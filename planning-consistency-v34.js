@@ -49,12 +49,6 @@
         setTimeout(()=>renderDerivedProducts(d),0);
       }else state._ddCustomSituationDerived=null;
     }
-    if(b.id==='ddBuildUnit'&&state._ddCustomSituationDerived){
-      const key=document.querySelector('input[name="ddProduct"]:checked')?.value;
-      const own=document.getElementById('ddOwnProduct');
-      const item=state._ddCustomSituationDerived.products?.find(x=>String(x.key)===String(key));
-      if(own&&item&&!tidy(own.value))own.value=item.text;
-    }
     const on=b.getAttribute('onclick')||'';
     if(/createUnitDemo/.test(on)){
       const raw=tidy(document.getElementById('unitSituation')?.value),title=document.getElementById('unitTitle');
