@@ -54,7 +54,7 @@
   document.head.appendChild(style);
 })();
 
-/* Carga estable: lector abierto → creatividad → intención → análisis exhaustivo → flujo pedagógico → auditoría → Unidad/Proyecto → estrategias → Director. */
+/* Carga estable: lector abierto → creatividad → intención → análisis exhaustivo → flujo pedagógico → auditoría → Unidad/Proyecto → estrategias → Director → control runtime. */
 (function(){
   if(document.querySelector('script[data-dd-context-semantic]'))return;
   const load=(src,key,next)=>{
@@ -70,7 +70,9 @@
               load('unit-project-mode-v13.js','data-dd-unit-project-mode',()=>
                 load('creative-runtime-v18.js','data-dd-creative-runtime',()=>
                   load('strategy-combinator-v15.js','data-dd-strategy-combinator',()=>
-                    load('director-creativity-v16.js','data-dd-director-creativity')
+                    load('director-creativity-v16.js','data-dd-director-creativity',()=>
+                      load('runtime-audit-v23.js','data-dd-runtime-audit')
+                    )
                   )
                 )
               )
