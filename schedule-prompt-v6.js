@@ -54,11 +54,18 @@
   document.head.appendChild(style);
 })();
 
-/* Carga el flujo de selección pedagógica después de los módulos principales. */
+/* Carga el flujo de selección pedagógica y, después, la auditoría/contexto. */
 (function(){
   if(document.querySelector('script[data-dd-proposal-choice]'))return;
   const s=document.createElement('script');
   s.src='proposal-choice-v7.js';
   s.dataset.ddProposalChoice='1';
+  s.onload=()=>{
+    if(document.querySelector('script[data-dd-context-audit]'))return;
+    const a=document.createElement('script');
+    a.src='context-audit-v8.js';
+    a.dataset.ddContextAudit='1';
+    document.body.appendChild(a);
+  };
   document.body.appendChild(s);
 })();
