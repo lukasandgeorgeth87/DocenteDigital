@@ -30,10 +30,12 @@
     if(!fw.length)return true;
     return fw.some(w=>tw.includes(w));
   }
+  function explicitCommunity(brief){return /\bcomunidad(?:\s+campesina|\s+nativa)?\b/i.test(tidy(brief));}
+  function ungroundedTerritorialAssumption(title,brief){return /\b(?:nuestra\s+comunidad|la\s+comunidad|saberes\s+de\s+(?:nuestra\s+)?comunidad|comunal(?:es)?)\b/i.test(tidy(title))&&!explicitCommunity(brief);}
   function neutralTitles(focus,type){
     const topic=tidy(focus)||'la situación planteada';
     const project=/proyecto/i.test(type||'');
-    const initial=String(window.state?.level||state?.level||'')==='Inicial';
+    const initial=String(window.state?.level||'')==='Inicial';
     if(initial){
       if(project)return [
         `Descubrimos ${topic}: investigamos y creamos juntos`,
@@ -62,11 +64,25 @@
     const focus=focusFor(brief);
     let existing=[];
     try{existing=typeof base==='function'?(base(brief,type)||[]):[];}catch(e){}
-    if(existing.length===3&&existing.every(t=>titleMentionsFocus(t,focus)))return existing;
+    if(existing.length===3&&existing.every(t=>titleMentionsFocus(t,focus)&&!ungroundedTerritorialAssumption(t,brief)))return existing;
     return neutralTitles(focus,type);
   };
+  window.ddContextualTitlePreview=function(brief,type){return neutralTitles(focusFor(brief),type);};
+  function repaintLivePreview(){
+    const ta=document.getElementById('unitSituation'),box=document.querySelector('#ddIntentBox .dd-title-suggestions');
+    if(!ta||!box||tidy(ta.value).length<15)return;
+    const type=document.getElementById('unitType')?.value||'Unidad de aprendizaje';
+    const titles=window.ddContextualTitlePreview(ta.value,type);
+    const esc=v=>typeof window.escapeHtml==='function'?window.escapeHtml(String(v||'')):String(v||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    box.innerHTML=titles.map(t=>`<button type="button" data-dd-title="${esc(t)}">${esc(t)}</button>`).join('');
+  }
+  let previewTimer=0;
+  const schedulePreview=()=>{clearTimeout(previewTimer);previewTimer=setTimeout(repaintLivePreview,340);};
+  document.addEventListener('input',e=>{if(e.target?.id==='unitSituation')schedulePreview();},true);
+  document.addEventListener('change',e=>{if(e.target?.id==='unitType')schedulePreview();},true);
+  setTimeout(repaintLivePreview,80);
   window.ddAuditTitleContext=function(brief,type){
     const focus=focusFor(brief),titles=window.ddCreativeTitleOptions(brief,type);
-    return {focus,titles,coherent:titles.length===3&&titles.every(t=>titleMentionsFocus(t,focus))};
+    return {focus,titles,coherent:titles.length===3&&titles.every(t=>titleMentionsFocus(t,focus)&&!ungroundedTerritorialAssumption(t,brief))};
   };
 })();
