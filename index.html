@@ -41,7 +41,7 @@
         </div>
         <div id="step4" class="hidden">
           <h1>Selecciona las áreas</h1><p id="areaHelp" class="sub"></p><div id="areaChoices" class="choices"></div>
-          <div class="card inner"><h3>🌎 Configuración EIB</h3><div class="form2"><label>Idioma de trabajo<select id="language"><option>Castellano</option><option>Quechua</option><option>Bilingüe</option></select></label><label>Variedad de quechua<select id="quechuaVar"><option>Quechua Collao</option><option>Quechua Chanka</option></select></label></div><small>La variedad se confirma antes de generar materiales.</small></div>
+          <div class="card inner"><h3>🌎 Perfil lingüístico de la IE</h3><p class="sub">Indica si la institución brinda atención EIB o trabaja de manera monolingüe en castellano.</p><div class="form2"><label>Tipo de atención lingüística<select id="linguisticMode"><option value="">Selecciona una opción</option><option value="EIB">Educación Intercultural Bilingüe (EIB)</option><option value="Monolingüe castellano">Monolingüe castellano</option></select></label><label>Lengua de trabajo<select id="language"><option value="Castellano">Castellano</option><option value="Lengua originaria">Lengua originaria</option><option value="Bilingüe">Bilingüe</option></select></label><label class="full">Lengua originaria / variedad principal<select id="quechuaVar"><option value="Ninguna">Ninguna</option></select></label></div><small>En EIB, la lengua o variedad pertinente debe confirmarse antes de generar materiales. No se asigna automáticamente por ubicación.</small></div>
           <div class="actions"><button class="btn ghost" onclick="nextSetup(3)">← Atrás</button><button class="btn" onclick="finishSetup()">Guardar y entrar</button></div>
         </div>
       </div>
@@ -53,7 +53,7 @@
         <button class="card action-card span6" onclick="continueWork()"><span>▶️</span><h2>Continuar mi trabajo</h2><p>Retoma tu última unidad, proyecto o sesión.</p></button>
         <button class="card action-card span6" onclick="go('session')"><span>📝</span><h2>Crear mi sesión</h2><p>Usa la unidad/proyecto actual y completa solo lo que falta.</p></button>
         <button class="card action-card span4" onclick="go('plan')"><span>📘</span><h2>Mi planificación</h2><p>Diagnóstico, programación anual, horario, unidades y proyectos.</p></button>
-        <button class="card action-card span4" onclick="go('materials')"><span>🧩</span><h2>Materiales</h2><p>Lecturas y fichas en castellano, quechua o bilingüe.</p></button>
+        <button class="card action-card span4" onclick="go('materials')"><span>🧩</span><h2>Materiales</h2><p>Lecturas y fichas en castellano, lengua originaria o formato bilingüe.</p></button>
         <button class="card action-card span4" onclick="go('evaluation')"><span>📊</span><h2>Evaluación</h2><p>Registro, evaluación y conclusiones SIAGIE.</p></button>
       </div>
     </section>
@@ -78,9 +78,9 @@
         <h2>📚 Crear unidad/proyecto</h2><div id="unitContext" class="success"></div>
         <div class="form2">
           <label>Tipo<select id="unitType"><option>Unidad de aprendizaje</option><option>Proyecto de aprendizaje</option></select></label>
-          <label>Duración<select id="unitDuration"><option>3 semanas</option><option>4 semanas</option><option>5 semanas</option></select></label>
+          <label>Duración<select id="unitDuration"><option>1 semana</option><option>2 semanas</option><option>3 semanas</option><option>4 semanas</option><option>5 semanas</option><option>6 semanas</option></select></label>
           <label class="full">Título de la unidad/proyecto<input id="unitTitle" placeholder="La app propondrá y mejorará el título a partir del contexto"></label>
-          <label class="full">Idea o contexto de partida<textarea id="unitSituation" placeholder="Ejemplo: la siembra en Ccotataqui, Hatun Tarpuy, papa, añu y oca"></textarea><small>Escribe una idea breve. La app redactará la situación significativa completa con contexto, necesidad/reto, preguntas y relación con evidencias.</small></label>
+          <label class="full">Idea o contexto de partida<textarea id="unitSituation" placeholder="Ejemplo: describe un interés, necesidad, problema u oportunidad real de tus estudiantes y su contexto"></textarea><small>Escribe una idea breve. La app analizará primero lo expresado y redactará una propuesta sin inventar problemas, causas, actores o finalidades no mencionados.</small></label>
         </div>
         <div class="expert-only notice">Modo Experto: competencias, capacidades, desempeños, criterios, enfoques y fuentes normativas.</div>
         <button class="btn" onclick="createUnitDemo()">✨ Crear propuesta completa</button>
@@ -97,8 +97,8 @@
     </section>
 
     <section id="materials" class="screen">
-      <h1>Materiales</h1><p class="sub">Lecturas, fichas y recursos en castellano, quechua o bilingüe.</p>
-      <div class="card"><div class="form2"><label>Tipo<select><option>Lectura</option><option>Ficha</option><option>Tarjetas palabra-imagen</option></select></label><label>Idioma<select id="materialLanguage"><option>Castellano</option><option>Quechua</option><option>Bilingüe</option></select></label><label>Variedad de quechua<select id="materialQuechua"><option>Quechua Collao</option><option>Quechua Chanka</option></select></label><label>Grado<select id="materialGrade"></select></label><label class="full">Tema<input value="Cuidado del agua en nuestra comunidad"></label></div><div class="notice">La versión quechua usa la variedad seleccionada y requiere revisión del docente antes de imprimir.</div><button class="btn" onclick="generateMaterial()">✨ Crear lectura</button><div id="materialOutput" class="document hidden topgap"><h2>Lectura generada</h2><p id="materialText"></p></div></div>
+      <h1>Materiales</h1><p class="sub">Lecturas, fichas y recursos en castellano, lengua originaria o formato bilingüe.</p>
+      <div class="card"><div class="form2"><label>Tipo<select><option>Lectura</option><option>Ficha</option><option>Tarjetas palabra-imagen</option></select></label><label>Idioma<select id="materialLanguage"><option>Castellano</option><option>Lengua originaria</option><option>Bilingüe</option></select></label><label>Lengua originaria / variedad<select id="materialQuechua"><option value="Ninguna">Ninguna</option></select></label><label>Grado<select id="materialGrade"></select></label><label class="full">Tema<input placeholder="Escribe el tema o interés que deseas trabajar"></label></div><div class="notice">Si seleccionas lengua originaria o bilingüe, confirma la lengua/variedad pertinente y revisa el material antes de imprimir.</div><button class="btn" onclick="generateMaterial()">✨ Crear lectura</button><div id="materialOutput" class="document hidden topgap"><h2>Lectura generada</h2><p id="materialText"></p></div></div>
     </section>
 
     <section id="evaluation" class="screen">
