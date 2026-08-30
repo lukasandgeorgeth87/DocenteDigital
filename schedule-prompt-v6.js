@@ -54,7 +54,7 @@
   document.head.appendChild(style);
 })();
 
-/* Carga estable: perfil lingüístico → lector abierto → creatividad → intención → análisis exhaustivo diferido → flujo pedagógico → auditoría → Unidad/Proyecto → estrategias → Director → control runtime → seguridad curricular. */
+/* Carga estable: perfil lingüístico → lector abierto → creatividad → intención → análisis exhaustivo → propuestas → núcleo estable → perfil territorial → Unidad/Proyecto → estrategias → Director → control runtime → seguridad curricular. */
 (function(){
   if(document.querySelector('script[data-dd-context-semantic]'))return;
   const load=(src,key,next)=>{
@@ -66,14 +66,16 @@
       load('creativity-engine-v14.js','data-dd-creativity-engine',()=>
         load('intent-engine-v21.js','data-dd-intent-engine',()=>
           load('meaning-engine-v25.js','data-dd-meaning-engine',()=>
-            load('proposal-choice-v7.js','data-dd-proposal-choice',()=>
+            load('proposal-choice-v8.js','data-dd-proposal-choice',()=>
               load('stable-core-v12.js','data-dd-stable-core',()=>
-                load('unit-project-mode-v13.js','data-dd-unit-project-mode',()=>
-                  load('creative-runtime-v18.js','data-dd-creative-runtime',()=>
-                    load('strategy-combinator-v15.js','data-dd-strategy-combinator',()=>
-                      load('director-creativity-v16.js','data-dd-director-creativity',()=>
-                        load('runtime-audit-v23.js','data-dd-runtime-audit',()=>
-                          load('curriculum-safety-v27.js','data-dd-curriculum-safety')
+                load('territorial-context-v28.js','data-dd-territorial-context',()=>
+                  load('unit-project-mode-v13.js','data-dd-unit-project-mode',()=>
+                    load('creative-runtime-v18.js','data-dd-creative-runtime',()=>
+                      load('strategy-combinator-v15.js','data-dd-strategy-combinator',()=>
+                        load('director-creativity-v16.js','data-dd-director-creativity',()=>
+                          load('runtime-audit-v23.js','data-dd-runtime-audit',()=>
+                            load('curriculum-safety-v27.js','data-dd-curriculum-safety')
+                          )
                         )
                       )
                     )
