@@ -54,7 +54,7 @@
   document.head.appendChild(style);
 })();
 
-/* Carga el flujo de selección pedagógica, auditorías y Biblioteca Maestra. */
+/* Carga el flujo de selección pedagógica, auditorías, Biblioteca Maestra y elección Unidad/Proyecto. */
 (function(){
   if(document.querySelector('script[data-dd-proposal-choice]'))return;
   const load=(src,key,next)=>{
@@ -64,7 +64,9 @@
   load('proposal-choice-v7.js','data-dd-proposal-choice',()=>
     load('context-audit-v8.js','data-dd-context-audit',()=>
       load('session-audit-v9.js','data-dd-session-audit',()=>
-        load('master-library-v10.js','data-dd-master-library')
+        load('master-library-v10.js','data-dd-master-library',()=>
+          load('unit-project-mode-v11.js','data-dd-unit-project-mode')
+        )
       )
     )
   );
