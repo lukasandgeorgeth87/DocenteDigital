@@ -22,7 +22,6 @@
 
   document.getElementById('ddUploadScheduleNow').onclick=()=>{
     if(!state.areas||!state.areas.length){alert('Primero selecciona las áreas de trabajo.');return;}
-    // Conserva las selecciones actuales antes de abrir el módulo de horario.
     const language=document.getElementById('language');
     const q=document.getElementById('quechuaVar');
     if(language)state.language=language.value;
@@ -53,4 +52,13 @@
     .dd-schedule-prompt h3{margin-top:0}.dd-schedule-prompt .actions{display:flex;gap:8px;flex-wrap:wrap}.dd-schedule-later{opacity:.9}
   `;
   document.head.appendChild(style);
+})();
+
+/* Carga el flujo de selección pedagógica después de los módulos principales. */
+(function(){
+  if(document.querySelector('script[data-dd-proposal-choice]'))return;
+  const s=document.createElement('script');
+  s.src='proposal-choice-v7.js';
+  s.dataset.ddProposalChoice='1';
+  document.body.appendChild(s);
 })();
