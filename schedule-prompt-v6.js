@@ -54,7 +54,7 @@
   document.head.appendChild(style);
 })();
 
-/* Carga el flujo de selección pedagógica y, después, la auditoría/contexto. */
+/* Carga el flujo de selección pedagógica, auditoría/contexto y auditoría de sesión. */
 (function(){
   if(document.querySelector('script[data-dd-proposal-choice]'))return;
   const s=document.createElement('script');
@@ -65,6 +65,13 @@
     const a=document.createElement('script');
     a.src='context-audit-v8.js';
     a.dataset.ddContextAudit='1';
+    a.onload=()=>{
+      if(document.querySelector('script[data-dd-session-audit]'))return;
+      const sa=document.createElement('script');
+      sa.src='session-audit-v9.js';
+      sa.dataset.ddSessionAudit='1';
+      document.body.appendChild(sa);
+    };
     document.body.appendChild(a);
   };
   document.body.appendChild(s);
