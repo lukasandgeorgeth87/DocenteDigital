@@ -54,7 +54,7 @@
   document.head.appendChild(style);
 })();
 
-/* Carga estable: perfil lingüístico → lector abierto → creatividad → intención → análisis exhaustivo → propuestas → núcleo estable → perfil territorial → Unidad/Proyecto → estrategias → Director → control runtime → seguridad curricular. */
+/* Carga estable: perfil lingüístico → lector abierto → creatividad → intención → análisis exhaustivo → propuestas → núcleo estable → perfil territorial → Unidad/Proyecto → estrategias → Director → control runtime → seguridad curricular → DOCX real. */
 (function(){
   if(document.querySelector('script[data-dd-context-semantic]'))return;
   const load=(src,key,next)=>{
@@ -74,7 +74,9 @@
                       load('strategy-combinator-v15.js','data-dd-strategy-combinator',()=>
                         load('director-creativity-v16.js','data-dd-director-creativity',()=>
                           load('runtime-audit-v23.js','data-dd-runtime-audit',()=>
-                            load('curriculum-safety-v27.js','data-dd-curriculum-safety')
+                            load('curriculum-safety-v27.js','data-dd-curriculum-safety',()=>
+                              load('docx-export-v29.js','data-dd-docx-export')
+                            )
                           )
                         )
                       )
