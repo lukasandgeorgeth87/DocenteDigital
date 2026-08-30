@@ -54,25 +54,18 @@
   document.head.appendChild(style);
 })();
 
-/* Carga el flujo de selección pedagógica, auditoría/contexto y auditoría de sesión. */
+/* Carga el flujo de selección pedagógica, auditorías y Biblioteca Maestra. */
 (function(){
   if(document.querySelector('script[data-dd-proposal-choice]'))return;
-  const s=document.createElement('script');
-  s.src='proposal-choice-v7.js';
-  s.dataset.ddProposalChoice='1';
-  s.onload=()=>{
-    if(document.querySelector('script[data-dd-context-audit]'))return;
-    const a=document.createElement('script');
-    a.src='context-audit-v8.js';
-    a.dataset.ddContextAudit='1';
-    a.onload=()=>{
-      if(document.querySelector('script[data-dd-session-audit]'))return;
-      const sa=document.createElement('script');
-      sa.src='session-audit-v9.js';
-      sa.dataset.ddSessionAudit='1';
-      document.body.appendChild(sa);
-    };
-    document.body.appendChild(a);
+  const load=(src,key,next)=>{
+    if(document.querySelector(`script[${key}]`)){next&&next();return;}
+    const s=document.createElement('script');s.src=src;s.setAttribute(key,'1');s.onload=()=>next&&next();document.body.appendChild(s);
   };
-  document.body.appendChild(s);
+  load('proposal-choice-v7.js','data-dd-proposal-choice',()=>
+    load('context-audit-v8.js','data-dd-context-audit',()=>
+      load('session-audit-v9.js','data-dd-session-audit',()=>
+        load('master-library-v10.js','data-dd-master-library')
+      )
+    )
+  );
 })();
