@@ -54,7 +54,7 @@
   document.head.appendChild(style);
 })();
 
-/* Carga estable: perfil lingüístico → lector abierto → creatividad → intención → análisis exhaustivo → propuestas → núcleo estable → perfil territorial → Unidad/Proyecto → estrategias → Director → control runtime → seguridad curricular → DOCX real. */
+/* Carga estable: perfil lingüístico → lector abierto → creatividad → intención → análisis exhaustivo → propuestas → núcleo estable → perfil territorial → Unidad/Proyecto → neutralización territorial de proyectos → estrategias → Director → control runtime → seguridad curricular → DOCX real. */
 (function(){
   if(document.querySelector('script[data-dd-context-semantic]'))return;
   const load=(src,key,next)=>{
@@ -70,12 +70,14 @@
               load('stable-core-v12.js','data-dd-stable-core',()=>
                 load('territorial-context-v28.js','data-dd-territorial-context',()=>
                   load('unit-project-mode-v13.js','data-dd-unit-project-mode',()=>
-                    load('creative-runtime-v18.js','data-dd-creative-runtime',()=>
-                      load('strategy-combinator-v15.js','data-dd-strategy-combinator',()=>
-                        load('director-creativity-v16.js','data-dd-director-creativity',()=>
-                          load('runtime-audit-v23.js','data-dd-runtime-audit',()=>
-                            load('curriculum-safety-v27.js','data-dd-curriculum-safety',()=>
-                              load('docx-export-v29.js','data-dd-docx-export')
+                    load('project-territorial-v31.js','data-dd-project-territorial',()=>
+                      load('creative-runtime-v18.js','data-dd-creative-runtime',()=>
+                        load('strategy-combinator-v15.js','data-dd-strategy-combinator',()=>
+                          load('director-creativity-v16.js','data-dd-director-creativity',()=>
+                            load('runtime-audit-v23.js','data-dd-runtime-audit',()=>
+                              load('curriculum-safety-v27.js','data-dd-curriculum-safety',()=>
+                                load('docx-export-v29.js','data-dd-docx-export')
+                              )
                             )
                           )
                         )
