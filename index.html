@@ -83,7 +83,7 @@
           <label class="full">Idea o contexto de partida<textarea id="unitSituation" placeholder="Ejemplo: la siembra en Ccotataqui, Hatun Tarpuy, papa, añu y oca"></textarea><small>Escribe una idea breve. La app redactará la situación significativa completa con contexto, necesidad/reto, preguntas y relación con evidencias, siguiendo orientaciones de planificación del MINEDU.</small></label>
         </div>
         <div class="expert-only notice">Modo Experto: competencias, capacidades, desempeños, criterios, enfoques y fuentes normativas.</div>
-        <button class="btn" onclick="createUnitDemo()">✨ Crear propuesta</button>
+        <button class="btn" onclick="createUnitDemo()">✨ Crear propuesta completa</button>
         <div id="unitReady" class="success hidden">Unidad creada y guardada en “Mis unidades/proyectos”.</div>
       </div>
 
@@ -92,7 +92,7 @@
 
     <section id="session" class="screen">
       <h1>Crear mi sesión</h1><p class="sub">La app reutiliza la unidad/proyecto, diferencia las tareas por grado y permite descargar o compartir la sesión en Word.</p>
-      <div class="card"><div id="sessionContext" class="success"></div><div class="form2"><label>Unidad / Proyecto actual<select id="sessionUnit" onchange="loadUnitForSession()"></select></label><label>Actividad programada<select id="activity" onchange="syncTitle()"></select></label><label class="full">Título de la sesión <span class="pill">Automático</span><input id="sessionTitle" readonly><small>Copiado de la actividad programada.</small></label><label>Duración<select id="sessionDuration"><option>45 minutos</option><option>60 minutos</option><option>90 minutos</option></select></label><label>Recursos de hoy<select id="sessionResources"><option>Materiales básicos</option><option>Con impresora</option><option>TV/proyector</option><option>Tabletas/celulares</option></select></label></div><div class="expert-only notice">Modo Experto: revisión de competencia, desempeño, criterio, evidencia e instrumento.</div><button class="btn block topgap" onclick="generateSession()">✨ PREPARAR MI SESIÓN</button></div>
+      <div class="card"><div id="sessionContext" class="success"></div><div class="form2"><label>Unidad / Proyecto actual<select id="sessionUnit" onchange="loadUnitForSession()"></select></label><label>Actividad programada<select id="activity" onchange="syncTitle()"></select></label><label class="full">Título de la sesión <span class="pill">Automático</span><input id="sessionTitle" readonly><small>Copiado de la actividad programada.</small></label><label>Duración<select id="sessionDuration"><option>45 minutos</option><option>60 minutos</option><option>90 minutos</option></select></label><label>Recursos de hoy<select id="sessionResources"><option>Materiales básicos</option><option>Con impresora</option><option>TV/proyector</option><option>Tabletas/celulares</option></select></label></div><div class="expert-only notice">Modo Experto: revisión de competencia, desempeño, criterio, evidencia e instrumento.</div><button class="btn block topgap" onclick="generateSession()">✨ PREPARAR MI SESIÓN MAESTRA</button></div>
       <div id="sessionOutput" class="card hidden topgap"><div class="tabs"><span class="tab active">Sesión</span><span class="tab">Ficha</span><span class="tab">Instrumento</span><span class="tab">Formalización</span><span class="tab">PPT</span></div><div class="document" id="sessionDocument"></div><div class="chatbar"><input id="chatInput" placeholder="¿Qué deseas corregir o mejorar?"><button class="btn" onclick="sendCorrection()">Enviar</button></div><div id="chatLog"></div></div>
     </section>
 
@@ -113,5 +113,6 @@
 </div>
 <nav class="mobile-nav"><button class="active" data-screen="home" onclick="go('home')"><b>🏠</b>Inicio</button><button data-screen="plan" onclick="go('plan')"><b>📘</b>Plan</button><button data-screen="session" onclick="go('session')"><b>📝</b>Sesión</button><button data-screen="materials" onclick="go('materials')"><b>🧩</b>Materiales</button><button data-screen="evaluation" onclick="go('evaluation')"><b>📊</b>Evaluación</button></nav>
 <script src="app.js"></script>
+<script src="enhancements.js"></script>
 </body>
 </html>
