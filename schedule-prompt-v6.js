@@ -54,7 +54,7 @@
   document.head.appendChild(style);
 })();
 
-/* Carga estable: lector abierto de contexto → creatividad → flujo pedagógico → auditoría → Unidad/Proyecto → estrategias → Director. */
+/* Carga estable: lector abierto → creatividad → intención → flujo pedagógico → auditoría → Unidad/Proyecto → estrategias → Director. */
 (function(){
   if(document.querySelector('script[data-dd-context-semantic]'))return;
   const load=(src,key,next)=>{
@@ -63,12 +63,14 @@
   };
   load('context-semantic-v20.js','data-dd-context-semantic',()=>
     load('creativity-engine-v14.js','data-dd-creativity-engine',()=>
-      load('proposal-choice-v7.js','data-dd-proposal-choice',()=>
-        load('stable-core-v12.js','data-dd-stable-core',()=>
-          load('unit-project-mode-v13.js','data-dd-unit-project-mode',()=>
-            load('creative-runtime-v18.js','data-dd-creative-runtime',()=>
-              load('strategy-combinator-v15.js','data-dd-strategy-combinator',()=>
-                load('director-creativity-v16.js','data-dd-director-creativity')
+      load('intent-engine-v21.js','data-dd-intent-engine',()=>
+        load('proposal-choice-v7.js','data-dd-proposal-choice',()=>
+          load('stable-core-v12.js','data-dd-stable-core',()=>
+            load('unit-project-mode-v13.js','data-dd-unit-project-mode',()=>
+              load('creative-runtime-v18.js','data-dd-creative-runtime',()=>
+                load('strategy-combinator-v15.js','data-dd-strategy-combinator',()=>
+                  load('director-creativity-v16.js','data-dd-director-creativity')
+                )
               )
             )
           )
