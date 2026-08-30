@@ -54,7 +54,7 @@
   document.head.appendChild(style);
 })();
 
-/* Carga estable: perfil lingüístico → lector abierto → creatividad → intención → análisis exhaustivo diferido → flujo pedagógico → auditoría → Unidad/Proyecto → estrategias → Director → control runtime. */
+/* Carga estable: perfil lingüístico → lector abierto → creatividad → intención → análisis exhaustivo diferido → flujo pedagógico → auditoría → Unidad/Proyecto → estrategias → Director → control runtime → seguridad curricular. */
 (function(){
   if(document.querySelector('script[data-dd-context-semantic]'))return;
   const load=(src,key,next)=>{
@@ -72,7 +72,9 @@
                   load('creative-runtime-v18.js','data-dd-creative-runtime',()=>
                     load('strategy-combinator-v15.js','data-dd-strategy-combinator',()=>
                       load('director-creativity-v16.js','data-dd-director-creativity',()=>
-                        load('runtime-audit-v23.js','data-dd-runtime-audit')
+                        load('runtime-audit-v23.js','data-dd-runtime-audit',()=>
+                          load('curriculum-safety-v27.js','data-dd-curriculum-safety')
+                        )
                       )
                     )
                   )
