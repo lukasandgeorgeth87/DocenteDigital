@@ -1,95 +1,16 @@
 /* DocenteDigital – solicitud de horario Word en configuración inicial */
 (function(){
-  const step4=document.getElementById('step4');
-  if(!step4||document.getElementById('ddInitialSchedulePrompt'))return;
-
-  const box=document.createElement('div');
-  box.id='ddInitialSchedulePrompt';
-  box.className='card inner dd-schedule-prompt';
-  box.innerHTML=`
-    <h3>🗓️ Horario docente</h3>
-    <p><b>¿Deseas subir tu horario docente en Word?</b></p>
-    <p class="sub">Es opcional, pero recomendado. DocenteDigital lo analizará y lo guardará para organizar automáticamente las sesiones por día, bloque y área. No tendrás que volver a subirlo mientras tu horario no cambie.</p>
-    <div class="actions">
-      <button type="button" class="btn alt" id="ddUploadScheduleNow">📄 Subir horario en Word</button>
-      <button type="button" class="btn ghost" id="ddScheduleLater">Lo haré después</button>
-    </div>
-    <small>Formato recomendado: archivo .docx con una tabla que contenga los días de la semana y las áreas por bloque.</small>
-  `;
-
-  const eib=step4.querySelector('.card.inner');
-  if(eib&&eib.nextSibling)step4.insertBefore(box,eib.nextSibling);else step4.appendChild(box);
-
-  document.getElementById('ddUploadScheduleNow').onclick=()=>{
-    if(!state.areas||!state.areas.length){alert('Primero selecciona las áreas de trabajo.');return;}
-    const language=document.getElementById('language');
-    const q=document.getElementById('quechuaVar');
-    if(language)state.language=language.value;
-    if(q)state.quechuaVar=q.value;
-    save();
-    finishSetup();
-    setTimeout(()=>{
-      go('plan');
-      setTimeout(()=>{
-        const input=document.getElementById('ddScheduleFile');
-        const card=document.getElementById('ddScheduleCard');
-        if(card)card.scrollIntoView({behavior:'smooth',block:'start'});
-        if(input)input.click();
-        else alert('Abre “Horario de clases” y selecciona “Subir horario en Word”.');
-      },120);
-    },80);
-  };
-
-  document.getElementById('ddScheduleLater').onclick=()=>{
-    box.classList.add('dd-schedule-later');
-    const p=box.querySelector('p.sub');
-    if(p)p.textContent='Puedes subirlo después desde Mi planificación → Horario de clases. Mientras tanto, podrás elegir 2 o 3 sesiones por día.';
-  };
-
-  const style=document.createElement('style');
-  style.textContent=`
-    .dd-schedule-prompt{margin-top:12px;border:1px solid #cad9d1;background:linear-gradient(135deg,#f8fcfa,#eef7f2)}
-    .dd-schedule-prompt h3{margin-top:0}.dd-schedule-prompt .actions{display:flex;gap:8px;flex-wrap:wrap}.dd-schedule-later{opacity:.9}
-  `;
-  document.head.appendChild(style);
+  const step4=document.getElementById('step4');if(!step4||document.getElementById('ddInitialSchedulePrompt'))return;
+  const box=document.createElement('div');box.id='ddInitialSchedulePrompt';box.className='card inner dd-schedule-prompt';box.innerHTML=`<h3>🗓️ Horario docente</h3><p><b>¿Deseas subir tu horario docente en Word?</b></p><p class="sub">Es opcional, pero recomendado. DocenteDigital lo analizará y lo guardará para organizar automáticamente las sesiones por día, bloque y área. No tendrás que volver a subirlo mientras tu horario no cambie.</p><div class="actions"><button type="button" class="btn alt" id="ddUploadScheduleNow">📄 Subir horario en Word</button><button type="button" class="btn ghost" id="ddScheduleLater">Lo haré después</button></div><small>Formato recomendado: archivo .docx con una tabla que contenga los días de la semana y las áreas por bloque.</small>`;
+  const eib=step4.querySelector('.card.inner');if(eib&&eib.nextSibling)step4.insertBefore(box,eib.nextSibling);else step4.appendChild(box);
+  document.getElementById('ddUploadScheduleNow').onclick=()=>{if(!state.areas||!state.areas.length){alert('Primero selecciona las áreas de trabajo.');return;}const language=document.getElementById('language'),q=document.getElementById('quechuaVar');if(language)state.language=language.value;if(q)state.quechuaVar=q.value;save();finishSetup();setTimeout(()=>{go('plan');setTimeout(()=>{const input=document.getElementById('ddScheduleFile'),card=document.getElementById('ddScheduleCard');if(card)card.scrollIntoView({behavior:'smooth',block:'start'});if(input)input.click();else alert('Abre “Horario de clases” y selecciona “Subir horario en Word”.');},120);},80);};
+  document.getElementById('ddScheduleLater').onclick=()=>{box.classList.add('dd-schedule-later');const p=box.querySelector('p.sub');if(p)p.textContent='Puedes subirlo después desde Mi planificación → Horario de clases. Mientras tanto, podrás elegir 2 o 3 sesiones por día.';};
+  const style=document.createElement('style');style.textContent=`.dd-schedule-prompt{margin-top:12px;border:1px solid #cad9d1;background:linear-gradient(135deg,#f8fcfa,#eef7f2)}.dd-schedule-prompt h3{margin-top:0}.dd-schedule-prompt .actions{display:flex;gap:8px;flex-wrap:wrap}.dd-schedule-later{opacity:.9}`;document.head.appendChild(style);
 })();
 
-/* Carga estable: perfil lingüístico → lector abierto → creatividad → intención → análisis exhaustivo → propuestas → núcleo estable → perfil territorial → Unidad/Proyecto → neutralización territorial de proyectos → estrategias → Director → control runtime → seguridad curricular → DOCX real. */
+/* Carga estable: perfil lingüístico → lector abierto → creatividad → intención → análisis exhaustivo → razonamiento experto por nivel → propuestas → núcleo estable → perfil territorial → Unidad/Proyecto → neutralización territorial → estrategias → Director → control runtime → seguridad curricular → DOCX real. */
 (function(){
   if(document.querySelector('script[data-dd-context-semantic]'))return;
-  const load=(src,key,next)=>{
-    if(document.querySelector(`script[${key}]`)){next&&next();return;}
-    const s=document.createElement('script');s.src=src;s.setAttribute(key,'1');s.onload=()=>next&&next();document.body.appendChild(s);
-  };
-  load('linguistic-profile-v26.js','data-dd-linguistic-profile',()=>
-    load('context-semantic-v20.js','data-dd-context-semantic',()=>
-      load('creativity-engine-v14.js','data-dd-creativity-engine',()=>
-        load('intent-engine-v21.js','data-dd-intent-engine',()=>
-          load('meaning-engine-v25.js','data-dd-meaning-engine',()=>
-            load('proposal-choice-v8.js','data-dd-proposal-choice',()=>
-              load('stable-core-v12.js','data-dd-stable-core',()=>
-                load('territorial-context-v28.js','data-dd-territorial-context',()=>
-                  load('unit-project-mode-v13.js','data-dd-unit-project-mode',()=>
-                    load('project-territorial-v31.js','data-dd-project-territorial',()=>
-                      load('creative-runtime-v18.js','data-dd-creative-runtime',()=>
-                        load('strategy-combinator-v15.js','data-dd-strategy-combinator',()=>
-                          load('director-creativity-v16.js','data-dd-director-creativity',()=>
-                            load('runtime-audit-v23.js','data-dd-runtime-audit',()=>
-                              load('curriculum-safety-v27.js','data-dd-curriculum-safety',()=>
-                                load('docx-export-v29.js','data-dd-docx-export')
-                              )
-                            )
-                          )
-                        )
-                      )
-                    )
-                  )
-                )
-              )
-            )
-          )
-        )
-      )
-    )
-  );
+  const load=(src,key,next)=>{if(document.querySelector(`script[${key}]`)){next&&next();return;}const s=document.createElement('script');s.src=src;s.setAttribute(key,'1');s.onload=()=>next&&next();document.body.appendChild(s);};
+  load('linguistic-profile-v26.js','data-dd-linguistic-profile',()=>load('context-semantic-v20.js','data-dd-context-semantic',()=>load('creativity-engine-v14.js','data-dd-creativity-engine',()=>load('intent-engine-v21.js','data-dd-intent-engine',()=>load('meaning-engine-v25.js','data-dd-meaning-engine',()=>load('expert-reasoning-v32.js','data-dd-expert-reasoning',()=>load('proposal-choice-v8.js','data-dd-proposal-choice',()=>load('stable-core-v12.js','data-dd-stable-core',()=>load('territorial-context-v28.js','data-dd-territorial-context',()=>load('unit-project-mode-v13.js','data-dd-unit-project-mode',()=>load('project-territorial-v31.js','data-dd-project-territorial',()=>load('creative-runtime-v18.js','data-dd-creative-runtime',()=>load('strategy-combinator-v15.js','data-dd-strategy-combinator',()=>load('director-creativity-v16.js','data-dd-director-creativity',()=>load('runtime-audit-v23.js','data-dd-runtime-audit',()=>load('curriculum-safety-v27.js','data-dd-curriculum-safety',()=>load('docx-export-v29.js','data-dd-docx-export'))))))))))))))))));
 })();
