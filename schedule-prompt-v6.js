@@ -54,14 +54,14 @@
   document.head.appendChild(style);
 })();
 
-/* Carga estable: contexto/palabras clave → creatividad → flujo pedagógico → auditoría → Unidad/Proyecto → estrategias → Director. */
+/* Carga estable: lector abierto de contexto → creatividad → flujo pedagógico → auditoría → Unidad/Proyecto → estrategias → Director. */
 (function(){
-  if(document.querySelector('script[data-dd-context-keywords]'))return;
+  if(document.querySelector('script[data-dd-context-semantic]'))return;
   const load=(src,key,next)=>{
     if(document.querySelector(`script[${key}]`)){next&&next();return;}
     const s=document.createElement('script');s.src=src;s.setAttribute(key,'1');s.onload=()=>next&&next();document.body.appendChild(s);
   };
-  load('context-keywords-v19.js','data-dd-context-keywords',()=>
+  load('context-semantic-v20.js','data-dd-context-semantic',()=>
     load('creativity-engine-v14.js','data-dd-creativity-engine',()=>
       load('proposal-choice-v7.js','data-dd-proposal-choice',()=>
         load('stable-core-v12.js','data-dd-stable-core',()=>
