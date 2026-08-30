@@ -54,24 +54,26 @@
   document.head.appendChild(style);
 })();
 
-/* Carga estable: lector abierto → creatividad → intención → análisis exhaustivo diferido → flujo pedagógico → auditoría → Unidad/Proyecto → estrategias → Director → control runtime. */
+/* Carga estable: perfil lingüístico → lector abierto → creatividad → intención → análisis exhaustivo diferido → flujo pedagógico → auditoría → Unidad/Proyecto → estrategias → Director → control runtime. */
 (function(){
   if(document.querySelector('script[data-dd-context-semantic]'))return;
   const load=(src,key,next)=>{
     if(document.querySelector(`script[${key}]`)){next&&next();return;}
     const s=document.createElement('script');s.src=src;s.setAttribute(key,'1');s.onload=()=>next&&next();document.body.appendChild(s);
   };
-  load('context-semantic-v20.js','data-dd-context-semantic',()=>
-    load('creativity-engine-v14.js','data-dd-creativity-engine',()=>
-      load('intent-engine-v21.js','data-dd-intent-engine',()=>
-        load('meaning-engine-v25.js','data-dd-meaning-engine',()=>
-          load('proposal-choice-v7.js','data-dd-proposal-choice',()=>
-            load('stable-core-v12.js','data-dd-stable-core',()=>
-              load('unit-project-mode-v13.js','data-dd-unit-project-mode',()=>
-                load('creative-runtime-v18.js','data-dd-creative-runtime',()=>
-                  load('strategy-combinator-v15.js','data-dd-strategy-combinator',()=>
-                    load('director-creativity-v16.js','data-dd-director-creativity',()=>
-                      load('runtime-audit-v23.js','data-dd-runtime-audit')
+  load('linguistic-profile-v26.js','data-dd-linguistic-profile',()=>
+    load('context-semantic-v20.js','data-dd-context-semantic',()=>
+      load('creativity-engine-v14.js','data-dd-creativity-engine',()=>
+        load('intent-engine-v21.js','data-dd-intent-engine',()=>
+          load('meaning-engine-v25.js','data-dd-meaning-engine',()=>
+            load('proposal-choice-v7.js','data-dd-proposal-choice',()=>
+              load('stable-core-v12.js','data-dd-stable-core',()=>
+                load('unit-project-mode-v13.js','data-dd-unit-project-mode',()=>
+                  load('creative-runtime-v18.js','data-dd-creative-runtime',()=>
+                    load('strategy-combinator-v15.js','data-dd-strategy-combinator',()=>
+                      load('director-creativity-v16.js','data-dd-director-creativity',()=>
+                        load('runtime-audit-v23.js','data-dd-runtime-audit')
+                      )
                     )
                   )
                 )
