@@ -58,7 +58,13 @@
   function routeFor(session){
     if(session.ddStrategyRoute)return session.ddStrategyRoute;
     const parts=uniqueRoute(session);const area=areaMoves[session.area]||['plantear un reto auténtico','hacer visible el razonamiento','producir evidencia y revisar'];
-    const eib=(state.language==='Quechua'||state.language==='Bilingüe'||state.ieType==='Unidocente'||state.ieType==='Multigrado')?[pick(eibMoves),pick(eibMoves.filter(x=>x!==eibMoves[0]))]:[];
+    const needsEib=state.language==='Quechua'||state.language==='Bilingüe'||state.ieType==='Unidocente'||state.ieType==='Multigrado';
+    let eib=[];
+    if(needsEib){
+      const firstEib=pick(eibMoves);
+      const remainingEib=eibMoves.filter(x=>x!==firstEib);
+      eib=[firstEib,pick(remainingEib)];
+    }
     session.ddStrategyRoute={signature:signature(parts),activation:parts[0],grouping:parts[1],reasoning:parts[2],evidence:parts[3],feedback:parts[4],differentiation:parts[5],closure:parts[6],area:[...area],eib,total:TOTAL};
     save();return session.ddStrategyRoute;
   }
