@@ -54,7 +54,7 @@
   document.head.appendChild(style);
 })();
 
-/* Carga estable: selector pedagógico → núcleo sin observers recursivos → modo Unidad/Proyecto. */
+/* Carga estable: selector pedagógico → núcleo estable → selector Unidad/Proyecto sin observadores. */
 (function(){
   if(document.querySelector('script[data-dd-proposal-choice]'))return;
   const load=(src,key,next)=>{
@@ -63,7 +63,7 @@
   };
   load('proposal-choice-v7.js','data-dd-proposal-choice',()=>
     load('stable-core-v12.js','data-dd-stable-core',()=>
-      load('unit-project-mode-v11.js','data-dd-unit-project-mode')
+      load('unit-project-mode-v13.js','data-dd-unit-project-mode')
     )
   );
 })();
