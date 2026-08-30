@@ -68,7 +68,7 @@
 
       <div id="unitsLibrary" class="card topgap">
         <h2>📂 Mis unidades/proyectos</h2>
-        <p class="sub">Aquí aparecen las unidades y proyectos que crees. Puedes abrirlos o usarlos para preparar sesiones.</p>
+        <p class="sub">Aquí aparecen las unidades y proyectos que crees. Puedes abrirlos, descargarlos en Word o usarlos para preparar sesiones.</p>
         <div id="unitsList"></div>
       </div>
 
@@ -80,7 +80,7 @@
           <label>Tipo<select id="unitType"><option>Unidad de aprendizaje</option><option>Proyecto de aprendizaje</option></select></label>
           <label>Duración<select id="unitDuration"><option>3 semanas</option><option>4 semanas</option><option>5 semanas</option></select></label>
           <label class="full">Título de la unidad/proyecto<input id="unitTitle" placeholder="Puedes escribirlo o dejar que la app proponga uno"></label>
-          <label class="full">Situación significativa<textarea id="unitSituation">Cuidado de la Pachamama y manejo responsable de residuos en la comunidad.</textarea></label>
+          <label class="full">Idea o contexto de partida<textarea id="unitSituation" placeholder="Ejemplo: la siembra en Ccotataqui, Hatun Tarpuy, papa, añu y oca"></textarea><small>Escribe una idea breve. La app redactará la situación significativa completa con contexto, necesidad/reto, preguntas y relación con evidencias, siguiendo orientaciones de planificación del MINEDU.</small></label>
         </div>
         <div class="expert-only notice">Modo Experto: competencias, capacidades, desempeños, criterios, enfoques y fuentes normativas.</div>
         <button class="btn" onclick="createUnitDemo()">✨ Crear propuesta</button>
@@ -91,9 +91,9 @@
     </section>
 
     <section id="session" class="screen">
-      <h1>Crear mi sesión</h1><p class="sub">La app reutiliza información ya registrada.</p>
-      <div class="card"><div id="sessionContext" class="success"></div><div class="form2"><label>Unidad / Proyecto actual<select id="sessionUnit" onchange="loadUnitForSession()"></select></label><label>Actividad programada<select id="activity" onchange="syncTitle()"></select></label><label class="full">Título de la sesión <span class="pill">Automático</span><input id="sessionTitle" readonly><small>Copiado de la actividad programada.</small></label><label>Duración<select><option>45 minutos</option><option>60 minutos</option><option>90 minutos</option></select></label><label>Recursos de hoy<select><option>Materiales básicos</option><option>Con impresora</option><option>TV/proyector</option><option>Tabletas/celulares</option></select></label></div><div class="expert-only notice">Modo Experto: revisión de competencia, desempeño, criterio, evidencia e instrumento.</div><button class="btn block topgap" onclick="generateSession()">✨ PREPARAR MI SESIÓN</button></div>
-      <div id="sessionOutput" class="card hidden topgap"><div class="tabs"><span class="tab active">Sesión</span><span class="tab">Ficha</span><span class="tab">Instrumento</span><span class="tab">Formalización</span><span class="tab">PPT</span></div><div class="document"><h2 id="docTitle"></h2><p><b>Propósito:</b> Resolver una situación del contexto empleando estrategias pertinentes.</p><p><b>Criterio:</b> Explica y representa su procedimiento de acuerdo con el reto planteado.</p><p><b>Inicio:</b> Presentación del reto, propósito y criterios en lenguaje comprensible.</p><p><b>Desarrollo:</b> Actividad común y diferenciada por grado cuando corresponde.</p><p><b>Cierre:</b> Socialización, reflexión y retroalimentación.</p></div><div class="chatbar"><input id="chatInput" placeholder="¿Qué deseas corregir o mejorar?"><button class="btn" onclick="sendCorrection()">Enviar</button></div><div id="chatLog"></div></div>
+      <h1>Crear mi sesión</h1><p class="sub">La app reutiliza la unidad/proyecto, diferencia las tareas por grado y permite descargar o compartir la sesión en Word.</p>
+      <div class="card"><div id="sessionContext" class="success"></div><div class="form2"><label>Unidad / Proyecto actual<select id="sessionUnit" onchange="loadUnitForSession()"></select></label><label>Actividad programada<select id="activity" onchange="syncTitle()"></select></label><label class="full">Título de la sesión <span class="pill">Automático</span><input id="sessionTitle" readonly><small>Copiado de la actividad programada.</small></label><label>Duración<select id="sessionDuration"><option>45 minutos</option><option>60 minutos</option><option>90 minutos</option></select></label><label>Recursos de hoy<select id="sessionResources"><option>Materiales básicos</option><option>Con impresora</option><option>TV/proyector</option><option>Tabletas/celulares</option></select></label></div><div class="expert-only notice">Modo Experto: revisión de competencia, desempeño, criterio, evidencia e instrumento.</div><button class="btn block topgap" onclick="generateSession()">✨ PREPARAR MI SESIÓN</button></div>
+      <div id="sessionOutput" class="card hidden topgap"><div class="tabs"><span class="tab active">Sesión</span><span class="tab">Ficha</span><span class="tab">Instrumento</span><span class="tab">Formalización</span><span class="tab">PPT</span></div><div class="document" id="sessionDocument"></div><div class="chatbar"><input id="chatInput" placeholder="¿Qué deseas corregir o mejorar?"><button class="btn" onclick="sendCorrection()">Enviar</button></div><div id="chatLog"></div></div>
     </section>
 
     <section id="materials" class="screen">
