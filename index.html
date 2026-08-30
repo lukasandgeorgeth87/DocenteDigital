@@ -52,14 +52,14 @@
       <div class="grid">
         <button class="card action-card span6" onclick="continueWork()"><span>▶️</span><h2>Continuar mi trabajo</h2><p>Retoma tu última unidad, proyecto o sesión.</p></button>
         <button class="card action-card span6" onclick="go('session')"><span>📝</span><h2>Crear mi sesión</h2><p>Usa la unidad/proyecto actual y completa solo lo que falta.</p></button>
-        <button class="card action-card span4" onclick="go('plan')"><span>📘</span><h2>Mi planificación</h2><p>Diagnóstico, programación anual, unidades y proyectos.</p></button>
+        <button class="card action-card span4" onclick="go('plan')"><span>📘</span><h2>Mi planificación</h2><p>Diagnóstico, programación anual, horario, unidades y proyectos.</p></button>
         <button class="card action-card span4" onclick="go('materials')"><span>🧩</span><h2>Materiales</h2><p>Lecturas y fichas en castellano, quechua o bilingüe.</p></button>
         <button class="card action-card span4" onclick="go('evaluation')"><span>📊</span><h2>Evaluación</h2><p>Registro, evaluación y conclusiones SIAGIE.</p></button>
       </div>
     </section>
 
     <section id="plan" class="screen">
-      <h1>Mi planificación</h1><p class="sub">Nivel → Tipo de IE → grados/edades → áreas → planificación.</p>
+      <h1>Mi planificación</h1><p class="sub">Nivel → Tipo de IE → grados/edades → áreas → horario → planificación.</p>
       <div class="grid">
         <div class="card span4"><h2>🩺 Evaluación diagnóstica</h2><p>Toma como referencia aprendizajes del grado anterior.</p><button class="btn block" onclick="showDiagnostic()">Crear diagnóstico</button></div>
         <div class="card span4"><h2>📅 Programación anual</h2><p>Se reajusta con diagnóstico, contexto y avances.</p><button class="btn alt block" onclick="demoAnnual()">Abrir</button></div>
@@ -79,8 +79,8 @@
         <div class="form2">
           <label>Tipo<select id="unitType"><option>Unidad de aprendizaje</option><option>Proyecto de aprendizaje</option></select></label>
           <label>Duración<select id="unitDuration"><option>3 semanas</option><option>4 semanas</option><option>5 semanas</option></select></label>
-          <label class="full">Título de la unidad/proyecto<input id="unitTitle" placeholder="Puedes escribirlo o dejar que la app proponga uno"></label>
-          <label class="full">Idea o contexto de partida<textarea id="unitSituation" placeholder="Ejemplo: la siembra en Ccotataqui, Hatun Tarpuy, papa, añu y oca"></textarea><small>Escribe una idea breve. La app redactará la situación significativa completa con contexto, necesidad/reto, preguntas y relación con evidencias, siguiendo orientaciones de planificación del MINEDU.</small></label>
+          <label class="full">Título de la unidad/proyecto<input id="unitTitle" placeholder="La app propondrá y mejorará el título a partir del contexto"></label>
+          <label class="full">Idea o contexto de partida<textarea id="unitSituation" placeholder="Ejemplo: la siembra en Ccotataqui, Hatun Tarpuy, papa, añu y oca"></textarea><small>Escribe una idea breve. La app redactará la situación significativa completa con contexto, necesidad/reto, preguntas y relación con evidencias.</small></label>
         </div>
         <div class="expert-only notice">Modo Experto: competencias, capacidades, desempeños, criterios, enfoques y fuentes normativas.</div>
         <button class="btn" onclick="createUnitDemo()">✨ Crear propuesta completa</button>
@@ -115,5 +115,9 @@
 <script src="app.js"></script>
 <script src="enhancements.js"></script>
 <script src="format-v2.js"></script>
+<script>window.unitBrief=window.unitBrief||function(u){return (u&&((u.situationBrief||u.situation)||''))||'';};</script>
+<script src="schedule-v3.js"></script>
+<script src="strategies-v4.js"></script>
+<script src="resources-v5.js"></script>
 </body>
 </html>
