@@ -12,12 +12,13 @@
    Regla central: comprender primero → conservar intención/finalidad → recién generar.
 */
 (function(){
-  if(window.__ddStableModuleLoaderV45)return;window.__ddStableModuleLoaderV45=true;
+  if(window.__ddStableModuleLoaderV46)return;window.__ddStableModuleLoaderV46=true;
   const modules=[
     'config-state-guard-v42.js',
     'linguistic-profile-v26.js',
     'initial-curriculum-areas-v43.js',
     'linguistic-confirmation-v37.js',
+    'institution-master-v46.js',
     'context-semantic-v20.js',
     'creativity-engine-v14.js',
     'intent-engine-v21.js',
