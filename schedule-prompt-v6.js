@@ -22,6 +22,7 @@
     'context-semantic-v20.js',
     'creativity-engine-v14.js',
     'intent-engine-v21.js',
+    'mci-normalization-v58.js',
     'meaning-engine-v25.js',
     'context-keywords-v19.js',
     'title-context-v38.js',
