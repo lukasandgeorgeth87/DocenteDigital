@@ -48,6 +48,7 @@
     'export-fallback-guard-v39.js',
     'docx-export-v29.js',
     'executable-audit-v47.js',
+    'prelaunch-evidence-gate-v50.js',
     'simplicity-audit-v49.js'
   ];
   let index=0;
