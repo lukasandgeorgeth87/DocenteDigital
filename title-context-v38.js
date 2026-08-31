@@ -1,17 +1,35 @@
-/* DocenteDigital – títulos naturales desde MCI v41
+/* DocenteDigital – títulos naturales desde MCI v42
    Auditoría Maestra: el título no copia la instrucción del docente; expresa la intención pedagógica.
 */
 (function(){
-  if(window.__ddTitleContextV41)return;window.__ddTitleContextV41=true;
+  if(window.__ddTitleContextV42)return;window.__ddTitleContextV42=true;
   const tidy=s=>String(s||'').replace(/\s+/g,' ').trim();
   const low=s=>tidy(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   const cap=s=>{s=tidy(s);return s?s.charAt(0).toUpperCase()+s.slice(1):s;};
   const E=s=>typeof window.escapeHtml==='function'?window.escapeHtml(String(s||'')):String(s||'');
   const BAD=/\b(?:unidad|proyecto|sesión|sesion)\s+(?:sobre|de|acerca de)\b|\bquiero enseñar\b|\bquiero trabajar\b|\bnecesito una?\b/i;
+  const INTEREST_PREFIX=/^(?:quiero|queremos|quieren|deseo|deseamos|desean)?\s*(?:saber|conocer|aprender|descubrir)\s+(?:más\s+)?(?:sobre|acerca de|de)\s+/i;
+
+  function cleanTheme(value){
+    let s=tidy(value);
+    s=s.replace(/^(?:unidad|proyecto|sesión|sesion)\s+(?:sobre|de|acerca de)\s+/i,'');
+    s=s.replace(INTEREST_PREFIX,'');
+    s=s.replace(/^(?:el tema de|tema:)\s*/i,'');
+    return tidy(s.replace(/[.!?]+$/,''));
+  }
+  function isSimpleInterest(raw){
+    const s=tidy(raw);
+    return INTEREST_PREFIX.test(s) && cleanTheme(s).split(/\s+/).length<=10 && !/\b(?:porque|para|debido|problema|necesidad|afecta|evitar|resolver|solucionar|proponer|hacer frente)\b/i.test(s);
+  }
 
   function mci(raw,type){
-    try{if(typeof window.ddUnderstandUserIntent==='function')return window.ddUnderstandUserIntent(raw,type);}catch(e){}
-    return{raw:tidy(raw),theme:tidy(raw).replace(/^(?:unidad|proyecto|sesión|sesion)\s+(?:sobre|de|acerca de)\s+/i,''),intentKind:'exploración/comprensión',finality:'',place:'',doNotCopyLiterally:BAD.test(raw)};
+    try{
+      if(typeof window.ddUnderstandUserIntent==='function'){
+        const u=window.ddUnderstandUserIntent(raw,type)||{};
+        return {...u,theme:cleanTheme(u.theme||raw)};
+      }
+    }catch(e){}
+    return{raw:tidy(raw),theme:cleanTheme(raw),intentKind:'exploración/comprensión',finality:'',place:'',doNotCopyLiterally:BAD.test(raw)};
   }
   function investigative(raw){const s=low(raw);return /investig|indag|averigu|pregunt|quieren saber|queremos saber|curios/.test(s);}
   function observed(raw){const s=low(raw);return /\baparecieron?\b|\bencontramos\b|\bobservamos\b|\bvimos\b/.test(s);}
@@ -28,6 +46,7 @@
     const u=mci(raw,type),theme=tidy(u.theme)||'esta experiencia',kind=u.intentKind||'exploración/comprensión',goal=tidy(u.finality),project=/proyecto/i.test(type||u.document||'');
     const school=returnToSchool(raw);if(school)return school;
     const season=seasonal(theme);if(season)return season;
+    if(isSimpleInterest(raw))return [`Descubrimos ${theme}`,`¿Qué queremos saber sobre ${theme}?`,`Exploramos ${theme} y compartimos lo aprendido`];
     let list=[];
     if(investigative(raw)||observed(raw)||kind==='indagación/curiosidad'){
       list=project?[`Investigamos ${theme} para responder nuestras preguntas`,`De nuestras preguntas a los hallazgos: exploramos ${theme}`,`Compartimos lo que descubrimos sobre ${theme}`]:[`Descubrimos ${theme} a partir de nuestras preguntas`,`Exploramos ${theme} para comprenderlo mejor`,`Lo que queremos saber sobre ${theme}`];
@@ -67,9 +86,9 @@
   setTimeout(repaint,120);
 
   window.ddAuditTitleContext=function(brief,type){
-    const titles=naturalTitles(brief,type),understood=mci(brief,type),forcedInvestigation=!investigative(brief)&&!observed(brief)&&understood.intentKind!=='indagación/curiosidad'&&titles.some(t=>/investig|indag|bajo la lupa/i.test(t));
+    const titles=naturalTitles(brief,type),understood=mci(brief,type),forcedInvestigation=!investigative(brief)&&!observed(brief)&&understood.intentKind!=='indagación/curiosidad'&&!isSimpleInterest(brief)&&titles.some(t=>/investig|indag|bajo la lupa/i.test(t));
     const instrumentLeak=titles.some(t=>BAD.test(t));
     const distinct=new Set(titles.map(t=>low(t).replace(/[^a-z0-9ñ ]/g,' '))).size===titles.length;
-    return{theme:understood.theme,intentKind:understood.intentKind,finality:understood.finality,titles,coherent:titles.length===3&&!forcedInvestigation&&!instrumentLeak&&distinct,forcedInvestigation,instrumentLeak,distinct};
+    return{theme:understood.theme,topic:understood.theme,intentKind:understood.intentKind,finality:understood.finality,titles,coherent:titles.length===3&&!forcedInvestigation&&!instrumentLeak&&distinct,forcedInvestigation,instrumentLeak,distinct,simpleInterest:isSimpleInterest(brief)};
   };
 })();
