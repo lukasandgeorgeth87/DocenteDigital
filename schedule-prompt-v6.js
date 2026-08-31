@@ -57,6 +57,7 @@
     'session-learning-core-v54.js',
     'easy-surface-simplicity-v55.js',
     'planning-archive-simplicity-v56.js',
+    'diagnostic-integrity-v59.js',
     'master-audit-v57.js'
   ];
   window.ddModuleLoadFailures=Array.isArray(window.ddModuleLoadFailures)?window.ddModuleLoadFailures:[];
