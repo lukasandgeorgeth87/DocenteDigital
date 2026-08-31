@@ -51,7 +51,8 @@
     'prelaunch-evidence-gate-v50.js',
     'simplicity-audit-v49.js',
     'planning-coherence-v51.js',
-    'visible-analysis-guard-v52.js'
+    'visible-analysis-guard-v52.js',
+    'significant-situation-core-v53.js'
   ];
   let index=0;
   function next(){
