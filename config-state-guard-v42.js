@@ -16,6 +16,12 @@
     if(state.level==='Secundaria'&&state.areas.length>1)state.areas=[];
   }
 
+  function hasCompleteBaseConfiguration(){
+    if(typeof state==='undefined')return false;
+    sanitizeConfiguration();
+    return Boolean(state.level&&state.ieType&&state.grades.length&&state.areas.length);
+  }
+
   const originalChooseOne=window.chooseOne;
   if(typeof originalChooseOne==='function'){
     window.chooseOne=function(key,val,btn){
@@ -55,6 +61,21 @@
         return;
       }
       return originalFinishSetup.apply(this,arguments);
+    };
+  }
+
+  // Evita salir del asistente con una configuración semánticamente incompleta.
+  // app.js solo comprobaba state.level, por lo que elegir el nivel bastaba para
+  // poder entrar al Inicio desde la barra lateral antes de definir IE, grados y áreas.
+  const originalGo=window.go;
+  if(typeof originalGo==='function'){
+    window.go=function(id){
+      if(id!=='setup'&&!hasCompleteBaseConfiguration()){
+        if(typeof showSetup==='function')showSetup();
+        else originalGo.call(this,'setup');
+        return;
+      }
+      return originalGo.apply(this,arguments);
     };
   }
 
