@@ -1,4 +1,4 @@
-/* DocenteDigital – lector abierto de contexto v20: cualquier vocabulario, frases y conceptos */
+/* DocenteDigital – lector abierto de contexto v20: detección léxica preliminar, no sustituye comprensión semántica */
 (function(){
   if(window.__ddContextSemanticV20)return;window.__ddContextSemanticV20=true;
 
@@ -21,14 +21,14 @@
 
   function analyze(text,limit=12){
     const raw=String(text||'').trim();
-    if(!raw)return{concepts:[],allTerms:[],phrases:[],words:[],numbers:[],raw:''};
+    if(!raw)return{concepts:[],allTerms:[],phrases:[],words:[],numbers:[],raw:'',analysisType:'lexical-preliminary'};
     const tokenList=contentWords(raw),freq={};tokenList.forEach(w=>freq[w]=(freq[w]||0)+1);
     const first={};tokenList.forEach((w,i)=>{if(first[w]===undefined)first[w]=i;});
     const candidates=[];
     const seen=new Set();
     const add=(value,score,kind='word')=>{const k=norm(value);if(!k||seen.has(kind+'|'+k))return;seen.add(kind+'|'+k);candidates.push({value:String(value).trim(),key:k,score,kind});};
 
-    // 1) Lo que el docente separa con comas, punto y coma o saltos se interpreta como posible concepto explícito.
+    // Apoyo léxico: conserva expresiones explícitas, pero NO infiere intención, finalidad ni relaciones causales.
     const phraseMap=originalPhraseMap(raw);
     for(const [k,original] of phraseMap.entries()){
       const cw=contentWords(original);
@@ -36,11 +36,9 @@
       else if(cw.length===1)add(original,7,'word');
     }
 
-    // 2) Frases entre comillas tienen máxima prioridad porque el docente las destacó deliberadamente.
     const quoted=[...raw.matchAll(/[“\"]([^”\"]{2,100})[”\"]/g)].map(m=>m[1].trim());
     quoted.forEach(q=>add(q,25,'phrase'));
 
-    // 3) N-gramas abiertos: no existe lista temática fija. Cualquier combinación significativa puede emerger.
     const rawWords=words(raw);
     for(let n=4;n>=2;n--){
       for(let i=0;i<=rawWords.length-n;i++){
@@ -53,18 +51,15 @@
       }
     }
 
-    // 4) Palabras individuales: frecuencia, especificidad y posición. Sin vocabulario preferido predefinido.
     Object.keys(freq).forEach(w=>{
       const specificity=Math.min(w.length/4,3);
       const positionBonus=first[w]!==undefined?Math.max(0,2-first[w]/30):0;
       add(w,5+(freq[w]*2)+specificity+positionBonus,'word');
     });
 
-    // 5) Números, porcentajes, años y cantidades pueden ser parte esencial del contexto.
     const nums=[...raw.matchAll(/\b\d+(?:[.,]\d+)?%?\b/g)].map(m=>m[0]);
     nums.forEach(n=>add(n,7,'number'));
 
-    // Evita seleccionar frases casi idénticas entre sí.
     candidates.sort((a,b)=>b.score-a.score||b.value.length-a.value.length);
     const selected=[];
     const similarity=(a,b)=>{
@@ -82,12 +77,12 @@
       allTerms:candidates.map(x=>x.value),
       phrases:selected.filter(x=>x.kind==='phrase').map(x=>x.value),
       words:selected.filter(x=>x.kind==='word').map(x=>x.value),
-      numbers:selected.filter(x=>x.kind==='number').map(x=>x.value)
+      numbers:selected.filter(x=>x.kind==='number').map(x=>x.value),
+      analysisType:'lexical-preliminary'
     };
   }
 
   window.ddAnalyzeContext=analyze;
-  // Compatibilidad: las capas anteriores pueden seguir llamando ddContextKeywords.
   window.ddContextKeywords=(text,limit=12)=>analyze(text,limit).concepts;
   window.ddContextKeywordPhrase=text=>analyze(text,6).concepts.join(', ');
 
@@ -103,7 +98,7 @@
     let box=document.getElementById('ddKeywordBox');
     if(!box){box=document.createElement('div');box.id='ddKeywordBox';box.className='dd-keyword-box';ta.parentElement.appendChild(box);}
     const a=analyze(ta.value,12);
-    box.innerHTML=a.concepts.length?`<b>🧠 Conceptos que DocenteDigital está leyendo:</b>${a.concepts.map(k=>`<span>${escapeHtml(k)}</span>`).join('')}<small>Se analiza todo el texto. Aquí solo se muestran los conceptos más relevantes; no existe una lista temática cerrada. Puedes escribir cualquier término, nombre local, problema, actividad, cultivo, profesión, tradición o frase que necesites.</small>`:'<small>Describe libremente tu realidad. DocenteDigital analizará las palabras y frases que tú escribas; no necesitas usar un vocabulario predefinido.</small>';
+    box.innerHTML=a.concepts.length?`<b>🧠 Señales del texto detectadas (apoyo preliminar):</b>${a.concepts.map(k=>`<span>${escapeHtml(k)}</span>`).join('')}<small>Esta vista solo identifica palabras y frases destacables. No equivale a una comprensión semántica completa ni confirma por sí sola intención, finalidad, problema, causa, consecuencia o producto. La planificación final debe conservar el significado completo del texto del docente.</small>`:'<small>Escribe libremente tu realidad. Esta vista puede resaltar palabras y frases como apoyo preliminar; no debe interpretarse como comprensión semántica completa.</small>';
   }
 
   function saveAnalysis(){
