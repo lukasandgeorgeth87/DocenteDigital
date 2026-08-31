@@ -1,4 +1,4 @@
-/* DocenteDigital – Ficha Maestra de la IE v46
+/* DocenteDigital – Ficha Maestra de la IE v46.1
    Registra una vez los datos institucionales y los reutiliza en Docente y Director.
    No sustituye autenticación ni una base de datos multiusuario; en este prototipo se guarda en localStorage.
 */
@@ -20,7 +20,7 @@
       locationType:tidy(c.locationType||c.placeType||''),
       locationName:tidy(c.locationName||c.locality||c.community||''),
       geographicArea:'No especificado',
-      managementType:'Pública',
+      managementType:'',
       levels:state.level?[state.level]:[],
       organization:tidy(state.ieType||''),
       shifts:[],
@@ -34,6 +34,9 @@
 
   state.userRole=state.userRole||'Docente y Director';
   state.institutionMaster=Object.assign(initialMaster(),state.institutionMaster||{});
+  /* Corrige únicamente el valor heredado por defecto de versiones previas. Si la ficha
+     ya fue guardada por el usuario, se conserva su decisión. */
+  if(!state.institutionMaster.updatedAt&&state.institutionMaster.managementType==='Pública')state.institutionMaster.managementType='';
 
   function syncLegacy(){
     const m=state.institutionMaster;
@@ -53,7 +56,7 @@
   }
 
   function levelChecks(selected){return levels.map(x=>`<label class="dd-check"><input type="checkbox" data-dd-level="${E(x)}" ${selected.includes(x)?'checked':''}> ${E(x)}</label>`).join('');}
-  function options(list,current){return list.map(x=>`<option ${x===current?'selected':''}>${E(x)}</option>`).join('');}
+  function options(list,current){return list.map(x=>`<option value="${E(x)}" ${x===current?'selected':''}>${E(x||'Por precisar')}</option>`).join('');}
 
   function mountSettings(){
     const host=document.getElementById('settings');if(!host)return;
@@ -77,7 +80,7 @@
         <label>Tipo de lugar<select id="ddLocationType"><option value="">Selecciona</option>${options(locationTypes,m.locationType)}</select></label>
         <label>Nombre del lugar<input id="ddLocationName" value="${E(m.locationName)}" placeholder="Nombre real del lugar"></label>
         <label>Ámbito<select id="ddGeoArea">${options(['No especificado','Rural','Urbano','Periurbano'],m.geographicArea)}</select></label>
-        <label>Gestión<select id="ddManagementType">${options(['Pública','Privada','Otra / por precisar'],m.managementType)}</select></label>
+        <label>Gestión<select id="ddManagementType">${options(['','Pública','Privada','Otra / por precisar'],m.managementType)}</select></label>
         <label>Organización de la IE<select id="ddOrganization">${options(['','Unidocente','Multigrado','Polidocente'],m.organization)}</select></label>
         <label>Director/a<input id="ddDirectorName" value="${E(m.directorName)}"></label>
         <label>N.º de docentes<input id="ddTeacherCount" inputmode="numeric" value="${E(m.teacherCount)}"></label>
@@ -99,7 +102,7 @@
     const next={
       ieName:val('ddIeName'),modularCode:val('ddModularCode'),localCode:val('ddLocalCode'),ugel:val('ddUgel'),dreGre:val('ddDreGre'),
       region:val('ddRegion'),province:val('ddProvince'),district:val('ddDistrict'),locationType:val('ddLocationType'),locationName:val('ddLocationName'),
-      geographicArea:val('ddGeoArea')||'No especificado',managementType:val('ddManagementType')||'Pública',levels:selectedLevels(),organization:val('ddOrganization'),
+      geographicArea:val('ddGeoArea')||'No especificado',managementType:val('ddManagementType'),levels:selectedLevels(),organization:val('ddOrganization'),
       shifts:state.institutionMaster?.shifts||[],directorName:val('ddDirectorName'),teacherCount:val('ddTeacherCount'),studentCount:val('ddStudentCount'),
       schoolCalendar:val('ddSchoolCalendar'),communalCalendar:val('ddCommunalCalendar'),notes:val('ddInstitutionNotes'),updatedAt:new Date().toISOString()
     };
