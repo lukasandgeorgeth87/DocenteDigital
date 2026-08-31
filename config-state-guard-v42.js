@@ -5,6 +5,7 @@
 
   const allowedGrades=()=>typeof gradeOptions==='function'?gradeOptions():[];
   const allowedAreas=()=>typeof areaOptions==='function'?areaOptions():[];
+  const NONE='Ninguna';
 
   function sanitizeConfiguration(){
     if(typeof state==='undefined')return;
@@ -14,12 +15,33 @@
     state.areas=Array.isArray(state.areas)?state.areas.filter(a=>areas.includes(a)):[];
     if(state.ieType==='Polidocente'&&state.grades.length>1)state.grades=[];
     if(state.level==='Secundaria'&&state.areas.length>1)state.areas=[];
+
+    /* Mantiene coherencia mínima aun antes de que cargue linguistic-profile-v26.js. */
+    if(state.linguisticMode==='Monolingüe castellano'){
+      state.language='Castellano';
+      state.indigenousLanguage=NONE;
+      state.quechuaVar=NONE;
+    }
+  }
+
+  function hasCompleteLinguisticConfiguration(){
+    if(typeof state==='undefined')return false;
+    if(state.linguisticMode==='Monolingüe castellano')return true;
+    if(state.linguisticMode!=='EIB')return false;
+    const origin=String(state.indigenousLanguage||state.quechuaVar||'').trim();
+    return Boolean(origin&&origin!==NONE);
   }
 
   function hasCompleteBaseConfiguration(){
     if(typeof state==='undefined')return false;
     sanitizeConfiguration();
-    return Boolean(state.level&&state.ieType&&state.grades.length&&state.areas.length);
+    return Boolean(
+      state.level&&
+      state.ieType&&
+      state.grades.length&&
+      state.areas.length&&
+      hasCompleteLinguisticConfiguration()
+    );
   }
 
   const originalChooseOne=window.chooseOne;
@@ -65,8 +87,8 @@
   }
 
   // Evita salir del asistente con una configuración semánticamente incompleta.
-  // app.js solo comprobaba state.level, por lo que elegir el nivel bastaba para
-  // poder entrar al Inicio desde la barra lateral antes de definir IE, grados y áreas.
+  // Además de nivel/IE/grados/áreas, el perfil lingüístico debe estar confirmado:
+  // monolingüe castellano o EIB con lengua originaria seleccionada.
   const originalGo=window.go;
   if(typeof originalGo==='function'){
     window.go=function(id){
