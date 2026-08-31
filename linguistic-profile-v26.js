@@ -68,7 +68,11 @@
   const originOptions=(includeNone=true)=>`${includeNone?`<option value="${NONE}">${NONE}</option>`:''}${languages.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}`;
 
   state.linguisticMode=state.linguisticMode||'';
-  state.indigenousLanguage=state.indigenousLanguage||((state.quechuaVar&&state.quechuaVar!==NONE)?state.quechuaVar:NONE);
+  // Solo migra el campo legado cuando ya existe una confirmación EIB previa.
+  // En perfiles nuevos o aún no confirmados, el valor histórico por defecto de app.js
+  // no debe convertirse silenciosamente en una lengua originaria seleccionada.
+  const legacyOrigin=(state.linguisticMode==='EIB'&&state.quechuaVar&&state.quechuaVar!==NONE)?state.quechuaVar:NONE;
+  state.indigenousLanguage=state.indigenousLanguage||legacyOrigin;
 
   function mountSetup(){
     const step4=document.getElementById('step4');if(!step4)return;
@@ -110,7 +114,7 @@
     if(lang)lang.value=['Bilingüe','Lengua originaria','Castellano'].includes(state.language)?state.language:(state.linguisticMode==='EIB'?'Bilingüe':'Castellano');
     const origin=document.getElementById('quechuaVar');
     if(origin){
-      const preferred=state.indigenousLanguage||state.quechuaVar||NONE;
+      const preferred=state.indigenousLanguage||NONE;
       origin.value=[NONE,...languages].includes(preferred)?preferred:NONE;
     }
     mode?.addEventListener('change',()=>syncSetup(false));
@@ -137,6 +141,7 @@
       if(help)help.innerHTML=`✓ <b>IE EIB:</b> selecciona la lengua originaria pertinente. Si tu IE está en Cusco, revisa si corresponde <b>${FIRST}</b>; es solo una sugerencia y no se seleccionará automáticamente.`;
     }else{
       lang.disabled=true;origin.disabled=true;
+      origin.value=NONE;
       if(help)help.textContent='Selecciona EIB o Monolingüe castellano para continuar.';
     }
     persistFromControls(false);
@@ -182,7 +187,7 @@
     }else{
       mo.disabled=false;
       if(['Castellano','Lengua originaria','Bilingüe'].includes(state.language))ml.value=state.language;
-      const v=state.indigenousLanguage||state.quechuaVar||NONE;
+      const v=state.indigenousLanguage||NONE;
       mo.value=[NONE,...languages].includes(v)?v:NONE;
     }
   }
@@ -208,7 +213,7 @@
     mountMaterials();
     const summary=document.getElementById('settingsSummary');
     if(summary&&state.linguisticMode){
-      const extra=`<br><b>Atención lingüística:</b> ${esc(state.linguisticMode)}${state.linguisticMode==='EIB'?`<br><b>Lengua originaria:</b> ${esc(state.indigenousLanguage||state.quechuaVar||NONE)}`:''}`;
+      const extra=`<br><b>Atención lingüística:</b> ${esc(state.linguisticMode)}${state.linguisticMode==='EIB'?`<br><b>Lengua originaria:</b> ${esc(state.indigenousLanguage||NONE)}`:''}`;
       if(!/Atención lingüística:/.test(summary.innerHTML))summary.innerHTML+=extra;
     }
     return r;
