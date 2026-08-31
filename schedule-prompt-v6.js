@@ -57,6 +57,20 @@
     'easy-surface-simplicity-v55.js',
     'planning-archive-simplicity-v56.js'
   ];
+  window.ddModuleLoadFailures=Array.isArray(window.ddModuleLoadFailures)?window.ddModuleLoadFailures:[];
+  function showLoadFailure(){
+    if(document.getElementById('ddModuleLoadFailure'))return;
+    const bar=document.createElement('div');
+    bar.id='ddModuleLoadFailure';
+    bar.setAttribute('role','alert');
+    bar.setAttribute('aria-live','assertive');
+    bar.innerHTML='<div><b>No se pudo cargar una parte necesaria de DocenteDigital.</b><span> Recarga la página antes de crear, guardar o descargar documentos.</span></div><button type="button">Recargar</button>';
+    bar.querySelector('button').onclick=()=>location.reload();
+    document.body.prepend(bar);
+    const css=document.createElement('style');
+    css.textContent='#ddModuleLoadFailure{position:sticky;top:0;z-index:99999;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;background:#fff4e5;border-bottom:2px solid #d97706;color:#713f12;font-size:14px;line-height:1.35}#ddModuleLoadFailure button{border:0;border-radius:9px;padding:9px 13px;background:#92400e;color:#fff;font-weight:800;cursor:pointer}@media(max-width:720px){#ddModuleLoadFailure{align-items:flex-start;flex-direction:column}#ddModuleLoadFailure button{width:100%}}';
+    document.head.appendChild(css);
+  }
   let index=0;
   function next(){
     if(index>=modules.length)return;
@@ -68,7 +82,11 @@
       s.onerror=()=>{
         console.warn(`DocenteDigital: no se pudo cargar ${src}${attempt===0?'; reintentando una vez.':'; se continúa con el siguiente módulo.'}`);
         s.remove();
-        if(attempt===0)setTimeout(()=>load(1),350);else next();
+        if(attempt===0)setTimeout(()=>load(1),350);else{
+          if(!window.ddModuleLoadFailures.includes(src))window.ddModuleLoadFailures.push(src);
+          showLoadFailure();
+          next();
+        }
       };
       document.body.appendChild(s);
     };
