@@ -40,6 +40,7 @@
     'strategy-combinator-v15.js',
     'director-creativity-v16.js',
     'director-prototype-guard-v40.js',
+    'mobile-navigation-guard-v60.js',
     'prototype-data-guard-v41.js',
     'planning-consistency-v34.js',
     'usage-reality-v35.js',
