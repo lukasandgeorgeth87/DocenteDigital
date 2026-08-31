@@ -1,12 +1,14 @@
-/* DocenteDigital – interfaz simple de planificación v49
+/* DocenteDigital – interfaz simple de planificación v50
    Filosofía: la IA piensa mucho por dentro y muestra poco por fuera.
-   Oculta diagnósticos internos y convierte productos en opciones concretas.
+   La capa visual simplifica SIN sustituir el significado aprobado por el núcleo.
 */
 (function(){
-  if(window.__ddSimplePlanningUIV49)return;window.__ddSimplePlanningUIV49=true;
+  if(window.__ddSimplePlanningUIV50)return;window.__ddSimplePlanningUIV50=true;
   const tidy=s=>String(s||'').replace(/\s+/g,' ').trim();
   const low=s=>tidy(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 
+  // Solo apoyo visual/fallback. Nunca debe reemplazar productos ya construidos
+  // desde la interpretación semántica, finalidad o producto explícito del docente.
   function planningTopic(raw){
     try{
       const a=window.ddAuditTitleContext?.(raw,document.getElementById('unitType')?.value||'Unidad de aprendizaje');
@@ -68,18 +70,27 @@
     if(label)label.textContent='✨ Elige uno de estos títulos';
   }
 
+  function conciseTitle(value,fallback){
+    const t=tidy(value||fallback);
+    if(t.length<=86)return t;
+    const cut=t.slice(0,86).replace(/\s+\S*$/,'').trim();
+    return cut||t.slice(0,86);
+  }
+
   function compactProductCards(){
     const host=document.getElementById('ddProposalChooser');
     if(!host||!host.querySelector('input[name="ddProduct"]'))return;
-    const raw=state.pendingUnitChoice?.brief||document.getElementById('unitSituation')?.value||'';
-    const names=compactProducts(raw);
-    const products=(state.pendingUnitChoice?.products||[]);
-    products.slice(0,3).forEach((p,i)=>{if(p){p.title=names[i];p.text=names[i];}});
-    if(state.pendingUnitChoice)state.pendingUnitChoice.products=products;
-    if(typeof save==='function')save();
+
+    // V50: NO reescribir state.pendingUnitChoice.products ni sus títulos/textos.
+    // La versión anterior imponía bancos temáticos visibles y podía borrar una
+    // finalidad nueva (p. ej. "aprendemos X para producir un podcast/ruta sonora").
+    // Aquí solo se compacta la PRESENTACIÓN de los productos que ya llegaron
+    // del núcleo/propuesta semántica.
+    const products=Array.isArray(state.pendingUnitChoice?.products)?state.pendingUnitChoice.products:[];
     [...host.querySelectorAll('.dd-product-grid .dd-choice-card')].slice(0,3).forEach((card,i)=>{
+      const item=products[i]||{};
       const h=card.querySelector('h3'),p=card.querySelector('p');
-      if(h)h.textContent=names[i];
+      if(h)h.textContent=conciseTitle(item.title,`Producto ${i+1}`);
       if(p)p.textContent='';
     });
     const intro=host.querySelector('.dd-choice-intro p');
@@ -120,5 +131,8 @@
     @media(max-width:650px){#ddIntentBox .dd-title-suggestions button{font-size:14px}.dd-product-grid .dd-choice-card{min-height:auto}}
   `;document.head.appendChild(css);
   setTimeout(simplifyAll,700);
+
+  // Se conserva como helper explícito de fallback para otros usos, pero esta
+  // capa UI no lo utiliza para reemplazar resultados semánticos.
   window.ddCompactProductOptions=compactProducts;
 })();
