@@ -71,9 +71,9 @@ La aplicación todavía **NO debe declararse lista para producción, piloto masi
 
 | Función | Estado | Observación |
 |---|---|---|
-| Ficha Maestra de IE | PARCIALMENTE FUNCIONAL | Existen datos dispersos en configuración; falta unificar una ficha institucional completa. |
-| Reutilización automática en todos los documentos | PARCIALMENTE FUNCIONAL | Aún hay duplicaciones y datos que no se propagan entre todos los módulos. |
-| Rol Docente / Director / Director-Docente | INEXISTENTE | Requiere autenticación, permisos y perfiles reales. |
+| Ficha Maestra de IE | PARCIALMENTE FUNCIONAL | Ya existe una ficha institucional unificada en Configuración con IE, códigos, UGEL/DRE-GRE, territorio, ámbito, gestión, organización, niveles, director y cantidades básicas. En el prototipo se guarda en localStorage; falta backend seguro y pruebas de reutilización en todos los documentos. |
+| Reutilización automática en todos los documentos | PARCIALMENTE FUNCIONAL | La Ficha Maestra sincroniza datos territoriales e institucionales con el estado existente y expone una fuente común para Docente/Director; falta conectar PEI, PAT, PCI, RI/DG, RD, oficios, informes y registro completo. |
+| Rol Docente / Director / Docente-Director | PARCIALMENTE FUNCIONAL | Ya existe selección de rol en la Ficha Maestra y se conserva en el estado del prototipo. Aún no constituye autenticación ni permisos reales; eso requiere backend y control de acceso. |
 | Multiinstitución | INEXISTENTE | Requiere backend y aislamiento por organización. |
 
 ## 5. Persistencia, seguridad y datos
