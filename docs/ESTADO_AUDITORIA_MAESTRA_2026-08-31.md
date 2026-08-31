@@ -171,6 +171,12 @@ Toda acción debe probarse como **entrada → procesamiento → guardado → rec
 9. Falta batería de regresión automática y pruebas de 100 generaciones.
 10. Falta medir IUD, ICGD e IFR.
 
+## 13. Pruebas acumulativas recientes
+
+| ID | Módulo | Estado | Severidad | Causa raíz | Corrección | Evidencia posterior | Riesgo de regresión / impacto |
+|---|---|---|---|---|---|---|---|
+| AUD-EVA-DIAG-021 | Evaluación diagnóstica / integridad de datos | PARCIALMENTE FUNCIONAL · PASA la defensa base | S1 | `index.html` aún contenía 8/4/2 resultados ficticios en el DOM, aunque una guardia posterior los reemplazaba; si esa guardia fallaba, el prototipo base podía volver a exponer datos inventados. | Se retiraron definitivamente los resultados ficticios del marcado base; `diagnosticResult` queda vacío hasta que la capa de integridad muestre estado pendiente de evidencias reales. | Commit `645c95cb432daf5c7df4e7b56680a4fba247cee0`; Vercel production READY; raíz HTTP 200; la respuesta productiva ya contiene `<div id="diagnosticResult" class="hidden"></div>` sin cifras ficticias. | Reduce error silencioso y riesgo de alucinación de resultados. No cambia IUD/ICGD/IFR/ISU/Prelaunch definitivos; el módulo sigue pendiente de evidencias reales, registro por estudiante y backend seguro. |
+
 ## Pregunta de control
 
 > ¿Un docente o director real puede utilizar DocenteDigital durante todo el año escolar, confiar en ella, recuperar su información, reducir su trabajo y obtener documentos pedagógica, técnica y normativamente sólidos sin rehacerlos?
