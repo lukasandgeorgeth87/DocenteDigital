@@ -12,7 +12,7 @@
    Regla central: comprender primero → conservar intención/finalidad → recién generar.
 */
 (function(){
-  if(window.__ddStableModuleLoaderV48)return;window.__ddStableModuleLoaderV48=true;
+  if(window.__ddStableModuleLoaderV49)return;window.__ddStableModuleLoaderV49=true;
   const modules=[
     'config-state-guard-v42.js',
     'linguistic-profile-v26.js',
@@ -47,7 +47,8 @@
     'curriculum-safety-v27.js',
     'export-fallback-guard-v39.js',
     'docx-export-v29.js',
-    'executable-audit-v47.js'
+    'executable-audit-v47.js',
+    'simplicity-audit-v49.js'
   ];
   let index=0;
   function next(){
