@@ -12,7 +12,7 @@
    Regla central: comprender primero → conservar intención/finalidad → recién generar.
 */
 (function(){
-  if(window.__ddStableModuleLoaderV47)return;window.__ddStableModuleLoaderV47=true;
+  if(window.__ddStableModuleLoaderV48)return;window.__ddStableModuleLoaderV48=true;
   const modules=[
     'config-state-guard-v42.js',
     'linguistic-profile-v26.js',
@@ -30,6 +30,7 @@
     'semantic-goal-ui-v45.js',
     'expert-reasoning-v32.js',
     'proposal-choice-v8.js',
+    'simple-planning-ui-v48.js',
     'stable-core-v12.js',
     'territorial-context-v28.js',
     'unit-project-mode-v13.js',
