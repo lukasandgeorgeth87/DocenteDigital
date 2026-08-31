@@ -1,12 +1,11 @@
-/* DocenteDigital – interfaz simple de planificación v48
+/* DocenteDigital – interfaz simple de planificación v49
    Filosofía: la IA piensa mucho por dentro y muestra poco por fuera.
    Oculta diagnósticos internos y convierte productos en opciones concretas.
 */
 (function(){
-  if(window.__ddSimplePlanningUIV48)return;window.__ddSimplePlanningUIV48=true;
+  if(window.__ddSimplePlanningUIV49)return;window.__ddSimplePlanningUIV49=true;
   const tidy=s=>String(s||'').replace(/\s+/g,' ').trim();
   const low=s=>tidy(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  const E=v=>typeof escapeHtml==='function'?escapeHtml(String(v||'')):String(v||'');
 
   function planningTopic(raw){
     try{
@@ -75,7 +74,7 @@
     const raw=state.pendingUnitChoice?.brief||document.getElementById('unitSituation')?.value||'';
     const names=compactProducts(raw);
     const products=(state.pendingUnitChoice?.products||[]);
-    products.slice(0,3).forEach((p,i)=>{p.title=names[i];p.text=names[i];});
+    products.slice(0,3).forEach((p,i)=>{if(p){p.title=names[i];p.text=names[i];}});
     if(state.pendingUnitChoice)state.pendingUnitChoice.products=products;
     if(typeof save==='function')save();
     [...host.querySelectorAll('.dd-product-grid .dd-choice-card')].slice(0,3).forEach((card,i)=>{
@@ -107,7 +106,7 @@
 
   const css=document.createElement('style');css.textContent=`
     /* Análisis interno: nunca ocupa la pantalla normal, ni Fácil ni Experto */
-    #ddKeywordBox,#ddProposalKeywords{display:none!important}
+    #ddKeywordBox,#ddProposalKeywords,#ddGoalDetected,#ddTitleSuggestions{display:none!important}
     #ddIntentBox>.dd-intent-grid,#ddIntentBox>.dd-meaning-synthesis,#ddIntentBox>.dd-meaning-warning,#ddIntentBox>small,#ddIntentBox>b:first-child{display:none!important}
     #ddIntentBox{background:transparent!important;border:0!important;padding:4px 0!important;margin-top:7px!important}
     #ddIntentBox .dd-title-label{display:block!important;margin:4px 0 7px!important;font-size:14px}
