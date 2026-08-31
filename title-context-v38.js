@@ -32,10 +32,13 @@
   }
   function explicitCommunity(brief){return /\bcomunidad(?:\s+campesina|\s+nativa)?\b/i.test(tidy(brief));}
   function ungroundedTerritorialAssumption(title,brief){return /\b(?:nuestra\s+comunidad|la\s+comunidad|saberes\s+de\s+(?:nuestra\s+)?comunidad|comunal(?:es)?)\b/i.test(tidy(title))&&!explicitCommunity(brief);}
+  function currentLevel(){
+    try{return typeof state!=='undefined'?String(state.level||''):'';}catch(e){return '';}
+  }
   function neutralTitles(focus,type){
     const topic=tidy(focus)||'la situación planteada';
     const project=/proyecto/i.test(type||'');
-    const initial=String(window.state?.level||'')==='Inicial';
+    const initial=currentLevel()==='Inicial';
     if(initial){
       if(project)return [
         `Descubrimos ${topic}: investigamos y creamos juntos`,
