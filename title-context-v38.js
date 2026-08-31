@@ -37,7 +37,8 @@
   function placeFromRaw(raw){
     const s=spelling(raw);
     const m=s.match(/\b(?:en|dentro de|cerca de|junto a)\s+(el|la|los|las)?\s*([^,.;!?]+?)(?=\s+(?:y\s+queremos|queremos|para|porque|pero|sin embargo)\b|[,.!?]|$)/i);
-    return tidy(m?.[2]||'');
+    if(!m)return'';
+    return tidy([m[1]||'',m[2]||''].filter(Boolean).join(' '));
   }
 
   function intent(raw){
