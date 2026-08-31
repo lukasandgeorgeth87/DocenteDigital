@@ -52,7 +52,8 @@
     'simplicity-audit-v49.js',
     'planning-coherence-v51.js',
     'visible-analysis-guard-v52.js',
-    'significant-situation-core-v53.js'
+    'significant-situation-core-v53.js',
+    'session-learning-core-v54.js'
   ];
   let index=0;
   function next(){
