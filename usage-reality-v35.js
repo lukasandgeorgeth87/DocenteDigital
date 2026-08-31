@@ -77,18 +77,20 @@
   };
 
   function sanitizeUnit(unit){
-    if(!unit||unit.selectionApproved!==true||communityIsReal(unit))return unit;
-    unit.title=neutralize(unit.title,unit);
-    unit.purpose=neutralize(unit.purpose,unit);
+    if(!unit||unit.selectionApproved!==true)return unit;
+    if(!communityIsReal(unit)){
+      unit.title=neutralize(unit.title,unit);
+      unit.purpose=neutralize(unit.purpose,unit);
+      if(Array.isArray(unit.activities))unit.activities.forEach(a=>{if(a&&a.title)a.title=neutralize(a.title,unit);});
+    }
     if(unit.situation&&unsupportedLegacyClaim(briefText(unit),unit.situation))unit.situation=preliminarySituation(briefText(unit));
     else if(unit.situation)unit.situation=neutralize(unit.situation,unit);
-    if(Array.isArray(unit.activities))unit.activities.forEach(a=>{if(a&&a.title)a.title=neutralize(a.title,unit);});
     return unit;
   }
   function sanitizeAll(){
     let changed=false;
     (state.units||[]).forEach(u=>{
-      if(!u||u.selectionApproved!==true||communityIsReal(u))return;
+      if(!u||u.selectionApproved!==true)return;
       const before=JSON.stringify([u.title,u.purpose,u.situation,(u.activities||[]).map(a=>a.title)]);
       sanitizeUnit(u);
       if(before!==JSON.stringify([u.title,u.purpose,u.situation,(u.activities||[]).map(a=>a.title)]))changed=true;
@@ -106,7 +108,10 @@
 
   sanitizeAll();
   window.ddAuditUsageReality=function(){
-    const affected=(state.units||[]).filter(u=>u?.selectionApproved===true&&!communityIsReal(u)&&/\b(nuestra comunidad|la comunidad|comunal)\b/i.test([u.title,u.purpose,u.situation,...(u.activities||[]).map(a=>a.title)].join(' ')));
+    const affected=(state.units||[]).filter(u=>u?.selectionApproved===true&&(
+      (!communityIsReal(u)&&/\b(nuestra comunidad|la comunidad|comunal)\b/i.test([u.title,u.purpose,u.situation,...(u.activities||[]).map(a=>a.title)].join(' ')))||
+      unsupportedLegacyClaim(briefText(u),u.situation||'')
+    ));
     return {ok:affected.length===0,affected:affected.map(u=>({id:u.id,title:u.title}))};
   };
 })();
