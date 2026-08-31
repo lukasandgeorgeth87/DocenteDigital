@@ -1,0 +1,15 @@
+# Auditoría continua horaria — DocenteDigital
+
+Registro acumulativo complementario al estado maestro. No constituye certificación de lanzamiento ni reemplaza `AUDITORIA_MAESTRA_INTEGRAL_V2.md`, `ADENDA_AUDITORIA_EJECUTABLE_V3.md`, `AUDITORIA_SIMPLICIDAD_USO_V4.md`, `AUDITORIA_PRELANZAMIENTO_V5.md` ni `NUCLEO_IA_DOCENTEDIGITAL.md`.
+
+## Pruebas acumuladas
+
+| ID | Módulo | Entrada | Esperado | Obtenido antes | Estado / Severidad | Causa raíz | Corrección | Evidencia posterior | Riesgo / gate V5 |
+|---|---|---|---|---|---|---|---|---|---|
+| AUD-DOCX-DATA-022 | Exportación DOCX / integridad institucional | Descargar una unidad o sesión sin `teacherName` y/o `schoolName` registrados | No inventar identidad institucional; omitir datos ausentes o dejarlos claramente pendientes | El OOXML agregaba siempre `Docente · Institución Educativa` mediante valores fallback, pudiendo aparecer como identidad real en el archivo exportado | PASA tras corrección · S2 · PARCIALMENTE FUNCIONAL | `docx-export-v29.js` construía un párrafo final con `state.teacherName||'Docente'` y `state.schoolName||'Institución Educativa'` | El párrafo de identidad solo se incorpora cuando existen valores reales no vacíos; no se alteran documentos históricos guardados | Commit `0d6e22fdbcc5ceb367ab101e277919e5eaa4a04a`; Vercel production READY; raíz HTTP 200; `docx-export-v29.js` HTTP 200 y ya usa `filter(Boolean)` + `identityXml` condicional | Reduce riesgo de dato institucional inventado. La exportación sigue PENDIENTE de apertura física en Word/PDF, impresión, caracteres quechua, tablas, imágenes y prueba de 20 documentos exigida por V5. |
+
+## Bloqueantes V5 vigentes
+
+Siguen pendientes, entre otros: autenticación y aislamiento multiusuario; backend/persistencia segura; restore real; IA semántica remota; pruebas físicas de móvil; Word/PDF/impresión reales; prueba de 100 generaciones; año completo; OWASP ASVS; privacidad; concurrencia; costo IA; pilotos reales; Carpeta Director y Registro Auxiliar productivos.
+
+**Estado de lanzamiento: NO APROBADO.**
