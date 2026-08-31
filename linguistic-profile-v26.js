@@ -1,6 +1,6 @@
 /* DocenteDigital – perfil lingüístico v26
    Separa explícitamente IE EIB de IE monolingüe castellano.
-   Catálogo de lenguas basado en denominaciones usadas por MINEDU; Cusco-Collao se prioriza para el contexto Cusco.
+   Catálogo de lenguas basado en denominaciones usadas por MINEDU; Cusco-Collao se muestra solo como sugerencia editable para el contexto Cusco.
 */
 (function(){
   if(window.__ddLinguisticProfileV26)return;window.__ddLinguisticProfileV26=true;
@@ -111,7 +111,7 @@
     const origin=document.getElementById('quechuaVar');
     if(origin){
       const preferred=state.indigenousLanguage||state.quechuaVar||NONE;
-      origin.value=[NONE,...languages].includes(preferred)?preferred:(state.linguisticMode==='EIB'?FIRST:NONE);
+      origin.value=[NONE,...languages].includes(preferred)?preferred:NONE;
     }
     mode?.addEventListener('change',()=>syncSetup(false));
     lang?.addEventListener('change',persistFromControls);
@@ -134,8 +134,7 @@
     }else if(value==='EIB'){
       lang.disabled=false;origin.disabled=false;
       if(!['Bilingüe','Lengua originaria','Castellano'].includes(lang.value)||lang.value==='Castellano'&&!state.language)lang.value='Bilingüe';
-      if(origin.value===NONE)origin.value=(state.indigenousLanguage&&state.indigenousLanguage!==NONE)?state.indigenousLanguage:FIRST;
-      if(help)help.innerHTML=`✓ <b>IE EIB:</b> selecciona la lengua originaria pertinente. En Cusco se muestra primero <b>${FIRST}</b>.`;
+      if(help)help.innerHTML=`✓ <b>IE EIB:</b> selecciona la lengua originaria pertinente. Si tu IE está en Cusco, revisa si corresponde <b>${FIRST}</b>; es solo una sugerencia y no se seleccionará automáticamente.`;
     }else{
       lang.disabled=true;origin.disabled=true;
       if(help)help.textContent='Selecciona EIB o Monolingüe castellano para continuar.';
@@ -183,8 +182,8 @@
     }else{
       mo.disabled=false;
       if(['Castellano','Lengua originaria','Bilingüe'].includes(state.language))ml.value=state.language;
-      const v=state.indigenousLanguage||state.quechuaVar||FIRST;
-      mo.value=[NONE,...languages].includes(v)?v:FIRST;
+      const v=state.indigenousLanguage||state.quechuaVar||NONE;
+      mo.value=[NONE,...languages].includes(v)?v:NONE;
     }
   }
 
