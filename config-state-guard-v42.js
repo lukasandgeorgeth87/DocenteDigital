@@ -7,7 +7,7 @@
   const allowedAreas=()=>typeof areaOptions==='function'?areaOptions():[];
 
   function sanitizeConfiguration(){
-    if(!window.state)return;
+    if(typeof state==='undefined')return;
     const grades=allowedGrades();
     const areas=allowedAreas();
     state.grades=Array.isArray(state.grades)?state.grades.filter(g=>grades.includes(g)):[];
