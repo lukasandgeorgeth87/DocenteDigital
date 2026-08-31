@@ -9,6 +9,25 @@
     if(raw!==null){
       const parsed=JSON.parse(raw);
       if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('Estado guardado no es un objeto válido');
+
+      /* app.js decide que la configuración está terminada solo por la existencia de level.
+         Si una sesión anterior se interrumpió después de elegir nivel, puede abrir Inicio con
+         tipo de IE, grados o áreas incompletos. Recuperamos ese estado antes de app.js y
+         obligamos a rehacer únicamente la configuración base, sin borrar unidades/sesiones. */
+      const levels=['Inicial','Primaria','Secundaria'];
+      const ieTypes=['Unidocente','Multigrado','Polidocente'];
+      const hasAnySetup=Boolean(parsed.level||parsed.ieType||(Array.isArray(parsed.grades)&&parsed.grades.length)||(Array.isArray(parsed.areas)&&parsed.areas.length));
+      const setupComplete=levels.includes(parsed.level)&&ieTypes.includes(parsed.ieType)&&Array.isArray(parsed.grades)&&parsed.grades.length>0&&Array.isArray(parsed.areas)&&parsed.areas.length>0;
+      if(hasAnySetup&&!setupComplete){
+        parsed.level='';
+        parsed.ieType='';
+        parsed.grades=[];
+        parsed.areas=[];
+        localStorage.setItem(KEY,JSON.stringify(parsed));
+        raw=JSON.stringify(parsed);
+        window.__ddSetupRecovered={at:new Date().toISOString(),reason:'Configuración base incompleta'};
+        console.warn('DocenteDigital detectó una configuración incompleta y reabrirá el asistente inicial.',window.__ddSetupRecovered);
+      }
     }
   }catch(error){
     const stamp=new Date().toISOString().replace(/[:.]/g,'-');
