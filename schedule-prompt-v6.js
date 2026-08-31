@@ -26,6 +26,7 @@
     'title-context-v38.js',
     'goal-alignment-v28.js',
     'intelligence-core-v44.js',
+    'semantic-goal-ui-v45.js',
     'expert-reasoning-v32.js',
     'proposal-choice-v8.js',
     'stable-core-v12.js',
