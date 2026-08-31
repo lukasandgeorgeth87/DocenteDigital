@@ -1,7 +1,10 @@
 /* DocenteDigital – áreas curriculares de Educación Inicial v43
    Corrige la lista del II ciclo según el Programa Curricular MINEDU.
    - Arte y Cultura no se presenta como área independiente en Inicial.
-   - Castellano como segunda lengua aparece solo para IE EIB con 5 años.
+   - Castellano como segunda lengua NO se infiere solo por ser IE EIB.
+   - Solo se ofrece de forma automática cuando, además de EIB y 5 años,
+     el perfil declara explícitamente lengua originaria como lengua de trabajo.
+     Los perfiles bilingües quedan pendientes de una confirmación L1/L2 más precisa.
 */
 (function(){
   if(window.__ddInitialCurriculumAreasV43)return;window.__ddInitialCurriculumAreasV43=true;
@@ -12,7 +15,7 @@
   const INVALID='Arte y Cultura';
   const originalAreaOptions=window.areaOptions;
 
-  const eligibleForCSL=()=>state.level==='Inicial'&&state.linguisticMode==='EIB'&&Array.isArray(state.grades)&&state.grades.includes('5 años');
+  const eligibleForCSL=()=>state.level==='Inicial'&&state.linguisticMode==='EIB'&&state.language==='Lengua originaria'&&Array.isArray(state.grades)&&state.grades.includes('5 años');
 
   function sanitizeState(){
     if(state.level!=='Inicial'||!Array.isArray(state.areas))return false;
@@ -39,7 +42,7 @@
   }
 
   document.addEventListener('change',e=>{
-    if(e.target&&e.target.id==='linguisticMode'){
+    if(e.target&&['linguisticMode','language'].includes(e.target.id)){
       setTimeout(()=>{
         sanitizeState();
         if(state.level==='Inicial'&&typeof window.renderAreas==='function')window.renderAreas();
