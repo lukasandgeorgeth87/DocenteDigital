@@ -14,6 +14,7 @@
 (function(){
   if(window.__ddStableModuleLoaderV49)return;window.__ddStableModuleLoaderV49=true;
   const modules=[
+    'schedule-integrity-v62.js',
     'config-state-guard-v42.js',
     'linguistic-profile-v26.js',
     'initial-curriculum-areas-v43.js',
