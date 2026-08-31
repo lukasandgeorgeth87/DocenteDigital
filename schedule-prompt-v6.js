@@ -54,7 +54,8 @@
     'visible-analysis-guard-v52.js',
     'significant-situation-core-v53.js',
     'session-learning-core-v54.js',
-    'easy-surface-simplicity-v55.js'
+    'easy-surface-simplicity-v55.js',
+    'planning-archive-simplicity-v56.js'
   ];
   let index=0;
   function next(){
