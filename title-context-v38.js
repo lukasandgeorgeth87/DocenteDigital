@@ -1,178 +1,75 @@
-/* DocenteDigital – títulos naturales y pertinentes desde el sentido completo v40
-   Regla: primero comprender el tipo de situación y la intención; después redactar.
-   Nunca convertir automáticamente cualquier contexto en una investigación.
+/* DocenteDigital – títulos naturales desde MCI v41
+   Auditoría Maestra: el título no copia la instrucción del docente; expresa la intención pedagógica.
 */
 (function(){
-  if(window.__ddTitleContextV40)return; window.__ddTitleContextV40=true;
+  if(window.__ddTitleContextV41)return;window.__ddTitleContextV41=true;
   const tidy=s=>String(s||'').replace(/\s+/g,' ').trim();
   const low=s=>tidy(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   const cap=s=>{s=tidy(s);return s?s.charAt(0).toUpperCase()+s.slice(1):s;};
   const E=s=>typeof window.escapeHtml==='function'?window.escapeHtml(String(s||'')):String(s||'');
-  const STOP=new Set('a al algo ante con de del desde e el ella ellas ellos en entre es esta este estos la las lo los me mi mis muy ni no o para pero por que queremos quiero se sin sobre su sus tu un una unos unas y ya ello nuestra nuestro nuestras nuestros'.split(' '));
-  const VERBS=new Set('aparecio aparecieron apareciero aparecen hay vimos observamos encontramos queremos quiero investigar investigamos conocer conocemos aprender aprendemos saber sabemos comprender comprendemos estudiar exploramos explorar realizar hacemos hacer retornan regresan vuelven vuelve retorna regresa'.split(' '));
+  const BAD=/\b(?:unidad|proyecto|sesión|sesion)\s+(?:sobre|de|acerca de)\b|\bquiero enseñar\b|\bquiero trabajar\b|\bnecesito una?\b/i;
 
-  function spelling(s){
-    return tidy(s)
-      .replace(/\bapareciero\b/gi,'aparecieron')
-      .replace(/\baparecieron\s+las\s+hormigas\s+en\s+el\s+aula\s+y\s+queremos\s+investigar\s+sobre\s+ello\b/gi,'aparecieron hormigas en el aula y queremos investigarlas');
+  function mci(raw,type){
+    try{if(typeof window.ddUnderstandUserIntent==='function')return window.ddUnderstandUserIntent(raw,type);}catch(e){}
+    return{raw:tidy(raw),theme:tidy(raw).replace(/^(?:unidad|proyecto|sesión|sesion)\s+(?:sobre|de|acerca de)\s+/i,''),intentKind:'exploración/comprensión',finality:'',place:'',doNotCopyLiterally:BAD.test(raw)};
   }
-
-  function stripIntent(raw){
-    let s=spelling(raw).replace(/[.!?]+$/,'');
-    s=s.split(/\b(?:y\s+)?(?:queremos|quiero|deseamos|deseo|nos interesa|buscamos|necesitamos)\b/i)[0];
-    s=s.split(/\b(?:con el fin de|con la finalidad de|para lograr|para que)\b/i)[0];
-    return tidy(s);
-  }
-
-  function topicFromEvent(raw){
-    const s=stripIntent(raw);
-    let m=s.match(/\b(?:aparecieron?|apareciero|aparecen|encontramos|observamos|vimos|hay|llegaron?)\s+(.+?)(?=\s+(?:en|dentro de|cerca de|junto a)\s+|$)/i);
-    if(m&&tidy(m[1]).length<=70)return tidy(m[1]).replace(/^(unos?|unas?|los|las)\s+/i,'');
-    m=s.match(/\b(?:sobre|acerca de)\s+(.+)$/i);
-    if(m&&tidy(m[1]).length<=70)return tidy(m[1]);
-    const words=low(s).replace(/[^a-z0-9ñ\s-]/g,' ').split(/\s+/).filter(w=>w.length>2&&!STOP.has(w)&&!VERBS.has(w));
-    return words.slice(0,4).join(' ');
-  }
-
-  function placeFromRaw(raw){
-    const s=spelling(raw);
-    const m=s.match(/\b(?:en|dentro de|cerca de|junto a)\s+(el|la|los|las)?\s*([^,.;!?]+?)(?=\s+(?:y\s+queremos|queremos|para|porque|pero|sin embargo)\b|[,.!?]|$)/i);
-    if(!m)return'';
-    return tidy([m[1]||'',m[2]||''].filter(Boolean).join(' '));
-  }
-
-  function intent(raw){
-    const s=spelling(raw);
-    const m=s.match(/\b(?:queremos|quiero|deseamos|deseo|nos interesa|buscamos|necesitamos)\s+(.+?)(?=[.!?]|$)/i);
-    return tidy(m?.[1]||'').replace(/^investigar\s+sobre\s+ello$/i,'investigar lo observado');
-  }
-
-  function hasInvestigativeIntent(raw){
-    const s=low(raw);
-    return /\binvestig|\bindag|\baverigu|\bqueremos saber|\bquieren saber|\bnos preguntamos|\bpreguntarse|\bdescubrir por que|\bcomprender por que/.test(s);
-  }
-
-  function isObservedOccurrence(raw){
-    const s=low(raw);
-    return /\baparecieron?\b|\bencontramos\b|\bobservamos\b|\bvimos\b|\bhay\b/.test(s);
-  }
-
+  function investigative(raw){const s=low(raw);return /investig|indag|averigu|pregunt|quieren saber|queremos saber|curios/.test(s);}
+  function observed(raw){const s=low(raw);return /\baparecieron?\b|\bencontramos\b|\bobservamos\b|\bvimos\b/.test(s);}
   function returnToSchool(raw){
-    const s=low(raw);
-    if(!/(retorn|regres|vuelv|volver)/.test(s)||!/(clase|escuela|colegio|institucion educativa|ie\b)/.test(s))return null;
-    const joy=/alegr|entusias|emocion|content/.test(s);
-    const vacation=/vacacion/.test(s);
-    const mood=joy?' con alegría':'';
-    const after=vacation?' después de las vacaciones':'';
-    return [
-      `Volvemos a clases${mood}${after}`,
-      `Nos reencontramos${mood} al volver a clases${vacation?' después de las vacaciones':''}`,
-      `${vacation?'Después de las vacaciones, ':''}regresamos a clases${mood}`
-    ];
+    const s=low(raw);if(!/(retorn|regres|vuelv|volver)/.test(s)||!/(clase|escuela|colegio|institucion educativa|\bie\b)/.test(s))return null;
+    const joy=/alegr|entusias|emocion|content/.test(s),vac=/vacacion/.test(s),m=joy?' con alegría':'',a=vac?' después de las vacaciones':'';
+    return[`Volvemos a clases${m}${a}`,`Nos reencontramos${m} al volver a clases${a}`,`${vac?'Después de las vacaciones, ':''}regresamos a clases${m}`];
   }
-
-  function explicitActionTitles(raw,type){
-    const s=spelling(raw).replace(/[.!?]+$/,'');
-    const n=low(s);
-    const project=/proyecto/i.test(type||'');
-    if(/\bsiembr|\bcosech|\btej|\bferia|\bbiohuerto|\bhuerto/.test(n)){
-      const core=topicFromEvent(s)||'nuestros saberes y prácticas';
-      return project?[
-        `Aprendemos haciendo a partir de ${core}`,
-        `Ponemos en práctica nuestros saberes sobre ${core}`,
-        `Compartimos lo que aprendemos sobre ${core}`
-      ]:[
-        `Aprendemos a partir de ${core}`,
-        `Valoramos y ponemos en práctica saberes sobre ${core}`,
-        `Compartimos nuestros aprendizajes sobre ${core}`
-      ];
+  function seasonal(theme){
+    if(!/primavera/i.test(theme))return null;
+    return['Descubrimos los cambios que trae la primavera a nuestro entorno','¿Qué cambia en nuestro entorno cuando llega la primavera?','Conocemos y cuidamos la vida que florece durante la primavera'];
+  }
+  function titlesFromIntent(raw,type){
+    const u=mci(raw,type),theme=tidy(u.theme)||'esta experiencia',kind=u.intentKind||'exploración/comprensión',goal=tidy(u.finality),project=/proyecto/i.test(type||u.document||'');
+    const school=returnToSchool(raw);if(school)return school;
+    const season=seasonal(theme);if(season)return season;
+    let list=[];
+    if(investigative(raw)||observed(raw)||kind==='indagación/curiosidad'){
+      list=project?[`Investigamos ${theme} para responder nuestras preguntas`,`De nuestras preguntas a los hallazgos: exploramos ${theme}`,`Compartimos lo que descubrimos sobre ${theme}`]:[`Descubrimos ${theme} a partir de nuestras preguntas`,`Exploramos ${theme} para comprenderlo mejor`,`Lo que queremos saber sobre ${theme}`];
+    }else if(kind==='aplicación/acción'||goal){
+      const purpose=goal?` para ${goal}`:'';
+      list=project?[`Aprendemos sobre ${theme}${purpose}`,`${cap(theme)} en acción: aprendemos, decidimos y actuamos`,`Ponemos en práctica lo aprendido sobre ${theme}`]:[`Aprendemos sobre ${theme}${purpose}`,`Ponemos en práctica nuestros aprendizajes sobre ${theme}`,`${cap(theme)}: aprendemos haciendo y explicamos lo logrado`];
+    }else if(kind==='experiencia significativa'){
+      list=[cap(theme),`Aprendemos a partir de ${theme}`,`Compartimos lo que vivimos y aprendemos en ${theme}`];
+    }else if(kind==='valoración/contexto'){
+      list=[`Valoramos y comprendemos ${theme}`,`Aprendemos de ${theme} y compartimos sus saberes`,`${cap(theme)}: saberes que fortalecen nuestros aprendizajes`];
+    }else{
+      list=[`Descubrimos ${theme} y construimos nuevos aprendizajes`,`Exploramos ${theme} desde nuestra experiencia`,`Comprendemos ${theme} y comunicamos lo aprendido`];
     }
-    return null;
-  }
-
-  function semantic(raw){
-    const corrected=spelling(raw),topic=topicFromEvent(corrected),place=placeFromRaw(corrected),goal=intent(corrected);
-    let full=null;try{full=window.ddUnderstandPlanningDescription?.(corrected)||null;}catch(e){}
-    return {raw:corrected,topic:topic||tidy(full?.contextConcepts?.[0]||full?.analysis?.words?.[0]||'la situación observada'),place,goal,full};
-  }
-
-  function genericNaturalTitles(raw,type){
-    const sentence=cap(stripIntent(raw));
-    const topic=topicFromEvent(raw)||'esta experiencia';
-    const project=/proyecto/i.test(type||'');
-    const safeSentence=sentence.length<=105?sentence:'';
-    const list=project?[
-      safeSentence||`Construimos aprendizajes a partir de ${topic}`,
-      `Aprendemos y actuamos a partir de ${topic}`,
-      `Compartimos lo que descubrimos y construimos sobre ${topic}`
-    ]:[
-      safeSentence||`Aprendemos a partir de ${topic}`,
-      `Comprendemos mejor ${topic} desde nuestra experiencia`,
-      `Compartimos y construimos aprendizajes sobre ${topic}`
-    ];
     return list;
   }
-
   function naturalTitles(raw,type){
-    const s=semantic(raw),topic=s.topic||'la situación observada',place=s.place;
-    const project=/proyecto/i.test(type||'');
-    const location=place?` en ${place}`:'';
-    let list=[];
-
-    const schoolReturn=returnToSchool(s.raw);
-    if(schoolReturn){
-      list=schoolReturn;
-    }else if(hasInvestigativeIntent(s.raw)||isObservedOccurrence(s.raw)){
-      const plural=/s$/.test(low(topic));
-      const article=plural?'las':'los';
-      list=project?[
-        `Investigamos ${article} ${topic}${location} para responder nuestras preguntas`,
-        `${cap(topic)}${location}: observamos, investigamos y compartimos nuestros hallazgos`,
-        `De nuestras preguntas a los hallazgos: investigamos ${article} ${topic}${location}`
-      ]:[
-        `Investigamos ${article} ${topic}${location} a partir de lo que observamos`,
-        `${cap(topic)}${location}: observamos, preguntamos y aprendemos`,
-        `Descubrimos el mundo de ${article} ${topic}${location}`
-      ];
-    }else{
-      list=explicitActionTitles(s.raw,type)||genericNaturalTitles(s.raw,type);
-    }
-
-    return [...new Set(list.map(t=>tidy(t).replace(/\s+/g,' ')).filter(Boolean))].slice(0,3);
+    return [...new Set(titlesFromIntent(raw,type).map(t=>tidy(t)).filter(t=>t&&!BAD.test(t)))].slice(0,3);
   }
 
   const previous=window.ddCreativeTitleOptions;
   window.ddCreativeTitleOptions=function(brief,type){
-    const natural=naturalTitles(brief,type);
-    let old=[];try{old=typeof previous==='function'?(previous(brief,type)||[]):[];}catch(e){}
-    const merged=[...natural,...old].filter((x,i,a)=>x&&a.findIndex(y=>low(y)===low(x))===i);
+    const natural=naturalTitles(brief,type);let old=[];try{old=typeof previous==='function'?(previous(brief,type)||[]):[];}catch(e){}
+    const merged=[...natural,...old].filter(t=>t&&!BAD.test(t)).filter((x,i,a)=>a.findIndex(y=>low(y)===low(x))===i);
     return merged.slice(0,6);
   };
   window.ddContextualTitlePreview=(brief,type)=>naturalTitles(brief,type);
   window.ddNaturalPlanningTitles=naturalTitles;
 
   function repaint(){
-    const ta=document.getElementById('unitSituation'),box=document.querySelector('#ddIntentBox .dd-title-suggestions');
-    if(!ta||!box||tidy(ta.value).length<8)return;
-    const type=document.getElementById('unitType')?.value||'Unidad de aprendizaje';
-    const titles=naturalTitles(ta.value,type);
+    const ta=document.getElementById('unitSituation'),box=document.querySelector('#ddIntentBox .dd-title-suggestions');if(!ta||!box||tidy(ta.value).length<3)return;
+    const type=document.getElementById('unitType')?.value||'Unidad de aprendizaje',titles=naturalTitles(ta.value,type);
     box.innerHTML=titles.map(t=>`<button type="button" data-dd-title="${E(t)}">${E(t)}</button>`).join('');
   }
-  let timer=0;const schedule=()=>{clearTimeout(timer);timer=setTimeout(repaint,300);};
+  let timer=0;const schedule=()=>{clearTimeout(timer);timer=setTimeout(repaint,220);};
   document.addEventListener('input',e=>{if(e.target?.id==='unitSituation')schedule();},true);
   document.addEventListener('change',e=>{if(e.target?.id==='unitType')schedule();},true);
   setTimeout(repaint,120);
 
   window.ddAuditTitleContext=function(brief,type){
-    const titles=naturalTitles(brief,type),s=semantic(brief),forcedInvestigation=!hasInvestigativeIntent(brief)&&!isObservedOccurrence(brief)&&titles.some(t=>/investig|indag|bajo la lupa/i.test(t));
-    const returnRegression=naturalTitles('los niños retornan a clases con alegría después de las vacaciones','Unidad de aprendizaje');
-    return {
-      topic:s.topic,place:s.place,goal:s.goal,titles,
-      coherent:titles.length===3&&!forcedInvestigation,
-      forcedInvestigation,
-      regressions:{
-        retornoClases:returnRegression.length===3&&!returnRegression.some(t=>/investig|bajo la lupa/i.test(t))&&returnRegression.every(t=>/clases/i.test(t))
-      }
-    };
+    const titles=naturalTitles(brief,type),understood=mci(brief,type),forcedInvestigation=!investigative(brief)&&!observed(brief)&&understood.intentKind!=='indagación/curiosidad'&&titles.some(t=>/investig|indag|bajo la lupa/i.test(t));
+    const instrumentLeak=titles.some(t=>BAD.test(t));
+    const distinct=new Set(titles.map(t=>low(t).replace(/[^a-z0-9ñ ]/g,' '))).size===titles.length;
+    return{theme:understood.theme,intentKind:understood.intentKind,finality:understood.finality,titles,coherent:titles.length===3&&!forcedInvestigation&&!instrumentLeak&&distinct,forcedInvestigation,instrumentLeak,distinct};
   };
 })();
