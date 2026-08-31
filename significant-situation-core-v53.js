@@ -1,4 +1,4 @@
-/* DocenteDigital – Núcleo de situación significativa v53.1
+/* DocenteDigital – Núcleo de situación significativa v53.2
    Regla pedagógica transversal:
    contexto real → situación/interés/necesidad/oportunidad → reto auténtico
    → movilización de competencias → producto/evidencia de aprendizaje.
@@ -25,7 +25,9 @@
 
   function classify(raw){
     const s=norm(raw);
-    if(/curios|interes|quieren saber|pregunt|observar|aparec|encontr/.test(s))return'interés o curiosidad';
+    // Un interés breve también es un punto de partida válido. No exigir que el docente
+    // escriba literalmente "quieren saber" para reconocer una curiosidad auténtica.
+    if(/curios|interes|quieren saber|queremos saber|desean saber|pregunt|observar|aparec|encontr|^(?:quiero|queremos|quieren|deseo|deseamos|desean)?\s*(?:saber|conocer|aprender|descubrir)\s+(?:mas\s+)?(?:sobre|acerca de|de)\b/.test(s))return'interés o curiosidad';
     if(/necesit|hace falta|requiere|dificult/.test(s))return'necesidad';
     if(/problema|contamin|riesgo|conflict|afecta|perjudic/.test(s))return'problema';
     if(/costumbre|tradicion|siembra|cosecha|festiv|practica|saberes|biohuerto|feria/.test(s))return'práctica u oportunidad del contexto';
