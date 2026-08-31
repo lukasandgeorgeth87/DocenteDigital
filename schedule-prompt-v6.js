@@ -49,7 +49,8 @@
     'docx-export-v29.js',
     'executable-audit-v47.js',
     'prelaunch-evidence-gate-v50.js',
-    'simplicity-audit-v49.js'
+    'simplicity-audit-v49.js',
+    'planning-coherence-v51.js'
   ];
   let index=0;
   function next(){
