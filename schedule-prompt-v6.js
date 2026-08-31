@@ -11,6 +11,17 @@
 /* Carga estable: perfil lingüístico → confirmación explícita EIB → lector abierto → creatividad → intención → análisis exhaustivo → palabras clave neutrales → títulos coherentes con el tema → razonamiento experto por nivel → propuestas → núcleo estable → perfil territorial → Unidad/Proyecto → neutralización territorial → estrategias → Director → coherencia de fases/perfil → uso real/supuestos ocultos → auditoría transversal → control runtime → seguridad curricular → DOCX real. */
 (function(){
   if(document.querySelector('script[data-dd-context-semantic]'))return;
-  const load=(src,key,next)=>{if(document.querySelector(`script[${key}]`)){next&&next();return;}const s=document.createElement('script');s.src=src;s.setAttribute(key,'1');s.onload=()=>next&&next();document.body.appendChild(s);};
+  const load=(src,key,next,attempt=0)=>{
+    if(document.querySelector(`script[${key}]`)){next&&next();return;}
+    const s=document.createElement('script');s.src=src;s.setAttribute(key,'1');s.async=false;
+    s.onload=()=>next&&next();
+    s.onerror=()=>{
+      console.warn(`DocenteDigital: no se pudo cargar ${src}${attempt===0?'; se reintentará una vez.':'; se continúa con los módulos restantes.'}`);
+      s.remove();
+      if(attempt===0)setTimeout(()=>load(src,key,next,1),350);
+      else next&&next();
+    };
+    document.body.appendChild(s);
+  };
   load('linguistic-profile-v26.js','data-dd-linguistic-profile',()=>load('linguistic-confirmation-v37.js','data-dd-linguistic-confirmation',()=>load('context-semantic-v20.js','data-dd-context-semantic',()=>load('creativity-engine-v14.js','data-dd-creativity-engine',()=>load('intent-engine-v21.js','data-dd-intent-engine',()=>load('meaning-engine-v25.js','data-dd-meaning-engine',()=>load('context-keywords-v19.js','data-dd-context-keywords',()=>load('title-context-v38.js','data-dd-title-context',()=>load('expert-reasoning-v32.js','data-dd-expert-reasoning',()=>load('proposal-choice-v8.js','data-dd-proposal-choice',()=>load('stable-core-v12.js','data-dd-stable-core',()=>load('territorial-context-v28.js','data-dd-territorial-context',()=>load('unit-project-mode-v13.js','data-dd-unit-project-mode',()=>load('project-territorial-v31.js','data-dd-project-territorial',()=>load('creative-runtime-v18.js','data-dd-creative-runtime',()=>load('strategy-combinator-v15.js','data-dd-strategy-combinator',()=>load('director-creativity-v16.js','data-dd-director-creativity',()=>load('planning-consistency-v34.js','data-dd-planning-consistency',()=>load('usage-reality-v35.js','data-dd-usage-reality',()=>load('reasoning-audit-v33.js','data-dd-reasoning-audit',()=>load('runtime-audit-v23.js','data-dd-runtime-audit',()=>load('curriculum-safety-v27.js','data-dd-curriculum-safety',()=>load('docx-export-v29.js','data-dd-docx-export')))))))))))))))))))))))));
 })();
