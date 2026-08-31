@@ -55,7 +55,8 @@
     'significant-situation-core-v53.js',
     'session-learning-core-v54.js',
     'easy-surface-simplicity-v55.js',
-    'planning-archive-simplicity-v56.js'
+    'planning-archive-simplicity-v56.js',
+    'master-audit-v57.js'
   ];
   window.ddModuleLoadFailures=Array.isArray(window.ddModuleLoadFailures)?window.ddModuleLoadFailures:[];
   function showLoadFailure(){
