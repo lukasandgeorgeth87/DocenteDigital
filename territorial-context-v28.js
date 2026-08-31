@@ -1,5 +1,5 @@
 /* DocenteDigital – perfil territorial neutral v28
-   Evita asumir que toda IE está en una “comunidad”. Mantiene compatibilidad con teacherContext.community legado.
+   Evita asumir que toda IE está en una “comunidad”. Mantiene compatibilidad con teacherContext.community legado solo cuando el tipo de lugar realmente es una comunidad.
 */
 (function(){
   if(window.__ddTerritorialContextV28)return;window.__ddTerritorialContextV28=true;
@@ -8,7 +8,9 @@
   const TYPES=['Localidad','Centro poblado','Ciudad','Pueblo','Caserío','Anexo','Barrio / urbanización','Comunidad campesina','Comunidad nativa','Otro'];
   const AREAS=['No especificada','Urbana','Rural','Periurbana'];
   const old=state.teacherContext||{};
-  state.teacherContext={...old,locationType:old.locationType||'Localidad',locationName:old.locationName||old.community||'',areaType:old.areaType||'No especificada'};
+  const oldType=old.locationType||'Localidad';
+  const oldName=old.locationName||old.community||'';
+  state.teacherContext={...old,locationType:oldType,locationName:oldName,community:/^Comunidad (campesina|nativa)$/i.test(oldType)?oldName:'',areaType:old.areaType||'No especificada'};
   if(typeof save==='function')save();
 
   function territorialLabel(){const c=state.teacherContext||{},name=(c.locationName||c.community||'').trim(),type=(c.locationType||'Localidad').trim();if(name)return `${type}: ${name}`;if((c.district||'').trim())return `Distrito: ${c.district.trim()}`;return 'entorno de los estudiantes';}
@@ -35,8 +37,10 @@
     const c=state.teacherContext||{};
     card.innerHTML=`<h2>📍 Contexto donde trabajo</h2><p class="sub">Registra el lugar sin asumir que es una comunidad. Se guarda una sola vez y se reutiliza en unidades, proyectos y sesiones.</p><div class="form2"><label>Tipo de lugar<select id="ddCtxLocationType">${typeOptions(c.locationType||'Localidad')}</select></label><label>Nombre del lugar<input id="ddCtxLocationName" value="${E(c.locationName||c.community||'')}" placeholder="Ej.: Ccotataqui, Lamay, Wanchaq"></label><label>Área geográfica<select id="ddCtxAreaType">${areaOptions(c.areaType||'No especificada')}</select></label><label>Distrito<input id="ddCtxDistrict" value="${E(c.district||'')}"></label><label>Provincia<input id="ddCtxProvince" value="${E(c.province||'')}"></label><label>Región<input id="ddCtxRegion" value="${E(c.region||'')}"></label><label class="full">Calendario local/comunal / actividad del momento<input id="ddCtxCalendar" value="${E(c.calendar||'')}"></label><label class="full">Otros rasgos importantes<textarea id="ddCtxNotes">${E(c.notes||'')}</textarea></label></div><div class="notice">Usaremos el nombre real registrado. Si no especificas un tipo de lugar, la planificación empleará expresiones neutrales como <b>entorno</b> o <b>realidad de los estudiantes</b>.</div><button class="btn" id="ddSaveTeacherContext">💾 Guardar contexto</button>`;
     document.getElementById('ddSaveTeacherContext').onclick=()=>{
+      const locationType=document.getElementById('ddCtxLocationType')?.value||'Localidad';
       const locationName=(document.getElementById('ddCtxLocationName')?.value||'').trim();
-      state.teacherContext={...state.teacherContext,locationType:document.getElementById('ddCtxLocationType')?.value||'Localidad',locationName,community:locationName,areaType:document.getElementById('ddCtxAreaType')?.value||'No especificada',district:(document.getElementById('ddCtxDistrict')?.value||'').trim(),province:(document.getElementById('ddCtxProvince')?.value||'').trim(),region:(document.getElementById('ddCtxRegion')?.value||'').trim(),calendar:(document.getElementById('ddCtxCalendar')?.value||'').trim(),notes:(document.getElementById('ddCtxNotes')?.value||'').trim()};
+      const isCommunity=/^Comunidad (campesina|nativa)$/i.test(locationType);
+      state.teacherContext={...state.teacherContext,locationType,locationName,community:isCommunity?locationName:'',areaType:document.getElementById('ddCtxAreaType')?.value||'No especificada',district:(document.getElementById('ddCtxDistrict')?.value||'').trim(),province:(document.getElementById('ddCtxProvince')?.value||'').trim(),region:(document.getElementById('ddCtxRegion')?.value||'').trim(),calendar:(document.getElementById('ddCtxCalendar')?.value||'').trim(),notes:(document.getElementById('ddCtxNotes')?.value||'').trim()};
       if(typeof save==='function')save();refreshQuick();alert('Contexto territorial guardado.');
     };
   }
