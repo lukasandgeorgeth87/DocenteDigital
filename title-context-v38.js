@@ -1,8 +1,9 @@
-/* DocenteDigital – títulos naturales desde MCI v42
+/* DocenteDigital – títulos naturales desde MCI v43
    Auditoría Maestra: el título no copia la instrucción del docente; expresa la intención pedagógica.
+   V43 además protege la superficie visible frente a capas antiguas que vuelvan a pintar títulos genéricos.
 */
 (function(){
-  if(window.__ddTitleContextV42)return;window.__ddTitleContextV42=true;
+  if(window.__ddTitleContextV43)return;window.__ddTitleContextV43=true;
   const tidy=s=>String(s||'').replace(/\s+/g,' ').trim();
   const low=s=>tidy(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   const cap=s=>{s=tidy(s);return s?s.charAt(0).toUpperCase()+s.slice(1):s;};
@@ -75,20 +76,43 @@
   window.ddContextualTitlePreview=(brief,type)=>naturalTitles(brief,type);
   window.ddNaturalPlanningTitles=naturalTitles;
 
-  function repaint(){
-    const ta=document.getElementById('unitSituation'),box=document.querySelector('#ddIntentBox .dd-title-suggestions');if(!ta||!box||tidy(ta.value).length<3)return;
+  let repainting=false;
+  function repaint(force=false){
+    if(repainting)return;
+    const ta=document.getElementById('unitSituation'),box=document.querySelector('#ddIntentBox .dd-title-suggestions');
+    if(!ta||!box||tidy(ta.value).length<3)return;
     const type=document.getElementById('unitType')?.value||'Unidad de aprendizaje',titles=naturalTitles(ta.value,type);
+    const expected=titles.map(t=>tidy(t));
+    const current=[...box.querySelectorAll('button')].map(b=>tidy(b.textContent));
+    if(!force&&current.length===expected.length&&current.every((x,i)=>x===expected[i]))return;
+    repainting=true;
     box.innerHTML=titles.map(t=>`<button type="button" data-dd-title="${E(t)}">${E(t)}</button>`).join('');
+    box.dataset.ddNaturalTitles='1';
+    repainting=false;
   }
-  let timer=0;const schedule=()=>{clearTimeout(timer);timer=setTimeout(repaint,220);};
+  let timer=0;const schedule=(ms=120)=>{clearTimeout(timer);timer=setTimeout(()=>repaint(true),ms);};
   document.addEventListener('input',e=>{if(e.target?.id==='unitSituation')schedule();},true);
   document.addEventListener('change',e=>{if(e.target?.id==='unitType')schedule();},true);
-  setTimeout(repaint,120);
+
+  // Regresión detectada en móvil: una capa posterior podía sobrescribir los títulos
+  // naturales con frases genéricas y hasta introducir “nuestra comunidad”.
+  // Observamos solo el contenedor de sugerencias y restauramos la salida MCI.
+  const observer=new MutationObserver(mutations=>{
+    if(repainting)return;
+    if(mutations.some(m=>m.target?.closest?.('#ddIntentBox .dd-title-suggestions')||m.target?.matches?.('#ddIntentBox .dd-title-suggestions')))schedule(0);
+  });
+  function armObserver(){
+    const host=document.getElementById('ddIntentBox');
+    if(host){observer.observe(host,{subtree:true,childList:true,characterData:true});repaint(true);}
+  }
+  setTimeout(armObserver,120);
+  setTimeout(()=>repaint(true),450);
 
   window.ddAuditTitleContext=function(brief,type){
     const titles=naturalTitles(brief,type),understood=mci(brief,type),forcedInvestigation=!investigative(brief)&&!observed(brief)&&understood.intentKind!=='indagación/curiosidad'&&!isSimpleInterest(brief)&&titles.some(t=>/investig|indag|bajo la lupa/i.test(t));
     const instrumentLeak=titles.some(t=>BAD.test(t));
+    const territorialLeak=!/\b(?:comunidad|caserío|caserio|anexo|barrio|ciudad|centro poblado)\b/i.test(brief)&&titles.some(t=>/\b(?:nuestra comunidad|la comunidad|del caserío|del caserio|del anexo|del barrio|de la ciudad|del centro poblado)\b/i.test(t));
     const distinct=new Set(titles.map(t=>low(t).replace(/[^a-z0-9ñ ]/g,' '))).size===titles.length;
-    return{theme:understood.theme,topic:understood.theme,intentKind:understood.intentKind,finality:understood.finality,titles,coherent:titles.length===3&&!forcedInvestigation&&!instrumentLeak&&distinct,forcedInvestigation,instrumentLeak,distinct,simpleInterest:isSimpleInterest(brief)};
+    return{theme:understood.theme,topic:understood.theme,intentKind:understood.intentKind,finality:understood.finality,titles,coherent:titles.length===3&&!forcedInvestigation&&!instrumentLeak&&!territorialLeak&&distinct,forcedInvestigation,instrumentLeak,territorialLeak,distinct,simpleInterest:isSimpleInterest(brief)};
   };
 })();
