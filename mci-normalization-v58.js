@@ -19,7 +19,19 @@
       .replace(/\bapareciero\b/gi,'aparecieron');
   }
   function documentType(raw,typeHint=''){
-    const s=low(raw+' '+typeHint);if(/\bproyecto\b/.test(s))return'Proyecto de aprendizaje';if(/\bsesion\b/.test(s))return'Sesión de aprendizaje';return'Unidad de aprendizaje';
+    const hint=low(typeHint);
+    if(/\bsesion\b/.test(hint))return'Sesión de aprendizaje';
+    if(/\bproyecto\b/.test(hint))return'Proyecto de aprendizaje';
+    if(/\bunidad\b/.test(hint))return'Unidad de aprendizaje';
+
+    const s=low(normalize(raw));
+    const lead=s.match(/^\s*(?:(?:por favor|quiero|quisiera|necesito|deseo|hazme|haz|crea|crear|prepara|preparar|elabora|elaborar|realiza|realizar)\s+)*(?:una?|el|la)?\s*(sesion|unidad|proyecto)\b/);
+    if(lead){
+      if(lead[1]==='sesion')return'Sesión de aprendizaje';
+      if(lead[1]==='proyecto')return'Proyecto de aprendizaje';
+      return'Unidad de aprendizaje';
+    }
+    return'Unidad de aprendizaje';
   }
   function stripScaffold(raw){
     let s=normalize(raw).replace(/[.!?]+$/,'');
