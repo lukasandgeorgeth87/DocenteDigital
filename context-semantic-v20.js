@@ -97,7 +97,7 @@
     const ta=document.getElementById('unitSituation');if(!ta)return;
     let box=document.getElementById('ddKeywordBox');
     if(!box){box=document.createElement('div');box.id='ddKeywordBox';box.className='dd-keyword-box';ta.parentElement.appendChild(box);}
-    box.innerHTML='<small>Describe con tus propias palabras qué ocurre, qué interesa o qué quieren lograr. DocenteDigital usará ese contexto para preparar una propuesta coherente, sin mostrar análisis técnico.</small>';
+    box.innerHTML='<small>Cuéntanos qué sucede o qué quieren aprender. La app preparará una propuesta para que la revises.</small>';
   }
 
   function saveAnalysis(){
