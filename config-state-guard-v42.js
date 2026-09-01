@@ -16,6 +16,13 @@
     if(state.ieType==='Polidocente'&&state.grades.length>1)state.grades=[];
     if(state.level==='Secundaria'&&state.areas.length>1)state.areas=[];
 
+    /* El prototipo base antiguo asignaba "Quechua Collao" aun sin confirmación.
+       Un perfil no confirmado no puede heredar una lengua originaria como hecho. */
+    if(!state.linguisticMode&&state.quechuaVar==='Quechua Collao'){
+      state.quechuaVar=NONE;
+      if(!state.indigenousLanguage)state.indigenousLanguage=NONE;
+    }
+
     /* Mantiene coherencia mínima aun antes de que cargue linguistic-profile-v26.js. */
     if(state.linguisticMode==='Monolingüe castellano'){
       state.language='Castellano';
@@ -90,16 +97,14 @@
   // Además de nivel/IE/grados/áreas, el perfil lingüístico debe estar confirmado:
   // monolingüe castellano o EIB con lengua originaria seleccionada.
   const originalGo=window.go;
-  if(typeof originalGo==='function'){
-    window.go=function(id){
-      if(id!=='setup'&&!hasCompleteBaseConfiguration()){
-        if(typeof showSetup==='function')showSetup();
-        else originalGo.call(this,'setup');
-        return;
-      }
-      return originalGo.apply(this,arguments);
-    };
-  }
+  if(typeof originalGo==='function')window.go=function(id){
+    if(id!=='setup'&&!hasCompleteBaseConfiguration()){
+      if(typeof showSetup==='function')showSetup();
+      else originalGo.call(this,'setup');
+      return;
+    }
+    return originalGo.apply(this,arguments);
+  };
 
   sanitizeConfiguration();
   if(typeof save==='function')save();
