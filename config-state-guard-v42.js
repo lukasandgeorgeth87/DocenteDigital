@@ -31,6 +31,11 @@
     }
   }
 
+  function persistSetupProgress(){
+    sanitizeConfiguration();
+    if(typeof save==='function')save();
+  }
+
   function hasCompleteLinguisticConfiguration(){
     if(typeof state==='undefined')return false;
     if(state.linguisticMode==='Monolingüe castellano')return true;
@@ -62,7 +67,7 @@
         state.grades=[];
       }
       const result=originalChooseOne.apply(this,arguments);
-      sanitizeConfiguration();
+      persistSetupProgress();
       return result;
     };
   }
@@ -70,7 +75,7 @@
   const originalNextSetup=window.nextSetup;
   if(typeof originalNextSetup==='function'){
     window.nextSetup=function(n){
-      sanitizeConfiguration();
+      persistSetupProgress();
       return originalNextSetup.apply(this,arguments);
     };
   }
@@ -106,6 +111,29 @@
     return originalGo.apply(this,arguments);
   };
 
+  function installSetupAutosave(){
+    if(window.__ddSetupAutosaveV42)return;
+    window.__ddSetupAutosaveV42=true;
+
+    document.addEventListener('click',function(event){
+      const button=event.target&&event.target.closest?event.target.closest('#gradeChoices button, #areaChoices button'):null;
+      if(!button)return;
+      // Los handlers de grado/área actualizan state antes de que el evento llegue a document.
+      persistSetupProgress();
+    });
+
+    document.addEventListener('change',function(event){
+      const target=event.target;
+      if(!target||!['linguisticMode','language','quechuaVar'].includes(target.id))return;
+      if(target.id==='linguisticMode')state.linguisticMode=target.value;
+      if(target.id==='language')state.language=target.value;
+      if(target.id==='quechuaVar')state.quechuaVar=target.value;
+      persistSetupProgress();
+    });
+  }
+
   sanitizeConfiguration();
   if(typeof save==='function')save();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installSetupAutosave,{once:true});
+  else installSetupAutosave();
 })();
