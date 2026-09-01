@@ -94,10 +94,9 @@
   }
 
   function paint(){
-    const ta=document.getElementById('unitSituation');if(!ta)return;
-    let box=document.getElementById('ddKeywordBox');
-    if(!box){box=document.createElement('div');box.id='ddKeywordBox';box.className='dd-keyword-box';ta.parentElement.appendChild(box);}
-    box.innerHTML='<small>Cuéntanos qué sucede o qué quieren aprender. La app preparará una propuesta para que la revises.</small>';
+    // V4: la comprensión léxica queda interna. Evitar una segunda ayuda visible junto
+    // al texto breve ya incluido en el formulario de Unidad/Proyecto.
+    document.getElementById('ddKeywordBox')?.remove();
   }
 
   function saveAnalysis(){
@@ -120,6 +119,4 @@
 
   const oldShow=window.showUnit;if(typeof oldShow==='function')window.showUnit=function(){const r=oldShow.apply(this,arguments);setTimeout(()=>{ensureDuration();paint();},0);return r;};
   setTimeout(()=>{ensureDuration();paint();},0);
-
-  const style=document.createElement('style');style.textContent=`.dd-keyword-box{margin-top:8px;padding:9px 10px;border-radius:11px;background:#f4f8ff;border:1px solid #d7e2f0}.dd-keyword-box small{display:block;line-height:1.35}`;document.head.appendChild(style);
 })();
