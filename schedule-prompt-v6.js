@@ -72,6 +72,7 @@
     'significant-situation-core-v53.js',
     'session-learning-core-v54.js',
     'easy-surface-simplicity-v55.js',
+    'easy-audit-surface-v66.js',
     'planning-archive-simplicity-v56.js',
     'diagnostic-integrity-v59.js',
     'territorial-generation-guard-v61.js',
