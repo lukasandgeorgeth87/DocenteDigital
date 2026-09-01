@@ -1,6 +1,7 @@
-/* DocenteDigital – guardia curricular de Educación Inicial v72.2
+/* DocenteDigital – guardia curricular de Educación Inicial v72.3
    Corrige la lista base de áreas del ciclo II (3, 4 y 5 años) según el Programa Curricular de Educación Inicial del MINEDU.
    Además evita que el perfil EIB/monolingüe sea solo visual: lo valida y conserva en el estado activo.
+   V5: marca como no disponibles las acciones del Director que todavía no tienen comportamiento real, evitando controles simulados.
    No activa una matriz curricular completa ni declara curriculumMatrixReady. */
 (function(){
   if(window.__ddInitialCurriculumGuardV72)return;
@@ -94,6 +95,33 @@
     };
   }
 
+  function markUnfinishedDirectorActions(){
+    const section=document.getElementById('director');
+    if(!section)return;
+    const buttons=[...section.querySelectorAll('button')];
+    let marked=0;
+    for(const button of buttons){
+      const hasRealAction=button.hasAttribute('onclick')||button.hasAttribute('formaction');
+      if(hasRealAction)continue;
+      button.disabled=true;
+      button.setAttribute('aria-disabled','true');
+      button.setAttribute('title','Función aún no disponible');
+      const label=(button.textContent||'').trim();
+      if(label&&!/próximamente/i.test(label))button.textContent=`${label} · Próximamente`;
+      marked++;
+    }
+    if(marked&&!section.querySelector('[data-dd-director-pending]')){
+      const note=document.createElement('div');
+      note.className='notice';
+      note.setAttribute('data-dd-director-pending','true');
+      note.textContent='Estas funciones del Director todavía están en construcción y no se consideran listas para lanzamiento.';
+      const subtitle=section.querySelector('.sub');
+      if(subtitle)subtitle.insertAdjacentElement('afterend',note); else section.prepend(note);
+    }
+  }
+
   normalizeInitialAreaState();
   syncLinguisticControlsFromState();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',markUnfinishedDirectorActions,{once:true});
+  else markUnfinishedDirectorActions();
 })();
