@@ -43,6 +43,7 @@
     'director-prototype-guard-v40.js',
     'mobile-navigation-guard-v60.js',
     'prototype-data-guard-v41.js',
+    'persistence-truth-v63.js',
     'planning-consistency-v34.js',
     'usage-reality-v35.js',
     'reasoning-audit-v33.js',
