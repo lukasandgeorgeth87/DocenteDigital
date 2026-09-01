@@ -1,4 +1,4 @@
-/* DocenteDigital – guardia curricular de Educación Inicial v72
+/* DocenteDigital – guardia curricular de Educación Inicial v72.1
    Corrige la lista base de áreas del ciclo II (3, 4 y 5 años) según el Programa Curricular de Educación Inicial del MINEDU.
    No activa una matriz curricular completa ni declara curriculumMatrixReady. */
 (function(){
@@ -14,17 +14,23 @@
     'Ciencia y Tecnología'
   ];
 
+  function getState(){
+    try{return typeof state!=='undefined'&&state&&typeof state==='object'?state:null;}catch(_e){return null;}
+  }
+
   const previousAreaOptions=window.areaOptions;
   if(typeof previousAreaOptions==='function'){
     window.areaOptions=function(){
-      if(window.state?.level==='Inicial')return [...INITIAL_CYCLE_II_AREAS];
+      const currentState=getState();
+      if(currentState?.level==='Inicial')return [...INITIAL_CYCLE_II_AREAS];
       return previousAreaOptions.apply(this,arguments);
     };
   }
 
   function normalizeInitialAreaState(){
-    if(!window.state||state.level!=='Inicial'||!Array.isArray(state.areas))return false;
-    const before=state.areas.slice();
+    const currentState=getState();
+    if(!currentState||currentState.level!=='Inicial'||!Array.isArray(currentState.areas))return false;
+    const before=currentState.areas.slice();
     const next=[];
     for(const area of before){
       if(area==='Arte y Cultura'){
@@ -34,7 +40,7 @@
       if(INITIAL_CYCLE_II_AREAS.includes(area)&&!next.includes(area))next.push(area);
     }
     if(before.length===next.length&&before.every((value,index)=>value===next[index]))return false;
-    state.areas=next;
+    currentState.areas=next;
     try{save();}catch(_e){}
     return true;
   }
