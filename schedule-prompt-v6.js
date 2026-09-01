@@ -65,6 +65,7 @@
     'export-fallback-guard-v39.js',
     'docx-export-v29.js',
     'material-integrity-v65.js',
+    'material-surface-truth-v70.js',
     'executable-audit-v47.js',
     'prelaunch-evidence-gate-v50.js',
     'simplicity-audit-v49.js',
