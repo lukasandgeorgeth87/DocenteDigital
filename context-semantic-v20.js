@@ -97,8 +97,7 @@
     const ta=document.getElementById('unitSituation');if(!ta)return;
     let box=document.getElementById('ddKeywordBox');
     if(!box){box=document.createElement('div');box.id='ddKeywordBox';box.className='dd-keyword-box';ta.parentElement.appendChild(box);}
-    const a=analyze(ta.value,12);
-    box.innerHTML=a.concepts.length?`<b>🧠 Señales del texto detectadas (apoyo preliminar):</b>${a.concepts.map(k=>`<span>${escapeHtml(k)}</span>`).join('')}<small>Esta vista solo identifica palabras y frases destacables. No equivale a una comprensión semántica completa ni confirma por sí sola intención, finalidad, problema, causa, consecuencia o producto. La planificación final debe conservar el significado completo del texto del docente.</small>`:'<small>Escribe libremente tu realidad. Esta vista puede resaltar palabras y frases como apoyo preliminar; no debe interpretarse como comprensión semántica completa.</small>';
+    box.innerHTML='<small>Describe con tus propias palabras qué ocurre, qué interesa o qué quieren lograr. DocenteDigital usará ese contexto para preparar una propuesta coherente, sin mostrar análisis técnico.</small>';
   }
 
   function saveAnalysis(){
@@ -122,5 +121,5 @@
   const oldShow=window.showUnit;if(typeof oldShow==='function')window.showUnit=function(){const r=oldShow.apply(this,arguments);setTimeout(()=>{ensureDuration();paint();},0);return r;};
   setTimeout(()=>{ensureDuration();paint();},0);
 
-  const style=document.createElement('style');style.textContent=`.dd-keyword-box{margin-top:8px;padding:9px 10px;border-radius:11px;background:#f4f8ff;border:1px solid #d7e2f0}.dd-keyword-box span{display:inline-block;margin:5px 4px 0 0;padding:4px 8px;border-radius:999px;background:white;border:1px solid #cad8e7;font-size:12px}.dd-keyword-box small{display:block;margin-top:7px;line-height:1.35}`;document.head.appendChild(style);
+  const style=document.createElement('style');style.textContent=`.dd-keyword-box{margin-top:8px;padding:9px 10px;border-radius:11px;background:#f4f8ff;border:1px solid #d7e2f0}.dd-keyword-box small{display:block;line-height:1.35}`;document.head.appendChild(style);
 })();
