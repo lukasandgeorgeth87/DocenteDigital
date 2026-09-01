@@ -1,13 +1,14 @@
-/* DocenteDigital – seguridad curricular v27
+/* DocenteDigital – seguridad curricular v28
    Regla: mientras no exista matriz curricular oficial literal y versionada,
    ningún texto generado puede presentarse como competencia/capacidad/desempeño oficial MINEDU.
+   V4: el aviso visible debe ser breve y comprensible; el detalle técnico queda interno.
 */
 (function(){
   if(window.__ddCurriculumSafetyV27)return;window.__ddCurriculumSafetyV27=true;
   if(typeof state!=='object')return;
 
   const ready=()=>state.curriculumMatrixReady===true;
-  const warningHtml='<div class="dd-curriculum-safety"><b>🛡 Seguridad curricular:</b> la matriz curricular oficial literal todavía no está conectada/verificada. Los textos pedagógicos generados se muestran como <b>orientaciones provisionales</b> y no como competencias, capacidades, estándares o desempeños oficiales MINEDU.</div>';
+  const warningHtml='<div class="dd-curriculum-safety"><b>⚠ Currículo por verificar.</b> Aún no se ha conectado la matriz curricular oficial. Revisa las referencias curriculares antes de usar o descargar este documento.</div>';
 
   function sanitizeHtml(html){
     if(ready()||typeof html!=='string')return html;
@@ -51,7 +52,7 @@
     return html;
   };
 
-  state.curriculumSafety={version:'v27',officialMatrixReady:ready(),policy:'No presentar contenido generado como currículo oficial sin matriz literal verificada'};
+  state.curriculumSafety={version:'v28',officialMatrixReady:ready(),policy:'No presentar contenido generado como currículo oficial sin matriz literal verificada'};
   try{save();}catch(e){console.warn('DocenteDigital: no se pudo guardar el estado de seguridad curricular.',e)}
   markOutput();
   const css=document.createElement('style');css.textContent='.dd-curriculum-safety{margin:8px 0 12px;padding:10px 12px;border:1px solid #dfc36c;border-radius:11px;background:#fff8df;color:#66501a;font-size:13px}.dd-curriculum-global-warning .dd-curriculum-safety{margin:0;border:0;padding:0;background:transparent}';document.head.appendChild(css);
