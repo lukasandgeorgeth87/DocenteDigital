@@ -1,6 +1,6 @@
-/* DocenteDigital – hotfix de auditoría runtime v23 */
+/* DocenteDigital – hotfix de auditoría runtime v24 */
 (function(){
-  if(window.__ddRuntimeAuditV23)return;window.__ddRuntimeAuditV23=true;
+  if(window.__ddRuntimeAuditV24)return;window.__ddRuntimeAuditV24=true;
   const required=[
     ['lector de contexto',()=>typeof window.ddAnalyzeContext==='function'],
     ['análisis exhaustivo',()=>typeof window.ddUnderstandPlanningDescription==='function'],
@@ -17,6 +17,30 @@
     state.runtimeAudit={at:new Date().toISOString(),checks,ok:checks.every(x=>x.ok)};save();
     return state.runtimeAudit;
   }
+
+  /* V5: si falló un módulo estable, no permitir crear/guardar/exportar como si la app siguiera íntegra. */
+  const riskyAction=/\b(?:crear|generar|guardar|descargar|exportar|preparar|emitir|aprobar|subir)\b/i;
+  function hasModuleFailure(){return Array.isArray(window.ddModuleLoadFailures)&&window.ddModuleLoadFailures.length>0;}
+  function explainBlock(){
+    const names=(window.ddModuleLoadFailures||[]).join(', ');
+    alert(`DocenteDigital detectó una parte necesaria que no cargó${names?`: ${names}`:''}. Recarga la página antes de crear, guardar o descargar para evitar resultados incompletos.`);
+  }
+  document.addEventListener('click',e=>{
+    if(!hasModuleFailure())return;
+    const btn=e.target?.closest?.('button,a');
+    if(!btn||!riskyAction.test((btn.textContent||'').trim()))return;
+    e.preventDefault();e.stopImmediatePropagation();
+    explainBlock();
+  },true);
+  document.addEventListener('submit',e=>{
+    if(!hasModuleFailure())return;
+    e.preventDefault();e.stopImmediatePropagation();
+    explainBlock();
+  },true);
+  window.ddAuditModuleFailureGate=()=>({
+    failures:Array.isArray(window.ddModuleLoadFailures)?window.ddModuleLoadFailures.slice():[],
+    blocked:hasModuleFailure()
+  });
 
   /* Corrige una repetición posible en el doble movimiento EIB del motor combinatorio. */
   const baseSessionHtml=window.sessionHtml;
