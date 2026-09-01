@@ -1,4 +1,4 @@
-/* DocenteDigital – Ficha Maestra de la IE v46.1
+/* DocenteDigital – Ficha Maestra de la IE v46.2
    Registra una vez los datos institucionales y los reutiliza en Docente y Director.
    No sustituye autenticación ni una base de datos multiusuario; en este prototipo se guarda en localStorage.
 */
@@ -32,8 +32,11 @@
     };
   }
 
-  state.userRole=state.userRole||'Docente y Director';
   state.institutionMaster=Object.assign(initialMaster(),state.institutionMaster||{});
+  /* Versiones anteriores asignaban “Docente y Director” sin que el usuario lo eligiera.
+     Solo limpiamos ese valor heredado cuando la Ficha Maestra nunca fue guardada. */
+  if(!state.institutionMaster.updatedAt&&state.userRole==='Docente y Director')state.userRole='';
+  state.userRole=tidy(state.userRole||'');
   /* Corrige únicamente el valor heredado por defecto de versiones previas. Si la ficha
      ya fue guardada por el usuario, se conserva su decisión. */
   if(!state.institutionMaster.updatedAt&&state.institutionMaster.managementType==='Pública')state.institutionMaster.managementType='';
@@ -68,7 +71,7 @@
       <p class="sub">Registra estos datos una sola vez. DocenteDigital debe reutilizarlos en planificación, sesiones y documentos del Director en lugar de volver a pedirlos.</p>
       <div class="notice"><b>Regla:</b> un dato institucional registrado se reutiliza. Si falta, se marca como pendiente; no se inventa.</div>
       <div class="form2 topgap">
-        <label>Mi función principal<select id="ddUserRole"><option>Docente</option><option>Director</option><option>Docente y Director</option></select></label>
+        <label>Mi función principal<select id="ddUserRole"><option value="">Selecciona tu función</option><option>Docente</option><option>Director</option><option>Docente y Director</option></select></label>
         <label>Nombre de la IE<input id="ddIeName" value="${E(m.ieName)}" placeholder="Ej.: I.E. 50740 Ccotataqui"></label>
         <label>Código modular<input id="ddModularCode" value="${E(m.modularCode)}"></label>
         <label>Código de local<input id="ddLocalCode" value="${E(m.localCode)}"></label>
@@ -92,13 +95,15 @@
       </div>
       <div class="actions"><button class="btn" id="ddSaveInstitutionMaster">💾 Guardar Ficha Maestra</button></div>
       <small>En esta etapa del prototipo los datos se guardan solo en este navegador. La versión multiusuario requerirá autenticación y base de datos segura.</small>`;
-    const role=document.getElementById('ddUserRole');if(role)role.value=state.userRole||'Docente y Director';
+    const role=document.getElementById('ddUserRole');if(role)role.value=state.userRole||'';
     document.getElementById('ddSaveInstitutionMaster').onclick=saveMaster;
   }
 
   function selectedLevels(){return [...document.querySelectorAll('#ddInstitutionMaster [data-dd-level]:checked')].map(x=>x.getAttribute('data-dd-level'));}
   function val(id){return tidy(document.getElementById(id)?.value||'');}
   function saveMaster(){
+    const selectedRole=val('ddUserRole');
+    if(!selectedRole){alert('Selecciona tu función principal: Docente, Director o Docente y Director.');document.getElementById('ddUserRole')?.focus();return;}
     const next={
       ieName:val('ddIeName'),modularCode:val('ddModularCode'),localCode:val('ddLocalCode'),ugel:val('ddUgel'),dreGre:val('ddDreGre'),
       region:val('ddRegion'),province:val('ddProvince'),district:val('ddDistrict'),locationType:val('ddLocationType'),locationName:val('ddLocationName'),
@@ -106,7 +111,7 @@
       shifts:state.institutionMaster?.shifts||[],directorName:val('ddDirectorName'),teacherCount:val('ddTeacherCount'),studentCount:val('ddStudentCount'),
       schoolCalendar:val('ddSchoolCalendar'),communalCalendar:val('ddCommunalCalendar'),notes:val('ddInstitutionNotes'),updatedAt:new Date().toISOString()
     };
-    state.userRole=val('ddUserRole')||'Docente y Director';
+    state.userRole=selectedRole;
     state.institutionMaster=next;
     if(next.organization)state.ieType=next.organization;
     syncLegacy();if(typeof save==='function')save();
