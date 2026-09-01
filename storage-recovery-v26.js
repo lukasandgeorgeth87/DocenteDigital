@@ -1,16 +1,21 @@
-/* DocenteDigital – recuperación preventiva de almacenamiento v26 */
+/* DocenteDigital – recuperación preventiva de almacenamiento v26.1 */
 (function(){
   if(window.__ddStorageRecoveryV26)return;window.__ddStorageRecoveryV26=true;
   const KEY='docenteDigitalPrototype';
   const RESET_BACKUP_KEY='docenteDigitalPrototype_reset_backup';
   const DELETE_BACKUP_KEY='docenteDigitalPrototype_delete_backup';
   let raw=null;
+  let stateInvalid=false;
 
   try{
     raw=localStorage.getItem(KEY);
     if(raw!==null){
-      const parsed=JSON.parse(raw);
-      if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('Estado guardado no es un objeto válido');
+      let parsed;
+      try{parsed=JSON.parse(raw)}catch(error){stateInvalid=true;throw error}
+      if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)){
+        stateInvalid=true;
+        throw new Error('Estado guardado no es un objeto válido');
+      }
 
       /* app.js decide que la configuración está terminada solo por la existencia de level.
          Si una sesión anterior se interrumpió después de elegir nivel, puede abrir Inicio con
@@ -32,14 +37,22 @@
       }
     }
   }catch(error){
-    const stamp=new Date().toISOString().replace(/[:.]/g,'-');
-    let backedUp=false;
-    if(raw!==null){
-      try{localStorage.setItem(`${KEY}_recovery_${stamp}`,raw);backedUp=true}catch(backupError){console.warn('DocenteDigital: no se pudo crear copia de recuperación.',backupError)}
+    if(stateInvalid){
+      const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+      let backedUp=false;
+      if(raw!==null){
+        try{localStorage.setItem(`${KEY}_recovery_${stamp}`,raw);backedUp=true}catch(backupError){console.warn('DocenteDigital: no se pudo crear copia de recuperación.',backupError)}
+      }
+      try{localStorage.removeItem(KEY)}catch(removeError){console.warn('DocenteDigital: no se pudo limpiar el estado dañado.',removeError)}
+      window.__ddStorageRecovered={at:new Date().toISOString(),backedUp,error:String(error&&error.message||error)};
+      console.warn('DocenteDigital recuperó un estado local inválido antes del arranque.',window.__ddStorageRecovered);
+    }else{
+      /* Un fallo de lectura/escritura del navegador (por ejemplo cuota llena o almacenamiento
+         bloqueado) NO demuestra que el estado sea inválido. V5: conservar el original y
+         advertir; nunca borrar datos correctos por confundir un fallo de Storage con corrupción. */
+      window.__ddStorageStartupError={at:new Date().toISOString(),error:String(error&&error.message||error)};
+      console.warn('DocenteDigital no pudo normalizar el almacenamiento al iniciar; el estado original se conservó.',error);
     }
-    try{localStorage.removeItem(KEY)}catch(removeError){console.warn('DocenteDigital: no se pudo limpiar el estado dañado.',removeError)}
-    window.__ddStorageRecovered={at:new Date().toISOString(),backedUp,error:String(error&&error.message||error)};
-    console.warn('DocenteDigital recuperó un estado local inválido antes del arranque.',window.__ddStorageRecovered);
   }
 
   /* app.js usa un save() directo. Protegemos Storage antes de que app.js cargue para que
@@ -54,6 +67,9 @@
     box.style.cssText='position:fixed;left:12px;right:12px;bottom:74px;z-index:99999;padding:12px 14px;border-radius:12px;background:#fff4df;border:1px solid #e6bd67;box-shadow:0 4px 18px rgba(0,0,0,.16);font:14px/1.35 system-ui,sans-serif;color:#3b2b0b';
     box.innerHTML='<b>⚠️ No se pudo guardar este último cambio en el dispositivo.</b><br>El almacenamiento local está lleno o bloqueado. Puedes seguir viendo la pantalla, pero libera espacio antes de continuar para no perder cambios.';
     document.body.appendChild(box);
+  }
+  if(window.__ddStorageStartupError){
+    if(document.body)showStorageWarning();else window.addEventListener('DOMContentLoaded',showStorageWarning,{once:true});
   }
   Storage.prototype.setItem=function(key,value){
     try{return nativeSetItem.call(this,key,value)}
