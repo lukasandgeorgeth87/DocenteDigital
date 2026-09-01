@@ -1,11 +1,12 @@
-/* DocenteDigital – guardia de datos prototipo v43
+/* DocenteDigital – guardia de datos prototipo v44
    Evita presentar como resultados reales datos, materiales o conclusiones que aún son demostraciones estáticas.
    No genera ni modifica evidencias, niveles de logro, conclusiones SIAGIE ni contenido en lengua originaria sin datos suficientes.
    V42 impide crear sesiones desde unidades/actividades demostrativas cuando el docente aún no creó una unidad/proyecto real.
    V43 además bloquea sesiones si la unidad real está incompleta o no contiene una actividad válida con área y título.
+   V44 hace explícito en la superficie que Evaluación aún está en desarrollo, para no prometer registro/SIAGIE funcional antes de existir trazabilidad real.
 */
 (function(){
-  if(window.__ddPrototypeDataGuardV43)return;window.__ddPrototypeDataGuardV43=true;
+  if(window.__ddPrototypeDataGuardV44)return;window.__ddPrototypeDataGuardV44=true;
 
   const by=id=>document.getElementById(id);
   const tidy=s=>String(s||'').replace(/\s+/g,' ').trim();
@@ -119,6 +120,20 @@
     return baseGenerateSession.apply(this,arguments);
   };
 
+  function annotateEvaluationSurface(){
+    const screen=by('evaluation');
+    if(screen){
+      const sub=screen.querySelector(':scope > p.sub');
+      if(sub)sub.textContent='Estas opciones aún están en desarrollo. No registran valoraciones ni generan conclusiones SIAGIE reales todavía.';
+    }
+    const homeCards=[...document.querySelectorAll('#home .action-card')];
+    const card=homeCards.find(x=>/Evaluación/i.test(x.querySelector('h2')?.textContent||''));
+    if(card){
+      const p=card.querySelector('p');
+      if(p)p.textContent='Módulo en desarrollo: registro y conclusiones aún no están conectados a evidencias reales.';
+    }
+  }
+
   function annotateUI(){
     markButton('button[onclick="generateDiagnostic()"]','🧪 Ver diagnóstico (en desarrollo)');
     markButton('button[onclick="demoAnnual()"]','🧪 Programación anual (en desarrollo)');
@@ -128,6 +143,7 @@
       btn.setAttribute('title','Función en desarrollo: no produce datos reales todavía.');
       if(!/en desarrollo/i.test(btn.textContent||''))btn.textContent=(btn.textContent||'Abrir')+' · en desarrollo';
     });
+    annotateEvaluationSurface();
     const btn=document.querySelector('button[onclick="generateSession()"]');
     if(btn){
       if(!Array.isArray(state?.units)||!state.units.length)btn.setAttribute('title','Primero crea una unidad/proyecto real; no se usarán ejemplos internos.');
