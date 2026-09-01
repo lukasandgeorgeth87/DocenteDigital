@@ -1,4 +1,4 @@
-/* DocenteDigital – palabras clave del contexto + duración 1–6 semanas v19 */
+/* DocenteDigital – palabras clave internas del contexto + duración 1–6 semanas v19.1 */
 (function(){
   if(window.__ddContextKeywordsV19)return;window.__ddContextKeywordsV19=true;
   const STOP=new Set(('a al algo ante bajo con contra de del desde durante e el ella ellas ellos en entre era es esa ese eso esta estas este estos fue ha hacia hasta hay la las lo los más me mi muy ni no o para pero por porque que se sin sobre su sus tu un una uno unas unos y ya como cómo cual cuando donde qué quien').split(' '));
@@ -22,14 +22,13 @@
   function paintKeywordBox(){
     const ta=document.getElementById('unitSituation');if(!ta)return;let box=document.getElementById('ddKeywordBox');
     if(!box){box=document.createElement('div');box.id='ddKeywordBox';box.className='dd-keyword-box';ta.parentElement.appendChild(box);ta.addEventListener('input',paintKeywordBox);}
-    const ks=keywords(ta.value,8);
-    box.innerHTML=ks.length?`<b>🔑 Palabras clave detectadas:</b> ${ks.map(k=>`<span>${k}</span>`).join('')}<small>La app las tomará como referencia para el título, situación, reto, producto y secuencia.</small>`:'<small>Describe con tus propias palabras el interés, situación, necesidad, oportunidad, problema, actores, lugar o propósito que realmente corresponda. No necesitas completar datos que no existan.</small>';
+    box.innerHTML='<small>Describe con tus propias palabras qué ocurre, qué interesa o qué quieren lograr. La app usará ese contexto sin mostrar análisis técnico.</small>';
   }
 
   function enrichCreativeData(){
     const p=state.pendingUnitChoice;if(!p)return;const ks=keywords(p.brief,6),kp=phrase(ks);if(!kp)return;
     if(p._creativeData){p._creativeData.contextKeywords=ks;p._creativeData.situations=(p._creativeData.situations||[]).map(x=>{let text=x.text||'';if(!text.toLowerCase().includes(ks[0]))text=text.replace(/Reto:/,`En esta planificación se prestará especial atención a ${kp}. Reto:`);return {...x,text};});p._creativeData.products=(p._creativeData.products||[]).map(x=>{let text=x.text||'';if(!text.toLowerCase().includes(ks[0]))text+=` El producto debe integrar de manera visible aprendizajes vinculados con ${kp}.`;return {...x,text};});save();}
-    let info=document.getElementById('ddProposalKeywords');const host=document.getElementById('ddProposalChooser');if(host){if(!info){info=document.createElement('div');info.id='ddProposalKeywords';info.className='dd-proposal-keywords';host.prepend(info);}info.innerHTML=`<b>🔑 El contexto está guiando la propuesta:</b> ${ks.map(k=>`<span>${k}</span>`).join('')}`;}
+    const info=document.getElementById('ddProposalKeywords');if(info)info.remove();
   }
 
   function installTitleWrapper(){
@@ -47,5 +46,5 @@
   document.addEventListener('input',e=>{if(e.target?.id==='unitSituation')paintKeywordBox();},true);
   document.addEventListener('change',e=>{if(e.target?.id==='unitDuration')state.pendingPlanningWeeks=parseInt(e.target.value)||3;save();},true);
   function init(){ensureDuration();paintKeywordBox();installTitleWrapper();}const oldShow=window.showUnit;if(typeof oldShow==='function')window.showUnit=function(){const r=oldShow.apply(this,arguments);setTimeout(init,0);return r;};setTimeout(init,0);
-  const css=document.createElement('style');css.textContent=`.dd-keyword-box{margin-top:7px;padding:8px 9px;border-radius:10px;background:#f4f8ff;border:1px solid #d8e3f2}.dd-keyword-box span,.dd-proposal-keywords span{display:inline-block;margin:3px 3px 3px 0;padding:3px 7px;border-radius:999px;background:#fff;border:1px solid #cad9e8;font-size:12px}.dd-keyword-box small{display:block;margin-top:5px}.dd-proposal-keywords{margin-bottom:10px;padding:9px 11px;border-radius:11px;background:#f4f8ff;border:1px solid #d8e3f2}`;document.head.appendChild(css);
+  const css=document.createElement('style');css.textContent=`.dd-keyword-box{margin-top:7px;padding:8px 9px;border-radius:10px;background:#f4f8ff;border:1px solid #d8e3f2}.dd-keyword-box small{display:block;margin-top:2px}`;document.head.appendChild(css);
 })();
