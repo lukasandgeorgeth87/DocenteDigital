@@ -1,8 +1,9 @@
-/* DocenteDigital – guardia curricular de Educación Inicial v72.5
+/* DocenteDigital – guardia curricular de Educación Inicial v72.6
    Corrige la lista base de áreas del ciclo II (3, 4 y 5 años) según el Programa Curricular de Educación Inicial del MINEDU.
    Además evita que el perfil EIB/monolingüe sea solo visual: lo valida y conserva en el estado activo.
    V5: marca como no disponibles las acciones del Director que todavía no tienen comportamiento real, evitando controles simulados.
    V5: asegura que las guardias críticas de seguridad curricular y coherencia de configuración se carguen realmente en producción después de los módulos base.
+   V4/V5: mantiene accesible el espacio Director en navegación móvil cuando la barra lateral de escritorio se oculta.
    No activa una matriz curricular completa ni declara curriculumMatrixReady. */
 (function(){
   if(window.__ddInitialCurriculumGuardV72)return;
@@ -121,6 +122,20 @@
     }
   }
 
+  function ensureDirectorMobileAccess(){
+    const nav=document.querySelector('.mobile-nav');
+    if(!nav||nav.querySelector('[data-screen="director"]'))return;
+    const button=document.createElement('button');
+    button.setAttribute('data-screen','director');
+    button.setAttribute('aria-label','Abrir espacio del Director');
+    button.innerHTML='<b>🏫</b>Director';
+    button.onclick=function(){
+      if(typeof go==='function')go('director');
+    };
+    nav.appendChild(button);
+    nav.style.gridTemplateColumns='repeat(6, minmax(0, 1fr))';
+  }
+
   function loadCriticalModule(src,readyFlag){
     if(window[readyFlag]||document.querySelector(`script[data-dd-critical-module="${src}"]`))return;
     const script=document.createElement('script');
@@ -140,13 +155,18 @@
     loadCriticalModule('curriculum-safety-v27.js','__ddCurriculumSafetyV30');
   }
 
+  function initializeUiGuards(){
+    markUnfinishedDirectorActions();
+    ensureDirectorMobileAccess();
+  }
+
   normalizeInitialAreaState();
   syncLinguisticControlsFromState();
   if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',markUnfinishedDirectorActions,{once:true});
+    document.addEventListener('DOMContentLoaded',initializeUiGuards,{once:true});
     document.addEventListener('DOMContentLoaded',()=>setTimeout(loadCriticalGuards,0),{once:true});
   }else{
-    markUnfinishedDirectorActions();
+    initializeUiGuards();
     setTimeout(loadCriticalGuards,0);
   }
 })();
