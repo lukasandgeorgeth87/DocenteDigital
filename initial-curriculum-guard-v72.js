@@ -1,7 +1,8 @@
-/* DocenteDigital – guardia curricular de Educación Inicial v72.3
+/* DocenteDigital – guardia curricular de Educación Inicial v72.4
    Corrige la lista base de áreas del ciclo II (3, 4 y 5 años) según el Programa Curricular de Educación Inicial del MINEDU.
    Además evita que el perfil EIB/monolingüe sea solo visual: lo valida y conserva en el estado activo.
    V5: marca como no disponibles las acciones del Director que todavía no tienen comportamiento real, evitando controles simulados.
+   V5: asegura que la guardia crítica de seguridad curricular se cargue realmente en producción después de los módulos base.
    No activa una matriz curricular completa ni declara curriculumMatrixReady. */
 (function(){
   if(window.__ddInitialCurriculumGuardV72)return;
@@ -120,8 +121,27 @@
     }
   }
 
+  function loadCriticalCurriculumSafety(){
+    if(window.__ddCurriculumSafetyV30||document.querySelector('script[data-dd-curriculum-safety]'))return;
+    const script=document.createElement('script');
+    script.src='curriculum-safety-v27.js';
+    script.defer=true;
+    script.setAttribute('data-dd-curriculum-safety','true');
+    script.onerror=function(){
+      window.ddModuleLoadFailures=Array.isArray(window.ddModuleLoadFailures)?window.ddModuleLoadFailures:[];
+      if(!window.ddModuleLoadFailures.includes('curriculum-safety-v27.js'))window.ddModuleLoadFailures.push('curriculum-safety-v27.js');
+      console.error('DocenteDigital: no se pudo cargar la guardia crítica de seguridad curricular.');
+    };
+    document.body.appendChild(script);
+  }
+
   normalizeInitialAreaState();
   syncLinguisticControlsFromState();
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',markUnfinishedDirectorActions,{once:true});
-  else markUnfinishedDirectorActions();
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',markUnfinishedDirectorActions,{once:true});
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(loadCriticalCurriculumSafety,0),{once:true});
+  }else{
+    markUnfinishedDirectorActions();
+    setTimeout(loadCriticalCurriculumSafety,0);
+  }
 })();
