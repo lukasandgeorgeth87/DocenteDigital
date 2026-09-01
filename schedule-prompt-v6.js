@@ -72,7 +72,6 @@
     'significant-situation-core-v53.js',
     'session-learning-core-v54.js',
     'session-curriculum-safety-v67.js',
-    'session-traceability-guard-v68.js',
     'easy-surface-simplicity-v55.js',
     'easy-audit-surface-v66.js',
     'planning-archive-simplicity-v56.js',
