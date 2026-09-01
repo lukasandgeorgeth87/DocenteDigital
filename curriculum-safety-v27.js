@@ -1,11 +1,20 @@
-/* DocenteDigital – seguridad curricular v28
+/* DocenteDigital – seguridad curricular v29
    Regla: mientras no exista matriz curricular oficial literal y versionada,
    ningún texto generado puede presentarse como competencia/capacidad/desempeño oficial MINEDU.
    V4: el aviso visible debe ser breve y comprensible; el detalle técnico queda interno.
+   V5: si el estado base todavía no está disponible, la guardia reintenta el arranque y no se desactiva silenciosamente.
 */
-(function(){
-  if(window.__ddCurriculumSafetyV27)return;window.__ddCurriculumSafetyV27=true;
-  if(typeof state!=='object')return;
+(function boot(attempt){
+  if(window.__ddCurriculumSafetyV29)return;
+  if(typeof state!=='object'){
+    if((attempt||0)<20){setTimeout(()=>boot((attempt||0)+1),100);return;}
+    window.ddModuleLoadFailures=Array.isArray(window.ddModuleLoadFailures)?window.ddModuleLoadFailures:[];
+    if(!window.ddModuleLoadFailures.includes('curriculum-safety-v27.js'))window.ddModuleLoadFailures.push('curriculum-safety-v27.js');
+    window.__ddCurriculumSafetyStartupFailure={at:new Date().toISOString(),reason:'Estado base no disponible'};
+    console.error('DocenteDigital: la protección curricular no pudo iniciarse porque el estado base no está disponible.');
+    return;
+  }
+  window.__ddCurriculumSafetyV29=true;
 
   const ready=()=>state.curriculumMatrixReady===true;
   const warningHtml='<div class="dd-curriculum-safety"><b>⚠ Currículo por verificar.</b> Aún no se ha conectado la matriz curricular oficial. Revisa las referencias curriculares antes de usar o descargar este documento.</div>';
@@ -52,8 +61,8 @@
     return html;
   };
 
-  state.curriculumSafety={version:'v28',officialMatrixReady:ready(),policy:'No presentar contenido generado como currículo oficial sin matriz literal verificada'};
+  state.curriculumSafety={version:'v29',officialMatrixReady:ready(),policy:'No presentar contenido generado como currículo oficial sin matriz literal verificada'};
   try{save();}catch(e){console.warn('DocenteDigital: no se pudo guardar el estado de seguridad curricular.',e)}
   markOutput();
   const css=document.createElement('style');css.textContent='.dd-curriculum-safety{margin:8px 0 12px;padding:10px 12px;border:1px solid #dfc36c;border-radius:11px;background:#fff8df;color:#66501a;font-size:13px}.dd-curriculum-global-warning .dd-curriculum-safety{margin:0;border:0;padding:0;background:transparent}';document.head.appendChild(css);
-})();
+})(0);
