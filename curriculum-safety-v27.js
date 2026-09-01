@@ -1,11 +1,12 @@
-/* DocenteDigital – seguridad curricular v29
-   Regla: mientras no exista matriz curricular oficial literal y versionada,
-   ningún texto generado puede presentarse como competencia/capacidad/desempeño oficial MINEDU.
+/* DocenteDigital – seguridad curricular v30
+   Regla: mientras no exista matriz curricular oficial literal, versionada y
+   conectada mediante una integración verificable, ningún texto generado puede
+   presentarse como competencia/capacidad/desempeño oficial MINEDU.
    V4: el aviso visible debe ser breve y comprensible; el detalle técnico queda interno.
-   V5: si el estado base todavía no está disponible, la guardia reintenta el arranque y no se desactiva silenciosamente.
+   V5: un valor persistido en localStorage nunca puede habilitar por sí solo el modo curricular oficial.
 */
 (function boot(attempt){
-  if(window.__ddCurriculumSafetyV29)return;
+  if(window.__ddCurriculumSafetyV30)return;
   if(typeof state!=='object'){
     if((attempt||0)<20){setTimeout(()=>boot((attempt||0)+1),100);return;}
     window.ddModuleLoadFailures=Array.isArray(window.ddModuleLoadFailures)?window.ddModuleLoadFailures:[];
@@ -14,9 +15,15 @@
     console.error('DocenteDigital: la protección curricular no pudo iniciarse porque el estado base no está disponible.');
     return;
   }
-  window.__ddCurriculumSafetyV29=true;
+  window.__ddCurriculumSafetyV30=true;
 
-  const ready=()=>state.curriculumMatrixReady===true;
+  /*
+    IMPORTANTE: curriculumMatrixReady forma parte del estado local editable por el
+    navegador. Por tanto NO es evidencia suficiente de que exista una matriz oficial
+    conectada y verificada. Hasta incorporar una fuente curricular versionada con
+    metadatos verificables, el modo oficial permanece cerrado.
+  */
+  const ready=()=>false;
   const warningHtml='<div class="dd-curriculum-safety"><b>⚠ Currículo por verificar.</b> Aún no se ha conectado la matriz curricular oficial. Revisa las referencias curriculares antes de usar o descargar este documento.</div>';
 
   function sanitizeHtml(html){
@@ -61,7 +68,8 @@
     return html;
   };
 
-  state.curriculumSafety={version:'v29',officialMatrixReady:ready(),policy:'No presentar contenido generado como currículo oficial sin matriz literal verificada'};
+  state.curriculumMatrixReady=false;
+  state.curriculumSafety={version:'v30',officialMatrixReady:false,policy:'No presentar contenido generado como currículo oficial sin matriz literal, versionada y verificablemente conectada'};
   try{save();}catch(e){console.warn('DocenteDigital: no se pudo guardar el estado de seguridad curricular.',e)}
   markOutput();
   const css=document.createElement('style');css.textContent='.dd-curriculum-safety{margin:8px 0 12px;padding:10px 12px;border:1px solid #dfc36c;border-radius:11px;background:#fff8df;color:#66501a;font-size:13px}.dd-curriculum-global-warning .dd-curriculum-safety{margin:0;border:0;padding:0;background:transparent}';document.head.appendChild(css);
