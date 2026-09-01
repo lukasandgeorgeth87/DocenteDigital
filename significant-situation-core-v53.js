@@ -1,4 +1,4 @@
-/* DocenteDigital – Núcleo de situación significativa v53.2
+/* DocenteDigital – Núcleo de situación significativa v53.3
    Regla pedagógica transversal:
    contexto real → situación/interés/necesidad/oportunidad → reto auténtico
    → movilización de competencias → producto/evidencia de aprendizaje.
@@ -56,9 +56,10 @@
     if(!situation)issues.push('Falta redactar la situación significativa desde el contexto.');
     if(situation&&context&&kind!=='problema'&&/grave problema|problemática|afecta gravemente|contaminación|plaga/i.test(situation)&&!/problema|contamin|plaga|afecta/i.test(context))issues.push('La redacción convirtió en problema algo que el docente no presentó como problema.');
     if(situation&&context&&/como consecuencia|por ello ocasiona|esto provoca|esto genera/i.test(situation)&&!/consecu|provoca|genera|ocasiona|afecta|perjudic/i.test(context))issues.push('La redacción añadió consecuencias que no aparecen en el contexto; deben verificarse o eliminarse.');
-    if(!challenge)issues.push('Falta una pregunta retadora coherente con la situación.');
+    if(!challenge)issues.push('Falta un reto coherente con la situación.');
     else{
-      if(!/[¿?]/.test(challenge))issues.push('El reto debe formularse como una pregunta auténtica y comprensible.');
+      // El Núcleo IA admite tanto una pregunta como un desafío. No exigir signos de
+      // interrogación cuando el reto está formulado válidamente como acción/desafío.
       if(/^(¿)?(?:qué es|cuál es|define|menciona)/i.test(challenge))issues.push('El reto es demasiado reproductivo; debe promover comprensión, indagación, decisión, creación o actuación pertinente.');
     }
     if(!product)issues.push('Falta un producto/evidencia concreta.');
