@@ -1,4 +1,4 @@
-/* DocenteDigital – Ficha Maestra de la IE v46.2
+/* DocenteDigital – Ficha Maestra de la IE v46.3
    Registra una vez los datos institucionales y los reutiliza en Docente y Director.
    No sustituye autenticación ni una base de datos multiusuario; en este prototipo se guarda en localStorage.
 */
@@ -24,11 +24,8 @@
       levels:state.level?[state.level]:[],
       organization:tidy(state.ieType||''),
       shifts:[],
-      directorName:tidy(state.directorName||''),
-      teacherCount:'',studentCount:'',
-      schoolCalendar:'',communalCalendar:tidy(c.calendar||''),
-      notes:tidy(c.notes||''),
-      updatedAt:null
+      directorName:tidy(state.directorName||''),teacherCount:'',studentCount:'',
+      schoolCalendar:'',communalCalendar:tidy(c.calendar||''),notes:tidy(c.notes||''),updatedAt:null
     };
   }
 
@@ -58,6 +55,18 @@
     return [m.ieName,m.locationName,m.district,m.province,m.region].filter(Boolean).join(' · ')||'Ficha institucional pendiente de completar';
   }
 
+  function configurationWarnings(){
+    const m=state.institutionMaster||{};
+    const warnings=[];
+    const activeOrg=tidy(state.ieType||'');
+    const masterOrg=tidy(m.organization||'');
+    if(activeOrg&&masterOrg&&activeOrg!==masterOrg)warnings.push(`La configuración activa indica ${activeOrg}, pero la Ficha Maestra indica ${masterOrg}.`);
+    const activeLevel=tidy(state.level||'');
+    const masterLevels=Array.isArray(m.levels)?m.levels.filter(Boolean):[];
+    if(activeLevel&&masterLevels.length&&!masterLevels.includes(activeLevel))warnings.push(`El nivel activo es ${activeLevel}, pero no figura entre los niveles de la Ficha Maestra.`);
+    return warnings;
+  }
+
   function levelChecks(selected){return levels.map(x=>`<label class="dd-check"><input type="checkbox" data-dd-level="${E(x)}" ${selected.includes(x)?'checked':''}> ${E(x)}</label>`).join('');}
   function options(list,current){return list.map(x=>`<option value="${E(x)}" ${x===current?'selected':''}>${E(x||'Por precisar')}</option>`).join('');}
 
@@ -66,10 +75,12 @@
     let card=document.getElementById('ddInstitutionMaster');
     const m=state.institutionMaster;
     if(!card){card=document.createElement('div');card.id='ddInstitutionMaster';card.className='card topgap';host.insertBefore(card,host.firstChild?.nextSibling||null);}
+    const mismatches=configurationWarnings();
     card.innerHTML=`
       <h2>🏫 Ficha Maestra de la IE</h2>
       <p class="sub">Registra estos datos una sola vez. DocenteDigital debe reutilizarlos en planificación, sesiones y documentos del Director en lugar de volver a pedirlos.</p>
       <div class="notice"><b>Regla:</b> un dato institucional registrado se reutiliza. Si falta, se marca como pendiente; no se inventa.</div>
+      ${mismatches.length?`<div class="notice topgap"><b>⚠ Revisar configuración:</b><br>${mismatches.map(x=>E(x)).join('<br>')}<br><small>DocenteDigital no elegirá automáticamente cuál dato es correcto. Revisa la configuración activa y la Ficha Maestra.</small></div>`:''}
       <div class="form2 topgap">
         <label>Mi función principal<select id="ddUserRole"><option value="">Selecciona tu función</option><option>Docente</option><option>Director</option><option>Docente y Director</option></select></label>
         <label>Nombre de la IE<input id="ddIeName" value="${E(m.ieName)}" placeholder="Ej.: I.E. 50740 Ccotataqui"></label>
@@ -115,7 +126,7 @@
     state.institutionMaster=next;
     if(next.organization)state.ieType=next.organization;
     syncLegacy();if(typeof save==='function')save();
-    paintSummary();
+    paintSummary();mountSettings();
     alert('Ficha Maestra guardada. Estos datos quedan disponibles para reutilizarlos en Docente y Director.');
   }
 
@@ -141,7 +152,7 @@
   const oldRefresh=window.refresh;if(typeof oldRefresh==='function')window.refresh=function(){const r=oldRefresh.apply(this,arguments);setTimeout(paintSummary,0);return r;};
 
   syncLegacy();if(typeof save==='function')save();
-  window.ddInstitutionMaster={get,all:()=>({...state.institutionMaster}),requireFields,institutionLabel};
+  window.ddInstitutionMaster={get,all:()=>({...state.institutionMaster}),requireFields,institutionLabel,configurationWarnings};
   window.ddInstitutionData=()=>({...state.institutionMaster,userRole:state.userRole});
   setTimeout(()=>{mountSettings();paintSummary();},0);
 
