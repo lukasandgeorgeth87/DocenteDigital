@@ -1,9 +1,9 @@
-/* DocenteDigital – títulos naturales desde MCI v45
+/* DocenteDigital – títulos naturales desde MCI v46
    Auditoría Maestra: el título no copia la instrucción del docente; expresa la intención pedagógica.
-   V45 normaliza observaciones breves sin convertir cuantificadores circunstanciales en el tema del título.
+   V46 normaliza enunciados de desempeño breves como "Describen/Decriben..." para no copiarlos literalmente en el título.
 */
 (function(){
-  if(window.__ddTitleContextV45)return;window.__ddTitleContextV45=true;
+  if(window.__ddTitleContextV46)return;window.__ddTitleContextV46=true;
   const tidy=s=>String(s||'').replace(/\s+/g,' ').trim();
   const low=s=>tidy(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   const cap=s=>{s=tidy(s);return s?s.charAt(0).toUpperCase()+s.slice(1):s;};
@@ -12,6 +12,7 @@
   const INTEREST_PREFIX=/^(?:quiero|queremos|quieren|deseo|deseamos|desean)?\s*(?:saber|conocer|aprender|descubrir)\s+(?:más\s+)?(?:sobre|acerca de|de)\s+/i;
   const OBSERVATION_PREFIX=/^(?:(?:los|las)\s+estudiantes\s+|(?:los|las)\s+niñ(?:os|as)\s+)?(?:ven|vemos|veo|vieron|observan|observamos|observo|observaron|encuentran|encontramos|encontraron)\s+/i;
   const OBSERVATION_QUANTITY=/^(?:bastantes?|much[oa]s?|varios?|varias|algunos?|algunas|unos|unas)\s+/i;
+  const DESCRIPTION_PREFIX=/^(?:(?:los|las)\s+estudiantes\s+|(?:los|las)\s+niñ(?:os|as)\s+)?(?:describen|decriben|describir|describimos|describo)\s+/i;
 
   function cleanTheme(value){
     let s=tidy(value);
@@ -19,9 +20,8 @@
     s=s.replace(INTEREST_PREFIX,'');
     const wasObservation=OBSERVATION_PREFIX.test(s);
     s=s.replace(OBSERVATION_PREFIX,'');
-    // Conservamos el hecho original en el perfil semántico; para el título evitamos
-    // convertir cuantificadores circunstanciales ("bastantes", "muchas", etc.) en el tema.
     if(wasObservation)s=s.replace(OBSERVATION_QUANTITY,'');
+    s=s.replace(DESCRIPTION_PREFIX,'');
     s=s.replace(/^(?:el tema de|tema:)\s*/i,'');
     return tidy(s.replace(/[.!?]+$/,''));
   }
@@ -32,6 +32,10 @@
   function isSimpleObservation(raw){
     const s=tidy(raw);
     return OBSERVATION_PREFIX.test(s) && cleanTheme(s).split(/\s+/).length<=12 && !/\b(?:porque|para|debido|problema|necesidad|afecta|evitar|resolver|solucionar|proponer|hacer frente|pregunt|quieren saber|queremos saber|curios)\b/i.test(s);
+  }
+  function isSimpleDescription(raw){
+    const s=tidy(raw);
+    return DESCRIPTION_PREFIX.test(s) && cleanTheme(s).split(/\s+/).length<=12 && !/\b(?:porque|para|debido|problema|necesidad|afecta|evitar|resolver|solucionar|proponer|hacer frente)\b/i.test(s);
   }
 
   function mci(raw,type){
@@ -60,6 +64,7 @@
     const season=seasonal(theme);if(season)return season;
     if(isSimpleInterest(raw))return [`Descubrimos ${theme}`,`¿Qué queremos saber sobre ${theme}?`,`Exploramos ${theme} y compartimos lo aprendido`];
     if(isSimpleObservation(raw))return [`Observamos ${theme}`,`Conocemos más sobre ${theme}`,`Descubrimos ${theme} y compartimos lo aprendido`];
+    if(isSimpleDescription(raw))return [`Conocemos ${theme}`,`Describimos ${theme} con nuestras propias palabras`,`Comprendemos ${theme} y explicamos lo aprendido`];
     let list=[];
     if(investigative(raw)||observed(raw)||kind==='indagación/curiosidad'){
       list=project?[`Investigamos ${theme} para responder nuestras preguntas`,`De nuestras preguntas a los hallazgos: exploramos ${theme}`,`Compartimos lo que descubrimos sobre ${theme}`]:[`Descubrimos ${theme} a partir de nuestras preguntas`,`Exploramos ${theme} para comprenderlo mejor`,`Lo que queremos saber sobre ${theme}`];
@@ -122,6 +127,6 @@
     const instrumentLeak=titles.some(t=>BAD.test(t));
     const territorialLeak=!/\b(?:comunidad|caserío|caserio|anexo|barrio|ciudad|centro poblado)\b/i.test(brief)&&titles.some(t=>/\b(?:nuestra comunidad|la comunidad|del caserío|del caserio|del anexo|del barrio|de la ciudad|del centro poblado)\b/i.test(t));
     const distinct=new Set(titles.map(t=>low(t).replace(/[^a-z0-9ñ ]/g,' '))).size===titles.length;
-    return{theme:understood.theme,topic:understood.theme,intentKind:understood.intentKind,finality:understood.finality,titles,coherent:titles.length===3&&!forcedInvestigation&&!instrumentLeak&&!territorialLeak&&distinct,forcedInvestigation,instrumentLeak,territorialLeak,distinct,simpleInterest:isSimpleInterest(brief),simpleObservation:isSimpleObservation(brief)};
+    return{theme:understood.theme,topic:understood.theme,intentKind:understood.intentKind,finality:understood.finality,titles,coherent:titles.length===3&&!forcedInvestigation&&!instrumentLeak&&!territorialLeak&&distinct,forcedInvestigation,instrumentLeak,territorialLeak,distinct,simpleInterest:isSimpleInterest(brief),simpleObservation:isSimpleObservation(brief),simpleDescription:isSimpleDescription(brief)};
   };
 })();
