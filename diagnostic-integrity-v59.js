@@ -6,7 +6,7 @@
 */
 (function(){
   if(window.__ddDiagnosticIntegrityV60)return;window.__ddDiagnosticIntegrityV60=true;
-  const E=v=>typeof window.escapeHtml==='function'?window.escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+  const E=v=>typeof window.escapeHtml==='function'?window.escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const matrixReady=()=>typeof state==='object'&&state.curriculumMatrixReady===true;
 
   function markCurricularReference(){
