@@ -54,6 +54,7 @@
     'director-creativity-v16.js',
     'director-prototype-guard-v40.js',
     'mobile-navigation-guard-v60.js',
+    'role-surface-guard-v68.js',
     'prototype-data-guard-v41.js',
     'persistence-truth-v63.js',
     'planning-consistency-v34.js',
