@@ -77,6 +77,19 @@
     css.textContent='#ddModuleLoadFailure{position:sticky;top:0;z-index:99999;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;background:#fff4e5;border-bottom:2px solid #d97706;color:#713f12;font-size:14px;line-height:1.35}#ddModuleLoadFailure button{border:0;border-radius:9px;padding:9px 13px;background:#92400e;color:#fff;font-weight:800;cursor:pointer}@media(max-width:720px){#ddModuleLoadFailure{align-items:flex-start;flex-direction:column}#ddModuleLoadFailure button{width:100%}}';
     document.head.appendChild(css);
   }
+  function rememberFailure(src){
+    const name=String(src||'').split('/').pop().split('?')[0];
+    if(name&&modules.includes(name)&&!window.ddModuleLoadFailures.includes(name))window.ddModuleLoadFailures.push(name);
+    if(name&&modules.includes(name))showLoadFailure();
+  }
+  window.addEventListener('error',e=>{
+    const src=e?.filename||e?.target?.src||'';
+    rememberFailure(src);
+  },true);
+  window.addEventListener('unhandledrejection',()=>{
+    // Las promesas rechazadas no siempre identifican un módulo concreto; evitamos
+    // atribuir una causa falsa y dejamos el detalle para la auditoría/runtime.
+  });
   let index=0;
   function next(){
     if(index>=modules.length)return;
