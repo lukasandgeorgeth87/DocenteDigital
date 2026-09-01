@@ -1,26 +1,32 @@
-/* DocenteDigital – títulos naturales desde MCI v43
+/* DocenteDigital – títulos naturales desde MCI v44
    Auditoría Maestra: el título no copia la instrucción del docente; expresa la intención pedagógica.
-   V43 además protege la superficie visible frente a capas antiguas que vuelvan a pintar títulos genéricos.
+   V44 además normaliza observaciones breves (p. ej. “ven una mariposa”) sin inventar preguntas o finalidades.
 */
 (function(){
-  if(window.__ddTitleContextV43)return;window.__ddTitleContextV43=true;
+  if(window.__ddTitleContextV44)return;window.__ddTitleContextV44=true;
   const tidy=s=>String(s||'').replace(/\s+/g,' ').trim();
   const low=s=>tidy(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   const cap=s=>{s=tidy(s);return s?s.charAt(0).toUpperCase()+s.slice(1):s;};
   const E=s=>typeof window.escapeHtml==='function'?window.escapeHtml(String(s||'')):String(s||'');
   const BAD=/\b(?:unidad|proyecto|sesión|sesion)\s+(?:sobre|de|acerca de)\b|\bquiero enseñar\b|\bquiero trabajar\b|\bnecesito una?\b/i;
   const INTEREST_PREFIX=/^(?:quiero|queremos|quieren|deseo|deseamos|desean)?\s*(?:saber|conocer|aprender|descubrir)\s+(?:más\s+)?(?:sobre|acerca de|de)\s+/i;
+  const OBSERVATION_PREFIX=/^(?:(?:los|las)\s+estudiantes\s+|(?:los|las)\s+niñ(?:os|as)\s+)?(?:ven|vemos|veo|vieron|observan|observamos|observo|observaron|encuentran|encontramos|encontraron)\s+/i;
 
   function cleanTheme(value){
     let s=tidy(value);
     s=s.replace(/^(?:unidad|proyecto|sesión|sesion)\s+(?:sobre|de|acerca de)\s+/i,'');
     s=s.replace(INTEREST_PREFIX,'');
+    s=s.replace(OBSERVATION_PREFIX,'');
     s=s.replace(/^(?:el tema de|tema:)\s*/i,'');
     return tidy(s.replace(/[.!?]+$/,''));
   }
   function isSimpleInterest(raw){
     const s=tidy(raw);
     return INTEREST_PREFIX.test(s) && cleanTheme(s).split(/\s+/).length<=10 && !/\b(?:porque|para|debido|problema|necesidad|afecta|evitar|resolver|solucionar|proponer|hacer frente)\b/i.test(s);
+  }
+  function isSimpleObservation(raw){
+    const s=tidy(raw);
+    return OBSERVATION_PREFIX.test(s) && cleanTheme(s).split(/\s+/).length<=12 && !/\b(?:porque|para|debido|problema|necesidad|afecta|evitar|resolver|solucionar|proponer|hacer frente|pregunt|quieren saber|queremos saber|curios)\b/i.test(s);
   }
 
   function mci(raw,type){
@@ -33,7 +39,7 @@
     return{raw:tidy(raw),theme:cleanTheme(raw),intentKind:'exploración/comprensión',finality:'',place:'',doNotCopyLiterally:BAD.test(raw)};
   }
   function investigative(raw){const s=low(raw);return /investig|indag|averigu|pregunt|quieren saber|queremos saber|curios/.test(s);}
-  function observed(raw){const s=low(raw);return /\baparecieron?\b|\bencontramos\b|\bobservamos\b|\bvimos\b/.test(s);}
+  function observed(raw){const s=low(raw);return OBSERVATION_PREFIX.test(tidy(raw))||/\baparecieron?\b|\bencontramos\b|\bobservamos\b|\bvimos\b|\bvieron\b|\bven\b/.test(s);}
   function returnToSchool(raw){
     const s=low(raw);if(!/(retorn|regres|vuelv|volver)/.test(s)||!/(clase|escuela|colegio|institucion educativa|\bie\b)/.test(s))return null;
     const joy=/alegr|entusias|emocion|content/.test(s),vac=/vacacion/.test(s),m=joy?' con alegría':'',a=vac?' después de las vacaciones':'';
@@ -48,6 +54,7 @@
     const school=returnToSchool(raw);if(school)return school;
     const season=seasonal(theme);if(season)return season;
     if(isSimpleInterest(raw))return [`Descubrimos ${theme}`,`¿Qué queremos saber sobre ${theme}?`,`Exploramos ${theme} y compartimos lo aprendido`];
+    if(isSimpleObservation(raw))return [`Observamos ${theme}`,`Conocemos más sobre ${theme}`,`Descubrimos ${theme} y compartimos lo aprendido`];
     let list=[];
     if(investigative(raw)||observed(raw)||kind==='indagación/curiosidad'){
       list=project?[`Investigamos ${theme} para responder nuestras preguntas`,`De nuestras preguntas a los hallazgos: exploramos ${theme}`,`Compartimos lo que descubrimos sobre ${theme}`]:[`Descubrimos ${theme} a partir de nuestras preguntas`,`Exploramos ${theme} para comprenderlo mejor`,`Lo que queremos saber sobre ${theme}`];
@@ -94,9 +101,6 @@
   document.addEventListener('input',e=>{if(e.target?.id==='unitSituation')schedule();},true);
   document.addEventListener('change',e=>{if(e.target?.id==='unitType')schedule();},true);
 
-  // Regresión detectada en móvil: una capa posterior podía sobrescribir los títulos
-  // naturales con frases genéricas y hasta introducir “nuestra comunidad”.
-  // Observamos solo el contenedor de sugerencias y restauramos la salida MCI.
   const observer=new MutationObserver(mutations=>{
     if(repainting)return;
     if(mutations.some(m=>m.target?.closest?.('#ddIntentBox .dd-title-suggestions')||m.target?.matches?.('#ddIntentBox .dd-title-suggestions')))schedule(0);
@@ -113,6 +117,6 @@
     const instrumentLeak=titles.some(t=>BAD.test(t));
     const territorialLeak=!/\b(?:comunidad|caserío|caserio|anexo|barrio|ciudad|centro poblado)\b/i.test(brief)&&titles.some(t=>/\b(?:nuestra comunidad|la comunidad|del caserío|del caserio|del anexo|del barrio|de la ciudad|del centro poblado)\b/i.test(t));
     const distinct=new Set(titles.map(t=>low(t).replace(/[^a-z0-9ñ ]/g,' '))).size===titles.length;
-    return{theme:understood.theme,topic:understood.theme,intentKind:understood.intentKind,finality:understood.finality,titles,coherent:titles.length===3&&!forcedInvestigation&&!instrumentLeak&&!territorialLeak&&distinct,forcedInvestigation,instrumentLeak,territorialLeak,distinct,simpleInterest:isSimpleInterest(brief)};
+    return{theme:understood.theme,topic:understood.theme,intentKind:understood.intentKind,finality:understood.finality,titles,coherent:titles.length===3&&!forcedInvestigation&&!instrumentLeak&&!territorialLeak&&distinct,forcedInvestigation,instrumentLeak,territorialLeak,distinct,simpleInterest:isSimpleInterest(brief),simpleObservation:isSimpleObservation(brief)};
   };
 })();
