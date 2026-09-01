@@ -3,6 +3,7 @@
   if(window.__ddStorageRecoveryV26)return;window.__ddStorageRecoveryV26=true;
   const KEY='docenteDigitalPrototype';
   const RESET_BACKUP_KEY='docenteDigitalPrototype_reset_backup';
+  const DELETE_BACKUP_KEY='docenteDigitalPrototype_delete_backup';
   let raw=null;
 
   try{
@@ -119,7 +120,73 @@
     document.body.appendChild(box);
   }
 
-  const initResetSafety=()=>{installRecoverableReset();offerResetRestore();};
-  if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',()=>setTimeout(initResetSafety,0),{once:true});
-  else setTimeout(initResetSafety,0);
+  /* V4/V5: eliminar una unidad/proyecto tampoco debe ser irreversible.
+     Guardamos una copia local antes de invocar el borrado existente y ofrecemos deshacer
+     únicamente esa eliminación, sin sobrescribir otros cambios posteriores del usuario. */
+  function offerUnitDeleteRestore(){
+    if(!document.body)return;
+    document.getElementById('ddUnitDeleteRestore')?.remove();
+    let backup=null;
+    try{backup=JSON.parse(localStorage.getItem(DELETE_BACKUP_KEY)||'null')}catch(error){return;}
+    if(!backup||!backup.unit||!backup.unit.id)return;
+    const box=document.createElement('div');
+    box.id='ddUnitDeleteRestore';
+    box.setAttribute('role','status');
+    box.style.cssText='position:fixed;left:12px;right:12px;bottom:74px;z-index:99997;padding:12px 14px;border-radius:12px;background:#eef8f2;border:1px solid #8bc6a0;box-shadow:0 4px 18px rgba(0,0,0,.14);font:14px/1.35 system-ui,sans-serif;color:#17351f;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap';
+    box.innerHTML='<span><b>🗑️ Unidad eliminada.</b> Puedes recuperarla si fue un error.</span><span><button type="button" data-action="restore">Restaurar</button> <button type="button" data-action="discard">Descartar</button></span>';
+    box.querySelectorAll('button').forEach(btn=>{btn.style.cssText='border:0;border-radius:9px;padding:8px 11px;font-weight:700;cursor:pointer'});
+    box.querySelector('[data-action="restore"]').onclick=()=>{
+      try{
+        const saved=JSON.parse(localStorage.getItem(DELETE_BACKUP_KEY)||'null');
+        const current=JSON.parse(localStorage.getItem(KEY)||'{}');
+        if(!saved||!saved.unit||!saved.unit.id)throw new Error('Copia inválida');
+        current.units=Array.isArray(current.units)?current.units:[];
+        if(!current.units.some(u=>u&&u.id===saved.unit.id))current.units.unshift(saved.unit);
+        if(!current.activeUnitId)current.activeUnitId=saved.activeUnitId||saved.unit.id;
+        nativeSetItem.call(localStorage,KEY,JSON.stringify(current));
+        localStorage.removeItem(DELETE_BACKUP_KEY);
+        location.reload();
+      }catch(error){
+        alert('No se pudo restaurar la unidad. La copia local se conservará para no perderla.');
+        console.warn('DocenteDigital: fallo al restaurar unidad eliminada.',error);
+      }
+    };
+    box.querySelector('[data-action="discard"]').onclick=()=>{
+      if(confirm('¿Descartar definitivamente esta copia de la unidad eliminada?')){localStorage.removeItem(DELETE_BACKUP_KEY);box.remove();}
+    };
+    document.body.appendChild(box);
+  }
+
+  function installRecoverableUnitDelete(){
+    if(typeof window.deleteUnit!=='function'||window.deleteUnit.__ddRecoverable)return;
+    const previous=window.deleteUnit;
+    const wrapped=function(id){
+      let before=null;
+      try{
+        before=JSON.parse(localStorage.getItem(KEY)||'{}');
+        const unit=Array.isArray(before.units)?before.units.find(u=>u&&u.id===id):null;
+        if(unit){
+          nativeSetItem.call(localStorage,DELETE_BACKUP_KEY,JSON.stringify({savedAt:new Date().toISOString(),unit,activeUnitId:before.activeUnitId||null}));
+        }
+      }catch(error){
+        alert('No se pudo crear una copia de recuperación. Para evitar pérdida de información, la eliminación fue cancelada.');
+        console.warn('DocenteDigital: no se pudo respaldar la unidad antes de eliminar.',error);
+        return;
+      }
+      const result=previous.apply(this,arguments);
+      try{
+        const after=JSON.parse(localStorage.getItem(KEY)||'{}');
+        const stillExists=Array.isArray(after.units)&&after.units.some(u=>u&&u.id===id);
+        if(stillExists){localStorage.removeItem(DELETE_BACKUP_KEY);}
+        else offerUnitDeleteRestore();
+      }catch(error){console.warn('DocenteDigital: no se pudo comprobar el borrado recuperable.',error)}
+      return result;
+    };
+    wrapped.__ddRecoverable=true;
+    window.deleteUnit=wrapped;
+  }
+
+  const initSafety=()=>{installRecoverableReset();offerResetRestore();installRecoverableUnitDelete();if(localStorage.getItem(DELETE_BACKUP_KEY))offerUnitDeleteRestore();};
+  if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',()=>setTimeout(initSafety,0),{once:true});
+  else setTimeout(initSafety,0);
 })();
