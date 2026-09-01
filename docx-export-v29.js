@@ -5,6 +5,10 @@
   if(window.__ddDocxExportV29)return; window.__ddDocxExportV29=true;
   const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
   const enc=new TextEncoder();
+  let lastDownloadName='';
+  let lastDownloadAt=0;
+  let shareInFlight=false;
+  const DUPLICATE_WINDOW_MS=1200;
 
   function crc32(bytes){
     let c=0xffffffff;
@@ -85,20 +89,29 @@
   }
   function fileName(title){return (typeof cleanFileName==='function'?cleanFileName(title):String(title||'documento').replace(/[^\w -]+/g,'').trim().replace(/\s+/g,'_'))+'.docx'}
   function downloadDocx(blob,name){
+    const now=Date.now();
+    if(name===lastDownloadName&&now-lastDownloadAt<DUPLICATE_WINDOW_MS)return false;
+    lastDownloadName=name;lastDownloadAt=now;
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1800);
+    return true;
   }
   async function shareDocx(blob,name,title){
+    if(shareInFlight)return;
+    shareInFlight=true;
     try{
       const f=new File([blob],name,{type:blob.type});
       if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[f]}))){
         await navigator.share({title,files:[f]});
         return;
       }
+      downloadDocx(blob,name);
     }catch(e){
       if(e?.name==='AbortError') return;
       console.warn('Compartir DOCX:',e);
+      downloadDocx(blob,name);
+    }finally{
+      shareInFlight=false;
     }
-    downloadDocx(blob,name);
   }
 
   window.downloadUnitWord=function(id){
