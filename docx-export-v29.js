@@ -88,7 +88,16 @@
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1800);
   }
   async function shareDocx(blob,name,title){
-    try{const f=new File([blob],name,{type:blob.type});if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[f]}))){await navigator.share({title,files:[f]});return;}}catch(e){console.warn('Compartir DOCX:',e)}
+    try{
+      const f=new File([blob],name,{type:blob.type});
+      if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[f]}))){
+        await navigator.share({title,files:[f]});
+        return;
+      }
+    }catch(e){
+      if(e?.name==='AbortError') return;
+      console.warn('Compartir DOCX:',e);
+    }
     downloadDocx(blob,name);
   }
 
