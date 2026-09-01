@@ -1,9 +1,10 @@
-/* DocenteDigital – guardia de datos prototipo v41
+/* DocenteDigital – guardia de datos prototipo v42
    Evita presentar como resultados reales datos, materiales o conclusiones que aún son demostraciones estáticas.
    No genera ni modifica evidencias, niveles de logro, conclusiones SIAGIE ni contenido en lengua originaria sin datos suficientes.
+   V42 además impide crear sesiones desde unidades/actividades demostrativas cuando el docente aún no creó una unidad/proyecto real.
 */
 (function(){
-  if(window.__ddPrototypeDataGuardV41)return;window.__ddPrototypeDataGuardV41=true;
+  if(window.__ddPrototypeDataGuardV42)return;window.__ddPrototypeDataGuardV42=true;
 
   const by=id=>document.getElementById(id);
   const notice=(title,body)=>`<div class="notice dd-prototype-notice"><b>🧪 ${title}</b><br>${body}</div>`;
@@ -52,6 +53,33 @@
     p.scrollIntoView({behavior:'smooth'});
   };
 
+  // Sesiones: el prototipo base ofrecía una unidad y actividades demostrativas cuando state.units estaba vacío.
+  // Esa salida podía terminar en una sesión aparentemente real con tema, territorio y actividad no proporcionados por el usuario.
+  const baseFillSessionUnits=window.fillSessionUnits;
+  if(typeof baseFillSessionUnits==='function')window.fillSessionUnits=function(){
+    const r=baseFillSessionUnits.apply(this,arguments);
+    if(Array.isArray(state?.units)&&state.units.length)return r;
+    const unit=by('sessionUnit'),activity=by('activity'),title=by('sessionTitle');
+    if(unit)unit.innerHTML='<option value="">Primero crea una unidad/proyecto</option>';
+    if(activity)activity.innerHTML='<option value="">Sin actividad programada</option>';
+    if(title)title.value='';
+    return r;
+  };
+
+  const baseGenerateSession=window.generateSession;
+  if(typeof baseGenerateSession==='function')window.generateSession=function(){
+    if(!Array.isArray(state?.units)||!state.units.length){
+      const out=by('sessionOutput');
+      if(out){
+        out.innerHTML=`<h2>Crear mi sesión</h2>${notice('Primero crea una unidad o proyecto','La sesión debe nacer de una unidad/proyecto y de una actividad programada reales. DocenteDigital no usará ejemplos internos como si fueran tu planificación.')}`;
+        out.classList.remove('hidden');
+        out.scrollIntoView({behavior:'smooth'});
+      }else alert('Primero crea una unidad o proyecto. La sesión no se generará con datos de ejemplo.');
+      return null;
+    }
+    return baseGenerateSession.apply(this,arguments);
+  };
+
   function annotateUI(){
     markButton('button[onclick="generateDiagnostic()"]','🧪 Ver diagnóstico (en desarrollo)');
     markButton('button[onclick="demoAnnual()"]','🧪 Programación anual (en desarrollo)');
@@ -61,9 +89,13 @@
       btn.setAttribute('title','Función en desarrollo: no produce datos reales todavía.');
       if(!/en desarrollo/i.test(btn.textContent||''))btn.textContent=(btn.textContent||'Abrir')+' · en desarrollo';
     });
+    if(!Array.isArray(state?.units)||!state.units.length){
+      const btn=document.querySelector('button[onclick="generateSession()"]');
+      if(btn)btn.setAttribute('title','Primero crea una unidad/proyecto real; no se usarán ejemplos internos.');
+    }
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',annotateUI,{once:true});
   else annotateUI();
-  setTimeout(annotateUI,0);
+  setTimeout(()=>{annotateUI();try{window.fillSessionUnits?.();}catch(e){}},0);
 })();
