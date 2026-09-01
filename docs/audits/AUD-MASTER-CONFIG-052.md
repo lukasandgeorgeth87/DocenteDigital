@@ -29,7 +29,7 @@ La app muestra `⚠ Revisar configuración` y explica que DocenteDigital no eleg
 ## Evidencia posterior
 - Commit funcional: `c6fd27203ccde39bb2a63625fb7c9cfd141d199f`.
 - Producción `/institution-master-v46.js`: HTTP 200 y sirve v46.3 con `configurationWarnings()`.
-- Producción `/`: HTTP 200 pendiente de retest final de este ciclo.
+- Producción `/`: HTTP 200 en retest posterior a la corrección.
 - Vercel READY administrativo: PENDIENTE porque la API de deployments devuelve 403 por falta de autorización al scope del equipo.
 
 ## Estado posterior
