@@ -2,6 +2,7 @@
 (function(){
   if(window.__ddStorageRecoveryV26)return;window.__ddStorageRecoveryV26=true;
   const KEY='docenteDigitalPrototype';
+  const RESET_BACKUP_KEY='docenteDigitalPrototype_reset_backup';
   let raw=null;
 
   try{
@@ -64,4 +65,61 @@
       return undefined;
     }
   };
+
+  /* V4/V5: un restablecimiento no debe convertirse en pérdida irreversible por un clic.
+     Conservamos una única copia local recuperable del estado principal antes de borrar. */
+  function installRecoverableReset(){
+    if(typeof window.resetDemo!=='function'||window.resetDemo.__ddRecoverable)return;
+    const previous=window.resetDemo;
+    const wrapped=function(){
+      const current=localStorage.getItem(KEY);
+      if(current===null)return previous.apply(this,arguments);
+      const ok=confirm('¿Restablecer la configuración y los datos del prototipo? Se guardará una copia local para que puedas restaurarlos si fue un error.');
+      if(!ok)return;
+      try{
+        nativeSetItem.call(localStorage,RESET_BACKUP_KEY,JSON.stringify({savedAt:new Date().toISOString(),data:current}));
+      }catch(error){
+        alert('No se pudo crear la copia de recuperación. Para evitar pérdida de información, el restablecimiento fue cancelado.');
+        console.warn('DocenteDigital: no se pudo respaldar antes de restablecer.',error);
+        return;
+      }
+      localStorage.removeItem(KEY);
+      location.reload();
+    };
+    wrapped.__ddRecoverable=true;
+    window.resetDemo=wrapped;
+  }
+
+  function offerResetRestore(){
+    if(!document.body||document.getElementById('ddResetRestore'))return;
+    let backup=null;
+    try{backup=localStorage.getItem(RESET_BACKUP_KEY)}catch(error){return;}
+    if(!backup)return;
+    const box=document.createElement('div');
+    box.id='ddResetRestore';
+    box.setAttribute('role','status');
+    box.style.cssText='position:fixed;left:12px;right:12px;bottom:74px;z-index:99998;padding:12px 14px;border-radius:12px;background:#eef8f2;border:1px solid #8bc6a0;box-shadow:0 4px 18px rgba(0,0,0,.14);font:14px/1.35 system-ui,sans-serif;color:#17351f;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap';
+    box.innerHTML='<span><b>↩️ Hay una copia del estado anterior.</b> Puedes restaurarla si el restablecimiento fue accidental.</span><span><button type="button" data-action="restore">Restaurar</button> <button type="button" data-action="discard">Descartar copia</button></span>';
+    box.querySelectorAll('button').forEach(btn=>{btn.style.cssText='border:0;border-radius:9px;padding:8px 11px;font-weight:700;cursor:pointer'});
+    box.querySelector('[data-action="restore"]').onclick=()=>{
+      try{
+        const parsed=JSON.parse(localStorage.getItem(RESET_BACKUP_KEY)||'null');
+        if(!parsed||typeof parsed.data!=='string')throw new Error('Copia inválida');
+        nativeSetItem.call(localStorage,KEY,parsed.data);
+        localStorage.removeItem(RESET_BACKUP_KEY);
+        location.reload();
+      }catch(error){
+        alert('No se pudo restaurar la copia guardada. No se eliminará automáticamente.');
+        console.warn('DocenteDigital: fallo al restaurar copia de restablecimiento.',error);
+      }
+    };
+    box.querySelector('[data-action="discard"]').onclick=()=>{
+      if(confirm('¿Descartar definitivamente esta copia de recuperación?')){localStorage.removeItem(RESET_BACKUP_KEY);box.remove();}
+    };
+    document.body.appendChild(box);
+  }
+
+  const initResetSafety=()=>{installRecoverableReset();offerResetRestore();};
+  if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',()=>setTimeout(initResetSafety,0),{once:true});
+  else setTimeout(initResetSafety,0);
 })();
