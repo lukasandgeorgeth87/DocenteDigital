@@ -1,9 +1,9 @@
-/* DocenteDigital – títulos naturales desde MCI v44
+/* DocenteDigital – títulos naturales desde MCI v45
    Auditoría Maestra: el título no copia la instrucción del docente; expresa la intención pedagógica.
-   V44 además normaliza observaciones breves (p. ej. “ven una mariposa”) sin inventar preguntas o finalidades.
+   V45 normaliza observaciones breves sin convertir cuantificadores circunstanciales en el tema del título.
 */
 (function(){
-  if(window.__ddTitleContextV44)return;window.__ddTitleContextV44=true;
+  if(window.__ddTitleContextV45)return;window.__ddTitleContextV45=true;
   const tidy=s=>String(s||'').replace(/\s+/g,' ').trim();
   const low=s=>tidy(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   const cap=s=>{s=tidy(s);return s?s.charAt(0).toUpperCase()+s.slice(1):s;};
@@ -11,12 +11,17 @@
   const BAD=/\b(?:unidad|proyecto|sesión|sesion)\s+(?:sobre|de|acerca de)\b|\bquiero enseñar\b|\bquiero trabajar\b|\bnecesito una?\b/i;
   const INTEREST_PREFIX=/^(?:quiero|queremos|quieren|deseo|deseamos|desean)?\s*(?:saber|conocer|aprender|descubrir)\s+(?:más\s+)?(?:sobre|acerca de|de)\s+/i;
   const OBSERVATION_PREFIX=/^(?:(?:los|las)\s+estudiantes\s+|(?:los|las)\s+niñ(?:os|as)\s+)?(?:ven|vemos|veo|vieron|observan|observamos|observo|observaron|encuentran|encontramos|encontraron)\s+/i;
+  const OBSERVATION_QUANTITY=/^(?:bastantes?|much[oa]s?|varios?|varias|algunos?|algunas|unos|unas)\s+/i;
 
   function cleanTheme(value){
     let s=tidy(value);
     s=s.replace(/^(?:unidad|proyecto|sesión|sesion)\s+(?:sobre|de|acerca de)\s+/i,'');
     s=s.replace(INTEREST_PREFIX,'');
+    const wasObservation=OBSERVATION_PREFIX.test(s);
     s=s.replace(OBSERVATION_PREFIX,'');
+    // Conservamos el hecho original en el perfil semántico; para el título evitamos
+    // convertir cuantificadores circunstanciales ("bastantes", "muchas", etc.) en el tema.
+    if(wasObservation)s=s.replace(OBSERVATION_QUANTITY,'');
     s=s.replace(/^(?:el tema de|tema:)\s*/i,'');
     return tidy(s.replace(/[.!?]+$/,''));
   }
