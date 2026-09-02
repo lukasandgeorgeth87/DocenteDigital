@@ -2,7 +2,8 @@
    No presenta Materiales/Evaluación ni acciones Director no conectadas como disponibles
    mientras sus flujos principales estén explícitamente pendientes de prelaunch.
    V4/V5: evita entradas activas hacia flujos de planificación todavía no implementados.
-   V4: mantiene coherente la etiqueta visible de Modo Fácil/Experto con el estado activo. */
+   V4: mantiene coherente la etiqueta visible de Modo Fácil/Experto con el estado activo.
+   V4/V5: impide borrado irreversible de Unidades/Proyectos hasta disponer de papelera y recuperación. */
 (function(){
   if(window.__ddHomeSurfaceTruthV73)return;
   window.__ddHomeSurfaceTruthV73=true;
@@ -73,6 +74,41 @@
     return true;
   }
 
+  function markUnsafeUnitDeleteActions(){
+    document.querySelectorAll('#plan button').forEach(button=>{
+      const handler=button.getAttribute('onclick')||'';
+      if(!handler.includes('deleteUnit('))return;
+      button.disabled=true;
+      button.setAttribute('aria-disabled','true');
+      button.setAttribute('aria-label','Eliminar, próximamente con papelera');
+      button.setAttribute('title','El borrado seguro requiere papelera y recuperación antes de habilitarse');
+      button.removeAttribute('onclick');
+      button.textContent='Eliminar · Próximamente';
+    });
+  }
+
+  function guardUnsafeUnitDeletion(){
+    const previousDeleteUnit=window.deleteUnit;
+    if(typeof previousDeleteUnit==='function'&&!previousDeleteUnit.__ddSafeDeleteGuard){
+      const guarded=function(){
+        alert('Eliminar está temporalmente deshabilitado hasta implementar papelera y recuperación. Tu Unidad/Proyecto no fue borrado.');
+      };
+      guarded.__ddSafeDeleteGuard=true;
+      window.deleteUnit=guarded;
+    }
+    const previousRenderUnits=window.renderUnits;
+    if(typeof previousRenderUnits==='function'&&!previousRenderUnits.__ddSafeDeleteRenderGuard){
+      const guardedRender=function(){
+        const result=previousRenderUnits.apply(this,arguments);
+        markUnsafeUnitDeleteActions();
+        return result;
+      };
+      guardedRender.__ddSafeDeleteRenderGuard=true;
+      window.renderUnits=guardedRender;
+    }
+    markUnsafeUnitDeleteActions();
+  }
+
   function syncModeLabel(){
     const pill=document.querySelector('#home .hero .pill');
     if(!pill)return;
@@ -107,6 +143,7 @@
     markUnavailableNavigation('materials','Materiales');
     markUnavailableNavigation('evaluation','Evaluación');
     markUnavailableDirectorActions();
+    guardUnsafeUnitDeletion();
     guardModeLabel();
     syncModeLabel();
   }
