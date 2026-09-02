@@ -58,12 +58,6 @@
     );
   }
 
-  function hasPedagogicalSetupWithoutLanguage(){
-    if(typeof state==='undefined')return false;
-    sanitizeConfiguration();
-    return Boolean(state.level&&state.ieType&&state.grades.length&&state.areas.length);
-  }
-
   const originalChooseOne=window.chooseOne;
   if(typeof originalChooseOne==='function'){
     window.chooseOne=function(key,val,btn){
@@ -149,23 +143,35 @@
     });
   }
 
-  /* app.js puede abrir Inicio antes de que esta guardia cargue si existe un estado legado
-     con nivel/IE/grados/áreas completos pero perfil lingüístico incompleto. V4/V5: no mostrar
-     una configuración como terminada y bloquear recién en el siguiente clic. Se corrige el
-     estado visual inmediatamente y se lleva al paso lingüístico sin borrar lo ya registrado. */
-  function enforceIncompleteLinguisticSetup(){
-    if(!hasPedagogicalSetupWithoutLanguage()||hasCompleteLinguisticConfiguration())return;
+  /* app.js puede abrir Inicio antes de que esta guardia cargue. También la Ficha Maestra
+     puede cambiar organización/nivel y volver incompatible la selección previa. V4/V5:
+     cualquier configuración base incompleta debe volver inmediatamente al paso exacto
+     que falta, conservando los datos válidos y sin esperar al siguiente clic del usuario. */
+  function enforceIncompleteConfiguration(){
+    sanitizeConfiguration();
+    if(hasCompleteBaseConfiguration())return;
+    const hasAny=Boolean(state.level||state.ieType||state.grades.length||state.areas.length||state.linguisticMode);
+    if(!hasAny)return;
     const setup=document.getElementById('setup');
-    const isSetupActive=setup?.classList.contains('active');
-    if(!isSetupActive&&typeof showSetup==='function')showSetup();
-    if(typeof nextSetup==='function')nextSetup(4);
-    window.__ddIncompleteLinguisticSetup={at:new Date().toISOString(),reason:'Perfil lingüístico pendiente de confirmación'};
+    if(!setup?.classList.contains('active')&&typeof showSetup==='function')showSetup();
+    let step=1,reason='Nivel educativo pendiente';
+    if(state.level){
+      step=2;reason='Tipo de IE pendiente';
+      if(state.ieType){
+        step=3;reason='Grado/edad pendiente o incompatible';
+        if(state.grades.length){
+          step=4;reason=state.areas.length?'Perfil lingüístico pendiente de confirmación':'Área pendiente o incompatible';
+        }
+      }
+    }
+    if(typeof nextSetup==='function')nextSetup(step);
+    window.__ddIncompleteBaseSetup={at:new Date().toISOString(),step,reason};
   }
 
   sanitizeConfiguration();
   if(typeof save==='function')save();
-  const init=()=>{installSetupAutosave();enforceIncompleteLinguisticSetup();};
+  const init=()=>{installSetupAutosave();enforceIncompleteConfiguration();};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
   else init();
-  setTimeout(enforceIncompleteLinguisticSetup,0);
+  setTimeout(enforceIncompleteConfiguration,0);
 })();
