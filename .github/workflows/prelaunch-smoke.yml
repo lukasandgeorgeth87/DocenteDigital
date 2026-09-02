@@ -101,12 +101,16 @@ jobs:
           from pathlib import Path
 
           # A module existing in GitHub is not evidence that production executes it.
-          # Count a module as wired only if it is referenced by index.html or by the
-          # bootstrap guard that dynamically loads critical modules.
-          index = Path('index.html').read_text(encoding='utf-8')
-          bootstrap_path = Path('initial-curriculum-guard-v72.js')
-          bootstrap = bootstrap_path.read_text(encoding='utf-8') if bootstrap_path.is_file() else ''
-          runtime_wiring = index + '\n' + bootstrap
+          # Count a module as wired only if it is referenced by a production entrypoint
+          # or by one of the runtime loaders that the entrypoint itself loads.
+          wiring_files = [
+              Path('index.html'),
+              Path('initial-curriculum-guard-v72.js'),
+              Path('schedule-prompt-v6.js'),
+          ]
+          runtime_wiring = '\n'.join(
+              path.read_text(encoding='utf-8') for path in wiring_files if path.is_file()
+          )
 
           required = [
               'title-context-v38.js',
@@ -122,7 +126,7 @@ jobs:
               raise SystemExit('Audited critical runtime modules missing from repository: ' + ', '.join(missing_files))
           if unwired:
               raise SystemExit('Audited critical runtime modules exist but are NOT wired to production: ' + ', '.join(unwired))
-          print('Audited critical runtime modules are wired to the production bootstrap.')
+          print('Audited critical runtime modules are wired to the production runtime loaders.')
           PY
 
       - name: V5 scope notice
