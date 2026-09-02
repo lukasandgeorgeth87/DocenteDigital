@@ -1,4 +1,4 @@
-/* DocenteDigital – Ficha Maestra de la IE v46.3
+/* DocenteDigital – Ficha Maestra de la IE v46.4
    Registra una vez los datos institucionales y los reutiliza en Docente y Director.
    No sustituye autenticación ni una base de datos multiusuario; en este prototipo se guarda en localStorage.
 */
@@ -30,12 +30,8 @@
   }
 
   state.institutionMaster=Object.assign(initialMaster(),state.institutionMaster||{});
-  /* Versiones anteriores asignaban “Docente y Director” sin que el usuario lo eligiera.
-     Solo limpiamos ese valor heredado cuando la Ficha Maestra nunca fue guardada. */
   if(!state.institutionMaster.updatedAt&&state.userRole==='Docente y Director')state.userRole='';
   state.userRole=tidy(state.userRole||'');
-  /* Corrige únicamente el valor heredado por defecto de versiones previas. Si la ficha
-     ya fue guardada por el usuario, se conserva su decisión. */
   if(!state.institutionMaster.updatedAt&&state.institutionMaster.managementType==='Pública')state.institutionMaster.managementType='';
 
   function syncLegacy(){
@@ -97,8 +93,8 @@
         <label>Gestión<select id="ddManagementType">${options(['','Pública','Privada','Otra / por precisar'],m.managementType)}</select></label>
         <label>Organización de la IE<select id="ddOrganization">${options(['','Unidocente','Multigrado','Polidocente'],m.organization)}</select></label>
         <label>Director/a<input id="ddDirectorName" value="${E(m.directorName)}"></label>
-        <label>N.º de docentes<input id="ddTeacherCount" inputmode="numeric" value="${E(m.teacherCount)}"></label>
-        <label>N.º de estudiantes<input id="ddStudentCount" inputmode="numeric" value="${E(m.studentCount)}"></label>
+        <label>N.º de docentes<input id="ddTeacherCount" type="number" min="0" step="1" inputmode="numeric" value="${E(m.teacherCount)}"></label>
+        <label>N.º de estudiantes<input id="ddStudentCount" type="number" min="0" step="1" inputmode="numeric" value="${E(m.studentCount)}"></label>
         <label class="full">Niveles que atiende la IE<div class="dd-level-checks">${levelChecks(Array.isArray(m.levels)?m.levels:[])}</div></label>
         <label class="full">Calendario escolar / referencia anual<input id="ddSchoolCalendar" value="${E(m.schoolCalendar)}"></label>
         <label class="full">Calendario comunal o local, cuando corresponda<input id="ddCommunalCalendar" value="${E(m.communalCalendar)}"></label>
@@ -112,14 +108,26 @@
 
   function selectedLevels(){return [...document.querySelectorAll('#ddInstitutionMaster [data-dd-level]:checked')].map(x=>x.getAttribute('data-dd-level'));}
   function val(id){return tidy(document.getElementById(id)?.value||'');}
+  function nonNegativeInteger(id,label){
+    const raw=val(id);
+    if(raw==='')return '';
+    if(!/^\d+$/.test(raw)){
+      alert(`${label} debe ser un número entero igual o mayor que 0.`);
+      document.getElementById(id)?.focus();
+      return null;
+    }
+    return String(Number(raw));
+  }
   function saveMaster(){
     const selectedRole=val('ddUserRole');
     if(!selectedRole){alert('Selecciona tu función principal: Docente, Director o Docente y Director.');document.getElementById('ddUserRole')?.focus();return;}
+    const teacherCount=nonNegativeInteger('ddTeacherCount','El número de docentes');if(teacherCount===null)return;
+    const studentCount=nonNegativeInteger('ddStudentCount','El número de estudiantes');if(studentCount===null)return;
     const next={
       ieName:val('ddIeName'),modularCode:val('ddModularCode'),localCode:val('ddLocalCode'),ugel:val('ddUgel'),dreGre:val('ddDreGre'),
       region:val('ddRegion'),province:val('ddProvince'),district:val('ddDistrict'),locationType:val('ddLocationType'),locationName:val('ddLocationName'),
       geographicArea:val('ddGeoArea')||'No especificado',managementType:val('ddManagementType'),levels:selectedLevels(),organization:val('ddOrganization'),
-      shifts:state.institutionMaster?.shifts||[],directorName:val('ddDirectorName'),teacherCount:val('ddTeacherCount'),studentCount:val('ddStudentCount'),
+      shifts:state.institutionMaster?.shifts||[],directorName:val('ddDirectorName'),teacherCount,studentCount,
       schoolCalendar:val('ddSchoolCalendar'),communalCalendar:val('ddCommunalCalendar'),notes:val('ddInstitutionNotes'),updatedAt:new Date().toISOString()
     };
     state.userRole=selectedRole;
