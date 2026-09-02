@@ -1,4 +1,4 @@
-/* DocenteDigital – Ficha Maestra de la IE v46.4
+/* DocenteDigital – Ficha Maestra de la IE v46.5
    Registra una vez los datos institucionales y los reutiliza en Docente y Director.
    No sustituye autenticación ni una base de datos multiusuario; en este prototipo se guarda en localStorage.
 */
@@ -6,6 +6,7 @@
   if(window.__ddInstitutionMasterV46)return;window.__ddInstitutionMasterV46=true;
   if(typeof state!=='object')return;
 
+  const STORAGE_KEY='docenteDigitalPrototype';
   const E=v=>typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const tidy=v=>String(v??'').replace(/\s+/g,' ').trim();
   const locationTypes=['Localidad','Centro poblado','Ciudad','Pueblo','Caserío','Anexo','Comunidad campesina','Comunidad nativa','Barrio / urbanización','Otro'];
@@ -118,6 +119,22 @@
     }
     return String(Number(raw));
   }
+  function masterPersisted(updatedAt,role){
+    try{
+      const raw=localStorage.getItem(STORAGE_KEY);
+      const stored=raw?JSON.parse(raw):null;
+      return Boolean(stored&&typeof stored==='object'&&!Array.isArray(stored)&&stored.institutionMaster&&stored.institutionMaster.updatedAt===updatedAt&&tidy(stored.userRole||'')===tidy(role||''));
+    }catch(_e){return false;}
+  }
+  function showSaveFailure(){
+    let warning=document.getElementById('ddInstitutionSaveWarning');
+    const card=document.getElementById('ddInstitutionMaster');
+    if(!warning&&card){
+      warning=document.createElement('div');warning.id='ddInstitutionSaveWarning';warning.className='notice topgap';
+      const actions=card.querySelector('.actions');if(actions)actions.insertAdjacentElement('afterend',warning);else card.appendChild(warning);
+    }
+    if(warning)warning.innerHTML='<b>⚠️ No se pudo guardar la Ficha Maestra en este dispositivo.</b><br>Los datos siguen visibles en esta pantalla, pero podrían perderse al recargar. Libera espacio o habilita el almacenamiento y vuelve a guardar.';
+  }
   function saveMaster(){
     const selectedRole=val('ddUserRole');
     if(!selectedRole){alert('Selecciona tu función principal: Docente, Director o Docente y Director.');document.getElementById('ddUserRole')?.focus();return;}
@@ -134,7 +151,14 @@
     state.institutionMaster=next;
     if(next.organization)state.ieType=next.organization;
     syncLegacy();if(typeof save==='function')save();
+    const persisted=masterPersisted(next.updatedAt,selectedRole);
     paintSummary();mountSettings();
+    if(!persisted){
+      window.__ddPersistenceTruthFailure={at:new Date().toISOString(),kind:'institutionMaster',updatedAt:next.updatedAt};
+      showSaveFailure();
+      return;
+    }
+    document.getElementById('ddInstitutionSaveWarning')?.remove();
     alert('Ficha Maestra guardada. Estos datos quedan disponibles para reutilizarlos en Docente y Director.');
   }
 
