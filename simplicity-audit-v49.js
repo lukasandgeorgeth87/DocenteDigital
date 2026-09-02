@@ -1,10 +1,11 @@
-/* DocenteDigital – Auditoría de Simplicidad v49
+/* DocenteDigital – Auditoría de Simplicidad v50
    Regla: potente por dentro, simple por fuera.
    Añade pruebas locales de facilidad de uso a la auditoría ejecutable.
    El ISU completo NO se calcula sin piloto con usuarios reales.
+   V3/V5: una prueba omitida o no aplicable en el estado actual no cuenta como PASA.
 */
 (function(){
-  if(window.__ddSimplicityAuditV49)return;window.__ddSimplicityAuditV49=true;
+  if(window.__ddSimplicityAuditV50)return;window.__ddSimplicityAuditV50=true;
   const tidy=v=>String(v??'').replace(/\s+/g,' ').trim();
   const visible=el=>!!el&&!!(el.offsetWidth||el.offsetHeight||el.getClientRects().length)&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden';
   const now=()=>new Date().toISOString();
@@ -38,21 +39,21 @@
     },
     {
       id:'AUD-USO-005',area:'Simplicidad',severity:'S3',name:'Prueba básica del pulgar',run(){
-        if(window.innerWidth>768)return res(this.id,this.severity,true,'Botones táctiles cómodos en móvil','Prueba local omitida por ancho de escritorio',{width:window.innerWidth},'Ejecutar además en Android real');
+        if(window.innerWidth>768)return res(this.id,this.severity,false,'Botones táctiles cómodos en móvil','PENDIENTE: esta ejecución ocurrió en ancho de escritorio',{width:window.innerWidth},'Ejecutar en viewport móvil y además en Android real','PENDIENTE');
         const buttons=[...document.querySelectorAll('button')].filter(visible);const small=buttons.filter(b=>{const r=b.getBoundingClientRect();return r.height<40||r.width<40;});const ok=small.length===0;
         return res(this.id,this.severity,ok,'Botones visibles de al menos ~40 px en móvil',ok?'Sin objetivos táctiles pequeños detectados':`${small.length} botón(es) pequeños`,small.slice(0,8).map(b=>({label:tidy(b.textContent),rect:b.getBoundingClientRect().toJSON?.()||{width:b.offsetWidth,height:b.offsetHeight}})),'Aumentar área táctil de botones principales');
       }
     },
     {
       id:'AUD-USO-006',area:'Simplicidad',severity:'S2',name:'Ruta para volver en flujos guiados',run(){
-        const host=document.getElementById('ddProposalChooser');if(!visible(host))return res(this.id,this.severity,true,'Flujo activo con Volver/Cancelar','No hay selector de propuestas activo','No aplica en este instante','Repetir durante flujo Unidad/Proyecto');
+        const host=document.getElementById('ddProposalChooser');if(!visible(host))return res(this.id,this.severity,false,'Flujo activo con Volver/Cancelar','PENDIENTE: no hay selector de propuestas activo durante esta ejecución',{active:false},'Repetir durante el flujo Unidad/Proyecto','PENDIENTE');
         const back=host.querySelector('#ddBackSituation,#ddCancelChoice,.btn.ghost');const ok=!!back&&visible(back);
         return res(this.id,this.severity,ok,'Botón Volver o Cancelar visible',ok?tidy(back.textContent):'[ausente]',!!back,'Agregar una salida clara del paso actual');
       }
     },
     {
       id:'AUD-USO-007',area:'Simplicidad',severity:'S2',name:'Sin términos técnicos innecesarios',run(){
-        const active=document.querySelector('.screen.active');if(!active||active.id==='settings')return res(this.id,this.severity,true,'Sin jerga técnica en tareas del usuario','Pantalla técnica/configuración o sin pantalla activa',active?.id||'','Revisar en pantallas de trabajo');
+        const active=document.querySelector('.screen.active');if(!active||active.id==='settings')return res(this.id,this.severity,false,'Sin jerga técnica en tareas del usuario','PENDIENTE: pantalla técnica/configuración o sin pantalla de trabajo activa',{screen:active?.id||null},'Revisar en pantallas de trabajo','PENDIENTE');
         const text=tidy(active.innerText);const hits=(text.match(/\b(tokens?|rag|vector database|temperatura|prompt del sistema|persistir|instanciar|auditoría semántica)\b/gi)||[]);const ok=hits.length===0;
         return res(this.id,this.severity,ok,'Lenguaje cotidiano en el flujo del usuario',ok?'Sin jerga técnica detectada':`Términos técnicos: ${[...new Set(hits)].join(', ')}`,hits,'Reemplazar por lenguaje sencillo u ocultar la opción técnica');
       }
