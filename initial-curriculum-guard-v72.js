@@ -1,8 +1,9 @@
-/* DocenteDigital – guardia curricular de Educación Inicial v72.9
+/* DocenteDigital – guardia curricular de Educación Inicial v73.0
    Corrige la lista base de áreas del ciclo II (3, 4 y 5 años) según el Programa Curricular de Educación Inicial del MINEDU.
    Además evita que el perfil EIB/monolingüe sea solo visual: lo valida y conserva en el estado activo.
    V5: marca como no disponibles las acciones del Director que todavía no tienen comportamiento real, evitando controles simulados.
    V5: no presenta diagnóstico ni programación anual simulados como funciones terminadas.
+   V5: no presenta registro, evaluación de unidad ni conclusiones SIAGIE simuladas como funciones terminadas.
    V5: asegura que las guardias críticas de seguridad curricular, coherencia de configuración y exportación DOCX real se carguen realmente en producción después de los módulos base.
    V4/V5: mantiene accesible el espacio Director en navegación móvil cuando la barra lateral de escritorio se oculta.
    V3/V5: no presenta la interpretación léxica/local actual como comprensión semántica IA real.
@@ -152,6 +153,33 @@
     }
   }
 
+  function markUnfinishedEvaluationActions(){
+    const section=document.getElementById('evaluation');
+    if(!section)return;
+    const labels={register:'Registrar evaluación',unit:'Evaluación de unidad/proyecto',siagie:'Conclusiones SIAGIE'};
+    let marked=0;
+    for(const button of section.querySelectorAll('button')){
+      const handler=button.getAttribute('onclick')||'';
+      const match=handler.match(/showEvaluation\(['\"](register|unit|siagie)['\"]\)/);
+      if(!match)continue;
+      const kind=match[1];
+      button.disabled=true;
+      button.setAttribute('aria-disabled','true');
+      button.setAttribute('title','Función aún no disponible');
+      button.removeAttribute('onclick');
+      button.textContent=`${labels[kind]} · Próximamente`;
+      marked++;
+    }
+    if(marked&&!section.querySelector('[data-dd-evaluation-pending]')){
+      const note=document.createElement('div');
+      note.className='notice topgap';
+      note.setAttribute('data-dd-evaluation-pending','true');
+      note.textContent='Registro, evaluación de unidad/proyecto y conclusiones SIAGIE todavía no están implementados como flujos completos. No se consideran listos para lanzamiento.';
+      const grid=section.querySelector('.grid');
+      if(grid)grid.insertAdjacentElement('afterend',note);
+    }
+  }
+
   function markPlanningAsPreliminary(){
     const panel=document.getElementById('unitPanel');
     if(!panel)return;
@@ -201,6 +229,7 @@
   function initializeUiGuards(){
     markUnfinishedDirectorActions();
     markUnfinishedPlanningActions();
+    markUnfinishedEvaluationActions();
     markPlanningAsPreliminary();
     ensureDirectorMobileAccess();
   }
