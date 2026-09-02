@@ -1,9 +1,10 @@
-/* DocenteDigital – guardia curricular de Educación Inicial v72.7
+/* DocenteDigital – guardia curricular de Educación Inicial v72.8
    Corrige la lista base de áreas del ciclo II (3, 4 y 5 años) según el Programa Curricular de Educación Inicial del MINEDU.
    Además evita que el perfil EIB/monolingüe sea solo visual: lo valida y conserva en el estado activo.
    V5: marca como no disponibles las acciones del Director que todavía no tienen comportamiento real, evitando controles simulados.
    V5: asegura que las guardias críticas de seguridad curricular, coherencia de configuración y exportación DOCX real se carguen realmente en producción después de los módulos base.
    V4/V5: mantiene accesible el espacio Director en navegación móvil cuando la barra lateral de escritorio se oculta.
+   V3/V5: no presenta la interpretación léxica/local actual como comprensión semántica IA real.
    No activa una matriz curricular completa ni declara curriculumMatrixReady. */
 (function(){
   if(window.__ddInitialCurriculumGuardV72)return;
@@ -122,6 +123,18 @@
     }
   }
 
+  function markPlanningAsPreliminary(){
+    const panel=document.getElementById('unitPanel');
+    if(!panel)return;
+    const situation=document.getElementById('unitSituation');
+    const help=situation?.parentElement?.querySelector('small');
+    if(help)help.textContent='La propuesta actual usa interpretación local preliminar y debe revisarse. La comprensión semántica con IA real aún no está conectada.';
+    const createButton=[...panel.querySelectorAll('button')].find(button=>/createUnitDemo/.test(button.getAttribute('onclick')||''));
+    if(createButton)createButton.textContent='✨ Crear propuesta preliminar';
+    const ready=document.getElementById('unitReady');
+    if(ready)ready.textContent='Propuesta preliminar creada y guardada en “Mis unidades/proyectos”. Revísala antes de utilizarla.';
+  }
+
   function ensureDirectorMobileAccess(){
     const nav=document.querySelector('.mobile-nav');
     if(!nav||nav.querySelector('[data-screen="director"]'))return;
@@ -158,6 +171,7 @@
 
   function initializeUiGuards(){
     markUnfinishedDirectorActions();
+    markPlanningAsPreliminary();
     ensureDirectorMobileAccess();
   }
 
