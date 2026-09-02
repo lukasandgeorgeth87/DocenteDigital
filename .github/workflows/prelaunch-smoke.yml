@@ -93,6 +93,38 @@ jobs:
           print(f'Validated {len(parser.assets)} local/external asset references from index.html.')
           PY
 
+      - name: Verify audited critical runtime modules are wired to production
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          # A module existing in GitHub is not evidence that production executes it.
+          # Count a module as wired only if it is referenced by index.html or by the
+          # bootstrap guard that dynamically loads critical modules.
+          index = Path('index.html').read_text(encoding='utf-8')
+          bootstrap_path = Path('initial-curriculum-guard-v72.js')
+          bootstrap = bootstrap_path.read_text(encoding='utf-8') if bootstrap_path.is_file() else ''
+          runtime_wiring = index + '\n' + bootstrap
+
+          required = [
+              'title-context-v38.js',
+              'significant-situation-core-v53.js',
+              'institution-master-v46.js',
+              'runtime-audit-v23.js',
+              'simplicity-audit-v49.js',
+          ]
+
+          missing_files = [name for name in required if not Path(name).is_file()]
+          unwired = [name for name in required if name not in runtime_wiring]
+          if missing_files:
+              raise SystemExit('Audited critical runtime modules missing from repository: ' + ', '.join(missing_files))
+          if unwired:
+              raise SystemExit('Audited critical runtime modules exist but are NOT wired to production: ' + ', '.join(unwired))
+          print('Audited critical runtime modules are wired to the production bootstrap.')
+          PY
+
       - name: V5 scope notice
         run: |
           echo 'This workflow is only a technical smoke gate.'
