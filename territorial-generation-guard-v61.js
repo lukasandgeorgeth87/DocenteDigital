@@ -15,6 +15,10 @@
     const t=tidy(state.teacherContext?.locationType||'');
     return /^Comunidad (campesina|nativa)$/i.test(t);
   }
+  function contextAllowsFamily(unit){
+    const brief=low(unit?.situationBrief||unit?.planningMeaning?.raw||'');
+    return /\bfamilia\b|\bfamilias\b|\bfamiliar\b|\bfamiliares\b|\bmadres?\b|\bpadres?\b|\babuel[oa]s?\b/.test(brief);
+  }
   function placeName(){return tidy(state.teacherContext?.locationName||state.teacherContext?.community||'');}
   function isHistorical(unit){
     const s=low(unit?.status||unit?.documentStatus||'');
@@ -41,6 +45,13 @@
       s=s.replace(/\ben la comunidad\b/gi,'en el entorno');
       s=s.replace(/\bmuestra comunitaria\b/gi,'muestra escolar');
       s=s.replace(/\bpresentación comunitaria\b/gi,'presentación escolar');
+    }
+    if(!contextAllowsFamily(unit)){
+      s=s.replace(/\bsaberes de nuestras familias\b/gi,'saberes mencionados en la situación');
+      s=s.replace(/\bsaberes familiares\b/gi,'saberes mencionados en la situación');
+      s=s.replace(/\bexperiencias familiares y comunitarias\b/gi,'experiencias relacionadas con la situación');
+      s=s.replace(/\bnuestras familias\b/gi,'las personas involucradas en la situación');
+      s=s.replace(/\bde las familias\b/gi,'de las personas involucradas');
     }
     return s;
   }
@@ -83,7 +94,8 @@
   window.ddAuditTerritorialGeneration=function(unit){
     const texts=[unit?.purpose,unit?.reto,unit?.situation,unit?.product,...(unit?.purposes||[]).flatMap(p=>[p.evidence,...(p.performances||[]).map(x=>x.text),...(p.criteria||[]).map(x=>x.text)])].filter(Boolean).join(' ');
     const unauthorizedCommunity=!contextAllowsCommunity(unit)&&/\bnuestra comunidad\b|\bde la comunidad\b|\ben la comunidad\b/i.test(texts);
+    const unauthorizedFamily=!contextAllowsFamily(unit)&&/\bnuestras familias\b|\bsaberes familiares\b|\bsaberes de nuestras familias\b|\bexperiencias familiares\b/i.test(texts);
     const foreignCcotataqui=!/ccotataqui/.test(low(unit?.situationBrief||''))&&low(placeName())!=='ccotataqui'&&/ccotataqui/i.test(texts);
-    return{pass:!unauthorizedCommunity&&!foreignCcotataqui,unauthorizedCommunity,foreignCcotataqui};
+    return{pass:!unauthorizedCommunity&&!unauthorizedFamily&&!foreignCcotataqui,unauthorizedCommunity,unauthorizedFamily,foreignCcotataqui};
   };
 })();
