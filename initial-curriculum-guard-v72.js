@@ -1,4 +1,4 @@
-/* DocenteDigital – guardia curricular de Educación Inicial v73.2
+/* DocenteDigital – guardia curricular de Educación Inicial v73.3
    Corrige la lista base de áreas del ciclo II (3, 4 y 5 años) según el Programa Curricular de Educación Inicial del MINEDU.
    Además evita que el perfil EIB/monolingüe sea solo visual: lo valida y conserva en el estado activo.
    V5: marca como no disponibles las acciones del Director que todavía no tienen comportamiento real, evitando controles simulados.
@@ -9,6 +9,7 @@
    V4/V5: mantiene accesible el espacio Director en navegación móvil cuando la barra lateral de escritorio se oculta.
    V3/V5: no presenta la interpretación léxica/local actual como comprensión semántica IA real.
    V5: un fallo de carga de un módulo crítico debe ser visible para el usuario y no quedar solo en consola.
+   Núcleo IA: evita que el producto preliminar introduzca Ccotataqui cuando el usuario no lo proporcionó.
    No activa una matriz curricular completa ni declara curriculumMatrixReady. */
 (function(){
   if(window.__ddInitialCurriculumGuardV72)return;
@@ -214,6 +215,27 @@
     if(ready)ready.textContent='Propuesta preliminar creada y guardada en “Mis unidades/proyectos”. Revísala antes de utilizarla.';
   }
 
+  function preventHardcodedCcotataquiProduct(){
+    const previousCreateUnit=window.createUnitDemo;
+    if(typeof previousCreateUnit!=='function'||previousCreateUnit.__ddTerritoryGuard)return;
+    const guarded=function(){
+      const brief=(document.getElementById('unitSituation')?.value||'').trim();
+      const result=previousCreateUnit.apply(this,arguments);
+      if(/c+otataqui/i.test(brief))return result;
+      const currentState=getState();
+      const unit=currentState?.units?.find(u=>u.id===currentState.activeUnitId)||currentState?.units?.[0];
+      if(unit&&typeof unit.product==='string'&&/Ccotataqui/i.test(unit.product)){
+        unit.product=unit.product.replace(/\s+de\s+Ccotataqui/ig,'').replace(/Ccotataqui/ig,'el contexto descrito');
+        try{save();}catch(_e){}
+        try{if(typeof renderUnits==='function')renderUnits();}catch(_e){}
+        try{if(typeof renderUnitOutput==='function')renderUnitOutput(unit);}catch(_e){}
+      }
+      return result;
+    };
+    guarded.__ddTerritoryGuard=true;
+    window.createUnitDemo=guarded;
+  }
+
   function ensureDirectorMobileAccess(){
     const nav=document.querySelector('.mobile-nav');
     if(!nav||nav.querySelector('[data-screen="director"]'))return;
@@ -272,6 +294,7 @@
     markUnfinishedEvaluationActions();
     markUnfinishedMaterialsActions();
     markPlanningAsPreliminary();
+    preventHardcodedCcotataquiProduct();
     ensureDirectorMobileAccess();
   }
 
