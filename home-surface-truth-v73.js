@@ -1,6 +1,7 @@
 /* DocenteDigital – V4/V5: verdad funcional en Inicio y navegación.
    No presenta Materiales/Evaluación ni acciones Director no conectadas como disponibles
    mientras sus flujos principales estén explícitamente pendientes de prelaunch.
+   V4/V5: evita entradas activas hacia flujos de planificación todavía no implementados.
    V4: mantiene coherente la etiqueta visible de Modo Fácil/Experto con el estado activo. */
 (function(){
   if(window.__ddHomeSurfaceTruthV73)return;
@@ -58,6 +59,20 @@
     if(p)p.textContent='Unidades, proyectos y horario disponibles. Diagnóstico y programación anual: próximamente.';
   }
 
+  function markUnavailablePlanningEntry(handler,label){
+    const plan=document.getElementById('plan');
+    if(!plan)return false;
+    const button=[...plan.querySelectorAll('button')].find(b=>(b.getAttribute('onclick')||'').includes(handler));
+    if(!button)return false;
+    button.disabled=true;
+    button.setAttribute('aria-disabled','true');
+    button.setAttribute('aria-label',`${label}, próximamente`);
+    button.setAttribute('title','Función aún no disponible para lanzamiento');
+    button.removeAttribute('onclick');
+    if(!/Próximamente/i.test(button.textContent||''))button.textContent=`${label} · Próximamente`;
+    return true;
+  }
+
   function syncModeLabel(){
     const pill=document.querySelector('#home .hero .pill');
     if(!pill)return;
@@ -85,6 +100,8 @@
 
   function apply(){
     clarifyPlanningHomeCard();
+    markUnavailablePlanningEntry('showDiagnostic','Crear diagnóstico');
+    markUnavailablePlanningEntry('demoAnnual','Abrir programación anual');
     markUnavailableHomeAction('materials','Materiales');
     markUnavailableHomeAction('evaluation','Evaluación');
     markUnavailableNavigation('materials','Materiales');
