@@ -13,7 +13,7 @@
 **ID:** AUD-CI-PRELAUNCH-080  
 **Módulo:** Entrega / CI / prelaunch gate  
 **Entrada:** inspección del repositorio para localizar automatizaciones de prueba antes de publicar.  
-**Resultado esperado:** existir una puerta automatizada mínima que detecte fallos técnicos básicos antes de una publicación, sin presentar esa puerta como sustituto de las pruebas V5 reales.  
+**Resultado esperado:** existir una puerta automatizada mínima que detecte fallos técnicos básicos antes de una publicación, sin presentarla como sustituto de las pruebas V5 reales.  
 **Resultado obtenido inicial:** no existía `.github/workflows`; no había una automatización versionada de pruebas previas a publicación.  
 **Estado inicial:** NO PASA.  
 **Clasificación:** INEXISTENTE.  
@@ -35,22 +35,24 @@ Se añadió `.github/workflows/prelaunch-smoke.yml` con alcance deliberadamente 
 ## Retest
 
 - El workflow existe en la rama principal y es legible desde GitHub.
-- La creación del commit disparó un nuevo deployment Vercel asociado al mismo SHA.
-- Deployment: `dpl_HQHLTZFemF2EbTYxW5M1v5T2DMJH`.
-- Estado Vercel: `READY`.
-- Target: `production`.
+- GitHub Actions ejecutó realmente `Prelaunch Smoke` sobre el commit posterior de auditoría `3f11574a6155719cbde9b8809b9a8716bd714c55`.
+- Run ID: `33609345165`.
+- Estado del run: `completed`.
+- Conclusión: `success`.
+- El commit funcional disparó deployment Vercel `dpl_HQHLTZFemF2EbTYxW5M1v5T2DMJH`, estado `READY`, target `production`.
+- El commit documental posterior disparó deployment `dpl_FBaGFL1VUsbntTwCurp8odk9E76i`, también `READY`, target `production`.
 - Producción `https://docente-digital.vercel.app/`: HTTP 200 después de la corrección.
-- En la consulta inmediata a GitHub Actions todavía no aparecía una ejecución (`workflow_runs: []`), por lo que NO se declara probado el funcionamiento efectivo del runner. Debe mantenerse PENDIENTE hasta observar una ejecución real exitosa.
 
 ## Estado posterior
 
-**PARCIALMENTE FUNCIONAL / PENDIENTE DE EJECUCIÓN REAL DEL WORKFLOW.**
+**PASA para la existencia y ejecución real del smoke gate técnico mínimo.**  
+**Clasificación posterior:** FUNCIONAL para este alcance técnico limitado.
 
-La ausencia total del gate quedó corregida a nivel de configuración versionada, pero V5 sigue NO CUMPLIDA como puerta de publicación completa porque faltan pruebas automáticas y reales de Docente, Director, multigrado, Unidad, Proyecto, Sesión, Evaluación, Registro, Oficio, RD, Informe, guardado, buscador, Word/PDF, móvil, seguridad, IA y normativa.
+No se considera cumplida la puerta V5 completa. El workflow todavía no prueba Docente E2E, Director E2E, multigrado, generación de Unidad/Proyecto/Sesión, Evaluación, Registro, Oficio, RD, Informe, guardado real, buscador, Word/PDF físico, móvil físico, seguridad, IA semántica ni normativa dinámica.
 
 ## Riesgo de regresión
 
-Medio. El workflow puede existir y aun así no ejecutarse si GitHub Actions está deshabilitado, restringido o falla por configuración del repositorio. Además, Vercel actualmente puede desplegar un commit sin esperar este workflow; por tanto, no se considera todavía un gate bloqueante real del deployment.
+Medio. Aunque el runner ya ejecuta y pasa, Vercel sigue desplegando directamente los commits; no existe evidencia de que el deployment espere y bloquee ante un fallo de GitHub Actions. Por ello el smoke test es prevención útil, pero todavía no es un gate duro de publicación.
 
 ## Impacto en indicadores
 
@@ -58,7 +60,7 @@ Medio. El workflow puede existir y aun así no ejecutarse si GitHub Actions est�
 - **ICGD:** sin puntuación definitiva; sin impacto directo suficiente.
 - **IFR:** mejora parcial de prevención de regresiones técnicas, sin valor definitivo.
 - **ISU:** sin puntuación definitiva; no valida usuarios reales.
-- **Prelaunch:** mejora parcial, pero permanece NO APROBADO por ausencia de evidencia de ejecución del workflow y por los demás bloqueantes V5.
+- **Prelaunch:** mejora parcial; permanece NO APROBADO por los demás bloqueantes V5 y porque el CI todavía no bloquea formalmente el deployment.
 
 ## Bloqueantes V5 que permanecen abiertos
 
