@@ -1,9 +1,9 @@
-/* DocenteDigital – guardia de acciones prototipo del Director v41
+/* DocenteDigital – guardia de acciones prototipo del Director v42
    Evita presentar botones aparentemente funcionales cuando todavía no existe un flujo real.
    V4: la limitación se comunica en lenguaje breve y sencillo; el detalle técnico queda fuera de la superficie principal.
 */
 (function(){
-  if(window.__ddDirectorPrototypeGuardV41)return;window.__ddDirectorPrototypeGuardV41=true;
+  if(window.__ddDirectorPrototypeGuardV42)return;window.__ddDirectorPrototypeGuardV42=true;
 
   function mount(){
     const screen=document.getElementById('director');if(!screen)return;
@@ -13,12 +13,9 @@
       if(hasAction||btn.dataset.ddPrototypeGuard)return;
       btn.dataset.ddPrototypeGuard='1';
       btn.type='button';
+      btn.disabled=true;
       btn.setAttribute('aria-disabled','true');
       btn.title='Esta opción aún está en desarrollo.';
-      btn.addEventListener('click',e=>{
-        e.preventDefault();e.stopPropagation();
-        alert('Esta opción aún está en desarrollo.');
-      });
       if(!/en desarrollo/i.test(btn.textContent||''))btn.textContent=`${btn.textContent.trim()} · En desarrollo`;
     });
 
