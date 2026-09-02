@@ -21,6 +21,7 @@
     if(!state.linguisticMode&&state.quechuaVar==='Quechua Collao'){
       state.quechuaVar=NONE;
       if(!state.indigenousLanguage)state.indigenousLanguage=NONE;
+      state.linguisticSelectionConfirmed=false;
     }
 
     /* Mantiene coherencia mínima aun antes de que cargue linguistic-profile-v26.js. */
@@ -28,6 +29,7 @@
       state.language='Castellano';
       state.indigenousLanguage=NONE;
       state.quechuaVar=NONE;
+      state.linguisticSelectionConfirmed=false;
     }
   }
 
@@ -41,7 +43,7 @@
     if(state.linguisticMode==='Monolingüe castellano')return true;
     if(state.linguisticMode!=='EIB')return false;
     const origin=String(state.indigenousLanguage||state.quechuaVar||'').trim();
-    return Boolean(origin&&origin!==NONE);
+    return Boolean(origin&&origin!==NONE&&state.linguisticSelectionConfirmed===true);
   }
 
   function hasCompleteBaseConfiguration(){
@@ -100,7 +102,7 @@
 
   // Evita salir del asistente con una configuración semánticamente incompleta.
   // Además de nivel/IE/grados/áreas, el perfil lingüístico debe estar confirmado:
-  // monolingüe castellano o EIB con lengua originaria seleccionada.
+  // monolingüe castellano o EIB con lengua originaria seleccionada explícitamente.
   const originalGo=window.go;
   if(typeof originalGo==='function')window.go=function(id){
     if(id!=='setup'&&!hasCompleteBaseConfiguration()){
@@ -125,9 +127,18 @@
     document.addEventListener('change',function(event){
       const target=event.target;
       if(!target||!['linguisticMode','language','quechuaVar'].includes(target.id))return;
-      if(target.id==='linguisticMode')state.linguisticMode=target.value;
+      if(target.id==='linguisticMode'){
+        state.linguisticMode=target.value;
+        if(target.value==='EIB')state.linguisticSelectionConfirmed=false;
+      }
       if(target.id==='language')state.language=target.value;
-      if(target.id==='quechuaVar')state.quechuaVar=target.value;
+      if(target.id==='quechuaVar'){
+        state.quechuaVar=target.value;
+        if(state.linguisticMode==='EIB'){
+          state.indigenousLanguage=target.value||NONE;
+          state.linguisticSelectionConfirmed=Boolean(target.value&&target.value!==NONE);
+        }
+      }
       persistSetupProgress();
     });
   }
