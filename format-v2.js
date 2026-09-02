@@ -1,4 +1,4 @@
-/* DocenteDigital – formato pedagógico y de exportación v2.2 */
+/* DocenteDigital – formato pedagógico y de exportación v2.3 */
 (function(){
   /* V3/V5: no inventar identidad docente ni institución. Los perfiles nuevos parten vacíos;
      los valores existentes se conservan para no alterar históricos ni datos ya registrados. */
@@ -9,50 +9,52 @@
   const titleOptions=(brief,type)=>{
     const s=(brief||'').toLowerCase();
     const project=type==='Proyecto de aprendizaje';
+    const explicitlyCcotataqui=/ccotataqui|cotataqui/.test(s);
+    const placeName=explicitlyCcotataqui?'Ccotataqui':'nuestro entorno';
     if(/siembr|tarpuy|papa|añu|oca|olluco/.test(s)) return project?[
-      'Hatun Tarpuy: investigamos, sembramos y compartimos los saberes de nuestra comunidad',
-      'Sembramos saberes y futuro: aprendemos del Hatun Tarpuy de Ccotataqui',
+      'Hatun Tarpuy: investigamos, sembramos y compartimos saberes de nuestro entorno',
+      `Sembramos saberes y futuro: aprendemos del Hatun Tarpuy de ${placeName}`,
       'De la chacra a la escuela: investigamos y valoramos nuestra siembra andina'
     ]:[
-      'Sembramos saberes y cuidamos nuestra tierra en el Hatun Tarpuy de Ccotataqui',
-      'Aprendemos de nuestra siembra: saberes, ciencia y comunidad en Ccotataqui',
-      'Hatun Tarpuy: aprendemos juntos de la siembra y la vida de nuestra comunidad'
+      `Sembramos saberes y cuidamos nuestra tierra en el Hatun Tarpuy de ${placeName}`,
+      `Aprendemos de nuestra siembra: saberes, ciencia y territorio en ${placeName}`,
+      'Hatun Tarpuy: aprendemos juntos de la siembra y la vida de nuestro entorno'
     ];
     if(/pachamama|madre tierra/.test(s)) return project?[
       'Pachamamanchik: investigamos, valoramos y actuamos para cuidar nuestra Madre Tierra',
       'Saberes que cuidan la vida: un proyecto para agradecer y proteger la Pachamama',
-      'Nuestra Pachamama, nuestra responsabilidad: aprendemos y actuamos desde la comunidad'
+      'Nuestra Pachamama, nuestra responsabilidad: aprendemos y actuamos desde nuestro entorno'
     ]:[
       'Pachamamanchik kawsayta quwanchik: aprendemos a agradecer y cuidar nuestra Madre Tierra',
       'Aprendemos de la Pachamama y fortalecemos nuestro compromiso con la vida',
       'Saberes de nuestra tierra: valoramos, agradecemos y cuidamos la Pachamama'
     ];
     if(/agua|yaku/.test(s)) return project?[
-      'Yaku kawsaymi: investigamos y actuamos para cuidar el agua de nuestra comunidad',
+      'Yaku kawsaymi: investigamos y actuamos para cuidar el agua de nuestro entorno',
       'Cada gota cuenta: un proyecto para conocer y proteger el agua que nos da vida',
       'Guardianes del yaku: investigamos soluciones para cuidar el agua'
     ]:[
       'El agua nos da vida: aprendemos a conocerla, valorarla y cuidarla',
-      'Yaku kawsaymi: comprendemos y cuidamos el agua de nuestra comunidad',
-      'Aprendemos del agua para cuidar la vida y nuestra comunidad'
+      'Yaku kawsaymi: comprendemos y cuidamos el agua de nuestro entorno',
+      'Aprendemos del agua para cuidar la vida y nuestro entorno'
     ];
     if(/residuo|basura|contamin/.test(s)) return project?[
-      'Ccotataqui limpio: investigamos y actuamos para reducir nuestros residuos',
-      'Menos residuos, más vida: transformamos hábitos para cuidar nuestra comunidad',
-      'De problema a solución: construimos una comunidad que reduce y reutiliza'
+      `${placeName} limpio: investigamos y actuamos para reducir nuestros residuos`,
+      'Menos residuos, más vida: transformamos hábitos para cuidar nuestro entorno',
+      'De problema a solución: construimos un entorno que reduce y reutiliza'
     ]:[
-      'Aprendemos a reducir los residuos y proteger nuestra comunidad',
+      'Aprendemos a reducir los residuos y proteger nuestro entorno',
       'Cuidamos nuestro entorno: comprendemos el problema de los residuos',
       'Menos contaminación, más vida: aprendemos a cuidar nuestros espacios'
     ];
     return project?[
-      'Investigamos nuestra realidad y construimos soluciones para la comunidad',
+      'Investigamos nuestra realidad y construimos soluciones para nuestro entorno',
       'Aprendemos haciendo: un proyecto para comprender y mejorar nuestro entorno',
       'De nuestras preguntas a la acción: investigamos, creamos y compartimos'
     ]:[
       'Aprendemos desde nuestra realidad para comprender y transformar el entorno',
-      'Saberes de nuestra comunidad: investigamos, dialogamos y aprendemos juntos',
-      'Nuestra comunidad nos enseña: construimos aprendizajes con sentido'
+      'Saberes de nuestro entorno: investigamos, dialogamos y aprendemos juntos',
+      'Nuestro entorno nos enseña: construimos aprendizajes con sentido'
     ];
   };
 
@@ -160,7 +162,7 @@
   const homeGrid=byId('home')?.querySelector('.grid');
   if(homeGrid&&!byId('ddQuickBox')){
     const q=document.createElement('div');q.id='ddQuickBox';q.className='card dd-quickbox';
-    q.innerHTML='<h2>💬 ¿Qué quieres preparar hoy?</h2><p class="sub">Escribe en lenguaje natural y DocenteDigital te lleva al flujo correcto.</p><div class="chatbar"><input id="ddQuickInput" placeholder="Ej.: Quiero una unidad sobre la siembra en Ccotataqui"><button class="btn" id="ddQuickGo">Continuar</button></div><small>Acceso rápido del prototipo: organiza la solicitud y reutiliza tu configuración; no reemplaza tu criterio docente.</small>';
+    q.innerHTML='<h2>💬 ¿Qué quieres preparar hoy?</h2><p class="sub">Escribe en lenguaje natural y DocenteDigital te lleva al flujo correcto.</p><div class="chatbar"><input id="ddQuickInput" placeholder="Ej.: Quiero una unidad sobre la siembra de mi localidad"><button class="btn" id="ddQuickGo">Continuar</button></div><small>Acceso rápido del prototipo: organiza la solicitud y reutiliza tu configuración; no reemplaza tu criterio docente.</small>';
     homeGrid.prepend(q);
     byId('ddQuickGo').onclick=()=>{const t=(byId('ddQuickInput').value||'').trim();if(!t)return;if(/sesión|sesion/i.test(t)){go('session');return;}if(/evaluación|evaluacion|rúbrica|rubrica/i.test(t)){go('evaluation');return;}go('plan');showUnit();byId('unitSituation').value=t.replace(/^(quiero|crear|preparar|hazme|necesito)\s+/i,'');ddSuggestTitles();};
   }
