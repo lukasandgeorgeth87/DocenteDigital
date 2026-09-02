@@ -1,4 +1,4 @@
-/* DocenteDigital – V4/V5: verdad funcional en la pantalla de Inicio.
+/* DocenteDigital – V4/V5: verdad funcional en Inicio y navegación.
    No presenta Materiales/Evaluación como acciones disponibles mientras sus flujos
    principales estén explícitamente bloqueados por las guardas de prelaunch. */
 (function(){
@@ -12,6 +12,7 @@
     if(!button)return false;
     button.disabled=true;
     button.setAttribute('aria-disabled','true');
+    button.setAttribute('aria-label',`${label}, próximamente`);
     button.setAttribute('title','Función aún no disponible para lanzamiento');
     button.removeAttribute('onclick');
     const h2=button.querySelector('h2');
@@ -19,6 +20,19 @@
     const p=button.querySelector('p');
     if(p)p.textContent='Este flujo todavía está en construcción y no se considera disponible para lanzamiento.';
     return true;
+  }
+
+  function markUnavailableNavigation(screen,label){
+    document.querySelectorAll(`.sidebar [data-screen="${screen}"], .mobile-nav [data-screen="${screen}"]`).forEach(button=>{
+      button.disabled=true;
+      button.setAttribute('aria-disabled','true');
+      button.setAttribute('aria-label',`${label}, próximamente`);
+      button.setAttribute('title','Función aún no disponible para lanzamiento');
+      button.removeAttribute('onclick');
+      if(button.classList.contains('nav')&&!/Próximamente/i.test(button.textContent||'')){
+        button.innerHTML=`${screen==='materials'?'🧩':'📊'} ${label} · Próximamente`;
+      }
+    });
   }
 
   function clarifyPlanningHomeCard(){
@@ -33,8 +47,11 @@
     clarifyPlanningHomeCard();
     markUnavailableHomeAction('materials','Materiales');
     markUnavailableHomeAction('evaluation','Evaluación');
+    markUnavailableNavigation('materials','Materiales');
+    markUnavailableNavigation('evaluation','Evaluación');
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});
   else apply();
+  setTimeout(apply,350);
 })();
