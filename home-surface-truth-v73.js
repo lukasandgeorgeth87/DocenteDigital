@@ -1,6 +1,6 @@
 /* DocenteDigital – V4/V5: verdad funcional en Inicio y navegación.
-   No presenta Materiales/Evaluación como acciones disponibles mientras sus flujos
-   principales estén explícitamente bloqueados por las guardas de prelaunch. */
+   No presenta Materiales/Evaluación ni acciones Director no conectadas como disponibles
+   mientras sus flujos principales estén explícitamente pendientes de prelaunch. */
 (function(){
   if(window.__ddHomeSurfaceTruthV73)return;
   window.__ddHomeSurfaceTruthV73=true;
@@ -35,6 +35,20 @@
     });
   }
 
+  function markUnavailableDirectorActions(){
+    const director=document.getElementById('director');
+    if(!director)return;
+    director.querySelectorAll('.card button').forEach(button=>{
+      if(button.getAttribute('onclick'))return;
+      button.disabled=true;
+      button.setAttribute('aria-disabled','true');
+      button.setAttribute('title','Función aún no disponible para lanzamiento');
+      if(!/Próximamente/i.test(button.textContent||''))button.textContent=`${button.textContent.trim()} · Próximamente`;
+    });
+    const sub=director.querySelector('.sub');
+    if(sub)sub.textContent='Las funciones directivas principales siguen en construcción y no se consideran disponibles para lanzamiento.';
+  }
+
   function clarifyPlanningHomeCard(){
     const home=document.getElementById('home');
     if(!home)return;
@@ -49,6 +63,7 @@
     markUnavailableHomeAction('evaluation','Evaluación');
     markUnavailableNavigation('materials','Materiales');
     markUnavailableNavigation('evaluation','Evaluación');
+    markUnavailableDirectorActions();
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});
