@@ -1,4 +1,4 @@
-/* DocenteDigital – guardia curricular de Educación Inicial v73.3
+/* DocenteDigital – guardia curricular de Educación Inicial v73.4
    Corrige la lista base de áreas del ciclo II (3, 4 y 5 años) según el Programa Curricular de Educación Inicial del MINEDU.
    Además evita que el perfil EIB/monolingüe sea solo visual: lo valida y conserva en el estado activo.
    V5: marca como no disponibles las acciones del Director que todavía no tienen comportamiento real, evitando controles simulados.
@@ -10,6 +10,7 @@
    V3/V5: no presenta la interpretación léxica/local actual como comprensión semántica IA real.
    V5: un fallo de carga de un módulo crítico debe ser visible para el usuario y no quedar solo en consola.
    Núcleo IA: evita que el producto preliminar introduzca Ccotataqui cuando el usuario no lo proporcionó.
+   V2/V3/V5: impide crear una sesión desconectada usando la unidad y actividades de demostración del prototipo.
    No activa una matriz curricular completa ni declara curriculumMatrixReady. */
 (function(){
   if(window.__ddInitialCurriculumGuardV72)return;
@@ -236,6 +237,59 @@
     window.createUnitDemo=guarded;
   }
 
+  function guardSessionRequiresRealUnit(){
+    if(window.__ddSessionRequiresRealUnitV734)return;
+    window.__ddSessionRequiresRealUnitV734=true;
+
+    const originalFillSessionUnits=window.fillSessionUnits;
+    if(typeof originalFillSessionUnits==='function'){
+      window.fillSessionUnits=function(){
+        const currentState=getState();
+        const select=document.getElementById('sessionUnit');
+        const activity=document.getElementById('activity');
+        const title=document.getElementById('sessionTitle');
+        const button=[...document.querySelectorAll('#session button')].find(b=>(b.getAttribute('onclick')||'').includes('generateSession'));
+        if(!currentState||!Array.isArray(currentState.units)||currentState.units.length===0){
+          if(select){select.innerHTML='<option value="">Primero crea o abre una Unidad/Proyecto</option>';select.disabled=true;}
+          if(activity){activity.innerHTML='<option value="">Sin actividad programada</option>';activity.disabled=true;}
+          if(title)title.value='';
+          if(button){button.disabled=true;button.setAttribute('aria-disabled','true');button.setAttribute('title','Primero crea o abre una Unidad/Proyecto');}
+          const section=document.getElementById('session');
+          if(section&&!section.querySelector('[data-dd-session-unit-required]')){
+            const note=document.createElement('div');
+            note.className='notice topgap';
+            note.setAttribute('data-dd-session-unit-required','true');
+            note.textContent='Para crear una sesión primero debes crear o abrir una Unidad/Proyecto real. DocenteDigital no usará ejemplos automáticos como si fueran tu planificación.';
+            const card=section.querySelector('.card');
+            if(card)card.insertAdjacentElement('beforebegin',note);
+          }
+          return;
+        }
+        if(select)select.disabled=false;
+        if(activity)activity.disabled=false;
+        if(button){button.disabled=false;button.removeAttribute('aria-disabled');button.removeAttribute('title');}
+        document.querySelector('[data-dd-session-unit-required]')?.remove();
+        return originalFillSessionUnits.apply(this,arguments);
+      };
+    }
+
+    const originalGenerateSession=window.generateSession;
+    if(typeof originalGenerateSession==='function'){
+      window.generateSession=function(){
+        const currentState=getState();
+        const selectedId=document.getElementById('sessionUnit')?.value||'';
+        const hasRealUnit=Boolean(currentState&&Array.isArray(currentState.units)&&currentState.units.some(u=>u&&u.id===selectedId));
+        if(!hasRealUnit){
+          alert('Primero crea o abre una Unidad/Proyecto real antes de preparar la sesión.');
+          return;
+        }
+        return originalGenerateSession.apply(this,arguments);
+      };
+    }
+
+    try{if(typeof window.fillSessionUnits==='function')window.fillSessionUnits();}catch(_e){}
+  }
+
   function ensureDirectorMobileAccess(){
     const nav=document.querySelector('.mobile-nav');
     if(!nav||nav.querySelector('[data-screen="director"]'))return;
@@ -295,6 +349,7 @@
     markUnfinishedMaterialsActions();
     markPlanningAsPreliminary();
     preventHardcodedCcotataquiProduct();
+    guardSessionRequiresRealUnit();
     ensureDirectorMobileAccess();
   }
 
