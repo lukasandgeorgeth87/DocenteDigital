@@ -6,6 +6,8 @@
   const allowedGrades=()=>typeof gradeOptions==='function'?gradeOptions():[];
   const allowedAreas=()=>typeof areaOptions==='function'?areaOptions():[];
   const NONE='Ninguna';
+  const tidy=v=>String(v??'').replace(/\s+/g,' ').trim();
+  const isDirectorRole=()=>['Director','Docente y Director'].includes(tidy(typeof state!=='undefined'?state.userRole:''));
 
   function sanitizeConfiguration(){
     if(typeof state==='undefined')return;
@@ -100,12 +102,14 @@
     };
   }
 
-  // Evita salir del asistente con una configuración semánticamente incompleta.
-  // Además de nivel/IE/grados/áreas, el perfil lingüístico debe estar confirmado:
-  // monolingüe castellano o EIB con lengua originaria seleccionada explícitamente.
+  /* La configuración pedagógica completa se exige para las rutas Docente. Configuración
+     siempre debe poder abrirse para definir/corregir el rol y la Ficha Maestra. Un Director
+     explícito puede entrar a su espacio sin verse obligado a configurar grados, áreas o EIB
+     que solo son requisito para funciones pedagógicas. */
   const originalGo=window.go;
   if(typeof originalGo==='function')window.go=function(id){
-    if(id!=='setup'&&!hasCompleteBaseConfiguration()){
+    const exempt=id==='setup'||id==='settings'||(id==='director'&&isDirectorRole());
+    if(!exempt&&!hasCompleteBaseConfiguration()){
       if(typeof showSetup==='function')showSetup();
       else originalGo.call(this,'setup');
       return;
@@ -144,11 +148,12 @@
   }
 
   /* app.js puede abrir Inicio antes de que esta guardia cargue. También la Ficha Maestra
-     puede cambiar organización/nivel y volver incompatible la selección previa. V4/V5:
-     cualquier configuración base incompleta debe volver inmediatamente al paso exacto
-     que falta, conservando los datos válidos y sin esperar al siguiente clic del usuario. */
+     puede cambiar organización/nivel y volver incompatible la selección previa. Para perfiles
+     docentes, cualquier configuración base incompleta vuelve al paso exacto. Un Director
+     explícito conserva acceso a Configuración/Director y no es forzado al asistente pedagógico. */
   function enforceIncompleteConfiguration(){
     sanitizeConfiguration();
+    if(isDirectorRole())return;
     if(hasCompleteBaseConfiguration())return;
     const hasAny=Boolean(state.level||state.ieType||state.grades.length||state.areas.length||state.linguisticMode);
     if(!hasAny)return;
