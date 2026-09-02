@@ -1,8 +1,9 @@
-/* DocenteDigital – formato pedagógico y de exportación v2 */
+/* DocenteDigital – formato pedagógico y de exportación v2.1 */
 (function(){
-  state.teacherName=state.teacherName||'JORGE LUIS PALMA RODRIGUEZ';
-  state.schoolName=state.schoolName||'I.E. 50740 CCOTATAQUI';
-  save();
+  /* V3/V5: no inventar identidad docente ni institución. Los perfiles nuevos parten vacíos;
+     los valores existentes se conservan para no alterar históricos ni datos ya registrados. */
+  if(typeof state.teacherName!=='string')state.teacherName='';
+  if(typeof state.schoolName!=='string')state.schoolName='';
 
   const esc=v=>escapeHtml(v);
   const titleOptions=(brief,type)=>{
@@ -131,7 +132,7 @@
       first.querySelector('div')?.prepend(type);
     }
     if(!out.querySelector('.dd-preview-footer')){
-      const f=document.createElement('div');f.className='dd-preview-footer';f.textContent=`${state.teacherName} · ${state.schoolName}`;out.appendChild(f);
+      const f=document.createElement('div');f.className='dd-preview-footer';f.textContent=`${state.teacherName||'Docente'} · ${state.schoolName||'Institución Educativa'}`;out.appendChild(f);
     }
     const actions=out.querySelector('.actions.topgap');
     if(actions&&!actions.querySelector('.dd-review-btn')){
