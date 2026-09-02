@@ -1,9 +1,10 @@
-/* DocenteDigital – guardia curricular de Educación Inicial v73.0
+/* DocenteDigital – guardia curricular de Educación Inicial v73.1
    Corrige la lista base de áreas del ciclo II (3, 4 y 5 años) según el Programa Curricular de Educación Inicial del MINEDU.
    Además evita que el perfil EIB/monolingüe sea solo visual: lo valida y conserva en el estado activo.
    V5: marca como no disponibles las acciones del Director que todavía no tienen comportamiento real, evitando controles simulados.
    V5: no presenta diagnóstico ni programación anual simulados como funciones terminadas.
    V5: no presenta registro, evaluación de unidad ni conclusiones SIAGIE simuladas como funciones terminadas.
+   V5: no presenta el generador de materiales fijo/simulado como función terminada.
    V5: asegura que las guardias críticas de seguridad curricular, coherencia de configuración y exportación DOCX real se carguen realmente en producción después de los módulos base.
    V4/V5: mantiene accesible el espacio Director en navegación móvil cuando la barra lateral de escritorio se oculta.
    V3/V5: no presenta la interpretación léxica/local actual como comprensión semántica IA real.
@@ -180,6 +181,26 @@
     }
   }
 
+  function markUnfinishedMaterialsActions(){
+    const section=document.getElementById('materials');
+    if(!section)return;
+    const button=[...section.querySelectorAll('button')].find(b=>(b.getAttribute('onclick')||'').includes('generateMaterial'));
+    if(!button)return;
+    button.disabled=true;
+    button.setAttribute('aria-disabled','true');
+    button.setAttribute('title','Función aún no disponible');
+    button.removeAttribute('onclick');
+    button.textContent='✨ Crear material · Próximamente';
+    if(!section.querySelector('[data-dd-materials-pending]')){
+      const note=document.createElement('div');
+      note.className='notice topgap';
+      note.setAttribute('data-dd-materials-pending','true');
+      note.textContent='La generación contextualizada de materiales todavía no está implementada como flujo completo. No se considera lista para lanzamiento.';
+      const card=section.querySelector('.card');
+      if(card)card.insertAdjacentElement('beforebegin',note);
+    }
+  }
+
   function markPlanningAsPreliminary(){
     const panel=document.getElementById('unitPanel');
     if(!panel)return;
@@ -230,6 +251,7 @@
     markUnfinishedDirectorActions();
     markUnfinishedPlanningActions();
     markUnfinishedEvaluationActions();
+    markUnfinishedMaterialsActions();
     markPlanningAsPreliminary();
     ensureDirectorMobileAccess();
   }
