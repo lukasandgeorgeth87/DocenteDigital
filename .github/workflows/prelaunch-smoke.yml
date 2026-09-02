@@ -57,6 +57,42 @@ jobs:
           test -s curriculum-safety-v27.js
           test -s docx-export-v29.js
 
+      - name: Verify local assets referenced by production HTML
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          from urllib.parse import urlparse
+
+          class AssetParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.assets = []
+
+              def handle_starttag(self, tag, attrs):
+                  data = dict(attrs)
+                  if tag == 'script' and data.get('src'):
+                      self.assets.append(data['src'])
+                  if tag == 'link' and data.get('href') and 'stylesheet' in (data.get('rel') or ''):
+                      self.assets.append(data['href'])
+
+          parser = AssetParser()
+          parser.feed(Path('index.html').read_text(encoding='utf-8'))
+          missing = []
+          for asset in parser.assets:
+              parsed = urlparse(asset)
+              if parsed.scheme or parsed.netloc or asset.startswith('//'):
+                  continue
+              local = parsed.path.lstrip('/')
+              if not local or not Path(local).is_file():
+                  missing.append(asset)
+          if missing:
+              raise SystemExit('Missing local assets referenced by index.html: ' + ', '.join(missing))
+          print(f'Validated {len(parser.assets)} local/external asset references from index.html.')
+          PY
+
       - name: V5 scope notice
         run: |
           echo 'This workflow is only a technical smoke gate.'
