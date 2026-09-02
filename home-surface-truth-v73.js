@@ -3,7 +3,8 @@
    mientras sus flujos principales estén explícitamente pendientes de prelaunch.
    V4/V5: evita entradas activas hacia flujos de planificación todavía no implementados.
    V4: mantiene coherente la etiqueta visible de Modo Fácil/Experto con el estado activo.
-   V4/V5: impide borrado irreversible de Unidades/Proyectos hasta disponer de papelera y recuperación. */
+   V4/V5: impide borrado irreversible de Unidades/Proyectos hasta disponer de papelera y recuperación.
+   V4/V5: mantiene una ruta Volver visible, foco accesible y estado de navegación comprensible. */
 (function(){
   if(window.__ddHomeSurfaceTruthV73)return;
   window.__ddHomeSurfaceTruthV73=true;
@@ -151,6 +152,71 @@
     window.setMode=guarded;
   }
 
+  function activeScreenId(){
+    return document.querySelector('.screen.active')?.id||'';
+  }
+
+  function syncNavigationAccessibility(){
+    const active=activeScreenId();
+    document.querySelectorAll('[data-screen]').forEach(button=>{
+      const selected=button.dataset.screen===active;
+      if(selected)button.setAttribute('aria-current','page');
+      else button.removeAttribute('aria-current');
+    });
+    const screen=document.getElementById(active);
+    const heading=screen?.querySelector('h1');
+    if(heading){
+      if(!heading.hasAttribute('tabindex'))heading.setAttribute('tabindex','-1');
+      if(document.activeElement===document.body||document.activeElement?.matches?.('.nav,[data-screen]')){
+        setTimeout(()=>heading.focus({preventScroll:true}),0);
+      }
+    }
+  }
+
+  function ensureBackButton(){
+    let button=document.getElementById('ddGlobalBack');
+    if(!button){
+      button=document.createElement('button');
+      button.id='ddGlobalBack';
+      button.type='button';
+      button.className='dd-global-back';
+      button.textContent='← Volver';
+      button.setAttribute('aria-label','Volver a la pantalla anterior');
+      button.onclick=()=>{
+        const current=activeScreenId();
+        if(current==='setup'){
+          const visible=[1,2,3,4].find(i=>!document.getElementById(`step${i}`)?.classList.contains('hidden'))||1;
+          if(visible>1&&typeof nextSetup==='function')return nextSetup(visible-1);
+          return;
+        }
+        const previous=window.__ddPreviousScreen;
+        if(previous&&previous!==current&&document.getElementById(previous)&&typeof go==='function')return go(previous);
+        if(typeof go==='function')go('home');
+      };
+      document.body.appendChild(button);
+      const style=document.createElement('style');
+      style.textContent='.dd-global-back{position:fixed;left:14px;bottom:78px;z-index:9000;border:1px solid #c9d6cf;border-radius:999px;background:#fff;color:#244034;padding:10px 14px;min-height:44px;font-weight:800;box-shadow:0 3px 12px rgba(0,0,0,.12);cursor:pointer}.dd-global-back:focus-visible{outline:3px solid #1f6f50;outline-offset:2px}@media(min-width:901px){.dd-global-back{bottom:18px}}';
+      document.head.appendChild(style);
+    }
+    const current=activeScreenId();
+    button.hidden=!current||current==='home'||current==='setup'&&![2,3,4].some(i=>!document.getElementById(`step${i}`)?.classList.contains('hidden'));
+  }
+
+  function guardNavigationHistory(){
+    const previousGo=window.go;
+    if(typeof previousGo!=='function'||previousGo.__ddNavigationHistoryGuard)return;
+    const guarded=function(id){
+      const current=activeScreenId();
+      if(current&&current!==id&&current!=='setup')window.__ddPreviousScreen=current;
+      const result=previousGo.apply(this,arguments);
+      ensureBackButton();
+      syncNavigationAccessibility();
+      return result;
+    };
+    guarded.__ddNavigationHistoryGuard=true;
+    window.go=guarded;
+  }
+
   function apply(){
     clarifyPlanningHomeCard();
     markUnavailablePlanningEntry('showDiagnostic','Crear diagnóstico');
@@ -162,7 +228,10 @@
     markUnavailableDirectorActions();
     guardUnsafeUnitDeletion();
     guardModeLabel();
+    guardNavigationHistory();
     syncModeLabel();
+    ensureBackButton();
+    syncNavigationAccessibility();
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});
