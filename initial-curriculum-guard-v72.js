@@ -1,8 +1,8 @@
-/* DocenteDigital – guardia curricular de Educación Inicial v72.6
+/* DocenteDigital – guardia curricular de Educación Inicial v72.7
    Corrige la lista base de áreas del ciclo II (3, 4 y 5 años) según el Programa Curricular de Educación Inicial del MINEDU.
    Además evita que el perfil EIB/monolingüe sea solo visual: lo valida y conserva en el estado activo.
    V5: marca como no disponibles las acciones del Director que todavía no tienen comportamiento real, evitando controles simulados.
-   V5: asegura que las guardias críticas de seguridad curricular y coherencia de configuración se carguen realmente en producción después de los módulos base.
+   V5: asegura que las guardias críticas de seguridad curricular, coherencia de configuración y exportación DOCX real se carguen realmente en producción después de los módulos base.
    V4/V5: mantiene accesible el espacio Director en navegación móvil cuando la barra lateral de escritorio se oculta.
    No activa una matriz curricular completa ni declara curriculumMatrixReady. */
 (function(){
@@ -153,6 +153,7 @@
   function loadCriticalGuards(){
     loadCriticalModule('config-state-guard-v42.js','__ddConfigStateGuardV42');
     loadCriticalModule('curriculum-safety-v27.js','__ddCurriculumSafetyV30');
+    loadCriticalModule('docx-export-v29.js','__ddDocxExportV29');
   }
 
   function initializeUiGuards(){
