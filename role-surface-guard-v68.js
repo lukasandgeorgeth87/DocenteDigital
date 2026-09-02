@@ -1,4 +1,4 @@
-/* DocenteDigital – superficie por rol v69
+/* DocenteDigital – superficie por rol v69.1
    V2/V4: el rol explícito orienta la navegación y evita mostrar herramientas de otro rol como si le correspondieran.
    Esta guarda es de UX; NO sustituye autenticación, autorización ni aislamiento multiusuario.
 */
@@ -6,7 +6,10 @@
   if(window.__ddRoleSurfaceGuardV69)return;window.__ddRoleSurfaceGuardV69=true;
 
   const tidy=v=>String(v??'').replace(/\s+/g,' ').trim();
-  const role=()=>tidy(window.state?.userRole);
+  function getState(){
+    try{return typeof state!=='undefined'&&state&&typeof state==='object'?state:null;}catch(_e){return null;}
+  }
+  const role=()=>tidy(getState()?.userRole);
   const isDocenteOnly=()=>role()==='Docente';
   const isDirectorOnly=()=>role()==='Director';
   const TEACHER_SCREENS=new Set(['home','plan','session','materials','evaluation']);
