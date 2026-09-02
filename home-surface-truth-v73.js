@@ -87,6 +87,22 @@
     });
   }
 
+  function installUnsafeDeleteObserver(){
+    const plan=document.getElementById('plan');
+    if(!plan||plan.dataset.ddUnsafeDeleteObserver==='1')return;
+    plan.dataset.ddUnsafeDeleteObserver='1';
+    let pending=false;
+    const observer=new MutationObserver(()=>{
+      if(pending)return;
+      pending=true;
+      queueMicrotask(()=>{
+        pending=false;
+        markUnsafeUnitDeleteActions();
+      });
+    });
+    observer.observe(plan,{childList:true,subtree:true});
+  }
+
   function guardUnsafeUnitDeletion(){
     const previousDeleteUnit=window.deleteUnit;
     if(typeof previousDeleteUnit==='function'&&!previousDeleteUnit.__ddSafeDeleteGuard){
@@ -106,6 +122,7 @@
       guardedRender.__ddSafeDeleteRenderGuard=true;
       window.renderUnits=guardedRender;
     }
+    installUnsafeDeleteObserver();
     markUnsafeUnitDeleteActions();
   }
 
