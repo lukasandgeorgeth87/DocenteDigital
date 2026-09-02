@@ -1,7 +1,8 @@
-/* DocenteDigital – guardia curricular de Educación Inicial v72.8
+/* DocenteDigital – guardia curricular de Educación Inicial v72.9
    Corrige la lista base de áreas del ciclo II (3, 4 y 5 años) según el Programa Curricular de Educación Inicial del MINEDU.
    Además evita que el perfil EIB/monolingüe sea solo visual: lo valida y conserva en el estado activo.
    V5: marca como no disponibles las acciones del Director que todavía no tienen comportamiento real, evitando controles simulados.
+   V5: no presenta diagnóstico ni programación anual simulados como funciones terminadas.
    V5: asegura que las guardias críticas de seguridad curricular, coherencia de configuración y exportación DOCX real se carguen realmente en producción después de los módulos base.
    V4/V5: mantiene accesible el espacio Director en navegación móvil cuando la barra lateral de escritorio se oculta.
    V3/V5: no presenta la interpretación léxica/local actual como comprensión semántica IA real.
@@ -123,6 +124,34 @@
     }
   }
 
+  function markUnfinishedPlanningActions(){
+    const plan=document.getElementById('plan');
+    if(!plan)return;
+    const unfinished=[
+      {handler:'generateDiagnostic',label:'Crear diagnóstico'},
+      {handler:'demoAnnual',label:'Abrir programación anual'}
+    ];
+    let marked=0;
+    for(const item of unfinished){
+      const button=[...plan.querySelectorAll('button')].find(b=>(b.getAttribute('onclick')||'').includes(item.handler));
+      if(!button)continue;
+      button.disabled=true;
+      button.setAttribute('aria-disabled','true');
+      button.setAttribute('title','Función aún no disponible');
+      button.removeAttribute('onclick');
+      button.textContent=`${item.label} · Próximamente`;
+      marked++;
+    }
+    if(marked&&!plan.querySelector('[data-dd-planning-pending]')){
+      const note=document.createElement('div');
+      note.className='notice topgap';
+      note.setAttribute('data-dd-planning-pending','true');
+      note.textContent='Evaluación diagnóstica y Programación anual todavía no están implementadas como flujos completos. No se consideran listas para lanzamiento.';
+      const grid=plan.querySelector('.grid');
+      if(grid)grid.insertAdjacentElement('afterend',note);
+    }
+  }
+
   function markPlanningAsPreliminary(){
     const panel=document.getElementById('unitPanel');
     if(!panel)return;
@@ -171,6 +200,7 @@
 
   function initializeUiGuards(){
     markUnfinishedDirectorActions();
+    markUnfinishedPlanningActions();
     markPlanningAsPreliminary();
     ensureDirectorMobileAccess();
   }
