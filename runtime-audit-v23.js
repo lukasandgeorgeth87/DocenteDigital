@@ -1,4 +1,4 @@
-/* DocenteDigital – hotfix de auditoría runtime v24.1 */
+/* DocenteDigital – hotfix de auditoría runtime v24.2 */
 (function(){
   if(window.__ddRuntimeAuditV24)return;window.__ddRuntimeAuditV24=true;
   const required=[
@@ -42,6 +42,33 @@
   window.ddAuditModuleFailureGate=()=>({
     failures:Array.isArray(window.ddModuleLoadFailures)?window.ddModuleLoadFailures.slice():[],
     blocked:hasModuleFailure()
+  });
+
+  /* V5: doble clic rápido en crear/generar/guardar/descargar no debe duplicar documentos,
+     sesiones, descargas ni correlativos. Esta defensa de superficie evita la segunda acción
+     sobre el mismo control dentro de una ventana corta, sin alterar la lógica pedagógica. */
+  const recentCriticalClicks=new WeakMap();
+  const DUPLICATE_WINDOW_MS=900;
+  document.addEventListener('click',e=>{
+    const control=e.target?.closest?.('button,a');
+    if(!control||control.disabled||control.getAttribute('aria-disabled')==='true')return;
+    const label=(control.textContent||'').trim();
+    if(!riskyAction.test(label))return;
+    const now=Date.now();
+    const previous=recentCriticalClicks.get(control)||0;
+    if(previous&&now-previous<DUPLICATE_WINDOW_MS){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      window.__ddDuplicateActionBlocked={at:new Date().toISOString(),label,elapsedMs:now-previous};
+      return;
+    }
+    recentCriticalClicks.set(control,now);
+  },true);
+  window.ddAuditDuplicateActionGuard=()=>({
+    testId:'AUD-FUN-DUPLICATE-105',
+    windowMs:DUPLICATE_WINDOW_MS,
+    lastBlocked:window.__ddDuplicateActionBlocked||null,
+    installed:true
   });
 
   /* Corrige una repetición posible en el doble movimiento EIB del motor combinatorio. */
