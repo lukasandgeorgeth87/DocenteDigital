@@ -1,3 +1,35 @@
+/* DocenteDigital – guardia temprana del perfil lingüístico v49.1
+   V3/V5: la configuración base no debe poder finalizar sin confirmar EIB/monolingüe,
+   incluso antes de que termine de cargar la guarda lingüística asíncrona.
+*/
+(function(){
+  if(window.__ddEarlyLinguisticSetupGuardV491)return;window.__ddEarlyLinguisticSetupGuardV491=true;
+  const previousFinish=window.finishSetup;
+  if(typeof previousFinish!=='function')return;
+  window.finishSetup=function(){
+    const mode=document.getElementById('linguisticMode');
+    const language=document.getElementById('language');
+    const origin=document.getElementById('quechuaVar');
+    if(mode&&!mode.value){alert('Indica si la IE es EIB o monolingüe castellano.');return null;}
+    if(mode?.value==='EIB'&&(!origin?.value||origin.value==='Ninguna')){
+      alert('Selecciona la lengua originaria principal de la IE EIB.');return null;
+    }
+    if(typeof state==='object'&&state){
+      state.linguisticMode=mode?.value||state.linguisticMode||'';
+      if(mode?.value==='Monolingüe castellano'){
+        state.language='Castellano';
+        state.quechuaVar='Ninguna';
+        state.indigenousLanguage='Ninguna';
+      }else if(mode?.value==='EIB'){
+        state.language=language?.value||state.language||'Bilingüe';
+        state.quechuaVar=origin?.value||'Ninguna';
+        state.indigenousLanguage=state.quechuaVar;
+      }
+    }
+    return previousFinish.apply(this,arguments);
+  };
+})();
+
 /* DocenteDigital – solicitud de horario Word en configuración inicial */
 (function(){
   const step4=document.getElementById('step4');if(!step4||document.getElementById('ddInitialSchedulePrompt'))return;
