@@ -1,6 +1,7 @@
 /* DocenteDigital – V4/V5: verdad funcional en Inicio y navegación.
    No presenta Materiales/Evaluación ni acciones Director no conectadas como disponibles
-   mientras sus flujos principales estén explícitamente pendientes de prelaunch. */
+   mientras sus flujos principales estén explícitamente pendientes de prelaunch.
+   V4: mantiene coherente la etiqueta visible de Modo Fácil/Experto con el estado activo. */
 (function(){
   if(window.__ddHomeSurfaceTruthV73)return;
   window.__ddHomeSurfaceTruthV73=true;
@@ -57,6 +58,31 @@
     if(p)p.textContent='Unidades, proyectos y horario disponibles. Diagnóstico y programación anual: próximamente.';
   }
 
+  function syncModeLabel(){
+    const pill=document.querySelector('#home .hero .pill');
+    if(!pill)return;
+    let mode='easy';
+    try{
+      if(typeof state!=='undefined'&&state?.mode)mode=state.mode;
+      else if(document.body.classList.contains('expert'))mode='expert';
+    }catch(_e){
+      if(document.body.classList.contains('expert'))mode='expert';
+    }
+    pill.textContent=mode==='expert'?'🔵 Modo Experto':'✨ Modo Fácil';
+  }
+
+  function guardModeLabel(){
+    const previousSetMode=window.setMode;
+    if(typeof previousSetMode!=='function'||previousSetMode.__ddModeLabelGuard)return;
+    const guarded=function(){
+      const result=previousSetMode.apply(this,arguments);
+      syncModeLabel();
+      return result;
+    };
+    guarded.__ddModeLabelGuard=true;
+    window.setMode=guarded;
+  }
+
   function apply(){
     clarifyPlanningHomeCard();
     markUnavailableHomeAction('materials','Materiales');
@@ -64,6 +90,8 @@
     markUnavailableNavigation('materials','Materiales');
     markUnavailableNavigation('evaluation','Evaluación');
     markUnavailableDirectorActions();
+    guardModeLabel();
+    syncModeLabel();
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});
