@@ -1,4 +1,4 @@
-/* DocenteDigital – guardia curricular de Educación Inicial v73.1
+/* DocenteDigital – guardia curricular de Educación Inicial v73.2
    Corrige la lista base de áreas del ciclo II (3, 4 y 5 años) según el Programa Curricular de Educación Inicial del MINEDU.
    Además evita que el perfil EIB/monolingüe sea solo visual: lo valida y conserva en el estado activo.
    V5: marca como no disponibles las acciones del Director que todavía no tienen comportamiento real, evitando controles simulados.
@@ -8,6 +8,7 @@
    V5: asegura que las guardias críticas de seguridad curricular, coherencia de configuración y exportación DOCX real se carguen realmente en producción después de los módulos base.
    V4/V5: mantiene accesible el espacio Director en navegación móvil cuando la barra lateral de escritorio se oculta.
    V3/V5: no presenta la interpretación léxica/local actual como comprensión semántica IA real.
+   V5: un fallo de carga de un módulo crítico debe ser visible para el usuario y no quedar solo en consola.
    No activa una matriz curricular completa ni declara curriculumMatrixReady. */
 (function(){
   if(window.__ddInitialCurriculumGuardV72)return;
@@ -227,6 +228,23 @@
     nav.style.gridTemplateColumns='repeat(6, minmax(0, 1fr))';
   }
 
+  function showCriticalModuleWarning(src){
+    if(!document.body)return;
+    const id='ddCriticalModuleWarning';
+    let box=document.getElementById(id);
+    if(!box){
+      box=document.createElement('div');
+      box.id=id;
+      box.setAttribute('role','alert');
+      box.style.cssText='position:fixed;left:12px;right:12px;bottom:74px;z-index:100001;padding:12px 14px;border-radius:12px;background:#fff1f1;border:1px solid #d88;box-shadow:0 4px 18px rgba(0,0,0,.16);font:14px/1.35 system-ui,sans-serif;color:#5b1717';
+      document.body.appendChild(box);
+    }
+    const failures=Array.isArray(window.ddModuleLoadFailures)?window.ddModuleLoadFailures:[];
+    box.innerHTML='<b>⚠️ Una protección importante de DocenteDigital no pudo cargarse.</b><br>No continúes con documentos importantes ni descargues archivos hasta recargar la página. Si el aviso continúa, la función debe considerarse temporalmente no disponible.';
+    box.setAttribute('data-dd-critical-failures',failures.join(','));
+    console.error(`DocenteDigital: fallo visible de módulo crítico ${src}.`);
+  }
+
   function loadCriticalModule(src,readyFlag){
     if(window[readyFlag]||document.querySelector(`script[data-dd-critical-module="${src}"]`))return;
     const script=document.createElement('script');
@@ -237,6 +255,7 @@
       window.ddModuleLoadFailures=Array.isArray(window.ddModuleLoadFailures)?window.ddModuleLoadFailures:[];
       if(!window.ddModuleLoadFailures.includes(src))window.ddModuleLoadFailures.push(src);
       console.error(`DocenteDigital: no se pudo cargar el módulo crítico ${src}.`);
+      showCriticalModuleWarning(src);
     };
     document.body.appendChild(script);
   }
