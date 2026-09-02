@@ -1,4 +1,4 @@
-/* DocenteDigital – formato pedagógico y de exportación v2.1 */
+/* DocenteDigital – formato pedagógico y de exportación v2.2 */
 (function(){
   /* V3/V5: no inventar identidad docente ni institución. Los perfiles nuevos parten vacíos;
      los valores existentes se conservan para no alterar históricos ni datos ya registrados. */
@@ -142,8 +142,18 @@
 
   window.ddReviewUnit=function(id){
     const u=state.units.find(x=>x.id===id);if(!u)return;
-    const checks=[['Situación significativa',!!unitSituation(u)],['Reto',!!u.reto],['Producto',!!u.product],['Propósitos y desempeños',Array.isArray(u.purposes)&&u.purposes.length>0],['Secuencia de sesiones',Array.isArray(u.activities)&&u.activities.length>0],['Instrumentos',true],['Registro auxiliar',true]];
-    alert('Revisión pedagógica de la unidad\n\n'+checks.map(x=>`${x[1]?'✓':'⚠'} ${x[0]}`).join('\n')+'\n\nLa revisión avanzada con IA y fuentes curriculares se incorporará como siguiente capa.');
+    const checks=[
+      ['Situación significativa',!!unitSituation(u),''],
+      ['Reto',!!u.reto,''],
+      ['Producto',!!u.product,''],
+      ['Propósitos y desempeños',Array.isArray(u.purposes)&&u.purposes.length>0,''],
+      ['Secuencia de sesiones',Array.isArray(u.activities)&&u.activities.length>0,''],
+      ['Instrumentos',null,'pendiente de verificación funcional'],
+      ['Registro auxiliar',null,'pendiente de verificación funcional']
+    ];
+    const icon=v=>v===true?'✓':v===false?'⚠':'…';
+    const detail=x=>x[2]?` — ${x[2]}`:'';
+    alert('Revisión pedagógica de la unidad\n\n'+checks.map(x=>`${icon(x[1])} ${x[0]}${detail(x)}`).join('\n')+'\n\nEsta revisión comprueba solo datos visibles de la unidad. La revisión avanzada con IA, fuentes curriculares, instrumentos y registro auxiliar permanece pendiente hasta contar con evidencia funcional.');
   };
 
   // Entrada conversacional simple, inspirada en flujos públicos de asistentes docentes; no simula IA.
