@@ -112,11 +112,22 @@ jobs:
               path.read_text(encoding='utf-8') for path in wiring_files if path.is_file()
           )
 
+          # V3/V5: protect the runtime wiring of modules whose absence could make
+          # a critical feature look present while its guard/export/persistence is not active.
           required = [
+              'config-state-guard-v42.js',
+              'linguistic-profile-v26.js',
+              'linguistic-confirmation-v37.js',
+              'institution-master-v46.js',
               'title-context-v38.js',
               'significant-situation-core-v53.js',
-              'institution-master-v46.js',
+              'role-surface-guard-v68.js',
+              'persistence-truth-v63.js',
+              'curriculum-safety-v27.js',
+              'docx-export-v29.js',
+              'material-integrity-v65.js',
               'runtime-audit-v23.js',
+              'prelaunch-evidence-gate-v50.js',
               'simplicity-audit-v49.js',
           ]
 
