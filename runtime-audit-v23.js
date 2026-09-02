@@ -1,4 +1,4 @@
-/* DocenteDigital – hotfix de auditoría runtime v24 */
+/* DocenteDigital – hotfix de auditoría runtime v24.1 */
 (function(){
   if(window.__ddRuntimeAuditV24)return;window.__ddRuntimeAuditV24=true;
   const required=[
@@ -18,8 +18,10 @@
     return state.runtimeAudit;
   }
 
-  /* V5: si falló un módulo estable, no permitir crear/guardar/exportar como si la app siguiera íntegra. */
-  const riskyAction=/\b(?:crear|generar|guardar|descargar|exportar|preparar|emitir|aprobar|subir)\b/i;
+  /* V5: si falló un módulo estable, no permitir crear/guardar/exportar como si la app siguiera íntegra.
+     Incluye los botones compactos "Word" y "Compartir": si fallara docx-export-v29.js,
+     esos botones no deben caer silenciosamente en el exportador .doc legado de app.js. */
+  const riskyAction=/\b(?:crear|generar|guardar|descargar|exportar|preparar|emitir|aprobar|subir|word|compartir)\b/i;
   function hasModuleFailure(){return Array.isArray(window.ddModuleLoadFailures)&&window.ddModuleLoadFailures.length>0;}
   function explainBlock(){
     const names=(window.ddModuleLoadFailures||[]).join(', ');
