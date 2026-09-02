@@ -1,16 +1,17 @@
-/* DocenteDigital – títulos naturales desde MCI v46
+/* DocenteDigital – títulos naturales desde MCI v47
    Auditoría Maestra: el título no copia la instrucción del docente; expresa la intención pedagógica.
    V46 normaliza enunciados de desempeño breves como "Describen/Decriben..." para no copiarlos literalmente en el título.
+   V47 normaliza observaciones con “aparece/aparecieron” para evitar títulos como “Descubrimos aparecieron hormigas”.
 */
 (function(){
-  if(window.__ddTitleContextV46)return;window.__ddTitleContextV46=true;
+  if(window.__ddTitleContextV47)return;window.__ddTitleContextV47=true;
   const tidy=s=>String(s||'').replace(/\s+/g,' ').trim();
   const low=s=>tidy(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   const cap=s=>{s=tidy(s);return s?s.charAt(0).toUpperCase()+s.slice(1):s;};
   const E=s=>typeof window.escapeHtml==='function'?window.escapeHtml(String(s||'')):String(s||'');
   const BAD=/\b(?:unidad|proyecto|sesión|sesion)\s+(?:sobre|de|acerca de)\b|\bquiero enseñar\b|\bquiero trabajar\b|\bnecesito una?\b/i;
   const INTEREST_PREFIX=/^(?:quiero|queremos|quieren|deseo|deseamos|desean)?\s*(?:saber|conocer|aprender|descubrir)\s+(?:más\s+)?(?:sobre|acerca de|de)\s+/i;
-  const OBSERVATION_PREFIX=/^(?:(?:los|las)\s+estudiantes\s+|(?:los|las)\s+niñ(?:os|as)\s+)?(?:ven|vemos|veo|vieron|observan|observamos|observo|observaron|encuentran|encontramos|encontraron)\s+/i;
+  const OBSERVATION_PREFIX=/^(?:(?:los|las)\s+estudiantes\s+|(?:los|las)\s+niñ(?:os|as)\s+)?(?:ven|vemos|veo|vieron|observan|observamos|observo|observaron|encuentran|encontramos|encontraron|aparece|aparecen|apareció|aparecio|aparecieron)\s+/i;
   const OBSERVATION_QUANTITY=/^(?:bastantes?|much[oa]s?|varios?|varias|algunos?|algunas|unos|unas)\s+/i;
   const DESCRIPTION_PREFIX=/^(?:(?:los|las)\s+estudiantes\s+|(?:los|las)\s+niñ(?:os|as)\s+)?(?:describen|decriben|describir|describimos|describo)\s+/i;
 
