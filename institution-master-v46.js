@@ -1,4 +1,4 @@
-/* DocenteDigital – Ficha Maestra de la IE v46.6
+/* DocenteDigital – Ficha Maestra de la IE v46.7
    Registra una vez los datos institucionales y los reutiliza en Docente y Director.
    No sustituye autenticación ni una base de datos multiusuario; en este prototipo se guarda en localStorage.
 */
@@ -37,9 +37,9 @@
 
   function syncLegacy(){
     const m=state.institutionMaster;
-    state.ieName=m.ieName||state.ieName||'';
-    state.directorName=m.directorName||state.directorName||'';
-    state.teacherName=m.teacherName||state.teacherName||'';
+    state.ieName=m.ieName||'';
+    state.directorName=m.directorName||'';
+    state.teacherName=m.teacherName||'';
     state.teacherContext=Object.assign({},state.teacherContext||{}, {
       locationType:m.locationType||'',locationName:m.locationName||'',locality:m.locationName||'',
       district:m.district||'',province:m.province||'',region:m.region||'',calendar:m.communalCalendar||'',notes:m.notes||''
