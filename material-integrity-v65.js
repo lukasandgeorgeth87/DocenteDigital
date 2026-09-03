@@ -27,6 +27,20 @@
     return select||null;
   }
 
+  function actionControl(){
+    const section=document.getElementById('materials');
+    if(!section)return null;
+    return [...section.querySelectorAll('button')].find(x=>(x.getAttribute('onclick')||'').includes('generateMaterial'))||null;
+  }
+
+  function syncActionLanguage(){
+    const button=actionControl();
+    if(button){
+      button.textContent='Revisar solicitud';
+      button.setAttribute('aria-label','Revisar solicitud de material');
+    }
+  }
+
   function showStatus(message,kind='notice'){
     const out=document.getElementById('materialOutput');
     const text=document.getElementById('materialText');
@@ -47,7 +61,7 @@
     const topic=(topicControl()?.value||'').trim();
 
     if(!topic){
-      alert('Escribe el tema o interés que deseas trabajar antes de crear el material.');
+      alert('Escribe el tema o interés que deseas trabajar antes de revisar la solicitud.');
       topicControl()?.focus();
       return;
     }
@@ -77,6 +91,7 @@
   window.ddAuditMaterialIntegrity=function(){
     const topic=topicControl();
     const type=typeControl();
+    const action=actionControl();
     return {
       guard:'v65',
       topicField:Boolean(topic),
@@ -87,10 +102,12 @@
       gradeValue:document.getElementById('materialGrade')?.value||null,
       languageValue:document.getElementById('materialLanguage')?.value||null,
       varietyValue:document.getElementById('materialQuechua')?.value||null,
+      actionLabel:action?.textContent?.trim()||null,
       simulatedGenerationBlocked:true
     };
   };
 
   topicControl();
   typeControl();
+  syncActionLanguage();
 })();
