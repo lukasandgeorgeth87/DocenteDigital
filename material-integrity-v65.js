@@ -5,7 +5,7 @@
   if(window.__ddMaterialIntegrityV65)return;window.__ddMaterialIntegrityV65=true;
 
   const NONE='Ninguna';
-  const esc=v=>typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+  const esc=v=>typeof escapeHtml==='function'?escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   function topicControl(){
     const section=document.getElementById('materials');
