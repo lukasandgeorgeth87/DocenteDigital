@@ -1,10 +1,10 @@
-/* DocenteDigital – superficie simple de revisión v66
+/* DocenteDigital – superficie simple de revisión v66.1
    V4: la complejidad de auditoría permanece interna en Modo Fácil.
    No modifica resultados, datos ni reglas de la auditoría; solo evita mostrar
-   puntuaciones y telemetría técnica al docente principiante.
+   puntuaciones, telemetría técnica y lenguaje interno de prototipo al usuario.
 */
 (function(){
-  if(window.__ddEasyAuditSurfaceV66)return;window.__ddEasyAuditSurfaceV66=true;
+  if(window.__ddEasyAuditSurfaceV661)return;window.__ddEasyAuditSurfaceV661=true;
 
   const tidy=v=>String(v??'').replace(/\s+/g,' ').trim();
   const easy=()=>typeof state!=='object'||state.mode!=='expert';
@@ -27,8 +27,35 @@
     }
   }
 
+  function simplifyProductLanguage(){
+    const reset=[...document.querySelectorAll('button')].find(button=>(button.getAttribute('onclick')||'').includes('resetDemo'));
+    if(reset)reset.textContent='Restablecer datos';
+
+    const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+    let node;
+    while((node=walker.nextNode())){
+      if(node.nodeValue&&node.nodeValue.includes('Acceso rápido del prototipo')){
+        node.nodeValue=node.nodeValue.replace(/Acceso rápido del prototipo/g,'Acceso rápido');
+      }
+    }
+  }
+
+  function guardResetLanguage(){
+    const previous=window.resetDemo;
+    if(typeof previous!=='function'||previous.__ddSimpleResetLanguage)return;
+    const wrapped=function(){
+      const nativeConfirm=window.confirm;
+      window.confirm=function(message){
+        return nativeConfirm.call(window,String(message||'').replace(/del prototipo/gi,'de la aplicación'));
+      };
+      try{return previous.apply(this,arguments)}finally{window.confirm=nativeConfirm;}
+    };
+    wrapped.__ddSimpleResetLanguage=true;
+    window.resetDemo=wrapped;
+  }
+
   const observer=new MutationObserver(muts=>{
-    if(muts.some(m=>m.addedNodes?.length||m.type==='attributes'))setTimeout(simplify,0);
+    if(muts.some(m=>m.addedNodes?.length||m.type==='attributes'))setTimeout(()=>{simplify();simplifyProductLanguage();},0);
   });
   observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
 
@@ -41,7 +68,8 @@
     body:not(.expert) #ddAuditToast.dd-easy-audit-toast small{margin-top:2px}
   `;
   document.head.appendChild(css);
-  setTimeout(simplify,0);
+  guardResetLanguage();
+  setTimeout(()=>{simplify();simplifyProductLanguage();},0);
 
-  window.ddEasyAuditSurfaceV66={apply:simplify};
+  window.ddEasyAuditSurfaceV66={apply:()=>{simplify();simplifyProductLanguage();}};
 })();
