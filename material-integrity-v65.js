@@ -17,6 +17,16 @@
     return input||null;
   }
 
+  function typeControl(){
+    const section=document.getElementById('materials');
+    if(!section)return null;
+    const direct=document.getElementById('materialType');
+    if(direct)return direct;
+    const select=[...section.querySelectorAll('select')].find(x=>/^\s*Tipo\b/i.test(x.closest('label')?.textContent||''));
+    if(select&&!select.id)select.id='materialType';
+    return select||null;
+  }
+
   function showStatus(message,kind='notice'){
     const out=document.getElementById('materialOutput');
     const text=document.getElementById('materialText');
@@ -30,8 +40,10 @@
   }
 
   window.generateMaterial=function(){
+    const type=typeControl()?.value||'Material';
     const lang=document.getElementById('materialLanguage')?.value||'Castellano';
     const variety=document.getElementById('materialQuechua')?.value||NONE;
+    const grade=document.getElementById('materialGrade')?.value||'';
     const topic=(topicControl()?.value||'').trim();
 
     if(!topic){
@@ -53,6 +65,8 @@
        verdadero en vez de fabricar contenido. */
     const languageLabel=lang==='Castellano'?'castellano':lang==='Bilingüe'?`formato bilingüe con ${variety}`:variety;
     showStatus(
+      `<b>Tipo solicitado:</b> ${esc(type)}.<br>`+
+      `${grade?`<b>Grado/edad:</b> ${esc(grade)}.<br>`:''}`+
       `<b>Tema registrado:</b> ${esc(topic)}.<br>`+
       `<b>Idioma solicitado:</b> ${esc(languageLabel)}.<br>`+
       `La generación contextualizada de materiales todavía no está conectada a un motor de IA validado. Para evitar presentar textos genéricos o traducciones demostrativas como reales, DocenteDigital no fabricará el contenido en esta etapa.`,
@@ -62,10 +76,15 @@
 
   window.ddAuditMaterialIntegrity=function(){
     const topic=topicControl();
+    const type=typeControl();
     return {
       guard:'v65',
       topicField:Boolean(topic),
       topicFieldId:topic?.id||null,
+      typeField:Boolean(type),
+      typeFieldId:type?.id||null,
+      typeValue:type?.value||null,
+      gradeValue:document.getElementById('materialGrade')?.value||null,
       languageValue:document.getElementById('materialLanguage')?.value||null,
       varietyValue:document.getElementById('materialQuechua')?.value||null,
       simulatedGenerationBlocked:true
@@ -73,4 +92,5 @@
   };
 
   topicControl();
+  typeControl();
 })();
