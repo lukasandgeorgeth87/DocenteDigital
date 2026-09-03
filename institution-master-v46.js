@@ -1,4 +1,4 @@
-/* DocenteDigital – Ficha Maestra de la IE v46.5
+/* DocenteDigital – Ficha Maestra de la IE v46.6
    Registra una vez los datos institucionales y los reutiliza en Docente y Director.
    No sustituye autenticación ni una base de datos multiusuario; en este prototipo se guarda en localStorage.
 */
@@ -25,7 +25,7 @@
       levels:state.level?[state.level]:[],
       organization:tidy(state.ieType||''),
       shifts:[],
-      directorName:tidy(state.directorName||''),teacherCount:'',studentCount:'',
+      directorName:tidy(state.directorName||''),teacherName:tidy(state.teacherName||''),teacherCount:'',studentCount:'',
       schoolCalendar:'',communalCalendar:tidy(c.calendar||''),notes:tidy(c.notes||''),updatedAt:null
     };
   }
@@ -39,6 +39,7 @@
     const m=state.institutionMaster;
     state.ieName=m.ieName||state.ieName||'';
     state.directorName=m.directorName||state.directorName||'';
+    state.teacherName=m.teacherName||state.teacherName||'';
     state.teacherContext=Object.assign({},state.teacherContext||{}, {
       locationType:m.locationType||'',locationName:m.locationName||'',locality:m.locationName||'',
       district:m.district||'',province:m.province||'',region:m.region||'',calendar:m.communalCalendar||'',notes:m.notes||''
@@ -94,6 +95,7 @@
         <label>Gestión<select id="ddManagementType">${options(['','Pública','Privada','Otra / por precisar'],m.managementType)}</select></label>
         <label>Organización de la IE<select id="ddOrganization">${options(['','Unidocente','Multigrado','Polidocente'],m.organization)}</select></label>
         <label>Director/a<input id="ddDirectorName" value="${E(m.directorName)}"></label>
+        <label>Docente<input id="ddTeacherName" value="${E(m.teacherName)}" placeholder="Nombre del docente para los documentos"></label>
         <label>N.º de docentes<input id="ddTeacherCount" type="number" min="0" step="1" inputmode="numeric" value="${E(m.teacherCount)}"></label>
         <label>N.º de estudiantes<input id="ddStudentCount" type="number" min="0" step="1" inputmode="numeric" value="${E(m.studentCount)}"></label>
         <label class="full">Niveles que atiende la IE<div class="dd-level-checks">${levelChecks(Array.isArray(m.levels)?m.levels:[])}</div></label>
@@ -144,7 +146,7 @@
       ieName:val('ddIeName'),modularCode:val('ddModularCode'),localCode:val('ddLocalCode'),ugel:val('ddUgel'),dreGre:val('ddDreGre'),
       region:val('ddRegion'),province:val('ddProvince'),district:val('ddDistrict'),locationType:val('ddLocationType'),locationName:val('ddLocationName'),
       geographicArea:val('ddGeoArea')||'No especificado',managementType:val('ddManagementType'),levels:selectedLevels(),organization:val('ddOrganization'),
-      shifts:state.institutionMaster?.shifts||[],directorName:val('ddDirectorName'),teacherCount,studentCount,
+      shifts:state.institutionMaster?.shifts||[],directorName:val('ddDirectorName'),teacherName:val('ddTeacherName'),teacherCount,studentCount,
       schoolCalendar:val('ddSchoolCalendar'),communalCalendar:val('ddCommunalCalendar'),notes:val('ddInstitutionNotes'),updatedAt:new Date().toISOString()
     };
     state.userRole=selectedRole;
