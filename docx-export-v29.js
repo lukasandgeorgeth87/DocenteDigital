@@ -79,7 +79,8 @@
   function docxBlob(title,html,landscape=false){
     const body=htmlToWordXml(html);
     const pgSz=landscape?'<w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>':'<w:pgSz w:w="11906" w:h="16838"/>';
-    const identity=[state.teacherName,state.schoolName].map(v=>String(v||'').trim()).filter(Boolean).join(' · ');
+    const ieName=state.institutionMaster?.ieName||state.ieName||state.schoolName||'';
+    const identity=[state.teacherName,ieName].map(v=>String(v||'').trim()).filter(Boolean).join(' · ');
     const identityXml=identity?`<w:p>${runXml(identity,false,18)}</w:p>`:'';
     const documentXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}${identityXml}<w:sectPr>${pgSz}<w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="360" w:footer="360" w:gutter="0"/></w:sectPr></w:body></w:document>`;
     const contentTypes=`<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`;
