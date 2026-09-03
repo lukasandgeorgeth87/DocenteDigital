@@ -91,7 +91,7 @@
     const wrapped=function(){
       const current=localStorage.getItem(KEY);
       if(current===null)return previous.apply(this,arguments);
-      const ok=confirm('¿Restablecer la configuración y los datos del prototipo? Se guardará una copia local para que puedas restaurarlos si fue un error.');
+      const ok=confirm('¿Restablecer la configuración y los datos de la aplicación? Se guardará una copia local para que puedas restaurarlos si fue un error.');
       if(!ok)return;
       try{
         nativeSetItem.call(localStorage,RESET_BACKUP_KEY,JSON.stringify({savedAt:new Date().toISOString(),data:current}));
