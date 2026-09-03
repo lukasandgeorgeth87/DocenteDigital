@@ -1,4 +1,4 @@
-/* DocenteDigital – palabras clave internas del contexto + duración 1–6 semanas v19.1 */
+/* DocenteDigital – palabras clave internas del contexto + duración 1–6 semanas v19.2 */
 (function(){
   if(window.__ddContextKeywordsV19)return;window.__ddContextKeywordsV19=true;
   const STOP=new Set(('a al algo ante bajo con contra de del desde durante e el ella ellas ellos en entre era es esa ese eso esta estas este estos fue ha hacia hasta hay la las lo los más me mi muy ni no o para pero por porque que se sin sobre su sus tu un una uno unas unos y ya como cómo cual cuando donde qué quien').split(' '));
@@ -7,12 +7,8 @@
     const raw=String(text||'').trim();
     const tokens=normalize(raw).split(/\s+/).filter(w=>w.length>=3&&!STOP.has(w));
     const freq={};tokens.forEach(w=>freq[w]=(freq[w]||0)+1);
-    /* La lista prioriza términos solo cuando el docente realmente los escribió; no añade contexto rural ni EIB por sí sola. */
-    const preferred=['siembra','tarpuy','papa','añu','anu','oca','olluco','semilla','semillas','nativa','nativas','yachaq','pachamama','agua','yaku','riego','clima','climatico','climatica','residuo','residuos','contaminacion','cafe','cacao','banano','citricos','moraya','chuño','chuno','familia','familias','comunidad','tradicion','saberes'];
-    return Object.keys(freq).sort((a,b)=>{
-      const pa=preferred.includes(a)?3:0,pb=preferred.includes(b)?3:0;
-      return (freq[b]+pb)-(freq[a]+pa)||tokens.indexOf(a)-tokens.indexOf(b);
-    }).slice(0,limit);
+    /* Apoyo léxico neutral: solo frecuencia y orden de aparición de términos realmente escritos por el usuario. No prioriza territorio, ruralidad, agricultura ni EIB. */
+    return Object.keys(freq).sort((a,b)=>freq[b]-freq[a]||tokens.indexOf(a)-tokens.indexOf(b)).slice(0,limit);
   }
   function phrase(ks){if(!ks?.length)return'';if(ks.length===1)return ks[0];return ks.slice(0,-1).join(', ')+' y '+ks[ks.length-1];}
   window.ddContextKeywords=keywords;window.ddContextKeywordPhrase=text=>phrase(keywords(text));
