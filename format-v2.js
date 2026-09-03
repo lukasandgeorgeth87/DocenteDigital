@@ -90,7 +90,7 @@
     const p=document.createElement('div');p.className='dd-profile-box';
     p.innerHTML=`<h2>🪪 Datos para documentos</h2><div class="form2"><label>Nombre del docente<input id="ddTeacher" value="${esc(state.teacherName)}"></label><label>Institución educativa<input id="ddSchool" value="${esc(state.schoolName)}"></label></div><button class="btn" id="ddSaveProfile">Guardar datos</button>`;
     settingsCard.prepend(p);
-    byId('ddSaveProfile').onclick=()=>{state.teacherName=byId('ddTeacher').value.trim()||'Docente';state.schoolName=byId('ddSchool').value.trim()||'Institución Educativa';save();alert('Datos guardados. Se usarán en el pie de página de Word.');};
+    byId('ddSaveProfile').onclick=()=>{state.teacherName=byId('ddTeacher').value.trim();state.schoolName=byId('ddSchool').value.trim();save();alert('Datos guardados. Se usarán en el pie de página de Word.');};
   }
 
   // Mejora el documento de unidad/proyecto sin alterar la estructura pedagógica ya generada.
