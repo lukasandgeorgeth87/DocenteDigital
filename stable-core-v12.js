@@ -7,6 +7,7 @@
   save();
 
   function isPrimaryMulti(){return state.level==='Primaria'&&(state.ieType==='Multigrado'||state.ieType==='Unidocente');}
+  function isPrimaryEibMulti(){return isPrimaryMulti()&&state.linguisticMode==='EIB';}
   function ctxSummary(){const c=state.teacherContext||{};return [c.community,c.district,c.province,c.region,c.calendar,c.notes].filter(Boolean).join(' · ')||'Completa tu contexto en Configuración para contextualizar mejor la planificación.';}
 
   function mountContext(){
@@ -28,7 +29,7 @@
   function mountSessionBadge(){
     const screen=byId('session');if(!screen)return;let box=byId('ddSessionEngineBadge');
     if(!box){box=document.createElement('div');box.id='ddSessionEngineBadge';box.className='dd-engine-badge';const first=screen.querySelector('.card');if(first)screen.insertBefore(box,first);else screen.appendChild(box);}
-    const html=isPrimaryMulti()?`<b>🌱 Motor pedagógico activo:</b> Prompt Maestro de Sesión para <b>Primaria EIB ${E(state.ieType)}</b> · atención simultánea y diferenciada · procesos didácticos · evaluación formativa.`:`<b>ℹ️ Motor pedagógico:</b> se aplicará el motor correspondiente al nivel y tipo de IE.`;
+    const html=isPrimaryEibMulti()?`<b>🌱 Motor pedagógico activo:</b> Prompt Maestro de Sesión para <b>Primaria EIB ${E(state.ieType)}</b> · atención simultánea y diferenciada · procesos didácticos · evaluación formativa.`:isPrimaryMulti()?`<b>🌱 Motor pedagógico activo:</b> <b>Primaria ${E(state.ieType)}</b> · atención simultánea y diferenciada · procesos didácticos · evaluación formativa.`:`<b>ℹ️ Motor pedagógico:</b> se aplicará el motor correspondiente al nivel y tipo de IE.`;
     if(box.dataset.html!==html){box.dataset.html=html;box.innerHTML=html;}
   }
 
@@ -56,7 +57,7 @@
     if(/generateSession\(\)/.test(on)&&isPrimaryMulti()&&!sessionBypass){
       let unit=null,act=null;try{const s=selectedActivity();unit=s.unit;act=s.activity;}catch(err){}
       const checks=[['Unidad/proyecto de origen',!!unit],['Título de sesión',!!(byId('sessionTitle')?.value||act?.title)],['Grados multigrado definidos',(state.grades||[]).length>1],['Área identificada',!!act?.area],['Recursos disponibles',!!byId('sessionResources')?.value],['Atención diferenciada',true],['Procesos didácticos',true],['Retroalimentación y cierre',true]];
-      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();showToast('ddSessionAuditToast','⚡ Auditoría de Sesión',checks,'Prompt Maestro de Primaria EIB multigrado/unidocente activo.');setTimeout(()=>{hideToast('ddSessionAuditToast');sessionBypass=true;generateSession();sessionBypass=false;},450);return;
+      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();showToast('ddSessionAuditToast','⚡ Auditoría de Sesión',checks,isPrimaryEibMulti()?'Prompt Maestro de Primaria EIB multigrado/unidocente activo.':'Motor de Primaria multigrado/unidocente activo; se respeta el perfil lingüístico configurado.');setTimeout(()=>{hideToast('ddSessionAuditToast');sessionBypass=true;generateSession();sessionBypass=false;},450);return;
     }
     if(t.id==='ddContinueProducts'||/createUnitDemo/.test(on))setTimeout(mountAll,30);
   },true);
