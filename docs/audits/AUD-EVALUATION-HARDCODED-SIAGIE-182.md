@@ -1,4 +1,4 @@
-# AUD-EVALUATION-HARDCODED-SIAGIE-182
+# AUD-EVALUATION-HARDCODED-SIAGIE-182 — REVISADO
 
 ## Alcance
 Auditoría ejecutable acumulativa de DocenteDigital conforme a V2 + V3 + V4 + V5 + Núcleo IA.
@@ -13,67 +13,75 @@ Carpeta Docente → Evaluación → Registro / Evaluación de unidad-proyecto / 
 1. Configurar cualquier perfil docente válido.
 2. Abrir `Evaluación`.
 3. Pulsar `Registrar evaluación`, `Evaluación de unidad/proyecto` y `Conclusiones SIAGIE`.
-4. Contrastar lo mostrado con unidad/sesión/criterio/evidencia/estudiante previamente existentes.
+4. Contrastar el comportamiento final de runtime, no solo la implementación base de `app.js`.
 
 ## Resultado esperado
-Conforme a V2/V3/V5, Evaluación debe reutilizar la trazabilidad real:
+Evaluación debe reutilizar trazabilidad real:
 
 `Estudiante → Competencia → Criterio → Evidencia → Valoración → Retroalimentación → Progreso`.
 
-Debe recuperar estudiantes, competencias, criterios y evidencias existentes; permitir guardar/editar/recuperar; una conclusión descriptiva debe derivarse de evidencias reales y no inventar competencia ni nivel de logro. La evaluación de unidad/proyecto debe generar un instrumento/tarea real y verificable.
+Debe recuperar estudiantes, competencias, criterios y evidencias existentes; guardar/editar/recuperar; y generar conclusiones únicamente desde evidencias reales.
 
-## Resultado obtenido
-En `app.js`, `showEvaluation(kind)` no consulta `state.lastSession`, unidades, criterios, evidencias ni estudiantes:
+## Resultado obtenido revisado
+`app.js` contiene una implementación base demostrativa con datos hardcodeados: selector AD/A/B/C con B preseleccionado y una conclusión SIAGIE fija para “Resuelve problemas de cantidad”. Sin embargo, esa no es la conducta final cuando termina de cargar la cadena estable de módulos.
 
-- `register`: muestra únicamente un selector AD/A/B/C con **B preseleccionado**, sin estudiante, competencia, criterio, evidencia, guardar ni recuperación.
-- `unit`: muestra idioma y tipo, pero el botón `✨ Crear evaluación` no tiene acción asociada.
-- `siagie`: presenta siempre datos hardcodeados: **Competencia: Resuelve problemas de cantidad**, **Nivel: B** y una conclusión genérica, independientemente del contexto real. Los botones `Aprobar`, `Corregir` y `Copiar para SIAGIE` tampoco tienen acción asociada.
+`schedule-prompt-v6.js` carga `prototype-data-guard-v41.js`. Esa guardia reemplaza `window.showEvaluation` y evita presentar dichos datos como reales:
 
-La misma implementación fue confirmada en producción mediante respuesta HTTP 200 de `https://docente-digital.vercel.app/app.js`.
+- Registro: muestra que aún no está conectado a estudiantes, criterios ni evidencias persistentes.
+- Evaluación de unidad/proyecto: informa que aún no existe conexión E2E competencia → criterio → evidencia → instrumento.
+- Conclusiones SIAGIE: no muestra competencia, nivel ni conclusión ficticia; declara que no se propondrán sin estudiante, competencia, criterio, evidencia y valoración registrados.
+- Los botones de Evaluación se anotan explícitamente como `en desarrollo` y la tarjeta de Inicio también advierte que el módulo no está conectado a evidencias reales.
+
+Por tanto, el hallazgo original era correcto sobre la ausencia del motor de evaluación, pero incompleto al afirmar que la superficie productiva final necesariamente exponía los datos hardcodeados de `app.js`.
 
 ## Evidencia
-Repositorio `main`:
+Cadena runtime:
+
+`schedule-prompt-v6.js` → `prototype-data-guard-v41.js`.
+
+La guardia contiene:
 
 ```js
-function showEvaluation(kind){
-  const p=byId('evaluationPanel');p.classList.remove('hidden');
-  if(kind==='register')p.innerHTML=`<h2>📋 Registro de evaluación</h2><p>Usa criterios y evidencias ya registrados.</p><label>Nivel de logro<select><option>AD</option><option>A</option><option selected>B</option><option>C</option></select></label>`;
-  else if(kind==='unit')p.innerHTML=`...<button class="btn">✨ Crear evaluación</button>`;
-  else p.innerHTML=`<h2>📝 Conclusiones descriptivas SIAGIE</h2><div class="document"><p><b>Competencia:</b> Resuelve problemas de cantidad</p><p><b>Nivel:</b> B</p><p><b>Conclusión propuesta:</b> ...</p></div><p><button class="btn">✓ Aprobar</button> <button class="btn alt">✏️ Corregir</button> <button class="btn ghost">📋 Copiar para SIAGIE</button></p>`;
-}
+window.showEvaluation=function(kind){
+  const p=by('evaluationPanel');
+  ...
+  p.innerHTML=`<h2>${titles[kind]||'Evaluación'}</h2>${notice('Función en desarrollo',detail)}`;
+};
 ```
 
-Producción: `/app.js` respondió HTTP 200 y contiene la misma lógica.
+y además marca los botones de `showEvaluation(...)` como función en desarrollo.
+
+Producción respondió HTTP 200 para la aplicación y sirve la misma cadena de módulos.
 
 ## PASA / NO PASA
-**NO PASA**.
+**NO PASA V5** como módulo funcional de Evaluación/Registro/Seguimiento.
 
-## Clasificación funcional
-- Registrar evaluación: **SIMULADA / PARCIALMENTE FUNCIONAL en superficie**.
-- Evaluación de unidad/proyecto: **ROTA / SIMULADA**.
-- Conclusiones SIAGIE: **SIMULADA y pedagógicamente no confiable**.
-- Trazabilidad Evaluación → Registro → Seguimiento: **INEXISTENTE** en este flujo.
+La verdad de superficie UX **PASA PARCIALMENTE** porque la guardia evita mostrar valoraciones o conclusiones ficticias como utilizables cuando carga correctamente.
+
+## Clasificación funcional revisada
+- Registrar evaluación: **INEXISTENTE funcionalmente / superficie protegida**.
+- Evaluación de unidad/proyecto: **INEXISTENTE funcionalmente / superficie protegida**.
+- Conclusiones SIAGIE: **INEXISTENTE funcionalmente / superficie protegida**.
+- Trazabilidad Evaluación → Registro → Seguimiento: **INEXISTENTE**.
+- Protección contra datos prototipo: **FUNCIONAL/PARCIAL**, dependiente de que la cadena de módulos cargue sin fallo.
 
 ## Severidad
-**S1 CRÍTICO — bloqueante V5.**
-
-### Justificación
-V3 define S1 para documento pedagógicamente incorrecto o competencia falsa. La pantalla puede presentar una competencia y un nivel de logro no derivados del estudiante ni de evidencias reales, generando una conclusión que aparenta ser utilizable para SIAGIE. Además, Evaluación/Registro es función esencial congelada para V1.0 en V5.
+**S1 CRÍTICO — bloqueante V5**, por ausencia del flujo esencial de evaluación y trazabilidad, no por exposición final confirmada de una conclusión ficticia.
 
 ## Causa raíz
-`showEvaluation()` es una demostración HTML estática sin modelo de evaluación ni relaciones persistentes con estudiantes, sesiones, criterios o evidencias.
+El motor real de evaluación todavía no existe. `app.js` conserva contenido demostrativo heredado, mientras una guardia posterior lo neutraliza para mantener verdad de superficie. Esta arquitectura deja deuda técnica y dependencia del orden/carga de módulos.
 
 ## Acción correctiva requerida
 1. Crear modelo persistente de estudiantes/evidencias/valoraciones con IDs estables.
 2. Enlazar `sessionId`, `unitId`, competencia, criterio, evidencia y estudiante.
-3. Eliminar valores por defecto que aparenten resultados reales (por ejemplo B preseleccionado) cuando no exista evidencia.
-4. Generar conclusiones solo desde evidencias y valoraciones registradas, marcándolas como propuesta pendiente de decisión profesional.
-5. Implementar guardar, editar, recuperar, buscar y trazabilidad hacia Registro/Seguimiento.
-6. Mantener bloqueada o rotulada como `En desarrollo` toda acción todavía simulada, en lugar de mostrar una conclusión ficticia utilizable.
-7. Ejecutar pruebas de campos vacíos, múltiples estudiantes, multigrado, interrupciones, recarga y doble clic.
+3. Generar conclusiones solo desde evidencias y valoraciones registradas, siempre como propuesta editable por el profesional.
+4. Implementar guardar, editar, recuperar, buscar y trazabilidad hacia Registro/Seguimiento.
+5. Retirar del `app.js` base los valores demostrativos hardcodeados una vez exista el flujo real, para no depender de una guardia posterior.
+6. Mantener `En desarrollo` mientras el motor no exista.
+7. Ejecutar E2E multigrado y pruebas de recarga, doble clic, ausencia de evidencias y recuperación.
 
 ## Corrección aplicada en esta pasada
-**No se implementó el motor de evaluación**, porque requeriría decisiones de arquitectura de datos, persistencia y reglas pedagógicas que no deben simularse mediante un parche superficial.
+Se corrigió únicamente este documento de auditoría para reflejar el runtime final observado. No se modificó la lógica productiva.
 
 ## Evidencia posterior requerida
 - E2E: Unidad → Sesión → Criterio → Evidencia → Estudiante → Valoración → Conclusión → Registro → Seguimiento.
@@ -81,16 +89,7 @@ V3 define S1 para documento pedagógicamente incorrecto o competencia falsa. La 
 - Prueba multigrado.
 - Prueba de que una conclusión no aparece sin evidencia.
 - Prueba de que competencia/nivel corresponden al estudiante y contexto seleccionado.
-
-## Riesgo de regresión
-Alto si se corrige únicamente la UI sin modelo persistente: se podría mantener una apariencia funcional con datos no trazables.
-
-## Impacto en indicadores
-- IUD: negativo (obliga a reingresar o trabajar fuera de la app).
-- ICGD: crítico (rompe criterio ↔ evidencia ↔ valoración ↔ conclusión).
-- IFR: no aprobable para este flujo.
-- ISU: no calculable como definitivo; la simplicidad visual no compensa una acción pedagógicamente falsa.
-- Prelaunch: **bloqueante**.
+- Prueba de fallo de carga de módulos que confirme que no reaparecen resultados ficticios utilizables.
 
 ## Gate V5
-**NO PASA. DocenteDigital no puede declararse lista para V1.0 mientras este flujo esencial presente resultados hardcodeados o no trazables.**
+**NO PASA. DocenteDigital no puede declararse lista para V1.0 mientras Evaluación/Registro/Seguimiento siga inexistente de extremo a extremo.**
