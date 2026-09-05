@@ -1,56 +1,58 @@
-# AUD-PERSISTENCE-CORRUPT-STATE-183 — Estado local corrupto puede impedir el arranque
+# AUD-PERSISTENCE-CORRUPT-STATE-183 — REVISADO: recuperación preventiva ya cargada antes de app.js
 
-## Resultado
+## Resultado corregido
 
-**NO PASA · S1 CRÍTICO · ROTA ante estado local JSON inválido**
+**PASA PARCIAL · S3 MEDIO como riesgo residual · FUNCIONAL/PARCIAL**
+
+## Motivo de la revisión
+
+La primera lectura aislada de `app.js` produjo un falso positivo: allí existe un `JSON.parse(...)` directo y un `save()` directo, pero la producción no carga `app.js` sola. `index.html` carga primero `storage-recovery-v26.js` y `storage-access-guard-v71.js`.
+
+`storage-recovery-v26.js` valida `docenteDigitalPrototype` antes de que se ejecute `app.js`. Si el JSON es inválido o no representa un objeto válido:
+
+1. conserva la cadena original en una clave de recuperación con timestamp cuando el navegador permite escribir;
+2. elimina únicamente la clave principal dañada;
+3. deja que `app.js` arranque después con `{}`;
+4. diferencia corrupción real de un fallo de acceso al Storage, evitando borrar datos correctos por error;
+5. intercepta `Storage.prototype.setItem` para capturar errores de cuota y mostrar una advertencia visible al usuario.
+
+Además incorpora recuperación para restablecimiento y borrado de unidad/proyecto.
 
 ## Entrada
 
-Abrir DocenteDigital cuando la clave `docenteDigitalPrototype` de `localStorage` contiene un valor que no es JSON válido (por ejemplo, por escritura truncada, edición manual, extensión del navegador o corrupción local).
+Abrir DocenteDigital con `docenteDigitalPrototype` conteniendo JSON inválido.
 
 ## Esperado
 
-La aplicación debe recuperar el arranque de forma controlada, conservar o aislar el estado defectuoso para diagnóstico/recuperación, informar al usuario con lenguaje comprensible y permitir volver a entrar sin pantalla inutilizable. V5 exige persistencia y recuperación; V4 exige errores comprensibles y continuidad del trabajo.
+Evitar que el `JSON.parse` de `app.js` derribe el arranque, preservar el dato defectuoso si es posible y advertir sobre fallos de almacenamiento.
 
 ## Obtenido
 
-`app.js` inicia con:
-
-```js
-const state=JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'{}');
-```
-
-No existe `try/catch` alrededor de esa deserialización inicial. Si el valor almacenado no es JSON válido, `JSON.parse` lanza `SyntaxError` antes de que se inicialice `state` y antes de registrar el resto de funciones de `app.js`. La app depende por tanto de que esa única cadena persistida sea siempre válida.
-
-Además, el guardado base usa:
-
-```js
-const save=()=>localStorage.setItem('docenteDigitalPrototype',JSON.stringify(state));
-```
-
-sin manejo visible de fallos de cuota/almacenamiento, por lo que la persistencia tampoco tiene contrato de error recuperable en esta capa.
+La guardia preventiva se ejecuta antes de `app.js`, valida/aisla el estado defectuoso y protege fallos de cuota. Por ello el escenario está cubierto estáticamente por la cadena runtime actual.
 
 ## Evidencia
 
-- `app.js`, inicialización de `state` y función `save()` en las primeras líneas del archivo.
-- `docs/AUDITORIA_PRELANZAMIENTO_V5.md`: §§ 3, 4 y 18 exigen guardar/recuperar, probar recarga/interrupciones y bloquean pantallas blancas/negras en funciones principales.
-- `docs/AUDITORIA_SIMPLICIDAD_USO_V4.md`: §§ 17, 19 y 20 exigen errores comprensibles, guardado comprensible y continuar donde quedó.
+- `index.html`: `storage-recovery-v26.js` y `storage-access-guard-v71.js` aparecen antes de `app.js`.
+- `storage-recovery-v26.js`: validación preventiva, copia de recuperación, separación entre corrupción y fallo de Storage, advertencia de cuota y restauración de datos.
+- Producción actual sirve esa misma cadena de scripts.
 
-## Acción requerida
+## PASA / NO PASA
 
-1. Encapsular la lectura/deserialización del estado en una función segura.
-2. Si el JSON es inválido, preservar una copia de la cadena defectuosa antes de aislarla o reinicializarla.
-3. Mostrar un mensaje comprensible y ofrecer recuperación/reinicio sin perder silenciosamente la copia original.
-4. Manejar `QuotaExceededError` y otros fallos de `localStorage.setItem` sin afirmar que se guardó.
-5. Añadir pruebas automáticas de: JSON corrupto, clave vacía, esquema antiguo, cuota agotada y recarga posterior.
+**PASA PARCIAL** para recuperación preventiva de JSON corrupto y cuota agotada en la capa cliente.
 
-## Corrección automática
+No se declara PASA total V5 porque todavía faltan pruebas físicas/reales de navegadores, cierre/reapertura, cuota llena, almacenamiento bloqueado, migración de esquemas y recuperación por usuarios reales.
 
-No aplicada en esta pasada. Modificar únicamente la lectura inicial sin diseñar la recuperación de la copia dañada podría convertir un fallo visible en pérdida silenciosa de información, lo que sería peor para V5. La corrección debe preservar datos antes de resetear y después retestear arranque, persistencia y recuperación.
+## Severidad
+
+**S3 MEDIO** como riesgo residual de validación, no S1.
 
 ## Clasificación
 
-- Arranque con estado válido: **FUNCIONAL/PARCIAL**.
-- Arranque con estado local JSON inválido: **ROTA**.
-- Recuperación explícita del estado corrupto: **INEXISTENTE**.
-- Manejo visible de error de escritura/cuota en la capa base: **INEXISTENTE/PARCIAL**.
+- Guardia previa a `app.js`: **FUNCIONAL**.
+- Recuperación de JSON local corrupto: **FUNCIONAL/PARCIAL**.
+- Manejo de cuota: **FUNCIONAL/PARCIAL**.
+- Evidencia V5 con navegadores/dispositivos reales: **PENDIENTE / NO DEMOSTRADA**.
+
+## Acción
+
+Mantener los bloqueantes V5 de pruebas reales. Añadir pruebas automatizadas reproducibles para JSON inválido, esquema antiguo, Storage bloqueado y `QuotaExceededError`. No modificar esta guardia sin regresión específica.
