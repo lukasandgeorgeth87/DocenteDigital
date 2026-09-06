@@ -34,7 +34,7 @@
     if(kind==='unit'||kind==='project') out.push(AUTHORS[0],AUTHORS[4],AUTHORS[5]);
     if(kind==='session') out.push(AUTHORS[1],AUTHORS[2],AUTHORS[3],AUTHORS[6],AUTHORS[7],AUTHORS[9]);
     const multi=state.level==='Primaria'&&(state.ieType==='Multigrado'||state.ieType==='Unidocente');
-    const eib=(state.language==='Quechua'||state.language==='Bilingüe');
+    const eib=state.linguisticMode==='EIB'||(!state.linguisticMode&&(state.language==='Quechua'||state.language==='Bilingüe'));
     if(multi&&eib)out.push(AUTHORS[10]);
     const activity=(()=>{try{return selectedActivity()?.activity}catch(e){return null}})();
     if(multi&&eib&&activity?.area==='Matemática')out.push(AUTHORS[11]);
