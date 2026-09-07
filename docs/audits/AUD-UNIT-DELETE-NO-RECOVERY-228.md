@@ -1,34 +1,38 @@
-# AUD-UNIT-DELETE-NO-RECOVERY-228
+# AUD-UNIT-DELETE-NO-RECOVERY-228 — CORREGIDO
 
 ## Alcance
-Auditoría estática verificable sobre el flujo de eliminación de Unidades/Proyectos en DocenteDigital, contrastada con V4 y V5. No se simularon usuarios reales, dispositivos físicos, backend ni IA real.
+Auditoría estática verificable sobre el flujo de eliminación y recuperación de Unidades/Proyectos en DocenteDigital, contrastada con V4 y V5. No se simularon usuarios reales, dispositivos físicos, backend ni IA real.
 
-## Hallazgo principal
+## Corrección del hallazgo anterior
+La versión anterior de este informe inspeccionó únicamente `app.js` y concluyó que la recuperación era inexistente. Esa conclusión era incompleta: `index.html` carga `storage-recovery-v26.js` **antes** de `app.js`, y dicho módulo envuelve posteriormente `deleteUnit()` para crear una copia local recuperable y ofrecer restauración.
+
+La auditoría se corrige para distinguir entre **recuperación básica funcional** y la **papelera completa exigida por V4/V5**.
+
+## Hallazgo actualizado
 
 ### AUD-UNIT-228-A
 **ID:** AUD-UNIT-228-A  
-**Entrada:** Crear o disponer de una Unidad/Proyecto guardada y ejecutar `Eliminar`, confirmando el cuadro de confirmación.  
-**Esperado:** La eliminación debe ser segura: confirmación + papelera/estado recuperable + posibilidad de restauración antes de eliminación definitiva. Debe poder demostrarse también el caso eliminar → recuperar.  
-**Obtenido:** `deleteUnit(id)` confirma mediante `confirm(...)` y, tras aceptar, ejecuta directamente `state.units=state.units.filter(u=>u.id!==id)`, actualiza `activeUnitId`, guarda el nuevo estado y oculta la salida. No existe `trash`, `deletedUnits`, `deletedAt`, comando de restauración ni interfaz de recuperación en este flujo.  
-**Evidencia:** `app.js`, función `deleteUnit(id)`. V4 §23 exige “Confirmación + papelera + recuperación antes de eliminación definitiva”. V5 §3 exige probar crear/guardar/editar/duplicar/buscar/descargar/imprimir/**eliminar/recuperar** documentos.  
-**Resultado:** **NO PASA**.  
-**Severidad:** **S1 – CRÍTICO** para prelan­zamiento por riesgo de pérdida irreversible causada por una acción ordinaria del usuario y por incumplimiento directo del flujo de recuperación exigido.  
-**Clasificación:** confirmación = **FUNCIONAL**; eliminación = **FUNCIONAL pero destructiva**; papelera = **INEXISTENTE**; recuperación = **INEXISTENTE**; trazabilidad de eliminación = **INEXISTENTE**.  
-**Acción requerida:** Implementar eliminación blanda con metadatos (`deletedAt`, identificador estable y contexto documental), vista Papelera, Restaurar y eliminación definitiva separada con confirmación reforzada. Mantener referencias históricas necesarias para sesiones/documentos derivados y definir qué ocurre al restaurar una unidad que tiene sesiones vinculadas.
+**Entrada:** Crear o disponer de una Unidad/Proyecto guardada y ejecutar `Eliminar`, confirmando la acción.  
+**Esperado:** Confirmación + estado recuperable/papelera + restauración persistente antes de una eliminación definitiva, conservando el mismo ID y la trazabilidad con documentos derivados.  
+**Obtenido:** `app.js` elimina la unidad del arreglo principal, pero `storage-recovery-v26.js` intercepta `deleteUnit(id)`, guarda previamente una copia en `docenteDigitalPrototype_delete_backup` y, si la eliminación se concreta, muestra una interfaz `Unidad eliminada` con acciones `Restaurar` y `Descartar`. La restauración vuelve a insertar la unidad con su mismo `id` y conserva el respaldo si la restauración falla. `index.html` carga este módulo antes de `app.js`, por lo que la protección forma parte del runtime previsto.  
+**Evidencia:** `index.html` carga `storage-recovery-v26.js` antes de `app.js`; `storage-recovery-v26.js` implementa `installRecoverableUnitDelete()`, `offerUnitDeleteRestore()` y la clave `docenteDigitalPrototype_delete_backup`.  
+**Resultado:** **PASA PARCIALMENTE**.  
+**Severidad:** **S2 – ALTO** para prelan­zamiento, no S1 por pérdida irreversible inmediata, porque existe recuperación básica.  
+**Clasificación:** confirmación = **FUNCIONAL**; copia previa = **FUNCIONAL**; restauración inmediata/persistente = **FUNCIONAL/PARCIAL**; papelera navegable = **INEXISTENTE**; múltiples eliminados recuperables = **INEXISTENTE**; eliminación definitiva separada y auditable = **PARCIAL/INEXISTENTE**; trazabilidad histórica de la eliminación = **INEXISTENTE**.  
+**Acción requerida:** Mantener la protección actual y evolucionarla a una Papelera real con colección de elementos eliminados, `deletedAt`, restauración de múltiples documentos, eliminación definitiva separada y reglas explícitas para referencias `unitId` y documentos derivados.
 
-## Riesgo de integridad y trazabilidad
-La eliminación actual no distingue entre “quitar de la lista” y “destruir definitivamente”. Una unidad puede estar vinculada por `unitId` a sesiones históricas; eliminarla del arreglo `state.units` hace que el documento fuente deje de estar disponible en la colección principal sin un mecanismo de recuperación o auditoría. Esto debilita la cadena Unidad → Sesión y agrava los hallazgos previos de trazabilidad/snapshot.
-
-## Por qué no se aplicó una corrección rápida
-No es seguro sustituir únicamente el `filter()` por un arreglo `deletedUnits`: sin una pantalla de papelera, restauración, reglas sobre referencias `unitId`, migración del estado existente y pruebas de reapertura, el cambio sería parcial y podría crear estados huérfanos. Debe corregirse como flujo completo, pequeño pero coherente, y retestearse.
+## Límites de la recuperación actual
+La implementación conserva **una única copia local** bajo `docenteDigitalPrototype_delete_backup`. Una nueva eliminación puede sustituir el respaldo anterior. No existe una vista de Papelera con historial, metadatos de borrado o recuperación de múltiples elementos. Por ello V4/V5 todavía no quedan plenamente demostrados, pero ya no es correcto clasificar la recuperación como inexistente.
 
 ## Retest requerido
 1. Crear U1 y una sesión S1 vinculada a U1.  
-2. Eliminar U1: debe desaparecer de la lista normal y aparecer en Papelera, sin perder S1.  
-3. Recargar/cerrar y reabrir: U1 debe seguir recuperable.  
-4. Restaurar U1: debe recuperar el mismo ID y volver a enlazar coherentemente con S1.  
-5. Eliminar definitivamente desde Papelera: confirmación reforzada; verificar política para documentos derivados.  
-6. Probar doble clic y recarga durante eliminar/restaurar para impedir duplicados o pérdida de estado.
+2. Eliminar U1 y confirmar que aparece la opción de restauración.  
+3. Recargar antes de restaurar y confirmar que el respaldo sigue disponible.  
+4. Restaurar U1 y verificar el mismo ID y coherencia con S1.  
+5. Eliminar U1 y luego U2 antes de restaurar para documentar el comportamiento de respaldo único.  
+6. Probar fallo de almacenamiento/cuota y confirmar que la eliminación se cancela si no puede crearse la copia previa.  
+7. Implementar y retestear Papelera multi-elemento antes de marcar V4/V5 como plenamente aprobado.
 
 ## Estado V5
-**Bloqueante pendiente. DocenteDigital no debe aprobarse para lanzamiento V1.0 mientras la eliminación ordinaria de documentos pueda producir pérdida irreversible sin papelera y recuperación.**
+**Bloqueante específico de pérdida irreversible por un único borrado ordinario: mitigado por la recuperación actual.**  
+**Requisito V4/V5 de Papelera completa y recuperación documental: pendiente.** DocenteDigital no debe aprobarse para lanzamiento V1.0 por este informe aislado; la decisión global continúa dependiendo de los demás S0/S1 abiertos y de los retests integrales de V5.
