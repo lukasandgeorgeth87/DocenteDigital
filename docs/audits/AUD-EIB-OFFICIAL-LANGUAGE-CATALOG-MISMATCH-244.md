@@ -41,8 +41,12 @@ La fuente oficial actual del Ministerio de Cultura (BDPI) informa **48 lenguas i
 
 El problema no es que una variedad de Quechua no pueda seleccionarse pedagógicamente; el problema es que el modelo actual no separa `lengua oficial` de `variedad` y por tanto no puede demostrar trazabilidad normativa/canónica de la selección.
 
+### Verificación de producción
+La inspección del HTML servido actualmente por `https://docente-digital.vercel.app/` confirma además que `linguistic-profile-v26.js` **no está cargado en el runtime productivo actual**. Por tanto, el catálogo de 53 opciones es una deuda latente del repositorio, no una superficie activa de producción en esta ronda. Producción conserva el perfil lingüístico base y el problema mayor de módulos correctivos no cableados, ya documentado por auditorías anteriores; AUD-244 no duplica ese hallazgo, sino que identifica una incompatibilidad normativa/taxonómica que debe resolverse antes de cablear dicho módulo.
+
 ## Evidencia
 - `linguistic-profile-v26.js`: arreglo `languages` con 53 entradas y un único valor persistido en `state.indigenousLanguage`/`state.quechuaVar`.
+- Producción canónica: el HTML servido no incluye `<script src="linguistic-profile-v26.js">`.
 - BDPI, Ministerio de Cultura, `Lista de lenguas indígenas u originarias`: 48 lenguas vigentes; lista oficial actualizada continuamente.
 - MINEDU, `Lenguas originarias: algunos datos interesantes que no conocías` (2025): 48 lenguas indígenas originarias.
 - V3 §7 EIB: exige lengua, variedad, escenario lingüístico y denominaciones oficiales vigentes.
@@ -51,12 +55,12 @@ El problema no es que una variedad de Quechua no pueda seleccionarse pedagógica
 **NO PASA**
 
 ## Clasificación
-**PARCIALMENTE FUNCIONAL**: existe selección lingüística y guardas EIB/monolingüe, pero la taxonomía oficial/varietal no está normalizada ni trazable.
+**PARCIALMENTE FUNCIONAL en repositorio / NO ACTIVA en producción para este módulo específico**. Existe lógica de selección lingüística y guardas EIB/monolingüe en el repositorio, pero la taxonomía oficial/varietal no está normalizada ni trazable, y ese módulo no está cableado al runtime productivo actual.
 
 ## Severidad
 **S2 — ALTO**
 
-La selección puede persistirse y reutilizarse, pero el sistema no puede demostrar que el valor represente correctamente una lengua oficial y una variedad diferenciada. Esto afecta exactitud EIB, trazabilidad y futuras validaciones normativas.
+La lógica prevista puede persistir y reutilizar una selección, pero el sistema no puede demostrar que el valor represente correctamente una lengua oficial y una variedad diferenciada. Esto afecta exactitud EIB, trazabilidad y futuras validaciones normativas. La ausencia del módulo en producción mantiene además pendiente su validación E2E real.
 
 ## Causa raíz
 El catálogo evolucionó como una lista única para resolver simultáneamente dos necesidades distintas:
@@ -72,10 +76,10 @@ Al no existir dos campos normalizados, se mezclaron categorías y denominaciones
 4. Mantener un mapa de aliases/valores legados para no romper perfiles ya guardados.
 5. Normalizar denominaciones visibles contra fuente oficial actual y conservar alias históricos solo como compatibilidad interna.
 6. Registrar `source`, `verifiedAt` y versión del catálogo.
-7. Volver a probar EIB → monolingüe → EIB y la herencia a Unidad/Sesión/Materiales.
+7. Solo después cablear el módulo a producción y volver a probar EIB → monolingüe → EIB y la herencia a Unidad/Sesión/Materiales.
 
 ## Corrección aplicada en esta ronda
-No se modificó el catálogo funcional. Cambiar directamente los valores persistidos podría romper perfiles EIB existentes y alterar documentos históricos. La corrección segura requiere migración explícita y separación `lengua`/`variedad`, no un reemplazo textual masivo.
+No se modificó el catálogo funcional. Cambiar directamente los valores persistidos podría romper perfiles EIB existentes y alterar documentos históricos. La corrección segura requiere migración explícita y separación `lengua`/`variedad`, no un reemplazo textual masivo. Se corrigió únicamente el informe de auditoría para distinguir con precisión repositorio y producción.
 
 ## Pruebas posteriores obligatorias
 - seleccionar cada una de las 48 lenguas oficiales sin perder identidad canónica;
@@ -83,7 +87,8 @@ No se modificó el catálogo funcional. Cambiar directamente los valores persist
 - alias legado `Quechua Cusco-Collao (Cusco)` → migrar a lengua `Quechua` + variedad correspondiente sin modificar históricos emitidos;
 - EIB → monolingüe: limpiar herencia lingüística que ya no corresponda;
 - materiales bilingües: heredar lengua/variedad correcta sin traducción literal automática;
-- caracteres especiales de nombres oficiales (por ejemplo `Maijɨki`, `Murui-Muinanɨ`) en UI, localStorage, DOCX/PDF y búsqueda.
+- caracteres especiales de nombres oficiales (por ejemplo `Maijɨki`, `Murui-Muinanɨ`) en UI, almacenamiento, DOCX/PDF y búsqueda;
+- comprobar explícitamente que el módulo normalizado está cargado en producción antes de declararlo funcional.
 
 ## Fuente oficial verificada
 - Ministerio de Cultura — BDPI — Lista de lenguas indígenas u originarias, consultada el 8 de septiembre de 2026: https://bdpi.cultura.gob.pe/lenguas
