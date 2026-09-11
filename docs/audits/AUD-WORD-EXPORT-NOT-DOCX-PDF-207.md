@@ -1,15 +1,14 @@
-# AUD-WORD-EXPORT-NOT-DOCX-PDF-207
+# AUD-WORD-EXPORT-NOT-DOCX-PDF-207 — rectificación acumulativa
 
-## Resumen
+## Estado actual
 
-**Severidad:** S1 CRÍTICO — bloqueante V5  
-**Estado:** NO PASA  
-**Clasificación:** descarga Word básica = PARCIALMENTE FUNCIONAL; DOCX nativo = INEXISTENTE; PDF = INEXISTENTE / no demostrado  
-**Módulo:** Exportación profesional · Unidad/Proyecto · Sesión · V5
+**Estado:** RETIRADO como bloqueante independiente por premisa técnica incorrecta y solapamiento con `AUD-EXPORT-PDF-162`.  
+**Clasificación histórica:** el hallazgo original mezcló una observación válida sobre PDF/impresión ausentes con una afirmación incorrecta de que el DOCX nativo era inexistente.  
+**Severidad contabilizable:** **NO CONTABILIZAR S1 adicional**. El bloqueante de PDF/impresión y pruebas físicas continúa canónicamente en `AUD-EXPORT-PDF-162`.
 
 ## Especificaciones obligatorias aplicadas
 
-Esta prueba se ejecuta conjuntamente contra:
+Esta rectificación se contrasta conjuntamente con:
 
 - `docs/AUDITORIA_MAESTRA_INTEGRAL_V2.md`
 - `docs/ADENDA_AUDITORIA_EJECUTABLE_V3.md`
@@ -17,125 +16,107 @@ Esta prueba se ejecuta conjuntamente contra:
 - `docs/AUDITORIA_PRELANZAMIENTO_V5.md`
 - `docs/NUCLEO_IA_DOCENTEDIGITAL.md`
 
-V4 exige `Vista previa → Word / PDF / Imprimir` y V5 exige probar al menos 20 documentos Word reales, PDF e impresión reales; Word/PDF corruptos son bloqueantes.
+V3 obliga a demostrar el comportamiento real; por ello no basta inspeccionar las funciones legado de `app.js`. Debe seguirse la cadena completa `asset → wiring directo/transitivo → ejecución → comportamiento probado`.
 
 ## ID de prueba
 
 `AUD-WORD-EXPORT-NOT-DOCX-PDF-207`
 
-## Entrada
+## Entrada de reprueba
 
-1. Crear o abrir una Unidad/Proyecto y usar `Descargar Word`.
-2. Crear una Sesión y usar `Descargar Word`.
-3. Revisar el código de `wordDocument()`, `wordBlob()`, `downloadUnitWord()` y `downloadSessionWord()` en el runtime canónico.
-4. Verificar presencia de exportación PDF nativa en la interfaz y en el código ejecutado.
-5. Contrastar el mismo `app.js` en producción.
+1. Inspeccionar la implementación vigente de exportación en `app.js`.
+2. Inspeccionar `docx-export-v29.js`.
+3. Seguir el grafo de carga real desde `schedule-prompt-v6.js`.
+4. Verificar si el módulo DOCX sustituye las funciones legado `downloadUnitWord`, `shareUnit`, `downloadSessionWord` y `shareSession`.
+5. Separar la capacidad DOCX de las capacidades PDF/impresión y de las pruebas físicas V5.
 
 ## Resultado esperado
 
-Para una V1.0 aprobable:
-
-- la exportación Word debe producir un documento real y utilizable, idealmente DOCX cuando la auditoría exige DOCX;
-- debe existir exportación PDF real o una ruta explícita y probada de impresión/PDF;
-- el tipo MIME y la extensión deben corresponder al formato anunciado;
-- tablas, márgenes, imágenes, fuentes, encabezados, pies, firmas, orientación, saltos y caracteres quechua deben probarse físicamente en documentos reales;
-- la app no debe considerar aprobado el bloque de exportación solo porque el navegador descargue un archivo.
+- Un DOCX real debe producir un paquete OOXML `.docx`, con MIME coherente y una estructura ZIP/OOXML válida.
+- Si el exportador real está cableado en el runtime, no debe clasificarse como inexistente por observar únicamente el fallback legado de `app.js`.
+- PDF/impresión deben evaluarse por separado.
+- Las pruebas físicas de apertura, fidelidad y compatibilidad móvil siguen pendientes hasta ejecutarse realmente.
 
 ## Resultado obtenido
 
-### Evidencia A — “Word” no es DOCX nativo
+### A. El DOCX nativo sí existe
 
-`wordDocument()` construye un documento HTML completo como texto:
+`docx-export-v29.js` construye explícitamente un paquete ZIP OOXML con:
 
-```js
-return `<!doctype html><html ...><body>${body}</body></html>`;
-```
+- `[Content_Types].xml`;
+- `_rels/.rels`;
+- `word/document.xml`;
+- MIME `application/vnd.openxmlformats-officedocument.wordprocessingml.document`;
+- extensión `.docx`.
 
-`wordBlob()` encapsula ese HTML con:
+El módulo redefine en `window` las acciones de exportación de Unidad/Proyecto y Sesión, por lo que reemplaza la salida legado `.doc` cuando termina de cargar.
 
-```js
-new Blob([...], { type: 'application/msword;charset=utf-8' })
-```
+### B. El exportador DOCX sí está integrado en la cadena estable
 
-Las descargas usan extensión `.doc`:
+`schedule-prompt-v6.js` incluye expresamente `docx-export-v29.js` en `__ddStableModuleLoaderV49`, después de `export-fallback-guard-v39.js`.
 
-```js
-cleanFileName(unit.title)+'.doc'
-cleanFileName(s.title)+'.doc'
-```
+Por tanto, la afirmación original de AUD-207 —“DOCX nativo = INEXISTENTE”— es incorrecta para el runtime actual y ya era incompatible con la implementación existente.
 
-Por tanto, el flujo actual no genera un paquete OOXML `.docx`; genera HTML compatible con Word y lo entrega como `.doc`.
+### C. El bloqueante PDF/impresión permanece, pero ya tiene hallazgo canónico
 
-Esto puede ser útil como exportación básica editable, pero no satisface una afirmación de DOCX nativo ni permite dar por aprobadas las pruebas V5 de exportación profesional.
+`AUD-EXPORT-PDF-162` documenta correctamente que:
 
-### Evidencia B — PDF no existe en el runtime canónico
+- DOCX técnico existe pero requiere validación física;
+- PDF no está implementado en el flujo productivo;
+- impresión guiada/controlada no está implementada;
+- faltan las pruebas V5 de 20 documentos reales, PDF, impresión y dispositivos físicos.
 
-La interfaz de Unidad/Proyecto y Sesión muestra acciones `Descargar Word` / `Word` y compartir, pero no una acción PDF. En `app.js` no existe una función equivalente de generación PDF dentro del flujo canónico inspeccionado.
-
-Por tanto:
-
-- Word básico: disponible como `.doc` HTML;
-- DOCX nativo: no implementado;
-- PDF: no implementado/no demostrado en este vertical;
-- impresión real y validación física de 20 documentos: pendiente, no simulada.
-
-### Evidencia C — producción sirve exactamente esta implementación
-
-La producción canónica `https://docente-digital.vercel.app/app.js` responde HTTP 200 y contiene las mismas funciones `wordDocument`, `wordBlob`, `downloadUnitWord` y `downloadSessionWord`, con `application/msword` y extensión `.doc`.
-
-La página principal de producción responde HTTP 200 y anuncia `descargar ... en Word`, no PDF.
+Mantener otro S1 en AUD-207 por la misma brecha duplicaría la penalización.
 
 ## PASA / NO PASA
 
-**NO PASA**
+- **Existencia técnica de DOCX OOXML:** PASA.
+- **Wiring del exportador DOCX en el loader estable:** PASA.
+- **Apertura/fidelidad física en Word y móvil:** PENDIENTE.
+- **PDF/impresión:** NO PASA, registrado canónicamente en `AUD-EXPORT-PDF-162`.
+- **Gate V5 de exportación profesional completo:** NO PASA por AUD-162 y por las pruebas físicas todavía pendientes.
 
-## Clasificación funcional
+## Clasificación funcional corregida
 
-- Descarga de archivo editable que Word puede abrir: **PARCIALMENTE FUNCIONAL**.
-- Exportación `.doc` basada en HTML: **FUNCIONAL como mecanismo legado/provisional**, sujeto a prueba física.
-- DOCX nativo: **INEXISTENTE**.
-- PDF real: **INEXISTENTE / NO DEMOSTRADO**.
-- Prueba física de 20 Word, PDF e impresión: **PENDIENTE**; no se simula.
-- Cumplimiento V5 Exportación profesional: **ROTO / NO PASA**.
+- DOCX técnico: **PARCIALMENTE FUNCIONAL**, no inexistente.
+- Descarga/compartición DOCX: implementada técnicamente; requiere E2E físico.
+- PDF: **INEXISTENTE** según AUD-162.
+- Impresión guiada/controlada: **INEXISTENTE** según AUD-162.
+- AUD-207 como hallazgo independiente: **RETIRADO / NO CONTABILIZAR**.
 
-## Severidad
+## Causa raíz de la falsa clasificación
 
-**S1 CRÍTICO** porque V5 trata Word/PDF corruptos como bloqueantes y exige demostrar exportaciones profesionales reales antes del lanzamiento. Aunque aquí no se ha demostrado corrupción de los `.doc`, tampoco existe la evidencia necesaria para aprobar DOCX/PDF y el PDF está ausente.
+La versión original de AUD-207 inspeccionó el fallback legado de `app.js` (`application/msword` + `.doc`) sin seguir la sobreescritura posterior realizada por `docx-export-v29.js` mediante el cargador transitivo de `schedule-prompt-v6.js`.
 
-## Riesgo
+## Acción correctiva
 
-1. Diferencias de renderizado entre Microsoft Word, LibreOffice, móviles y visores web.
-2. Pérdida o cambio de estilos, tablas, saltos o caracteres al abrir HTML disfrazado como documento Word.
-3. Usuarios que esperan DOCX/PDF profesional y reciben un formato legado/provisional.
-4. Imposibilidad de aprobar el gate V5 sin pruebas físicas reales.
+No se requiere cambio funcional para corregir esta falsa premisa. La acción aplicada es de trazabilidad:
 
-## Acción correctiva requerida
+1. retirar el S1 duplicado de AUD-207;
+2. conservar AUD-162 como hallazgo canónico de PDF/impresión;
+3. mantener pendientes las pruebas físicas de DOCX;
+4. exigir en futuras auditorías la cadena completa `asset → wiring → ejecución → comportamiento` antes de declarar una función inexistente.
 
-No sustituir la extensión `.doc` por `.docx`; eso sería incorrecto y podría generar archivos inválidos.
-
-La corrección correcta debe:
-
-1. elegir una librería o servicio confiable que genere DOCX OOXML real;
-2. conservar tablas, estilos, márgenes, encabezados/pies, firmas, imágenes y caracteres Unicode/quechua;
-3. implementar exportación PDF real o una ruta de impresión/PDF explícita y estable;
-4. probar al menos 20 documentos reales de diferentes tipos y complejidades;
-5. probar apertura en Word y, cuando sea pertinente, otros visores;
-6. mantener el `.doc` HTML únicamente como fallback si se etiqueta honestamente y se prueba;
-7. añadir smoke técnico que valide MIME/extensión y pruebas de integración de los generadores.
-
-## Corrección directa
-
-**No aplicada.** Cambiar solo el texto del botón o renombrar `.doc` a `.docx` no resolvería el bloqueante. Implementar un generador DOCX/PDF real excede el criterio de cambio pequeño, seguro y reversible para esta pasada y requiere pruebas físicas que esta auditoría no debe simular.
-
-## Evidencia posterior requerida para cierre
+## Evidencia posterior requerida para aprobar DOCX
 
 - 20 DOCX reales abiertos y revisados;
-- PDFs reales revisados;
-- impresión real;
-- tablas, imágenes, membretes, márgenes, fuentes, encabezados, pies, firmas, saltos, orientación y caracteres quechua;
-- verificación de apertura en celular económico y laptop;
-- evidencia de que la producción sirve el generador aprobado.
+- tablas, márgenes, orientación, saltos, encabezados/pies e identidad institucional;
+- caracteres Unicode/quechua;
+- imágenes cuando el flujo las soporte;
+- apertura en Microsoft Word y dispositivos físicos relevantes;
+- celular económico, celular gama media, tablet y laptop;
+- doble clic, compartir/cancelar y fallo de descarga sin duplicaciones ni pérdida de datos.
+
+## Fuente normativa externa
+
+No se aplica ni declara vigente ninguna norma MINEDU externa nueva en esta rectificación. Se sustenta en V2–V5/Núcleo IA y en la implementación técnica del repositorio.
+
+## Impacto
+
+- **IUD/ISU:** no se recalculan; DOCX ya no debe penalizarse como inexistente, pero la experiencia completa de salida sigue pendiente.
+- **IFR:** continúa afectado por PDF/impresión y pruebas físicas faltantes.
+- **Prelaunch:** continúa bloqueado por `AUD-EXPORT-PDF-162` y otros S0/S1 reales.
 
 ## Estado de lanzamiento
 
-DocenteDigital **NO está aprobada para lanzamiento V1.0** mientras este bloqueante y los demás S0/S1 permanezcan abiertos o falten las pruebas reales esenciales de V5.
+DocenteDigital **NO está aprobada para V1.0**. Esta rectificación elimina un falso/duplicado S1, pero no desbloquea el gate V5.
