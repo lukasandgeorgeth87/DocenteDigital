@@ -1,72 +1,91 @@
 # AUD-MOBILE-DIRECTOR-NAV-ABSENT-220
 
-## Estado
-- Fecha de verificación: 2026-09-07
-- Módulo: navegación móvil / Carpeta Director / Configuración
-- Resultado: NO PASA
-- Severidad: S1 CRÍTICO — bloqueante V5
-- Clasificación: navegación móvil Docente = PARCIALMENTE FUNCIONAL; acceso móvil a Director = INEXISTENTE desde la navegación; acceso móvil a Configuración = INEXISTENTE desde la navegación; prueba física en dispositivos = PENDIENTE
+## Estado vigente — rectificación 2026-09-11
+- Módulo: navegación móvil / Carpeta Director / Configuración.
+- Resultado histórico: NO PASA — S1 CRÍTICO.
+- Resultado vigente a nivel de código e integración declarada: **CORREGIDO TÉCNICAMENTE / PENDIENTE DE VALIDACIÓN E2E Y FÍSICA**.
+- Severidad vigente por la causa específica “no existe ruta móvil a Director/Configuración”: **sin severidad abierta por defecto demostrado**.
+- Gate V5 global: **BLOQUEADO** por pruebas físicas y demás bloqueantes independientes.
 
 ## Especificaciones aplicadas
-Se aplicaron conjuntamente AUDITORIA_MAESTRA_INTEGRAL_V2, ADENDA_AUDITORIA_EJECUTABLE_V3, AUDITORIA_SIMPLICIDAD_USO_V4, AUDITORIA_PRELANZAMIENTO_V5 y NUCLEO_IA_DOCENTEDIGITAL.
+Se aplican conjuntamente AUDITORIA_MAESTRA_INTEGRAL_V2, ADENDA_AUDITORIA_EJECUTABLE_V3, AUDITORIA_SIMPLICIDAD_USO_V4, AUDITORIA_PRELANZAMIENTO_V5 y NUCLEO_IA_DOCENTEDIGITAL.
 
-V4 exige que un director principiante pueda localizar funciones frecuentes, que el botón principal sea claro y usable con el pulgar, y establece la prueba de 10 segundos para Oficio, RD, PAT e Informe. V5 exige probar móvil y considera la Carpeta Director parte del alcance esencial V1.0. V3 exige probar UX y funcionalidad por separado y no aprobar una función porque aparezca en otra superficie.
+V4 exige navegación móvil simple y funciones principales utilizables con el pulgar. V5 exige prueba física en celular económico, gama media y tablet, además del recorrido Director extremo a extremo. V3 exige distinguir presencia de código, integración, ejecución y comportamiento real.
 
-## Evidencia técnica
-En `styles.css`, dentro de `@media(max-width:850px)`, `.sidebar{display:none}`. Por tanto la navegación lateral que sí incluye `Director` y `Configuración` desaparece en pantallas de hasta 850 px.
+## Hallazgo histórico
+La auditoría original observó correctamente que el HTML base contiene una `.mobile-nav` con cinco destinos —Inicio, Plan, Sesión, Materiales y Evaluación— y que `styles.css` oculta `.sidebar` a `max-width:850px`. A partir de esa evidencia estática se concluyó que Director y Configuración quedaban inaccesibles.
 
-En `index.html`, la navegación móvil contiene únicamente cinco destinos: Inicio, Plan, Sesión, Materiales y Evaluación. No existe botón `data-screen="director"` ni `data-screen="settings"` dentro de `.mobile-nav`.
+Esa conclusión quedó incompleta porque no siguió el grafo de carga transitivo incorporado posteriormente.
 
-La producción `https://docente-digital.vercel.app/` sirve actualmente ese mismo HTML/CSS. El HTML productivo muestra la barra móvil con esos cinco destinos y el CSS productivo oculta la barra lateral a <=850 px.
+## Evidencia correctiva actual
+### 1. Guarda móvil implementada
+`mobile-navigation-guard-v60.js` monta dinámicamente un sexto acceso **☰ Más** dentro de `.mobile-nav` y crea un menú con:
 
-## Prueba AUD-MOV-DIR-220-A
-**Entrada:** abrir DocenteDigital con viewport <=850 px y completar el setup.
+- `🏫 Director` → `data-dd-go="director"`;
+- `⚙️ Configuración` → `data-dd-go="settings"`.
 
-**Resultado esperado:** desde la navegación principal móvil, el usuario con rol/director debe poder llegar claramente a su espacio de trabajo sin depender de URLs internas, consola, zoom o conocimiento técnico.
+El manejador invoca `window.go(target)` y el menú incluye `aria-haspopup`, `aria-expanded`, roles de menú, cierre por clic exterior y tecla Escape. En ancho <=850 px también ajusta la barra móvil a seis columnas.
 
-**Resultado obtenido:** la barra lateral queda oculta; la barra móvil no contiene Director. No existe otra acción visible en Inicio que lleve al espacio Director.
+### 2. Integración transitiva
+`index.html` carga `schedule-prompt-v6.js`. Ese archivo contiene `__ddStableModuleLoaderV49` y su lista de módulos incluye expresamente `mobile-navigation-guard-v60.js`. El loader crea los `<script>` de forma secuencial, espera `onload`, reintenta una vez en error y muestra una alerta visible si un módulo requerido no carga.
 
-**PASA/NO PASA:** NO PASA.
+### 3. Producción verificada
+En la revisión del 2026-09-11:
 
-**Severidad:** S1 CRÍTICO.
+- `https://docente-digital.vercel.app/` respondió HTTP 200;
+- `/schedule-prompt-v6.js` respondió HTTP 200 y contiene el loader con `mobile-navigation-guard-v60.js`;
+- `/mobile-navigation-guard-v60.js` respondió HTTP 200 y contiene el botón Más y las rutas Director/Configuración;
+- el deployment productivo asociado a `main` estaba en estado READY;
+- no se encontraron errores runtime en la última hora.
 
-**Acción correctiva:** rediseñar la navegación móvil para incluir el acceso Director sin aumentar confusión. No basta agregar un sexto botón mientras el núcleo Director siga bloqueado; primero debe definirse una navegación móvil coherente con V4 y la funcionalidad real disponible.
+Estas evidencias demuestran **asset + wiring productivo declarado**, no sustituyen una prueba interactiva real.
 
-## Prueba AUD-MOV-SET-220-B
-**Entrada:** viewport <=850 px → intentar volver a Configuración para modificar Ficha/Perfil.
+## Reprueba AUD-MOV-DIR-220-A
+**Entrada:** viewport <=850 px, perfil configurado, intentar acceder a Director mediante la interfaz móvil.
+
+**Resultado esperado:** una ruta visible y táctil hacia Director.
+
+**Resultado obtenido verificable en esta ronda:** el runtime desplegado contiene una guarda transitivamente cargada que añade `Más → Director` y llama a `go('director')`.
+
+**PASA/NO PASA:** **PASA a nivel de implementación e integración declarada. Validación E2E/física: PENDIENTE.**
+
+**Clasificación:** FUNCIONAL a nivel de wiring; funcionalidad móvil real no se declara demostrada todavía.
+
+## Reprueba AUD-MOV-SET-220-B
+**Entrada:** viewport <=850 px, intentar volver a Configuración.
 
 **Resultado esperado:** ruta visible y simple.
 
-**Resultado obtenido:** Configuración desaparece junto con la barra lateral y no está en la barra móvil.
+**Resultado obtenido verificable:** la misma guarda añade `Más → Configuración` y llama a `go('settings')`.
 
-**PASA/NO PASA:** NO PASA.
+**PASA/NO PASA:** **PASA a nivel de implementación e integración declarada. Validación E2E/física: PENDIENTE.**
 
-**Severidad:** S2 IMPORTANTE de forma aislada; queda absorbido por el S1 del flujo Director móvil.
+## Causa raíz histórica
+La navegación base reemplazaba la barra lateral por cinco accesos docentes. La corrección adoptó la estrategia recomendada por V4: mantener accesos frecuentes y trasladar destinos secundarios a un menú `Más`, en lugar de comprimir todos los destinos en la barra inferior.
 
-## Causa raíz
-La arquitectura responsive sustituye completamente la barra lateral por una navegación móvil de cinco destinos exclusivamente docentes, sin mecanismo `Más`, menú secundario, perfil/rol ni acceso equivalente a Director y Configuración.
+## Acción pendiente
+No modificar más código sin prueba interactiva. La siguiente evidencia requerida es:
 
-## Corrección aplicada
-No se modificó código en esta pasada. Agregar Director a la barra móvil expondría un módulo que ya tiene bloqueantes V1.0 abiertos y no resolvería Oficio/RD/PAT/Informe. La corrección debe hacerse junto con el flujo móvil real de Carpeta Director y pruebas de usabilidad.
+1. navegador real a 320, 360, 375, 390, 412, 768 y 850 px;
+2. comprobar aparición de `Más` después de completar/cargar la app;
+3. abrir/cerrar el menú por toque y teclado;
+4. entrar a Director y Configuración y volver sin quedar atrapado;
+5. verificar tamaño táctil, clipping, superposición y foco;
+6. probar en celular económico, gama media y tablet;
+7. probar con director principiante y medir la localización de funciones frecuentes.
 
-## Evidencia posterior / producción
-- Producción canónica consultada: HTTP 200.
-- Vercel: deployment productivo actual READY.
-- Errores runtime de la última hora: ninguno encontrado.
-- La ausencia de errores no invalida el hallazgo porque es una omisión de navegación, no una excepción runtime.
+Si cualquiera de estas pruebas falla, reabrir el defecto con la severidad sustentada por evidencia real.
 
 ## Riesgo de regresión
-Alto si se añade un botón Director sin revisar ancho, accesibilidad, orden de prioridades, navegación por rol y el límite de acciones principales de V4. También debe evitarse ocultar funciones docentes frecuentes.
+Medio. La solución depende de carga dinámica y puede verse afectada por fallo del loader, orden de módulos, CSS responsive, superposición del menú o cambios futuros de navegación.
 
-## Impacto en métricas
-- IUD: impacto negativo por imposibilidad de completar el flujo Director en móvil.
-- ICGD: impacto negativo por ruptura de acceso a la Carpeta Director.
-- IFR: no calcular definitivo; este S1 invalida cualquier conclusión de preparación.
-- ISU: no calcular definitivo; falla encontrar funciones y uso móvil.
-- Prelaunch: BLOQUEADO.
-
-## Pendientes reales
-Permanecen PENDIENTES: prueba física en celular económico, celular gama media y tablet; prueba con director principiante; prueba de pulgar; medición de 10 segundos; Oficio/RD/PAT/Informe extremo a extremo; concurrencia; restore real y seguridad integral.
+## Impacto en indicadores
+- ISU/IUD/ICGD: **no mejorar puntuaciones definitivas** hasta pruebas de usuario/dispositivo.
+- IFR: no calcular definitivo.
+- Prelaunch: continúa BLOQUEADO por pruebas reales esenciales y otros hallazgos abiertos.
 
 ## Normativa externa
-Este hallazgo es de funcionalidad/UX y no necesita declarar vigencia de una norma MINEDU/UGEL. No se atribuyó vigencia normativa externa sin fuente oficial.
+Este hallazgo es de UX/funcionalidad y no requiere declarar vigencia de una norma MINEDU/UGEL. No se atribuye ninguna vigencia normativa externa en esta rectificación.
+
+## Conclusión
+El S1 histórico por **ausencia técnica de una ruta móvil a Director/Configuración** ya no está sustentado por el código y wiring desplegados actuales. Se retira esa severidad específica y se conserva la obligación V5 de demostrar el comportamiento en navegador y dispositivos físicos antes del lanzamiento.
