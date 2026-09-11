@@ -30,9 +30,9 @@
 
 El indicador de Inicio no estaba enlazado con la fuente de estado `state.mode`. El selector superior y el contenido de Inicio evolucionaron como superficies independientes.
 
-## Corrección
+## Corrección implementada como asset
 
-Se actualizó `home-surface-truth-v73.js` para:
+Se creó/actualizó `home-surface-truth-v73.js` para:
 
 1. incorporar `syncModeLabel()`, que muestra `🔵 Modo Experto` cuando el modo activo es experto y `✨ Modo Fácil` cuando es fácil;
 2. envolver de forma idempotente `window.setMode` mediante `guardModeLabel()` para sincronizar la etiqueta después de cada cambio;
@@ -42,13 +42,61 @@ La modificación es pequeña, local y reversible. No altera generación pedagóg
 
 **Commit funcional:** `09a1564ff8888d96c0a57de67922ac37b927624e`.
 
-## Retest técnico
+## Retest histórico — evidencia insuficiente
+
+El retest histórico registró:
 
 - GitHub Actions `Prelaunch Smoke`, run `33631285557`: `completed / success` sobre el commit funcional.
 - Vercel deployment `dpl_4uBrjfhKs1gkkqnHDnf15sHFyuid`: `production / READY` para el mismo commit.
-- Producción sirve `/home-surface-truth-v73.js` con HTTP 200 y contiene `syncModeLabel()` y `guardModeLabel()`.
+- `/home-surface-truth-v73.js` respondía HTTP 200 y contenía `syncModeLabel()` y `guardModeLabel()`.
 
-**Resultado posterior:** PASA a nivel de código e integración desplegada para el defecto concreto.
+Ese retest **no demuestra integración runtime**. Un asset servido con HTTP 200 no equivale a que `index.html` lo cargue ni a que el navegador ejecute su override. Esta limitación coincide con `AUD-PRODUCTION-RUNTIME-FIXES-NOT-WIRED-204` y `AUD-RUNTIME-GUARDS-NOT-LOADED-230`.
+
+## Revisión de estado productivo — 2026-09-10/11
+
+Se volvió a inspeccionar el HTML servido por la URL canónica `https://docente-digital.vercel.app/` y el `index.html` de `main`.
+
+La cadena de scripts efectivamente declarada en la página canónica carga:
+
+- `storage-recovery-v26.js`
+- `storage-access-guard-v71.js`
+- `app.js`
+- `director-prototype-guard-v40.js`
+- `initial-curriculum-guard-v72.js`
+- `enhancements.js`
+- `format-v2.js`
+- script inline `unitBrief`
+- `schedule-v3.js`
+- `strategies-v4.js`
+- `resources-v5.js`
+- `schedule-prompt-v6.js`
+
+**`home-surface-truth-v73.js` no está referenciado en el HTML canónico.** Tampoco se encontró en esta prueba evidencia de un cargador transitivo que lo ejecute.
+
+Por ello, la conclusión histórica “PASA a nivel de código e integración desplegada” queda **RECTIFICADA**:
+
+- asset/código correctivo existente: **FUNCIONAL como archivo**;
+- integración en runtime canónico: **INEXISTENTE / NO DEMOSTRADA**;
+- defecto visible de etiqueta Fácil/Experto en producción: **NO PASA** mientras la guardia no esté cableada y ejecutada;
+- severidad del defecto concreto: **S3 MEDIO**;
+- causa transversal de release/runtime: ya cubierta por **AUD-204 / AUD-230**, por lo que no se crea una segunda penalización S1 por esta misma causa raíz.
+
+## Resultado vigente
+
+**NO PASA — PARCIALMENTE FUNCIONAL — S3 MEDIO.**
+
+El selector cambia el estado interno y las clases, pero la corrección visible del indicador de Inicio no puede darse por activa en la producción canónica mientras `home-surface-truth-v73.js` permanezca fuera del grafo de ejecución.
+
+## Acción correctiva
+
+No agregar únicamente este script de forma aislada sin revisar el orden de overrides. La corrección debe resolverse dentro del plan transversal de AUD-204/AUD-230:
+
+1. definir manifiesto/bundle de runtime;
+2. declarar qué guardas son requeridas;
+3. integrar `home-surface-truth-v73.js` en el orden correcto o trasladar `syncModeLabel()` al código canónico;
+4. ejecutar prueba real de navegador `Fácil → Experto → Fácil`;
+5. recargar con `expert` persistido y comprobar que Inicio muestre `🔵 Modo Experto`;
+6. incluir esta aserción en el smoke E2E del runtime, no limitarse a comprobar HTTP 200 del asset.
 
 ## Evidencia pendiente que no se simula
 
@@ -56,13 +104,13 @@ No se considera demostrada todavía la interacción en navegador físico, celula
 
 ## Riesgo de regresión
 
-Bajo, pero existe si un módulo futuro vuelve a reemplazar `window.setMode` después de instalar esta guardia. Mantener este caso en las pruebas automatizadas de interfaz cuando exista una batería E2E de navegador.
+Medio mientras existan múltiples archivos que reemplazan funciones globales sin un manifiesto de carga. Una integración futura puede volver a sustituir `window.setMode` después de instalar la guardia.
 
 ## Impacto en indicadores
 
-- ISU/IUD: mejora cualitativa de consistencia y comprensión del estado, sin asignar puntaje definitivo.
-- IFR: sin cambio cuantificado.
-- Prelaunch: corrige un S3 concreto, pero no elimina los bloqueantes V5 pendientes.
+- ISU/IUD: afectación cualitativa por inconsistencia visible del modo, sin puntaje definitivo.
+- IFR: afectado indirectamente por la discrepancia repositorio → runtime ya registrada en AUD-204/AUD-230.
+- Prelaunch: el S3 concreto no es bloqueante por sí solo; el gate permanece bloqueado por los S0/S1 y pruebas esenciales pendientes.
 
 ## Estado de lanzamiento
 
