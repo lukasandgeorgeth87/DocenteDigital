@@ -105,3 +105,20 @@ PENDIENTE validar con usuarios reales:
 - interacción con papelera y recuperación.
 
 No se calculan ISU/IFR/Prelaunch Score definitivos con esta evidencia parcial.
+
+## Evidencia posterior de despliegue y CI — 11/09/2026
+
+La evidencia técnica que había quedado abierta tras crear este hallazgo fue cerrada sin cambiar el dictamen funcional:
+
+- **GitHub Actions:** `Prelaunch Smoke #238`, asociado al SHA `ae349b70b61e8800cc864b92136b2a1d0ad56fa7`, terminó `completed / success`.
+- **Vercel:** deployment `dpl_AGx2yh67tHWsBQqR8RLdzpGPvZXM`, mismo SHA, permanece `READY · production`.
+- **Producción canónica:** `https://docente-digital.vercel.app/` respondió **HTTP 200 OK** después del despliegue.
+- **Cabeceras productivas observadas:** HSTS, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Permissions-Policy` restrictiva y CSP activa.
+
+### Interpretación
+
+Estas comprobaciones demuestran **sanidad técnica del despliegue y del smoke disponible**, no la existencia ni el funcionamiento de Recientes/Favoritos. El resultado funcional de AUD-260 permanece:
+
+**NO PASA · INEXISTENTE · S3 MEDIO.**
+
+No convertir un smoke exitoso ni un HTTP 200 en aprobación de una función que V4 exige y que continúa ausente.
