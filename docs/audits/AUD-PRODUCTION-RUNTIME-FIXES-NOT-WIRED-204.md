@@ -1,4 +1,4 @@
-# AUD-PRODUCTION-RUNTIME-FIXES-NOT-WIRED-204 — Correcciones desplegadas como archivos pero no activas en el runtime canónico
+# AUD-PRODUCTION-RUNTIME-FIXES-NOT-WIRED-204 — RECTIFICADO
 
 ## Especificaciones obligatorias aplicadas
 - `docs/AUDITORIA_MAESTRA_INTEGRAL_V2.md`
@@ -7,97 +7,74 @@
 - `docs/AUDITORIA_PRELANZAMIENTO_V5.md`
 - `docs/NUCLEO_IA_DOCENTEDIGITAL.md`
 
-## Prueba
+## Rectificación 2026-09-11
+El hallazgo histórico sostuvo que varias correcciones presentes como assets no estaban cableadas al runtime porque no aparecían directamente en los `<script src>` de `index.html`. Esa conclusión era incompleta: `index.html` carga `schedule-prompt-v6.js`, y este archivo implementa `__ddStableModuleLoaderV49`, un cargador secuencial de módulos transitivos.
+
+La lista productiva del loader incluye expresamente, entre otros:
+
+- `material-integrity-v65.js`
+- `director-creativity-v16.js`
+- `planning-archive-simplicity-v56.js`
+- `context-semantic-v20.js`
+- `curriculum-safety-v27.js`
+- `home-surface-truth-v73.js`
+
+Por tanto, **la ausencia de esos nombres en el HTML directo no demuestra que estén fuera del grafo de ejecución**.
+
+## Prueba rectificada
 **ID:** AUD-PRODUCTION-RUNTIME-FIXES-NOT-WIRED-204
 
-**Módulo:** Integración release/runtime · Vercel producción · carga efectiva de guardas y correcciones.
+**Entrada:** abrir la producción canónica, inspeccionar `index.html`, seguir cada script cargado y revisar cargadores transitivos.
 
-**Entrada:** abrir la URL canónica `https://docente-digital.vercel.app/`, inspeccionar el HTML realmente servido y comparar su grafo de scripts con las capas correctivas presentes en `main` y desplegadas como assets estáticos.
+**Resultado esperado:** distinguir entre:
+1. asset disponible;
+2. módulo cableado directa o transitivamente;
+3. módulo ejecutado sin error;
+4. comportamiento observable realmente corregido.
 
-**Resultado esperado:** toda corrección que se declare activa en producción debe estar efectivamente cargada —directa o transitivamente— por el runtime canónico y debe existir una prueba que demuestre que su comportamiento sustituyó o protegió al comportamiento legado.
+**Resultado obtenido:** los módulos citados anteriormente como “no cableados” sí están declarados en el loader transitivo de `schedule-prompt-v6.js`.
 
-**Resultado obtenido:** la página canónica responde HTTP 200 y el deployment actual está READY, pero el HTML servido carga únicamente este conjunto principal:
+**Resultado de wiring:** PASA a nivel de integración de código.
 
-- `storage-recovery-v26.js`
-- `storage-access-guard-v71.js`
-- `app.js`
-- `initial-curriculum-guard-v72.js`
-- `enhancements.js`
-- `format-v2.js`
-- `schedule-v3.js`
-- `strategies-v4.js`
-- `resources-v5.js`
-- `schedule-prompt-v6.js`
+**Resultado de comportamiento:** PENDIENTE DE E2E real para cada guarda. La existencia del loader no demuestra por sí sola que un override posterior no anule una corrección ni que el efecto final sea correcto en todos los flujos.
 
-No referencia, entre otras capas presentes en el repositorio, a `material-integrity-v65.js` ni `director-creativity-v16.js`. Ambas existen en el deployment y pueden responder HTTP 200 cuando se solicita su URL directamente, pero **asset disponible no equivale a código ejecutado**.
+## Clasificación vigente
+- Deployment/hosting básico: **FUNCIONAL**.
+- Loader transitivo: **FUNCIONAL a nivel de código**.
+- Wiring de los módulos citados: **FUNCIONAL a nivel de grafo declarado**.
+- Comportamiento final de cada guarda: **PENDIENTE DE PRUEBA E2E**.
 
-En particular:
+## Severidad vigente
+Se **RETIRA el S1 específico por “correcciones no cableadas”**, porque la premisa factual utilizada para elevar la severidad era incorrecta.
 
-1. `material-integrity-v65.js` contiene la guarda que reemplaza `window.generateMaterial`, bloquea la generación demostrativa y cambia la acción visible a `Revisar solicitud`. Al no cargarse desde la página canónica, queda expuesto el `generateMaterial()` legado de `app.js`, que contiene texto fijo sobre agua y una rama con frase quechua demostrativa.
-2. `director-creativity-v16.js` contiene la corrección v17 del hallazgo 203 (`expert-only` y nota breve). Al no cargarse desde la página canónica, esa corrección no puede considerarse activa únicamente porque el archivo exista y responda 200.
-3. `planning-archive-simplicity-v56.js` implementa una mejora V4 del archivo de unidades/proyectos, pero tampoco está en el grafo directo de scripts del HTML canónico.
+No se retiran otros hallazgos funcionales sobre Materiales, Director, semántica, currículo, persistencia, exportación, seguridad o gate V5. Cada uno debe conservar su propia evidencia y severidad.
 
-Se inspeccionó además `enhancements.js`, uno de los scripts efectivamente cargados, sin encontrar referencia a `material-integrity-v65.js` ni un cargador dinámico explícito de ese archivo. No existe evidencia suficiente para afirmar que las capas ausentes se incorporen transitivamente.
+## Causa raíz de la falsa alarma
+La auditoría anterior inspeccionó la carga directa de `index.html` y algunos scripts intermedios, pero no siguió hasta el final el grafo transitivo introducido por `schedule-prompt-v6.js`.
 
-## Resultado
-**NO PASA.**
+## Acción correctiva de auditoría
+1. Mantener inventario explícito del grafo de módulos cargados.
+2. Añadir smoke de navegador que verifique sentinelas de módulos críticos.
+3. Comprobar orden de overrides, no solo carga.
+4. Fallar CI si falta un módulo declarado como requerido o si un sentinela crítico no aparece.
+5. Retestar individualmente Materiales, Director, currículo, persistencia, exportación y simplicidad.
 
-## Clasificación
-- Deployment/hosting básico: **FUNCIONAL** (READY + HTTP 200).
-- Integración del runtime efectivo: **ROTA** para correcciones no cableadas.
-- Verificación histórica basada solo en `asset HTTP 200`: **INSUFICIENTE / PARCIALMENTE FUNCIONAL**.
-- Materiales seguros en runtime canónico: **ROTA** mientras permanezca activo el comportamiento legado.
-- Corrección 203 en runtime canónico: **NO DEMOSTRADA / no activa por carga directa**.
-
-## Severidad
-**S1 CRÍTICO — bloqueante V5.**
-
-La severidad se eleva a S1 porque el defecto de integración deja activo comportamiento pedagógico/lingüístico incorrecto conocido y permite falsos positivos de auditoría: un archivo corregido puede desplegarse sin ejecutarse nunca. V3 prohíbe aprobar porque una función responde o porque un artefacto existe; V5 exige que las funciones críticas estén realmente probadas antes de publicar.
-
-## Causa raíz
-El proyecto mantiene numerosas capas de corrección/guardas como archivos JS separados, mientras `index.html` conserva una lista manual y limitada de scripts. No existe evidencia de un manifiesto único de runtime, bundling/dependency graph o gate de CI que compruebe que todas las capas marcadas como requeridas para producción se cargan y ejecutan en el navegador canónico.
-
-Además, varias auditorías anteriores verificaron disponibilidad del asset con HTTP 200 como parte de su evidencia posterior. Esa comprobación demuestra que el archivo fue desplegado, pero no demuestra que el navegador lo cargó ni que su override quedó activo.
-
-## Acción correctiva
-No se agregan indiscriminadamente todos los scripts a `index.html`, porque el orden de carga, overrides, dependencias y efectos laterales puede provocar regresiones o pantallas blancas.
-
-Corrección requerida:
-1. definir un **manifiesto único y ordenado de runtime** o un bundle explícito;
-2. clasificar cada capa como requerida, opcional, experimental o solo auditoría;
-3. resolver dependencias y orden de overrides;
-4. añadir un smoke test de navegador que cargue la URL canónica y verifique sentinelas/efectos reales, no solo existencia de archivos;
-5. incluir como mínimo aserciones de que las guardas críticas de Materiales, Director, persistencia, currículo, exportación y prelaunch están efectivamente ejecutadas;
-6. fallar CI/publicación cuando un archivo considerado corrección de producción exista pero no esté conectado al grafo de ejecución;
-7. retestar los hallazgos previos cuya evidencia posterior se apoyó solo en `asset HTTP 200`.
-
-## Evidencia técnica
-- `main` al iniciar esta prueba: `63fce0787aa4a18d2095134cad716c1a57fdbbfb`.
-- Deployment asociado antes de registrar el hallazgo: `dpl_ChvpjLEJfezMQN1GjPMyUtNM4R8A`, `READY`, `production`, mismo SHA.
-- URL canónica: HTTP 200.
-- `material-integrity-v65.js`: HTTP 200 como asset, pero ausente de los `<script src>` del HTML canónico.
-- Runtime errors en la última hora: 0. Esto confirma que es un **error silencioso de integración**, no una caída del servicio.
+## Evidencia actual
+- `index.html` productivo carga `schedule-prompt-v6.js`.
+- `schedule-prompt-v6.js` productivo contiene `__ddStableModuleLoaderV49` y la lista secuencial de módulos citada.
+- Los assets relevantes siguen disponibles en producción.
+- La URL canónica responde HTTP 200 y el deployment está READY.
 
 ## Normativa externa
-Este hallazgo no requiere declarar vigente ninguna norma MINEDU/UGEL/legal externa. Se fundamenta en V2–V5, Núcleo IA y evidencia técnica actual del repositorio/runtime. Por tanto, no se formula ninguna afirmación de vigencia normativa externa sin verificación oficial.
+No se declara vigencia normativa externa en esta rectificación. La corrección es de trazabilidad técnica V3/V5.
 
 ## Riesgo de regresión
-**ALTO** si se corrige agregando scripts sin ordenar dependencias. **MEDIO/BAJO** si se introduce manifiesto/bundle con pruebas de navegador y despliegue progresivo.
+**MEDIO-ALTO.** El sistema aún depende de numerosos overrides globales y del orden secuencial de carga. Una modificación del loader o de funciones globales puede introducir regresiones silenciosas.
 
 ## Impacto en indicadores
-- **IUD:** afectado cualitativamente porque el usuario puede recibir superficies distintas de las correcciones auditadas.
-- **ICGD:** afectado por pérdida de confianza en la correspondencia repositorio → runtime.
-- **IFR:** afectado: un deployment READY no demuestra integridad funcional.
-- **ISU:** no se recalcula; algunas simplificaciones V4 pueden no estar activas.
-- **Prelaunch:** **BLOQUEADO** por S1 y por falta de evidencia E2E del runtime efectivo.
-
-No se calculan puntajes definitivos.
-
-## Pendientes reales
-- corregir el grafo de carga efectivo;
-- retestar navegador real/canónico;
-- retestar específicamente Materiales EIB, Director V4, planificación/archivo y demás capas ausentes;
-- mantener pendientes las pruebas físicas de móvil, Word/PDF/impresión, restore real, OWASP/aislamiento, 100 generaciones, año completo y pilotos.
+- Se retira el impacto S1 atribuido exclusivamente a “no wiring”.
+- IFR/ICGD continúan pendientes por falta de E2E completo.
+- ISU/Prelaunch no se recalculan definitivamente.
 
 ## Conclusión
-**DocenteDigital NO está aprobada para lanzamiento V1.0.** Un archivo presente en GitHub o servido con HTTP 200 no puede volver a contarse como corrección productiva hasta demostrar que el runtime canónico lo carga, lo ejecuta y produce el comportamiento esperado.
+**DocenteDigital continúa NO APROBADA PARA V1.0**, pero no debe mantenerse un bloqueante basado en una premisa de wiring que ya fue refutada por el cargador transitivo productivo. El gate sigue bloqueado por hallazgos y pruebas reales independientes.
