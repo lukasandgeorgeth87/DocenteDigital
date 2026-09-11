@@ -1,115 +1,123 @@
-# AUD-SETUP-AUTOSAVE-RUNTIME-NOT-WIRED-208
+# AUD-SETUP-AUTOSAVE-RUNTIME-NOT-WIRED-208 — rectificación acumulativa
 
-## Resumen
+## Estado actual
 
-**Módulo:** Configuración inicial / persistencia / recuperación
-
-**Estado:** NO PASA
-
-**Severidad:** S1 CRÍTICO
-
-**Clasificación funcional:**
-- Configuración inicial base: PARCIALMENTE FUNCIONAL.
-- Persistencia al finalizar (`Guardar y entrar`): FUNCIONAL de forma local.
-- Autoguardado durante los pasos previos: INEXISTENTE en el runtime productivo canónico.
-- Guardia `config-state-guard-v42.js`: implementada en repositorio, pero NO CARGADA por `index.html` productivo.
-- Recuperación del progreso intermedio tras recarga/cierre: NO DEMOSTRADA y, por el wiring actual, no disponible para las selecciones aún no guardadas.
+**Módulo:** Configuración inicial / persistencia / recuperación  
+**Estado:** RETIRADO como S1 independiente por premisa de wiring obsoleta.  
+**Clasificación:** el autoguardado de la configuración está implementado y cableado transitivamente; su E2E físico/automatizado de cierre, recarga e interrupción continúa PENDIENTE.  
+**Severidad contabilizable:** **NO CONTABILIZAR S1 adicional**. El estado canónico de esta capacidad se mantiene en `AUD-SETUP-AUTOSAVE-065`.
 
 ## Especificaciones obligatorias aplicadas
 
-V3 exige demostrar funcionalidad mediante entrada → resultado esperado → resultado obtenido → evidencia → PASA/NO PASA → severidad → acción correctiva. V4 exige guardado automático y continuar donde quedó. V5 exige probar recarga, cierre del navegador, cambio de pestaña, interrupción y retorno sin perder información, y considera el guardado inestable un bloqueante de prelaunch.
+Se contrasta conjuntamente con:
 
-## Prueba
+- `docs/AUDITORIA_MAESTRA_INTEGRAL_V2.md`
+- `docs/ADENDA_AUDITORIA_EJECUTABLE_V3.md`
+- `docs/AUDITORIA_SIMPLICIDAD_USO_V4.md`
+- `docs/AUDITORIA_PRELANZAMIENTO_V5.md`
+- `docs/NUCLEO_IA_DOCENTEDIGITAL.md`
 
-**ID:** AUD-SETUP-AUTOSAVE-RUNTIME-NOT-WIRED-208
+V3 exige evidencia real y obliga a distinguir entre archivo existente, wiring directo/transitivo, ejecución y comportamiento probado. V4 exige autoguardado y continuar donde quedó. V5 exige probar recarga, cierre, interrupción y retorno sin pérdida de información.
 
-**Entrada:**
-1. Abrir DocenteDigital desde cero.
-2. Seleccionar Nivel.
-3. Seleccionar Tipo de IE.
-4. Seleccionar grados/edades y/o áreas.
-5. Antes de pulsar `Guardar y entrar`, recargar o cerrar y volver a abrir.
+## ID de prueba
 
-**Resultado esperado:**
-Cada cambio relevante de la configuración debe persistirse automáticamente y el sistema debe recuperar el progreso intermedio sin obligar a repetir información ya ingresada.
+`AUD-SETUP-AUTOSAVE-RUNTIME-NOT-WIRED-208`
 
-**Resultado obtenido:**
-`app.js` solo persiste inmediatamente en algunas acciones generales y, dentro del asistente inicial, `chooseOne()` y los handlers de grado/área modifican `state` sin llamar a `save()`. La persistencia base del perfil se consolida en `finishSetup()` al final del flujo.
+## Entrada de reprueba
 
-Existe una corrección específica en `config-state-guard-v42.js`: envuelve `chooseOne()`, `nextSetup()`, clics de grados/áreas y cambios del perfil lingüístico para ejecutar `persistSetupProgress()` y `save()`. Sin embargo, el `index.html` productivo no carga `config-state-guard-v42.js`; su lista efectiva de scripts incluye `storage-recovery-v26.js`, `storage-access-guard-v71.js`, `app.js`, `initial-curriculum-guard-v72.js`, `enhancements.js`, `format-v2.js`, `schedule-v3.js`, `strategies-v4.js`, `resources-v5.js` y `schedule-prompt-v6.js`.
+1. Revisar `app.js` y la implementación específica `config-state-guard-v42.js`.
+2. Seguir el grafo de carga desde el `index.html` productivo hacia `schedule-prompt-v6.js`.
+3. Comprobar si `config-state-guard-v42.js` forma parte del cargador secuencial estable.
+4. Separar la evidencia de wiring de la prueba E2E de recarga/cierre/interrupción.
+5. Contrastar con el hallazgo canónico `AUD-SETUP-AUTOSAVE-065` para evitar doble conteo.
 
-Por tanto, la protección de autoguardado está presente en el repositorio pero no forma parte del runtime canónico.
+## Resultado esperado
 
-## Evidencia técnica
+- Si `config-state-guard-v42.js` está integrado transitivamente, no puede clasificarse como “NO CARGADO” solo porque no aparezca como `<script>` directo en `index.html`.
+- El código debe persistir las decisiones relevantes del setup.
+- La recuperación exacta después de recarga/cierre/interrupción solo puede darse por aprobada tras una prueba E2E real.
 
-### `app.js`
-- Inicializa `state` desde `localStorage`.
-- `save()` escribe `docenteDigitalPrototype`.
-- `chooseOne()` cambia `state[key]` pero no guarda.
-- Los clics de grado/área cambian `state.grades` / `state.areas` pero no guardan.
-- `finishSetup()` ejecuta `save()` al final.
+## Resultado obtenido
 
-### `config-state-guard-v42.js`
-Implementa explícitamente:
-- `persistSetupProgress()`;
-- wrapper de `chooseOne()` con guardado;
-- wrapper de `nextSetup()` con guardado;
-- listener de clic para grados/áreas;
-- listener de cambio para `linguisticMode`, `language` y `quechuaVar`;
-- recuperación guiada al paso pendiente.
+### A. La guarda de autoguardado sí está integrada
 
-### `index.html`
-No incluye `<script src="config-state-guard-v42.js"></script>`.
+`schedule-prompt-v6.js`, que sí se carga desde el HTML productivo, define `__ddStableModuleLoaderV49` y contiene expresamente:
 
-## Causa raíz
+```js
+'schedule-integrity-v62.js',
+'config-state-guard-v42.js',
+'linguistic-profile-v26.js',
+...
+```
 
-La arquitectura contiene correcciones en archivos de guarda independientes, pero el runtime productivo no dispone de un manifiesto/bundle único que garantice que las guardas requeridas se carguen y ejecuten en el orden correcto. Este hallazgo es una manifestación específica del problema de wiring documentado anteriormente, con impacto directo en una exigencia V5 de persistencia y recuperación.
+El loader crea cada `<script>` secuencialmente, usa `async=false`, continúa mediante `onload`, reintenta una vez ante error y registra fallos en `window.ddModuleLoadFailures`.
+
+Por tanto, la afirmación histórica de AUD-208 —“`config-state-guard-v42.js` está en el repositorio pero NO CARGADA por el runtime productivo”— ya no es correcta.
+
+### B. La implementación sí persiste progreso intermedio
+
+`config-state-guard-v42.js` implementa `persistSetupProgress()` y llama al `save()` existente. Además:
+
+- envuelve `chooseOne()` y persiste después de cada selección;
+- envuelve `nextSetup()` y persiste antes de avanzar;
+- escucha clics en `#gradeChoices` y `#areaChoices`;
+- escucha cambios en `linguisticMode`, `language` y `quechuaVar`;
+- sanea grados/áreas incompatibles al cambiar nivel/tipo de IE;
+- fuerza volver al paso pendiente cuando detecta una configuración parcial e incompatible.
+
+### C. AUD-065 ya es el registro canónico de esta corrección
+
+`AUD-SETUP-AUTOSAVE-065` documenta el cambio funcional, el commit que introdujo la guarda y su estado posterior como **PASA técnicamente para las decisiones cubiertas**, dejando expresamente pendientes las pruebas físicas/E2E V5.
+
+Mantener AUD-208 como S1 por “runtime no cableado” duplicaría una penalización y contradice tanto el código vigente como el registro canónico AUD-065.
 
 ## PASA / NO PASA
 
-**NO PASA.**
+- **Implementación de autoguardado del setup:** PASA técnicamente.
+- **Wiring de `config-state-guard-v42.js`:** PASA.
+- **Recarga/cierre/interrupción real en navegador y dispositivos físicos:** PENDIENTE.
+- **Persistencia multiusuario/backend y restore real:** PENDIENTE / fuera de lo demostrado por esta corrección local.
+- **AUD-208 como hallazgo S1 independiente:** RETIRADO.
 
-La existencia del archivo correctivo no constituye evidencia funcional mientras la página canónica no lo cargue ni ejecute.
+## Clasificación funcional corregida
 
-## Riesgo
+- Configuración inicial base: **PARCIALMENTE FUNCIONAL** dentro del alcance total V5.
+- Autoguardado local de decisiones cubiertas: **FUNCIONAL técnicamente**.
+- Recuperación E2E bajo interrupciones reales: **PENDIENTE DE PRUEBA**, no simulada.
+- AUD-208: **NO CONTABILIZAR como S1**.
 
-Un docente/director principiante puede completar varios pasos y perder el progreso por recarga, cierre o interrupción antes de `Guardar y entrar`. Es un error silencioso: no aparece Error 500 y Vercel puede seguir READY/HTTP 200.
+## Causa de la falsa clasificación histórica
 
-## Acción correctiva
+La auditoría anterior inspeccionó únicamente la lista de `<script>` directos de `index.html` y no siguió la carga transitiva iniciada por `schedule-prompt-v6.js`. La metodología correcta es:
 
-No conectar únicamente `config-state-guard-v42.js` de forma aislada sin resolver sus dependencias. La guarda exige una configuración lingüística completa; `linguistic-profile-v26.js` es la capa que monta el catálogo EIB y valida lengua/variedad, y actualmente tampoco forma parte del runtime canónico.
+**asset disponible → wiring directo/transitivo → ejecución → comportamiento demostrado.**
 
-La corrección segura debe:
-1. definir un manifiesto/bundle productivo único y ordenado;
-2. cargar conjuntamente las capas de configuración y perfil lingüístico compatibles;
-3. añadir prueba automática de wiring que falle si el autoguardado requerido no está ejecutándose;
-4. ejecutar prueba real: seleccionar cada paso → recargar → verificar recuperación exacta;
-5. probar EIB y monolingüe, cambio de nivel/tipo de IE y datos incompatibles;
-6. confirmar que la recuperación no mezcla datos históricos ni asigna lengua por territorio.
+## Acción posterior requerida
+
+No hace falta agregar otro `<script>` directo ni duplicar la guarda. Para cerrar completamente la exigencia V5 se requiere una batería E2E que haga, como mínimo:
+
+1. seleccionar nivel → recargar → comprobar recuperación;
+2. seleccionar tipo de IE → recargar;
+3. seleccionar grados/edades → recargar;
+4. seleccionar áreas → recargar;
+5. configurar EIB/monolingüe → recargar;
+6. cerrar/reabrir el navegador;
+7. simular interrupción de conexión;
+8. comprobar que cambios incompatibles limpian solo datos no válidos y no modifican históricos emitidos.
 
 ## Evidencia posterior requerida
 
-PENDIENTE hasta comprobar en navegador real/automatizado:
-- recarga después de cada paso;
-- cierre y reapertura;
-- interrupción de conexión;
-- EIB con lengua confirmada;
-- monolingüe castellano;
-- cambio de nivel con limpieza coherente de grados/áreas;
-- recuperación exacta sin datos heredados inválidos.
+PENDIENTE hasta ejecución E2E real/automatizada y, para V5 completo, dispositivo físico. La evidencia de wiring no sustituye estas pruebas.
 
 ## Fuente oficial externa
 
-No se aplicó ninguna norma externa MINEDU/UGEL/legal a este hallazgo. La conclusión deriva de V2–V5, Núcleo IA y del wiring/código productivo actual. No se declara ninguna vigencia normativa externa.
+No se aplica ni declara vigente ninguna norma externa MINEDU/UGEL/legal en esta rectificación. La conclusión deriva de V2–V5, Núcleo IA y del código/runtime de DocenteDigital.
 
 ## Impacto en indicadores
 
-- **IUD:** impacto negativo por repetición de datos y pérdida de avance.
-- **ICGD:** impacto negativo por incoherencia entre estado esperado y persistido.
-- **IFR:** no calcular definitivamente; este fallo impide aprobar persistencia/recuperación.
-- **ISU:** no calcular definitivamente; el usuario puede repetir el asistente por pérdida de progreso.
-- **Prelaunch:** BLOQUEADO mientras el guardado/recuperación esencial no esté demostrado.
+- **IUD/ICGD/IFR/ISU:** retirar la penalización duplicada asociada exclusivamente a “guarda no cableada”; no recalcular puntuaciones definitivas.
+- **Prelaunch:** continúa BLOQUEADO por otros S0/S1 y por pruebas esenciales V5 todavía pendientes.
 
 ## Riesgo de regresión
 
-ALTO si se conectan guardas aisladas sin ordenar dependencias: puede bloquear el setup EIB o dejar perfiles parcialmente configurados. La integración debe probarse como conjunto y no mediante inserción indiscriminada de scripts.
+**MEDIO.** La carga es transitiva y secuencial; cambios futuros en `schedule-prompt-v6.js`, orden de módulos o nombres de assets pueden desconectar la guarda. Debe existir una prueba automática que verifique tanto el wiring como el comportamiento de recuperación.
