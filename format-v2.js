@@ -164,7 +164,18 @@
     const q=document.createElement('div');q.id='ddQuickBox';q.className='card dd-quickbox';
     q.innerHTML='<h2>💬 ¿Qué quieres preparar hoy?</h2><p class="sub">Escribe en lenguaje natural y DocenteDigital te lleva al flujo correcto.</p><div class="chatbar"><input id="ddQuickInput" placeholder="Ej.: Quiero una unidad sobre la siembra de mi localidad"><button class="btn" id="ddQuickGo">Continuar</button></div><small>Acceso rápido del prototipo: organiza la solicitud y reutiliza tu configuración; no reemplaza tu criterio docente.</small>';
     homeGrid.prepend(q);
-    byId('ddQuickGo').onclick=()=>{const t=(byId('ddQuickInput').value||'').trim();if(!t)return;if(/sesión|sesion/i.test(t)){go('session');return;}if(/evaluación|evaluacion|rúbrica|rubrica/i.test(t)){go('evaluation');return;}go('plan');showUnit();byId('unitSituation').value=t.replace(/^(quiero|crear|preparar|hazme|necesito)\s+/i,'');ddSuggestTitles();};
+    byId('ddQuickGo').onclick=()=>{
+      const t=(byId('ddQuickInput').value||'').trim();
+      if(!t)return;
+      if(/\b(oficio|resoluci[oó]n|\brd\b|pat|pei|pci|reglamento interno|\bri\b|informe|acta|conei|comit[eé]|ugel|dre|gre|director|gesti[oó]n escolar)\b/i.test(t)){
+        if(typeof go==='function')go('director');
+        alert('Carpeta Director: esta función todavía está en construcción. Tu solicitud no se convertirá en una Unidad/Proyecto.');
+        return;
+      }
+      if(/sesión|sesion/i.test(t)){go('session');return;}
+      if(/evaluación|evaluacion|rúbrica|rubrica/i.test(t)){go('evaluation');return;}
+      go('plan');showUnit();byId('unitSituation').value=t.replace(/^(quiero|crear|preparar|hazme|necesito)\s+/i,'');ddSuggestTitles();
+    };
   }
 
   const css=document.createElement('style');
