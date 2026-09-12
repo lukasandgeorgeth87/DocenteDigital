@@ -47,12 +47,23 @@ Por tanto, ya no queda como “no confirmado”: **la rama principal no tiene pr
 
 Para el SHA actual `bcb672ba3e9e4cc4bfa8e5973f7d848bda3ba865`, el run `Prelaunch Smoke` n.° 224 terminó `success`, y Vercel mantiene el deployment productivo `dpl_9FpHheeUc8E8y7JhKniiHeMY7gBp` en estado `READY`. Esto demuestra que el smoke funciona como comprobación técnica, pero no corrige la falta de una barrera preventiva.
 
+### Revalidación 2026-09-12
+
+Se revalidó el HEAD `303656e0cdce651d08bb69ed23a97abc4271470f`.
+
+- Vercel despliega ese SHA directamente como `target: production` mediante `dpl_J6HtcbPpZyWvLnxZAb15HZtCgDLF`, actualmente `READY`.
+- La URL canónica `https://docente-digital.vercel.app/` responde HTTP 200 y sirve ese estado productivo.
+- GitHub Actions ejecutó por separado `Prelaunch Smoke` n.° 251 sobre el mismo SHA; terminó `completed/success`.
+- El estado combinado del commit muestra `Vercel: success`, pero esta evidencia no demuestra que el smoke sea un check requerido previo a la publicación productiva.
+
+Por tanto, el hallazgo **permanece abierto**: la automatización smoke es útil, pero sigue sin demostrarse una secuencia obligatoria `preview/pruebas → checks requeridos → promoción a producción`. Un resultado exitoso del smoke no convierte por sí mismo el flujo actual en una puerta preventiva V5.
+
 ## Evidencia
 - GitHub branch `main`: `protected=false`, protección deshabilitada y sin required status checks.
 - `.github/workflows/prelaunch-smoke.yml`: triggers `push`/`pull_request` y aviso explícito de alcance limitado.
 - GitHub Actions run n.° 224 del SHA `bcb672ba3e9e4cc4bfa8e5973f7d848bda3ba865`: `completed/success`.
 - Evidencia histórica del SHA `599a385b83ac6f086a0ce6850fb2ee98899eaccd`: Vercel producción finalizó antes del check `static-smoke`.
-- Vercel deployment actual `dpl_9FpHheeUc8E8y7JhKniiHeMY7gBp`: `READY`, target `production`, SHA `bcb672ba3e9e4cc4bfa8e5973f7d848bda3ba865` antes de esta actualización documental.
+- Revalidación 2026-09-12: deployment productivo `dpl_J6HtcbPpZyWvLnxZAb15HZtCgDLF` sobre SHA `303656e0cdce651d08bb69ed23a97abc4271470f`, estado `READY`; URL canónica HTTP 200; `Prelaunch Smoke` n.° 251 `completed/success`.
 
 ## PASA / NO PASA
 NO PASA
