@@ -1,4 +1,4 @@
-/* DocenteDigital – recuperación preventiva de almacenamiento v26.2 */
+/* DocenteDigital – recuperación preventiva de almacenamiento v26.3 */
 (function(){
   if(window.__ddStorageRecoveryV26)return;window.__ddStorageRecoveryV26=true;
   const KEY='docenteDigitalPrototype';
@@ -91,6 +91,23 @@
     const wrapped=function(){
       const current=localStorage.getItem(KEY);
       if(current===null)return previous.apply(this,arguments);
+
+      /* Una sola clave de respaldo no puede representar dos restablecimientos pendientes.
+         Si ya existe una copia recuperable, no la sobrescribimos: el usuario debe resolverla
+         primero (Restaurar o Descartar definitivamente). */
+      try{
+        const pending=localStorage.getItem(RESET_BACKUP_KEY);
+        if(pending){
+          alert('Ya hay una copia anterior pendiente de recuperación. Antes de restablecer otra vez, restaura o descarta definitivamente esa copia.');
+          offerResetRestore();
+          return;
+        }
+      }catch(error){
+        alert('No se pudo verificar la copia de recuperación pendiente. Para evitar pérdida de información, el restablecimiento fue cancelado.');
+        console.warn('DocenteDigital: no se pudo verificar la copia pendiente antes de restablecer.',error);
+        return;
+      }
+
       const ok=confirm('¿Restablecer la configuración y los datos de la aplicación? Se guardará una copia local para que puedas restaurarlos si fue un error.');
       if(!ok)return;
       try{
