@@ -74,6 +74,18 @@ No se recomienda añadir seis o siete botones comprimidos a la barra inferior si
 
 **No se modifica código funcional.** La corrección visual requiere decidir la estructura responsive (`Más`, menú lateral móvil u otra opción) y probarla para no introducir regresiones de accesibilidad ni botones demasiado pequeños. Se registra el defecto antes de intervenir.
 
+## Evidencia posterior de esta ronda
+
+Tras registrar el hallazgo:
+
+- commit documental inicial: `264da6c4e16b8cbab0b13fdeaefa906e54529807`;
+- Vercel desplegó ese SHA como `dpl_GbKBf3qnfM97FDrUANLBx4vgQqGs` en estado `READY`, destino `production`;
+- la URL canónica `https://docente-digital.vercel.app/` respondió `HTTP 200 OK`;
+- la respuesta productiva conservó exactamente el patrón observado: `mobile-nav` con Inicio, Plan, Sesión, Materiales y Evaluación, sin Director ni Configuración;
+- `Prelaunch Smoke #253` sobre `264da6c4e16b8cbab0b13fdeaefa906e54529807` terminó `completed / success`.
+
+El éxito del smoke confirma únicamente su alcance técnico; no cierra AUD-MOV-262 ni sustituye la prueba móvil física exigida por V5.
+
 ## Evidencia posterior requerida para cierre
 
 - viewport automatizado `<=850px`: Director y Configuración localizables y navegables;
