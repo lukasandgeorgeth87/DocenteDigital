@@ -1,4 +1,4 @@
-/* DocenteDigital – recuperación preventiva de almacenamiento v26.1 */
+/* DocenteDigital – recuperación preventiva de almacenamiento v26.2 */
 (function(){
   if(window.__ddStorageRecoveryV26)return;window.__ddStorageRecoveryV26=true;
   const KEY='docenteDigitalPrototype';
@@ -177,6 +177,22 @@
     if(typeof window.deleteUnit!=='function'||window.deleteUnit.__ddRecoverable)return;
     const previous=window.deleteUnit;
     const wrapped=function(id){
+      /* No sobrescribir una eliminación todavía recuperable. Con una sola clave de respaldo,
+         permitir un segundo borrado haría irreversible el primero. El usuario debe resolver
+         primero la copia pendiente (Restaurar o Descartar definitivamente). */
+      try{
+        const pending=JSON.parse(localStorage.getItem(DELETE_BACKUP_KEY)||'null');
+        if(pending&&pending.unit&&pending.unit.id&&pending.unit.id!==id){
+          alert('Hay una unidad eliminada pendiente de recuperación. Antes de eliminar otra, restaura o descarta definitivamente la copia anterior.');
+          offerUnitDeleteRestore();
+          return;
+        }
+      }catch(error){
+        alert('No se pudo verificar la copia de recuperación pendiente. Para evitar pérdida de información, la eliminación fue cancelada.');
+        console.warn('DocenteDigital: no se pudo verificar la copia pendiente antes de eliminar.',error);
+        return;
+      }
+
       let before=null;
       try{
         before=JSON.parse(localStorage.getItem(KEY)||'{}');
