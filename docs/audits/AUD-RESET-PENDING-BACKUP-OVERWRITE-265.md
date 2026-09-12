@@ -24,7 +24,7 @@ La V3 clasifica la pérdida irreversible como S0. V4 y V5 exigen recuperación e
 - **Severidad:** **S0 BLOQUEANTE** por riesgo de pérdida irreversible de la única copia recuperable.
 - **Causa raíz:** respaldo de ranura única sin guardia previa de copia pendiente.
 - **Acción correctiva aplicada:** v26.3 consulta `RESET_BACKUP_KEY` antes de confirmar/crear otro respaldo; si existe, cancela el nuevo restablecimiento, muestra la recuperación anterior y exige Restaurar o Descartar definitivamente.
-- **Evidencia posterior:** commit `5abdb7147c68cdc0617e2973ec2c5f5301092f01`.
+- **Evidencia posterior de código:** commit `5abdb7147c68cdc0617e2973ec2c5f5301092f01`.
 - **Estado posterior:** **CORREGIDO EN IMPLEMENTACIÓN; E2E REAL PENDIENTE**.
 
 ### AUD-RESET-265-B — fallo al comprobar la copia pendiente
@@ -45,6 +45,15 @@ La V3 clasifica la pérdida irreversible como S0. V4 y V5 exigen recuperación e
 - **Resultado obtenido:** v26.2 ya cancelaba el restablecimiento y conservaba el estado; v26.3 mantiene ese comportamiento.
 - **Resultado:** **PASA A NIVEL DE IMPLEMENTACIÓN; E2E PENDIENTE**.
 - **Clasificación:** **FUNCIONAL EN IMPLEMENTACIÓN**.
+
+## Evidencia posterior al despliegue
+
+- El commit acumulativo `c0ed7afc566d8e199b7ebb671de29e0279c48c7d` fue desplegado por Vercel como `dpl_CGbpyem2uJrsQQ5o5zqHW31eu4Pc` con estado **READY** y destino **production**.
+- La URL canónica `https://docente-digital.vercel.app/` respondió **HTTP 200 OK**.
+- El asset productivo `https://docente-digital.vercel.app/storage-recovery-v26.js` respondió **HTTP 200** y sirve explícitamente **v26.3**, incluida la guardia que impide sobrescribir una copia de restablecimiento pendiente.
+- No se observaron errores runtime en Vercel durante la ventana de una hora revisada después del cambio.
+- GitHub Actions **Prelaunch Smoke #266** (`run 34725904997`) terminó **completed / success** exactamente sobre `c0ed7afc566d8e199b7ebb671de29e0279c48c7d`.
+- Estas comprobaciones demuestran despliegue, carga del asset y smoke técnico; **no sustituyen** las pruebas E2E de recuperación ni las pruebas físicas exigidas por V5.
 
 ## Validaciones aún obligatorias
 
