@@ -14,7 +14,7 @@ Auditoría de eliminación, recuperación y persistencia de unidades/proyectos s
 - **Evidencia:** `app.js`, función `deleteUnit(id)`, y búsqueda del repositorio sin implementación de `trash`, `papelera`, `restoreUnit` o estado equivalente. La producción actual expone el botón `Eliminar` dentro de `Mis unidades/proyectos`.
 - **PASA/NO PASA:** **NO PASA**.
 - **Clasificación:** **PARCIALMENTE FUNCIONAL** (el borrado funciona, pero no cumple borrado seguro/recuperación).
-- **Severidad:** **S1 CRÍTICO para prelaunch**. El borrado confirmado elimina el único registro persistido de la unidad/proyecto en el estado local y no existe recuperación propia de la aplicación. No se eleva a S0 porque esta ronda no demostró pérdida accidental sin acción del usuario ni corrupción/fuga; sí existe riesgo real de pérdida irreversible después de confirmar.
+- **Severidad:** **S0 BLOQUEANTE**. V3 §23 clasifica expresamente como S0 la **pérdida irreversible**. En la implementación actual, tras la confirmación, la unidad/proyecto se elimina de la única colección persistida (`state.units`) y la aplicación no dispone de papelera ni restauración. La confirmación reduce el riesgo de borrado accidental, pero no cambia la naturaleza irreversible del resultado dentro de DocenteDigital.
 - **Acción correctiva:** implementar papelera lógica y restauración antes de habilitar eliminación definitiva: mover el documento a un contenedor recuperable con `deletedAt`, conservar relaciones necesarias, ofrecer `Restaurar`, exigir una segunda acción explícita para eliminación definitiva y probar recarga/cierre/retorno. En arquitectura multiusuario futura, la papelera deberá respetar autorización, aislamiento, trazabilidad y política de retención.
 
 ## Causa raíz
@@ -23,11 +23,12 @@ El modelo de persistencia trata `state.units` como colección única activa. `de
 
 ## Especificaciones afectadas
 
+- **V3 §19:** definir papelera, recuperación y eliminación definitiva.
+- **V3 §23 Severidad:** **S0 BLOQUEANTE** para pérdida irreversible.
 - **V4 §23 Borrado seguro:** confirmación + papelera + recuperación antes de eliminación definitiva.
 - **V5 §3:** probar eliminar y recuperar documentos.
 - **V5 §4:** persistencia y recuperación.
-- **V5 §18:** una puntuación global no puede ocultar bloqueantes de guardado/pérdida.
-- **V3 §19:** definir papelera, recuperación y eliminación definitiva.
+- **V5 §18 Prelaunch Gate:** una puntuación global no puede ocultar bloqueantes de pérdida/guardado.
 
 ## Riesgo de regresión
 
@@ -37,10 +38,10 @@ El modelo de persistencia trata `state.units` como colección única activa. `de
 
 - **IUD:** negativo hasta que el usuario pueda recuperar documentos eliminados.
 - **ICGD:** negativo por ciclo de vida documental incompleto.
-- **IFR/ISU/Prelaunch:** no calcular definitivamente con esta evidencia aislada. El hallazgo mantiene abierto el gate V5 hasta contar con recuperación real comprobada.
+- **IFR/ISU/Prelaunch:** no calcular definitivamente con esta evidencia aislada. El hallazgo es un **bloqueante S0** y mantiene abierto el gate V5 hasta contar con recuperación real comprobada.
 
 ## Decisión de esta ronda
 
-No se modifica directamente `deleteUnit()` porque introducir papelera y restauración cambia el modelo de datos y requiere probar relaciones, persistencia y UX. Se documenta el bloqueo y se mantiene pendiente una corrección funcional con prueba E2E posterior.
+No se modifica directamente `deleteUnit()` porque introducir papelera y restauración cambia el modelo de datos y requiere probar relaciones, persistencia y UX. Se corrige la severidad del hallazgo para alinearla con la taxonomía obligatoria de V3 y se mantiene pendiente una corrección funcional con prueba E2E posterior.
 
-**Gate V5:** BLOQUEADO.
+**Gate V5:** BLOQUEADO por S0.
