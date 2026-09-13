@@ -1,7 +1,7 @@
 # AUD-LINGUISTIC-SETTINGS-SUMMARY-STALE-276
 
 ## Estado
-NO PASA · PARCIALMENTE FUNCIONAL · S2 ALTO
+PASA EN IMPLEMENTACIÓN · FUNCIONAL EN IMPLEMENTACIÓN · E2E REAL PENDIENTE · severidad residual S3
 
 ## Especificaciones aplicadas
 - AUDITORIA_MAESTRA_INTEGRAL_V2.md: Ficha Maestra única y reutilización de datos.
@@ -22,10 +22,10 @@ AUD-LING-276-A
 ## Resultado esperado
 El resumen visible debe reflejar siempre el estado maestro actual. Después del cambio debe mostrar `Monolingüe castellano` y no conservar una lengua originaria antigua.
 
-## Resultado obtenido por inspección verificable
-`linguistic-profile-v26.js` envuelve `refresh()` y solo agrega el bloque lingüístico si `settingsSummary.innerHTML` todavía NO contiene `Atención lingüística:`. Si el bloque ya existe, no lo reemplaza. Por tanto un resumen ya renderizado puede conservar el perfil anterior después de editar la Ficha Maestra.
+## Resultado obtenido antes de la corrección
+`linguistic-profile-v26.js` envolvía `refresh()` y solo agregaba el bloque lingüístico si `settingsSummary.innerHTML` todavía NO contenía `Atención lingüística:`. Si el bloque ya existía, no lo reemplazaba. Por tanto un resumen ya renderizado podía conservar el perfil anterior después de editar la Ficha Maestra.
 
-Fragmento causal:
+Fragmento causal previo:
 
 ```js
 if(summary&&state.linguisticMode){
@@ -34,45 +34,65 @@ if(summary&&state.linguisticMode){
 }
 ```
 
-## Evidencia
-- `linguistic-profile-v26.js` en `main`, función wrapper de `refresh()`.
-- `config-state-guard-v42.js` sí sanea los datos internos al pasar a monolingüe; el defecto está en la representación visible posterior, no en esa sanitización.
-- Producción al momento de la auditoría: deployment `dpl_DNea4N6psBvHuVJPkkCRjiLcTYib`, SHA `89b1fdf1ec6373923f3992363783f444d053a614`, estado READY.
-- URL canónica respondió HTTP 200.
-- Vercel no reportó errores runtime durante la última hora; este hallazgo es un error silencioso de coherencia, no un Error 500.
-
 ## Causa raíz
-El resumen lingüístico se trata como contenido que se añade una sola vez, en lugar de una vista derivada y reemplazable de la Ficha Maestra actual.
+El resumen lingüístico se trataba como contenido que se añade una sola vez, en lugar de una vista derivada y reemplazable de la Ficha Maestra actual.
 
-## Riesgo
-El usuario puede creer que la IE sigue siendo EIB o que mantiene una lengua originaria previamente seleccionada aunque la fuente maestra ya sea monolingüe. Esto puede inducir decisiones pedagógicas posteriores equivocadas y debilita la confianza en la Ficha Maestra como fuente única.
+## Corrección aplicada
+Commit funcional: `83058db1b1998fa312ab85147951f702d8f8f8c3` — `fix: refresh linguistic settings summary from master state`.
 
-## Acción correctiva requerida
-Cambiar el bloque lingüístico del resumen por una región identificable y reemplazarla en cada `refresh()`, o reconstruir el resumen desde estado actual. No concatenar condicionalmente por simple presencia del texto.
-
-Ejemplo seguro de diseño:
+`linguistic-profile-v26.js` pasa a v26.1 e incorpora `syncSettingsSummary()`:
 
 ```js
-const old=summary.querySelector('[data-dd-linguistic-summary]');
-old?.remove();
-summary.insertAdjacentHTML('beforeend', `<span data-dd-linguistic-summary>...</span>`);
+function syncSettingsSummary(){
+  const summary=document.getElementById('settingsSummary');
+  if(!summary)return;
+  summary.querySelector('[data-dd-linguistic-summary]')?.remove();
+  if(!state.linguisticMode)return;
+  const block=document.createElement('span');
+  block.dataset.ddLinguisticSummary='1';
+  block.innerHTML=`<br><b>Atención lingüística:</b> ${esc(state.linguisticMode)}${state.linguisticMode==='EIB'?`<br><b>Lengua originaria:</b> ${esc(state.indigenousLanguage||NONE)}`:''}`;
+  summary.appendChild(block);
+}
 ```
 
-La implementación debe escapar valores y mostrar lengua originaria solo cuando `state.linguisticMode==='EIB'`.
+La función se ejecuta después de `refresh()`, al sincronizar explícitamente el perfil y en el montaje inicial. La lengua originaria solo se representa cuando el modo actual es EIB.
 
-## Corrección en esta ronda
-PENDIENTE. No se modificó el runtime porque el conector disponible reemplaza archivos completos y, dentro de esta ejecución, no hubo margen suficiente para hacer el reemplazo integral + despliegue + reprueba sin arriesgar una regresión. Se documenta el defecto en lugar de simular una corrección no verificada.
+## Reprueba AUD-LING-276-R1
+### Entrada
+Inspección del runtime corregido y producción desplegada.
 
-## Reprueba obligatoria
+### Resultado esperado
+- Región lingüística reemplazable en cada refresco.
+- Sin concatenación permanente del valor antiguo.
+- Monolingüe no muestra lengua originaria heredada.
+- EIB muestra la lengua maestra actual.
+
+### Resultado obtenido
+PASA EN IMPLEMENTACIÓN. El asset de producción contiene v26.1, `syncSettingsSummary()`, remoción de `[data-dd-linguistic-summary]` y render condicional de lengua originaria exclusivamente para EIB.
+
+### Evidencia posterior
+- Deployment Vercel `dpl_94Yf4emR4pDTtXZcqGki4Xdqh7yF`.
+- SHA desplegado `83058db1b1998fa312ab85147951f702d8f8f8c3`.
+- Estado `READY`, target `production`.
+- `https://docente-digital.vercel.app/` respondió HTTP 200.
+- `https://docente-digital.vercel.app/linguistic-profile-v26.js` respondió HTTP 200 y sirve v26.1.
+
+## Limitación de evidencia
+No se declara PASA E2E. El ejecutor `agent-browser` indicado para interacción web no está instalado en el entorno de esta ejecución, por lo que no fue posible realizar automáticamente la secuencia física EIB → Configuración → Monolingüe → Configuración ni el camino inverso. Esa evidencia queda pendiente y no se simula.
+
+## Repruebas todavía obligatorias
 - EIB → Configuración → Monolingüe → Configuración: no debe quedar lengua antigua.
 - Monolingüe → EIB + lengua confirmada → Configuración: debe aparecer la lengua nueva.
 - Recarga de navegador: mismo resultado.
 - Reapertura después de persistencia: mismo resultado.
-- Móvil: resumen legible y sin duplicados.
+- Móvil físico: resumen legible y sin duplicados.
+
+## Riesgo de regresión
+Bajo-medio. El cambio toca solo la representación del resumen de Configuración y no la persistencia maestra; debe vigilarse que otras capas que reconstruyen `settingsSummary` no eliminen el bloque o vuelvan a introducir contenido lingüístico duplicado.
 
 ## Impacto en indicadores
-- IUD/ICGD: impacto negativo por contradicción visible de datos maestros.
-- IFR/ISU/Prelaunch: no calcular puntaje definitivo; el hallazgo mantiene pendiente la prueba real de edición y reutilización de Ficha Maestra.
+- IUD/ICGD: mejora de coherencia visible de datos maestros.
+- IFR/ISU/Prelaunch: no calcular puntaje definitivo; sigue faltando la prueba E2E y las evidencias físicas V5.
 
 ## Gate V5
-Sigue BLOQUEADO. Este hallazgo no es el único bloqueante y no sustituye las pruebas reales pendientes de móvil, Word/PDF, E2E, seguridad, restore, IA100, año completo, escala y pilotos.
+Sigue BLOQUEADO. Esta corrección no sustituye pruebas reales pendientes de móvil, Word/PDF, E2E Docente/Director, seguridad, restore, IA100, continuidad sin IA, año completo, escala y pilotos.
