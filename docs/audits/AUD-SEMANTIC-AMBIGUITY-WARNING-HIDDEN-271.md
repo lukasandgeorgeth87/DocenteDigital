@@ -67,6 +67,17 @@ La advertencia semántica conserva el texto breve generado por el motor y no exp
 
 **Clasificación:** FUNCIONAL EN IMPLEMENTACIÓN / E2E REAL PENDIENTE.
 
+## Evidencia posterior de producción
+
+- Vercel desplegó el commit funcional `83374055c559ec815278266ceaa8a9862a9cc4ac` como producción `dpl_6UkkLrW5zoYKYakRZXoYCQpPdCCc` con estado READY.
+- El asset canónico `https://docente-digital.vercel.app/simple-planning-ui-v48.js` respondió HTTP 200 y sirve v50.1.
+- El asset productivo ya no contiene `.dd-meaning-warning` dentro del selector `display:none!important`; conserva ocultas las superficies de telemetría interna.
+- La URL canónica respondió HTTP 200 durante la ronda.
+- La observabilidad de Vercel no mostró registros `error` ni `fatal` en producción durante la última hora consultada.
+- Prelaunch Smoke #295, run `34769199165`, terminó `completed / success` sobre el commit de auditoría `0e50200922e05fab72fad325fdae59b741086557` que incluye la corrección funcional.
+
+La evidencia anterior demuestra despliegue, integración estática y smoke técnico. No sustituye una prueba interactiva con usuario/navegador.
+
 ## Pruebas reales pendientes
 
 No se declara cierre V5 hasta ejecutar en navegador real al menos:
