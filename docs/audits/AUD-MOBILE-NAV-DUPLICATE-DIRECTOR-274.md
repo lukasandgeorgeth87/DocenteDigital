@@ -50,6 +50,17 @@ La corrección no modifica rutas, roles, documentos, estado pedagógico, persist
 - **Clasificación posterior:** **FUNCIONAL EN IMPLEMENTACIÓN / E2E FÍSICO PENDIENTE**.
 - **Severidad residual:** S3 hasta prueba visual/táctil real.
 
+## Evidencia de producción posterior
+
+- El commit funcional `09fdadf50081a9e4edba785cc83ac1521dc853b5` fue desplegado por Vercel como producción y alcanzó `READY`.
+- El commit del expediente `766089b962ba5bd84ce349a4f0747e5c5e8b1b10` fue desplegado como `dpl_5NMH49zxA1kybxkCMnRjap2DEN36`, estado `READY`, target `production`, con alias canónico `docente-digital.vercel.app`.
+- `https://docente-digital.vercel.app/` respondió HTTP 200 OK después del despliegue.
+- `https://docente-digital.vercel.app/mobile-navigation-guard-v60.js` respondió HTTP 200 OK y contiene v60.1, `removeLegacyDirector()` y el observador de deduplicación.
+- Vercel no reportó errores runtime en la última hora consultada después de la corrección.
+- GitHub Actions `Prelaunch Smoke` run `34779452774`, número 303, terminó `completed / success` sobre `766089b962ba5bd84ce349a4f0747e5c5e8b1b10`.
+
+Estas evidencias prueban despliegue, disponibilidad e integración técnica. No sustituyen la prueba móvil física V5.
+
 ## Evidencia aún pendiente V5
 
 No se considera cerrado en V5 hasta verificar físicamente al menos 320, 360, 375, 390, 412, 768 y 850 px, celular económico, celular gama media y tablet; comprobar que `Más` abre/cierra, Director y Configuración navegan correctamente, Escape/foco funcionan donde corresponda, no existe clipping y los objetivos táctiles siguen siendo utilizables.
