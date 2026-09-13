@@ -1,13 +1,29 @@
-/* DocenteDigital – navegación móvil completa v60
+/* DocenteDigital – navegación móvil completa v60.1
    V4: las funciones principales no deben quedar inaccesibles en celular.
    Mantiene cinco accesos frecuentes y agrega “Más” para Director y Configuración.
+   Evita que guardias legado agreguen además un acceso Director directo y saturen la barra.
 */
 (function(){
   if(window.__ddMobileNavigationGuardV60)return;window.__ddMobileNavigationGuardV60=true;
 
+  function removeLegacyDirector(nav){
+    if(!nav)return;
+    nav.querySelectorAll('[data-screen="director"]').forEach(button=>button.remove());
+  }
+
+  function watchLegacyDirector(nav){
+    if(!nav||nav.dataset.ddDirectorDedupe==='1')return;
+    nav.dataset.ddDirectorDedupe='1';
+    const observer=new MutationObserver(()=>removeLegacyDirector(nav));
+    observer.observe(nav,{childList:true});
+  }
+
   function mount(){
     const nav=document.querySelector('.mobile-nav');
-    if(!nav||document.getElementById('ddMobileMoreBtn'))return;
+    if(!nav)return;
+    removeLegacyDirector(nav);
+    watchLegacyDirector(nav);
+    if(document.getElementById('ddMobileMoreBtn'))return;
 
     const more=document.createElement('button');
     more.type='button';
