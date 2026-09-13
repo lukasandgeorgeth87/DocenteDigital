@@ -1,4 +1,4 @@
-/* DocenteDigital – recuperación preventiva de almacenamiento v26.5 */
+/* DocenteDigital – recuperación preventiva de almacenamiento v26.6 */
 (function(){
   if(window.__ddStorageRecoveryV26)return;window.__ddStorageRecoveryV26=true;
   const KEY='docenteDigitalPrototype';
@@ -47,7 +47,9 @@
     }
   }
 
+  const nativeGetItem=Storage.prototype.getItem;
   const nativeSetItem=Storage.prototype.setItem;
+  function strictGetItem(key){return nativeGetItem.call(localStorage,key)}
   function showStorageWarning(){
     if(document.getElementById('ddStorageWarning'))return;
     if(!document.body)return;
@@ -78,7 +80,7 @@
     const previous=window.resetDemo;
     const wrapped=function(){
       let current=null;
-      try{current=localStorage.getItem(KEY)}
+      try{current=strictGetItem(KEY)}
       catch(error){
         alert('No se pudo verificar el estado guardado. Para evitar pérdida de información, el restablecimiento fue cancelado.');
         console.warn('DocenteDigital: no se pudo leer el estado antes de restablecer.',error);
@@ -87,7 +89,7 @@
       }
       if(current===null)return previous.apply(this,arguments);
       try{
-        const pending=localStorage.getItem(RESET_BACKUP_KEY);
+        const pending=strictGetItem(RESET_BACKUP_KEY);
         if(pending){
           alert('Ya hay una copia anterior pendiente de recuperación. Antes de restablecer otra vez, restaura o descarta definitivamente esa copia.');
           offerResetRestore();
@@ -182,7 +184,7 @@
     const previous=window.deleteUnit;
     const wrapped=function(id){
       try{
-        const pending=JSON.parse(localStorage.getItem(DELETE_BACKUP_KEY)||'null');
+        const pending=JSON.parse(strictGetItem(DELETE_BACKUP_KEY)||'null');
         if(pending&&pending.unit&&pending.unit.id&&pending.unit.id!==id){
           alert('Hay una unidad eliminada pendiente de recuperación. Antes de eliminar otra, restaura o descarta definitivamente la copia anterior.');
           offerUnitDeleteRestore();
@@ -195,7 +197,7 @@
       }
       let before=null;
       try{
-        before=JSON.parse(localStorage.getItem(KEY)||'{}');
+        before=JSON.parse(strictGetItem(KEY)||'{}');
         const unit=Array.isArray(before.units)?before.units.find(u=>u&&u.id===id):null;
         if(unit){
           nativeSetItem.call(localStorage,DELETE_BACKUP_KEY,JSON.stringify({savedAt:new Date().toISOString(),unit,activeUnitId:before.activeUnitId||null}));
