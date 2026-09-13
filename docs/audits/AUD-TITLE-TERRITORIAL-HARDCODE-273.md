@@ -36,6 +36,13 @@ No se cambió la extracción de finalidad, problema, actores, lugar, confianza, 
 **Clasificación:** FUNCIONAL EN IMPLEMENTACIÓN / E2E REAL PENDIENTE.  
 **Severidad residual:** S2 hasta prueba real con descripciones rural, urbana, periurbana, EIB y monolingüe y verificación de títulos seleccionados/exportados.
 
+## Evidencia posterior de producción
+- El commit funcional `1ac723be52359c0617524833ffce55992077fd86` fue desplegado por Vercel en producción como `dpl_54nFeiiT7XJ2W3UKMQsWDVDEgtwo` con estado `READY`.
+- La URL canónica `https://docente-digital.vercel.app/` respondió HTTP 200 después de la corrección.
+- `https://docente-digital.vercel.app/meaning-engine-v25.js` respondió HTTP 200 y contiene `saberes, preguntas y aprendizajes desde nuestro contexto`.
+- Vercel no reportó errores runtime en la última hora consultada.
+- Prelaunch Smoke #300, run `34774151643`, terminó `completed / success` sobre el commit de documentación `e60de1c092be7420f907e413a83bcaeea91b49f5`.
+
 ## Riesgo de regresión
 Bajo. El cambio altera una sola cadena de presentación y no toca persistencia, currículo, generación de documentos ni datos históricos.
 
