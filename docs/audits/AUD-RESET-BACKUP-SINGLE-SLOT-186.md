@@ -77,6 +77,13 @@ Configuración → Restablecer datos → persistencia y recuperación local.
 
 Esta evidencia cierra únicamente la comprobación técnica de despliegue/smoke que estaba pendiente en la ronda anterior. **No convierte la recuperación en PASA E2E**: siguen pendientes navegador real, recarga/cierre, almacenamiento restringido/cuota llena, móvil físico y verificación íntegra de Restaurar/Descartar.
 
+## Evidencia adicional — Prelaunch Smoke #270
+- GitHub Actions `Prelaunch Smoke` run #270 (`34732398003`) terminó `completed / success` exactamente sobre `329c674dcbb85e0799bc06e107b14d57e43d3a8a`, commit `audit: append confirmed smoke evidence for reset backup 186`.
+- Vercel desplegó ese mismo SHA como `dpl_Fjyui9iEbgnVE1nnYCcSwRR11rZk`, estado `READY`, target `production`.
+- La URL canónica respondió HTTP 200 después del despliegue y Vercel no registró errores runtime en la hora revisada.
+
+**Interpretación de esta evidencia:** PASA el smoke técnico del SHA 329c674d y la disponibilidad HTTP del despliegue. Esto no cambia el estado funcional de recuperación: la prueba E2E real continúa PENDIENTE conforme a V3/V5.
+
 ## Retest obligatorio antes de cerrar definitivamente
 1. A → Restablecer → Restaurar A.
 2. A → Restablecer → recargar/cerrar/abrir → Restaurar A.
