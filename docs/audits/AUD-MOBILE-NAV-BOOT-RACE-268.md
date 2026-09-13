@@ -80,6 +80,20 @@ Este hallazgo no contradice AUD-220/AUD-247: aquellos corrigieron la ausencia t�
 
 ---
 
+## Evidencia posterior verificada
+
+Para el estado acumulativo que incluyó la corrección y este expediente (`25fa2aac7435bbff826b3f08fdd7c7aafaabadd9`):
+
+- Vercel desplegó el commit en producción y el deployment `dpl_8T9sSDXjzFpZQFQ9CCgNMuUpEVWH` alcanzó `READY`.
+- La URL canónica `https://docente-digital.vercel.app/` respondió HTTP 200.
+- `https://docente-digital.vercel.app/director-prototype-guard-v40.js` respondió HTTP 200 y sirve la versión v43 con `ensureMobileNavigation()`.
+- La observabilidad de Vercel no registró errores runtime durante la hora verificada.
+- Prelaunch Smoke #287, run `34759911558`, terminó `completed / success` exactamente sobre `25fa2aac7435bbff826b3f08fdd7c7aafaabadd9`.
+
+Estas evidencias demuestran despliegue, disponibilidad y smoke técnico; **no sustituyen** el throttling E2E ni la prueba física móvil exigidos por V5.
+
+---
+
 ## Pruebas todavía obligatorias
 
 - throttling de red en navegador real;
