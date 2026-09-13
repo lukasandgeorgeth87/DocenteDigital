@@ -1,4 +1,4 @@
-/* DocenteDigital – recuperación preventiva de almacenamiento v26.4 */
+/* DocenteDigital – recuperación preventiva de almacenamiento v26.5 */
 (function(){
   if(window.__ddStorageRecoveryV26)return;window.__ddStorageRecoveryV26=true;
   const KEY='docenteDigitalPrototype';
@@ -16,11 +16,6 @@
         stateInvalid=true;
         throw new Error('Estado guardado no es un objeto válido');
       }
-
-      /* app.js decide que la configuración está terminada solo por la existencia de level.
-         Si una sesión anterior se interrumpió después de elegir nivel, puede abrir Inicio con
-         tipo de IE, grados o áreas incompletos. Recuperamos ese estado antes de app.js y
-         obligamos a rehacer únicamente la configuración base, sin borrar unidades/sesiones. */
       const levels=['Inicial','Primaria','Secundaria'];
       const ieTypes=['Unidocente','Multigrado','Polidocente'];
       const hasAnySetup=Boolean(parsed.level||parsed.ieType||(Array.isArray(parsed.grades)&&parsed.grades.length)||(Array.isArray(parsed.areas)&&parsed.areas.length));
@@ -47,16 +42,11 @@
       window.__ddStorageRecovered={at:new Date().toISOString(),backedUp,error:String(error&&error.message||error)};
       console.warn('DocenteDigital recuperó un estado local inválido antes del arranque.',window.__ddStorageRecovered);
     }else{
-      /* Un fallo de lectura/escritura del navegador (por ejemplo cuota llena o almacenamiento
-         bloqueado) NO demuestra que el estado sea inválido. V5: conservar el original y
-         advertir; nunca borrar datos correctos por confundir un fallo de Storage con corrupción. */
       window.__ddStorageStartupError={at:new Date().toISOString(),error:String(error&&error.message||error)};
       console.warn('DocenteDigital no pudo normalizar el almacenamiento al iniciar; el estado original se conservó.',error);
     }
   }
 
-  /* app.js usa un save() directo. Protegemos Storage antes de que app.js cargue para que
-     una cuota llena no rompa clics, cambios de pantalla o generación de documentos. */
   const nativeSetItem=Storage.prototype.setItem;
   function showStorageWarning(){
     if(document.getElementById('ddStorageWarning'))return;
@@ -83,18 +73,19 @@
     }
   };
 
-  /* V4/V5: un restablecimiento no debe convertirse en pérdida irreversible por un clic.
-     Conservamos una única copia local recuperable del estado principal antes de borrar. */
   function installRecoverableReset(){
     if(typeof window.resetDemo!=='function'||window.resetDemo.__ddRecoverable)return;
     const previous=window.resetDemo;
     const wrapped=function(){
-      const current=localStorage.getItem(KEY);
+      let current=null;
+      try{current=localStorage.getItem(KEY)}
+      catch(error){
+        alert('No se pudo verificar el estado guardado. Para evitar pérdida de información, el restablecimiento fue cancelado.');
+        console.warn('DocenteDigital: no se pudo leer el estado antes de restablecer.',error);
+        if(document.body)showStorageWarning();
+        return;
+      }
       if(current===null)return previous.apply(this,arguments);
-
-      /* Una sola clave de respaldo no puede representar dos restablecimientos pendientes.
-         Si ya existe una copia recuperable, no la sobrescribimos: el usuario debe resolverla
-         primero (Restaurar o Descartar definitivamente). */
       try{
         const pending=localStorage.getItem(RESET_BACKUP_KEY);
         if(pending){
@@ -107,7 +98,6 @@
         console.warn('DocenteDigital: no se pudo verificar la copia pendiente antes de restablecer.',error);
         return;
       }
-
       const ok=confirm('¿Restablecer la configuración y los datos de la aplicación? Se guardará una copia local para que puedas restaurarlos si fue un error.');
       if(!ok)return;
       try{
@@ -153,9 +143,6 @@
     document.body.appendChild(box);
   }
 
-  /* V4/V5: eliminar una unidad/proyecto tampoco debe ser irreversible.
-     Guardamos una copia local antes de invocar el borrado existente y ofrecemos deshacer
-     únicamente esa eliminación, sin sobrescribir otros cambios posteriores del usuario. */
   function offerUnitDeleteRestore(){
     if(!document.body)return;
     document.getElementById('ddUnitDeleteRestore')?.remove();
@@ -194,9 +181,6 @@
     if(typeof window.deleteUnit!=='function'||window.deleteUnit.__ddRecoverable)return;
     const previous=window.deleteUnit;
     const wrapped=function(id){
-      /* No sobrescribir una eliminación todavía recuperable. Con una sola clave de respaldo,
-         permitir un segundo borrado haría irreversible el primero. El usuario debe resolver
-         primero la copia pendiente (Restaurar o Descartar definitivamente). */
       try{
         const pending=JSON.parse(localStorage.getItem(DELETE_BACKUP_KEY)||'null');
         if(pending&&pending.unit&&pending.unit.id&&pending.unit.id!==id){
@@ -209,7 +193,6 @@
         console.warn('DocenteDigital: no se pudo verificar la copia pendiente antes de eliminar.',error);
         return;
       }
-
       let before=null;
       try{
         before=JSON.parse(localStorage.getItem(KEY)||'{}');
