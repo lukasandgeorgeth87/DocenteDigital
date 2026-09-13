@@ -29,67 +29,77 @@ Auditoría de resiliencia de persistencia/recuperación conforme a V3, V4 y V5, 
 - **Estado previo:** NO PASA.
 - **Clasificación:** PARCIALMENTE FUNCIONAL.
 - **Severidad:** S2 ALTO.
-- **Corrección aplicada:** commit `abbe52b6e6dde36c780d2d55e75fa861eded367e`, capa v26.5.
+- **Corrección inicial:** commit `abbe52b6e6dde36c780d2d55e75fa861eded367e`, capa v26.5.
 
-## Revalidación 2026-09-13 — interacción entre capas
+## Revalidación de integración — AUD-STORAGE-266-C
 
-La conclusión anterior “PASA EN CÓDIGO” era demasiado fuerte al analizar `storage-recovery-v26.js` de forma aislada.
+La revisión integrada detectó que `storage-access-guard-v71.js`, cargado después de `storage-recovery-v26.js`, sustituía `Storage.prototype.getItem()` y convertía errores de acceso bloqueado (`SecurityError`, `InvalidStateError`, `NotAllowedError`) en `null`.
 
-Producción carga en este orden:
+Eso hacía ambiguo `null`: podía significar tanto “la clave no existe” como “el navegador no permite leerla”. En v26.5, la ruta destructiva de Restablecer contenía `if(current===null)return previous.apply(this,arguments)`, de modo que una lectura bloqueada normalizada a `null` podía delegar en el `resetDemo()` original sin crear el backup recuperable de la capa v26.5. En la eliminación de unidades ocurría un riesgo equivalente al comprobar el backup pendiente y al leer el estado previo.
 
-1. `storage-recovery-v26.js`
-2. `storage-access-guard-v71.js`
-3. `app.js`
+- **ID:** AUD-STORAGE-266-C.
+- **Entrada:** Storage con lectura bloqueada; la guardia v71 captura el error y devuelve `null`; el usuario intenta Restablecer o Eliminar una unidad.
+- **Resultado esperado:** distinguir “clave ausente” de “lectura inaccesible” y cancelar de forma fail-closed cualquier operación destructiva si no puede verificarse el estado.
+- **Resultado previo:** NO PASA EN INTEGRACIÓN ESTÁTICA.
+- **Clasificación previa:** PARCIALMENTE FUNCIONAL.
+- **Severidad:** S2 ALTO. No se eleva a S0 porque no se demostró pérdida irreversible en navegador real.
+- **Causa raíz:** contratos incompatibles entre dos capas de resiliencia: una necesitaba recibir la excepción y otra la convertía globalmente a `null`.
 
-`storage-access-guard-v71.js` reemplaza posteriormente `Storage.prototype.getItem()`. Cuando detecta errores de acceso bloqueado (`SecurityError`, `InvalidStateError`, `NotAllowedError`), registra la advertencia y devuelve `null` en lugar de relanzar la excepción.
+## Corrección 2026-09-13 — v26.6
 
-Esto afecta a la guarda de v26.5: el wrapper de `resetDemo()` espera capturar una excepción de `localStorage.getItem(KEY)` para cancelar de forma fail-closed, pero la capa v71 puede convertir esa excepción en `null`. El wrapper interpreta entonces `current === null` como “no existe estado guardado” y delega en el `resetDemo()` original.
+Commit funcional: `d672454551f303d1e9cf78fe906f904023643a59` — `fix: keep destructive storage reads fail-closed`.
 
-El `resetDemo()` original ejecuta confirmación y `localStorage.removeItem('docenteDigitalPrototype')` sin crear la copia de recuperación de v26.5.
+La corrección es deliberadamente local y reversible:
 
-### AUD-STORAGE-266-C — lectura bloqueada transformada en null antes de Restablecer
+1. `storage-recovery-v26.js` captura antes de cargar la guardia v71 una referencia a `Storage.prototype.getItem` como `nativeGetItem`.
+2. Introduce `strictGetItem(key)`, que usa esa referencia nativa.
+3. Las comprobaciones previas a **Restablecer** usan `strictGetItem(KEY)` y `strictGetItem(RESET_BACKUP_KEY)`.
+4. Las comprobaciones previas a **Eliminar unidad** usan `strictGetItem(DELETE_BACKUP_KEY)` y `strictGetItem(KEY)`.
+5. Si el navegador bloquea esas lecturas estrictas, la excepción vuelve a llegar a los `catch` ya existentes y la operación destructiva se cancela con aviso al usuario.
+6. La guardia v71 sigue intacta para lecturas normales de la aplicación; no se cambió globalmente su contrato tolerante.
 
-- **ID:** AUD-STORAGE-266-C
-- **Módulo:** Persistencia / recuperación / Restablecer datos.
-- **Entrada:** Storage con lectura bloqueada de forma que la guardia v71 captura el error y devuelve `null`; usuario pulsa Restablecer datos.
-- **Resultado esperado:** la acción debe distinguir “no existe estado” de “no puedo leer el estado”, cancelar y conservar el camino de recuperación.
-- **Resultado obtenido por inspección del wiring actual:** v71 puede transformar el fallo de lectura en `null`; v26.5 recibe `null` y puede derivar al `resetDemo()` original sin crear backup.
-- **Evidencia:** orden de scripts de `index.html`; `storage-access-guard-v71.js` devuelve `null` para errores de lectura bloqueada; `storage-recovery-v26.js` contiene `if(current===null)return previous.apply(this,arguments)`; `app.js` define `resetDemo()` con eliminación directa del estado principal.
-- **Resultado:** NO PASA A NIVEL DE INTEGRACIÓN ESTÁTICA.
-- **Clasificación:** PARCIALMENTE FUNCIONAL.
-- **Severidad:** S2 ALTO.
-- **Causa raíz:** dos capas de resiliencia aplican contratos incompatibles: una necesita recibir la excepción para actuar fail-closed y la otra la normaliza a `null`.
-- **Acción correctiva recomendada:** introducir una lectura estricta para operaciones destructivas (que no convierta errores de acceso en `null`) o devolver un estado distinguible de “ausente”; después probar Restablecer y Eliminar con Storage realmente bloqueado.
-- **Riesgo de regresión:** medio; modificar globalmente `Storage.prototype.getItem()` puede romper el arranque, por lo que la corrección debe limitarse a rutas destructivas y validarse E2E.
+### Resultado posterior por inspección de wiring
 
-## Estado consolidado
+- **AUD-STORAGE-266-C / Restablecer:** PASA EN IMPLEMENTACIÓN. Una lectura bloqueada ya no puede transformarse en `null` por v71 antes de la decisión destructiva; el `catch` de v26.6 cancela la operación.
+- **AUD-STORAGE-266-D / Eliminar unidad:** PASA EN IMPLEMENTACIÓN. Las dos lecturas críticas previas al borrado utilizan lectura estricta y cancelan si el almacenamiento no es verificable.
+- **Clasificación actual:** FUNCIONAL EN IMPLEMENTACIÓN / E2E REAL PENDIENTE.
+- **Severidad residual:** S2 PENDIENTE DE PRUEBA REAL, no porque exista un fallo estático conocido después del parche, sino porque V5 exige demostrar el comportamiento en navegador/dispositivo real.
 
-La protección de bootstrap añadida en v26.5 sigue siendo válida, pero la protección de Restablecer no puede considerarse cerrada mientras exista la interacción descrita con `storage-access-guard-v71.js`.
+## Evidencia posterior
 
-**Resultado actual:** PARCIALMENTE FUNCIONAL / NO PASA EN INTEGRACIÓN ESTÁTICA / E2E REAL PENDIENTE.
+- Producción carga `storage-recovery-v26.js` antes de `storage-access-guard-v71.js`, por lo que la referencia nativa se captura antes de la envoltura global.
+- Vercel deployment `dpl_91FqsUGoi1zQ68k4Qzdb4JMbqaga` está `READY`, target `production`, asociado exactamente a `d672454551f303d1e9cf78fe906f904023643a59`.
+- `https://docente-digital.vercel.app/` respondió HTTP 200 después del despliegue.
+- `https://docente-digital.vercel.app/storage-recovery-v26.js` respondió HTTP 200 y sirve `v26.6`, `nativeGetItem`, `strictGetItem` y las lecturas estrictas en Restablecer/Eliminar.
+- GitHub Actions **Prelaunch Smoke #276**, run `34742847026`, terminó `completed / success` exactamente sobre `d672454551f303d1e9cf78fe906f904023643a59`.
 
-No se eleva a S0 porque esta revisión no ha demostrado pérdida irreversible en navegador real: falta probar el comportamiento conjunto de lectura bloqueada, `removeItem`, recarga y posterior recuperación. Conforme a V3 y V5, no se presume ese resultado.
+HTTP 200, READY y el smoke técnico no sustituyen la prueba funcional E2E real.
 
 ## Pruebas pendientes obligatorias
 
 - navegador real con Storage bloqueado por privacidad/política;
-- distinguir lectura bloqueada de clave inexistente;
-- Restablecer con lectura bloqueada;
-- Eliminar unidad con lectura bloqueada;
+- Restablecer con lectura bloqueada y comprobar que no elimina datos;
+- Eliminar unidad con lectura bloqueada y comprobar que no elimina datos;
+- clave realmente inexistente para confirmar que no se confunde con acceso bloqueado;
 - cuota agotada real;
 - recarga y cierre/reapertura;
 - recuperación de unidad con backup pendiente;
+- restauración del estado completo;
 - móvil físico económico y gama media.
 
 Estas pruebas no se sustituyen con inspección estática, smoke ni HTTP 200.
 
+## Riesgo de regresión
+
+Bajo-medio. La modificación está limitada a la capa de recuperación y a lecturas previas a acciones destructivas. No se alteró globalmente `Storage.prototype.getItem()` ni la política tolerante de v71. Debe vigilarse especialmente que un navegador con Storage bloqueado no permita Restablecer/Eliminar y que un Storage accesible sin clave siga funcionando normalmente.
+
 ## Impacto en métricas
 
-- IUD: riesgo de mensaje/comportamiento inconsistente en una acción destructiva; no cuantificado.
+- IUD: mejora esperada al evitar que una acción destructiva continúe cuando el estado no puede verificarse; no cuantificado.
 - ICGD: sin cambio demostrado.
-- IFR: resiliencia de persistencia queda parcialmente abierta; no cuantificado.
+- IFR: mejora técnica de resiliencia; no cuantificada hasta E2E real.
 - ISU: no calculado.
-- Prelaunch: persistencia/recuperación continúa bloqueada hasta prueba real y corrección del contrato entre capas.
+- Prelaunch: persistencia/recuperación sigue bloqueada hasta pruebas reales esenciales.
 
 ## Gate
 
