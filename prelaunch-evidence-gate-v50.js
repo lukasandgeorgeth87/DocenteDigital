@@ -48,6 +48,9 @@
   }
 
   function render(){
+    // V4: la telemetría técnica no pertenece a la superficie normal del docente/director.
+    // Solo se muestra cuando un auditor/desarrollador habilita explícitamente este modo.
+    if(window.__ddShowTechnicalAudit!==true)return;
     const host=document.getElementById('settings');
     if(!host||document.getElementById('ddPrelaunchEvidenceGate'))return;
     const runResult=run();
@@ -74,10 +77,10 @@
   const oldGo=window.go;
   if(typeof oldGo==='function')window.go=function(id){
     const r=oldGo.apply(this,arguments);
-    if(id==='settings')setTimeout(render,0);
+    if(id==='settings'&&window.__ddShowTechnicalAudit===true)setTimeout(render,0);
     return r;
   };
 
-  window.ddPrelaunchEvidenceGate={run,mandatory};
-  setTimeout(render,0);
+  window.ddPrelaunchEvidenceGate={run,mandatory,render};
+  if(window.__ddShowTechnicalAudit===true)setTimeout(render,0);
 })();
