@@ -1,9 +1,21 @@
-/* DocenteDigital – guardia de acciones prototipo del Director v42
+/* DocenteDigital – guardia de acciones prototipo del Director v43
    Evita presentar botones aparentemente funcionales cuando todavía no existe un flujo real.
    V4: la limitación se comunica en lenguaje breve y sencillo; el detalle técnico queda fuera de la superficie principal.
+   Carga tempranamente la navegación móvil del Director/Configuración para evitar que dependa
+   de la cola larga de módulos dinámicos en conexiones lentas.
 */
 (function(){
-  if(window.__ddDirectorPrototypeGuardV42)return;window.__ddDirectorPrototypeGuardV42=true;
+  if(window.__ddDirectorPrototypeGuardV43)return;window.__ddDirectorPrototypeGuardV43=true;
+
+  function ensureMobileNavigation(){
+    if(window.__ddMobileNavigationGuardV60||document.querySelector('script[data-dd-early-mobile-nav]'))return;
+    const script=document.createElement('script');
+    script.src='mobile-navigation-guard-v60.js';
+    script.async=false;
+    script.setAttribute('data-dd-early-mobile-nav','1');
+    script.onerror=()=>console.warn('DocenteDigital: no se pudo cargar tempranamente la navegación móvil; el cargador estable volverá a intentarlo.');
+    document.body.appendChild(script);
+  }
 
   function mount(){
     const screen=document.getElementById('director');if(!screen)return;
@@ -29,6 +41,7 @@
     }
   }
 
+  ensureMobileNavigation();
   const oldGo=window.go;
   if(typeof oldGo==='function')window.go=function(id){const r=oldGo.apply(this,arguments);if(id==='director')setTimeout(mount,0);return r;};
   setTimeout(mount,0);
