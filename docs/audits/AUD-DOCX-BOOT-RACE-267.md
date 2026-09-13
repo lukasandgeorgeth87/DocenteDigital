@@ -49,6 +49,13 @@ No se aplica automáticamente en esta ronda porque el cambio de orden de bootstr
 - `ddDocxSelfTest() === true` en navegador real;
 - pruebas físicas Word/móvil y batería V5.
 
+## Evidencia de infraestructura confirmada — 2026-09-13
+
+- El commit `300b2f8bd8aa1c1a20eceda380e20476ea6ff116`, que documentó este hallazgo, fue desplegado en producción por Vercel como `dpl_2VawSfgqr3vnj6L5fUpVEj92omMP` con estado `READY`.
+- `https://docente-digital.vercel.app/` respondió HTTP 200 y continúa sirviendo el orden de scripts que coloca `app.js` antes de las capas de exportación posteriores.
+- GitHub Actions `Prelaunch Smoke` run #282 (`34749767870`) terminó `completed / success` exactamente sobre `300b2f8bd8aa1c1a20eceda380e20476ea6ff116`.
+- Esta evidencia confirma infraestructura y smoke técnico; **no cambia** `AUD-DOCX-BOOT-RACE-267` a PASA y **no sustituye** la reproducción E2E con red lenta/throttling ni las pruebas físicas de Word/PDF/impresión.
+
 ## Fuente normativa externa
 
 No se declara ni aplica una norma MINEDU externa nueva. El hallazgo se sustenta en V2–V5/Núcleo IA y evidencia técnica del repositorio/runtime.
