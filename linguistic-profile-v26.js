@@ -1,4 +1,4 @@
-/* DocenteDigital – perfil lingüístico v26
+/* DocenteDigital – perfil lingüístico v26.1
    Separa explícitamente IE EIB de IE monolingüe castellano.
    Catálogo de lenguas basado en denominaciones usadas por MINEDU; Cusco-Collao se muestra solo como sugerencia editable para el contexto Cusco.
 */
@@ -192,6 +192,17 @@
     }
   }
 
+  function syncSettingsSummary(){
+    const summary=document.getElementById('settingsSummary');
+    if(!summary)return;
+    summary.querySelector('[data-dd-linguistic-summary]')?.remove();
+    if(!state.linguisticMode)return;
+    const block=document.createElement('span');
+    block.dataset.ddLinguisticSummary='1';
+    block.innerHTML=`<br><b>Atención lingüística:</b> ${esc(state.linguisticMode)}${state.linguisticMode==='EIB'?`<br><b>Lengua originaria:</b> ${esc(state.indigenousLanguage||NONE)}`:''}`;
+    summary.appendChild(block);
+  }
+
   const previousFinish=window.finishSetup;
   if(typeof previousFinish==='function')window.finishSetup=function(){
     const mode=document.getElementById('linguisticMode');
@@ -211,11 +222,7 @@
   if(typeof previousRefresh==='function')window.refresh=function(){
     const r=previousRefresh.apply(this,arguments);
     mountMaterials();
-    const summary=document.getElementById('settingsSummary');
-    if(summary&&state.linguisticMode){
-      const extra=`<br><b>Atención lingüística:</b> ${esc(state.linguisticMode)}${state.linguisticMode==='EIB'?`<br><b>Lengua originaria:</b> ${esc(state.indigenousLanguage||NONE)}`:''}`;
-      if(!/Atención lingüística:/.test(summary.innerHTML))summary.innerHTML+=extra;
-    }
+    syncSettingsSummary();
     return r;
   };
 
@@ -225,6 +232,6 @@
   };
 
   window.ddLinguisticLanguages=languages.slice();
-  window.ddSyncLinguisticProfile=()=>{mountSetup();syncSetup(true);mountMaterials();};
-  setTimeout(()=>{mountSetup();mountMaterials();},0);
+  window.ddSyncLinguisticProfile=()=>{mountSetup();syncSetup(true);mountMaterials();syncSettingsSummary();};
+  setTimeout(()=>{mountSetup();mountMaterials();syncSettingsSummary();},0);
 })();
