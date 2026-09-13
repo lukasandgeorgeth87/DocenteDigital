@@ -1,49 +1,95 @@
-# AUD-DOC-TRASH-179 — REVISADO: borrado recuperable parcial, sin Papelera completa
+# AUD-DOC-TRASH-179 — CANÓNICO: recuperación parcial, sin Papelera persistente
 
-## Alcance
-Auditoría acumulativa contra V2 + V3 + V4 + V5 + Núcleo IA. Se revisó el flujo real de `Mi planificación → Mis unidades/proyectos → Eliminar`, incluyendo el orden de carga completo del runtime y no solo `app.js`.
+## Estado revalidado — 2026-09-13
+
+Auditoría acumulativa contra V2 + V3 + V4 + V5 + Núcleo IA. Se revisó el flujo real de `Mi planificación → Mis unidades/proyectos → Eliminar`, incluyendo `app.js` y `storage-recovery-v26.js` v26.6.
 
 ## ID de prueba
 **AUD-DOC-TRASH-179**
 
 ## Entrada
 1. Tener una Unidad/Proyecto guardada.
-2. Pulsar `Eliminar`.
-3. Confirmar.
-4. Intentar restaurarla antes de efectuar otro borrado.
+2. Pulsar `Eliminar` y confirmar.
+3. Recuperarla después del borrado.
+4. Mantener A pendiente e intentar eliminar B.
+5. Buscar una Papelera donde administrar varios elementos eliminados.
 
 ## Esperado
-V4 exige confirmación + papelera + recuperación antes de eliminación definitiva. V5 exige probar eliminar y recuperar documentos.
+V4 §23 exige **confirmación + papelera + recuperación antes de eliminación definitiva**. V5 exige demostrar eliminar/recuperar documentos y conservar información ante interrupciones.
 
-## Obtenido revisado
-La lectura aislada de `app.js` era incompleta. Aunque `deleteUnit(id)` elimina el objeto de `state.units`, producción carga **antes de `app.js`** el módulo `storage-recovery-v26.js`.
+## Resultado obtenido actual
+La lectura de `app.js` aislada no representa el comportamiento productivo completo. `storage-recovery-v26.js` envuelve `window.deleteUnit` y:
+- crea una copia preventiva en `docenteDigitalPrototype_delete_backup`;
+- muestra `🗑️ Unidad eliminada` con **Restaurar / Descartar**;
+- al restaurar vuelve a insertar la unidad conservando su `id`;
+- si A está pendiente e intenta borrarse B, bloquea B para evitar sobrescribir A;
+- si no puede verificar/crear la copia, cancela el borrado de forma conservadora.
 
-Ese módulo envuelve posteriormente `window.deleteUnit` y, antes del borrado, guarda una copia de la unidad en `docenteDigitalPrototype_delete_backup`. Tras el borrado, muestra una barra `🗑️ Unidad eliminada` con acción **Restaurar**. La restauración vuelve a insertar la unidad conservando su `id` y recarga la aplicación.
+Por tanto, **la recuperación inmediata de un borrado individual existe en implementación** y ya no es correcto describir ese borrado como irreversible por defecto.
 
-Por ello es incorrecto afirmar que el flujo productivo actual carece por completo de recuperación.
-
-Sin embargo, no existe todavía una Papelera documental persistente con múltiples elementos, fechas de eliminación y eliminación definitiva separada. La implementación usa una sola clave de respaldo, por lo que el cumplimiento de V4/V5 sigue siendo parcial.
+Lo que sigue faltando es una **Papelera persistente multi-documento**. No existe una colección navegable de eliminados, fecha de borrado por elemento, restauración independiente de múltiples documentos ni gestión de eliminación definitiva por elemento. La protección actual sigue siendo una ranura preventiva y obliga a resolver A antes de poder borrar B.
 
 ## Evidencia
-- `index.html`: `storage-recovery-v26.js` se carga antes de `app.js`.
-- `storage-recovery-v26.js`: `DELETE_BACKUP_KEY`, envoltorio `installRecoverableUnitDelete()` y `offerUnitDeleteRestore()`.
-- `app.js`: confirmación y borrado base de `state.units`.
-- V4 §23 y V5 §3 mantienen el requisito de ciclo de borrado/recuperación verificable.
+- `app.js`: `deleteUnit(id)` confirma y elimina de `state.units`.
+- `storage-recovery-v26.js` v26.6: `DELETE_BACKUP_KEY`, `installRecoverableUnitDelete()` y `offerUnitDeleteRestore()`.
+- V4 §23: “Confirmación + papelera + recuperación antes de eliminación definitiva”.
+- `AUD-UNIT-DELETE-SINGLE-BACKUP-OVERWRITE-210`: corrección histórica de la sobrescritura consecutiva.
 
-## PASA / NO PASA
-**PASA PARCIAL / NO PASA el ciclo completo V4-V5.**
+## Matriz de prueba
 
-## Clasificación
-- Confirmación antes de borrar: **FUNCIONAL**.
-- Recuperación inmediata de una unidad borrada: **FUNCIONAL/PARCIAL**.
-- Papelera persistente multi-documento: **INEXISTENTE**.
-- Eliminación definitiva separada: **INEXISTENTE**.
+### AUD-DOC-TRASH-179-A — borrado individual
+**Entrada:** eliminar A → Restaurar.
 
-## Severidad revisada
-**S2 — ALTO** por incumplimiento del ciclo documental completo y riesgo de pérdida en borrados consecutivos; ya no corresponde describir cada borrado individual como irreversible.
+**Esperado:** A vuelve a estar disponible con su identidad.
 
-## Acción
-Implementar una Papelera persistente como colección, con `id`, `deletedAt`, contenido y relaciones; permitir restaurar cada elemento y ejecutar eliminación definitiva como acción separada. Añadir pruebas de recarga, varios borrados consecutivos y restauración fuera de orden.
+**Obtenido:** el código guarda A antes de borrar y la acción Restaurar la reinyecta conservando `id`.
+
+**Resultado:** **PASA EN IMPLEMENTACIÓN / E2E REAL PENDIENTE**.
+
+**Clasificación:** **FUNCIONAL EN IMPLEMENTACIÓN**.
+
+### AUD-DOC-TRASH-179-B — segundo borrado con A pendiente
+**Entrada:** eliminar A → no resolver recuperación → intentar eliminar B.
+
+**Esperado:** A no se pierde.
+
+**Obtenido:** v26.6 cancela B y vuelve a ofrecer A.
+
+**Resultado:** **PASA EN IMPLEMENTACIÓN / E2E REAL PENDIENTE**.
+
+**Clasificación:** **FUNCIONAL EN IMPLEMENTACIÓN** como protección contra sobrescritura.
+
+### AUD-DOC-TRASH-179-C — Papelera multiítem
+**Entrada:** eliminar varios documentos, continuar trabajando y abrir una Papelera para gestionarlos de forma independiente.
+
+**Esperado:** colección persistente con varios elementos, `deletedAt`, Restaurar y Eliminar definitivamente por elemento.
+
+**Obtenido:** no existe esa colección ni vista. Solo existe una copia pendiente única y el segundo borrado se bloquea hasta resolverla.
+
+**Resultado:** **NO PASA**.
+
+**Clasificación:** **INEXISTENTE** para Papelera persistente multi-documento.
+
+**Severidad:** **S2 ALTO** por incumplimiento del ciclo de borrado seguro V4 y recuperación previa a lanzamiento. No hay en esta revalidación una nueva evidencia de pérdida irreversible que active S0/S1.
+
+## Causa raíz
+El diseño actual implementa “deshacer un borrado pendiente” mediante una sola ranura de backup, no un ciclo de vida documental de soft delete/Papelera.
+
+## Acción correctiva pendiente
+Implementar una colección de Papelera preservando `id`, `deletedAt`, contenido y relaciones. Permitir Restaurar y Eliminar definitivamente por elemento, migrar de forma segura la copia única existente y probar varios borrados, recarga/cierre, restauración fuera de orden, `activeUnitId`, sesiones/documentos relacionados, Storage restringido y móvil real.
+
+No se aplica automáticamente en esta ronda porque cambia persistencia, ciclo de vida y relaciones; no es un parche pequeño de bajo riesgo.
+
+## Riesgo de regresión
+**Medio-alto** si la migración no conserva referencias e históricos.
+
+## Impacto
+- IUD/ISU: recuperación parcial; Papelera completa pendiente.
+- ICGD: requiere preservar trazabilidad y relaciones al implementar soft delete.
+- IFR/Prelaunch: sin puntaje definitivo; pruebas E2E/físicas continúan pendientes.
+
+## Normativa externa
+No se aplicó ni declaró vigente normativa MINEDU/UGEL externa. El hallazgo deriva de V3/V4/V5 y del comportamiento técnico observado.
 
 ## Estado de lanzamiento
-El hallazgo sigue abierto para V5, pero con evidencia corregida. DocenteDigital continúa **NO APROBADA PARA LANZAMIENTO V1.0** mientras existan bloqueantes V5.
+**Gate V5 BLOQUEADO. DocenteDigital continúa NO APROBADA PARA V1.0.**
