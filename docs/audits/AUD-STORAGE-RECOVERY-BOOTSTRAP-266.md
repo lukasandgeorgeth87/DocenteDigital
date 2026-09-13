@@ -1,82 +1,96 @@
 # AUD-STORAGE-RECOVERY-BOOTSTRAP-266
 
-Fecha de revisión: 2026-09-12 (hora local Perú)
+Fecha de revisión inicial: 2026-09-12 (hora local Perú)
+Revalidación: 2026-09-13 (hora local Perú)
 
 ## Alcance
 
 Auditoría de resiliencia de persistencia/recuperación conforme a V3, V4 y V5, con foco en almacenamiento local bloqueado o inaccesible. No se considera prueba física de navegador/dispositivo.
 
-## Hallazgo
+## Hallazgo inicial
 
-`storage-recovery-v26.js` ya protegía varios fallos de escritura y algunas lecturas de `localStorage`, pero quedaban dos lecturas directas fuera de manejo de errores:
-
-1. El bootstrap `initSafety()` consultaba `DELETE_BACKUP_KEY` directamente. Si `localStorage.getItem()` lanzaba una excepción (almacenamiento bloqueado/restringido), el callback podía abortar antes de terminar la inicialización de recuperación y dejar una excepción no gestionada.
-2. El wrapper de `resetDemo()` leía `KEY` antes de entrar a cualquier `try/catch`. Con almacenamiento bloqueado, pulsar Restablecer podía terminar en excepción en lugar de cancelar de forma comprensible y conservadora.
-
-Los defectos no demostraban pérdida irreversible: en ambos casos la operación destructiva no había sido ejecutada y los datos existentes no se eliminaban. Por ello no corresponde S0/S1.
-
-## Pruebas
+`storage-recovery-v26.js` protegía varios fallos de escritura, pero quedaban lecturas directas que podían abortar el bootstrap o la acción Restablecer cuando `localStorage.getItem()` lanzaba una excepción.
 
 ### AUD-STORAGE-266-A — bootstrap con lectura bloqueada
 
 - **Entrada:** navegador donde `localStorage.getItem(DELETE_BACKUP_KEY)` lanza una excepción durante `initSafety()`.
-- **Resultado esperado:** la app conserva el estado, muestra advertencia comprensible y no deja fallar silenciosamente el bootstrap de seguridad.
-- **Resultado obtenido antes de corregir:** lectura directa sin `try/catch`; podía abortar el callback con excepción.
-- **Evidencia:** versión v26.3 de `storage-recovery-v26.js`, `initSafety()`.
+- **Resultado esperado:** conservar estado, advertir y no romper silenciosamente el bootstrap de seguridad.
+- **Resultado previo:** lectura directa sin manejo suficiente.
 - **Estado previo:** NO PASA.
 - **Clasificación:** PARCIALMENTE FUNCIONAL.
 - **Severidad:** S2 ALTO.
-- **Causa raíz:** supuesto implícito de que la lectura de Storage siempre es accesible durante el bootstrap.
-- **Acción correctiva aplicada:** envolver la lectura en manejo de errores, registrar `__ddStorageStartupError`, conservar datos y mostrar advertencia sin ejecutar acciones destructivas.
+- **Corrección aplicada:** commit `90118f8f8f3064e5b471d84ef7dc42c80947bde4`.
 
 ### AUD-STORAGE-266-B — Restablecer con lectura principal bloqueada
 
 - **Entrada:** pulsar Restablecer cuando `localStorage.getItem(KEY)` lanza una excepción.
-- **Resultado esperado:** cancelar el restablecimiento, explicar que no puede verificarse el estado y preservar los datos.
-- **Resultado obtenido antes de corregir:** excepción no gestionada antes de crear/verificar el backup.
-- **Evidencia:** versión v26.4 de `storage-recovery-v26.js`, inicio del wrapper `resetDemo()`.
+- **Resultado esperado:** cancelar, explicar que no puede verificarse el estado y preservar los datos.
+- **Resultado previo:** excepción antes de crear/verificar backup.
 - **Estado previo:** NO PASA.
 - **Clasificación:** PARCIALMENTE FUNCIONAL.
 - **Severidad:** S2 ALTO.
-- **Acción correctiva aplicada:** lectura protegida; ante error se cancela el restablecimiento (fail-closed), se informa al usuario y se mantiene el estado existente.
+- **Corrección aplicada:** commit `abbe52b6e6dde36c780d2d55e75fa861eded367e`, capa v26.5.
 
-## Corrección
+## Revalidación 2026-09-13 — interacción entre capas
 
-- Commit `90118f8f8f3064e5b471d84ef7dc42c80947bde4`: protege la lectura de recuperación de unidad durante `initSafety()`.
-- Commit `abbe52b6e6dde36c780d2d55e75fa861eded367e`: protege la lectura inicial del estado antes de `resetDemo()` y actualiza la capa a v26.5.
+La conclusión anterior “PASA EN CÓDIGO” era demasiado fuerte al analizar `storage-recovery-v26.js` de forma aislada.
 
-## Evidencia posterior
+Producción carga en este orden:
 
-A nivel de implementación:
+1. `storage-recovery-v26.js`
+2. `storage-access-guard-v71.js`
+3. `app.js`
 
-- el bootstrap ya no depende de una lectura de `DELETE_BACKUP_KEY` sin protección;
-- Restablecer cancela si no puede leer el estado actual;
-- no se borra el estado cuando la verificación de Storage falla;
-- se mantiene advertencia visible para el usuario.
+`storage-access-guard-v71.js` reemplaza posteriormente `Storage.prototype.getItem()`. Cuando detecta errores de acceso bloqueado (`SecurityError`, `InvalidStateError`, `NotAllowedError`), registra la advertencia y devuelve `null` en lugar de relanzar la excepción.
 
-**Resultado posterior de implementación:** PASA EN CÓDIGO / E2E REAL PENDIENTE.
+Esto afecta a la guarda de v26.5: el wrapper de `resetDemo()` espera capturar una excepción de `localStorage.getItem(KEY)` para cancelar de forma fail-closed, pero la capa v71 puede convertir esa excepción en `null`. El wrapper interpreta entonces `current === null` como “no existe estado guardado” y delega en el `resetDemo()` original.
+
+El `resetDemo()` original ejecuta confirmación y `localStorage.removeItem('docenteDigitalPrototype')` sin crear la copia de recuperación de v26.5.
+
+### AUD-STORAGE-266-C — lectura bloqueada transformada en null antes de Restablecer
+
+- **ID:** AUD-STORAGE-266-C
+- **Módulo:** Persistencia / recuperación / Restablecer datos.
+- **Entrada:** Storage con lectura bloqueada de forma que la guardia v71 captura el error y devuelve `null`; usuario pulsa Restablecer datos.
+- **Resultado esperado:** la acción debe distinguir “no existe estado” de “no puedo leer el estado”, cancelar y conservar el camino de recuperación.
+- **Resultado obtenido por inspección del wiring actual:** v71 puede transformar el fallo de lectura en `null`; v26.5 recibe `null` y puede derivar al `resetDemo()` original sin crear backup.
+- **Evidencia:** orden de scripts de `index.html`; `storage-access-guard-v71.js` devuelve `null` para errores de lectura bloqueada; `storage-recovery-v26.js` contiene `if(current===null)return previous.apply(this,arguments)`; `app.js` define `resetDemo()` con eliminación directa del estado principal.
+- **Resultado:** NO PASA A NIVEL DE INTEGRACIÓN ESTÁTICA.
+- **Clasificación:** PARCIALMENTE FUNCIONAL.
+- **Severidad:** S2 ALTO.
+- **Causa raíz:** dos capas de resiliencia aplican contratos incompatibles: una necesita recibir la excepción para actuar fail-closed y la otra la normaliza a `null`.
+- **Acción correctiva recomendada:** introducir una lectura estricta para operaciones destructivas (que no convierta errores de acceso en `null`) o devolver un estado distinguible de “ausente”; después probar Restablecer y Eliminar con Storage realmente bloqueado.
+- **Riesgo de regresión:** medio; modificar globalmente `Storage.prototype.getItem()` puede romper el arranque, por lo que la corrección debe limitarse a rutas destructivas y validarse E2E.
+
+## Estado consolidado
+
+La protección de bootstrap añadida en v26.5 sigue siendo válida, pero la protección de Restablecer no puede considerarse cerrada mientras exista la interacción descrita con `storage-access-guard-v71.js`.
+
+**Resultado actual:** PARCIALMENTE FUNCIONAL / NO PASA EN INTEGRACIÓN ESTÁTICA / E2E REAL PENDIENTE.
+
+No se eleva a S0 porque esta revisión no ha demostrado pérdida irreversible en navegador real: falta probar el comportamiento conjunto de lectura bloqueada, `removeItem`, recarga y posterior recuperación. Conforme a V3 y V5, no se presume ese resultado.
 
 ## Pruebas pendientes obligatorias
 
-PENDIENTE hasta ejecución real:
-
-- navegador con Storage bloqueado por privacidad/política;
+- navegador real con Storage bloqueado por privacidad/política;
+- distinguir lectura bloqueada de clave inexistente;
+- Restablecer con lectura bloqueada;
+- Eliminar unidad con lectura bloqueada;
 - cuota agotada real;
 - recarga y cierre/reapertura;
-- Restablecer con lectura bloqueada;
 - recuperación de unidad con backup pendiente;
 - móvil físico económico y gama media.
 
-Estas pruebas no se sustituyen con inspección estática ni con HTTP 200.
+Estas pruebas no se sustituyen con inspección estática, smoke ni HTTP 200.
 
 ## Impacto en métricas
 
-- IUD: mejora esperada al convertir un fallo silencioso en aviso comprensible; no cuantificado.
-- ICGD: sin cambio demostrable.
-- IFR: mejora técnica parcial de resiliencia; no cuantificado.
+- IUD: riesgo de mensaje/comportamiento inconsistente en una acción destructiva; no cuantificado.
+- ICGD: sin cambio demostrado.
+- IFR: resiliencia de persistencia queda parcialmente abierta; no cuantificado.
 - ISU: no calculado.
-- Prelaunch: el riesgo puntual queda corregido en implementación, pero persistencia/recuperación real sigue PENDIENTE según V5.
+- Prelaunch: persistencia/recuperación continúa bloqueada hasta prueba real y corrección del contrato entre capas.
 
 ## Gate
 
-Este hallazgo corregido no autoriza lanzamiento. V5 continúa bloqueado mientras falten pruebas reales esenciales y existan otros bloqueantes abiertos.
+V5 continúa BLOQUEADO. Este informe no autoriza lanzamiento y no se calcula Prelaunch Score definitivo.
