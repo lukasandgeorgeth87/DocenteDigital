@@ -11,11 +11,15 @@
   const mandatory=[
     {id:'V5-SEC-REAL-001',area:'Seguridad',severity:'S0',label:'Autenticación, autorización y aislamiento entre usuarios/IE',why:'Requiere backend productivo y prueba real de aislamiento; una variable local no demuestra seguridad.'},
     {id:'V5-DOCX-REAL-001',area:'Exportación',severity:'S1',label:'Apertura de DOCX real en Word móvil/escritorio, Google Docs, WPS y LibreOffice',why:'La presencia del generador OOXML no demuestra compatibilidad física ni ausencia de corrupción.'},
+    {id:'V5-PDF-PRINT-REAL-001',area:'Exportación',severity:'S1',label:'PDF e impresión reales con fidelidad visual y caracteres especiales',why:'V5 exige probar PDF e impresión reales; una vista previa o un DOCX generado no demuestra márgenes, tablas, saltos, imágenes ni salida física correcta.'},
     {id:'V5-MOV-REAL-001',area:'Móvil',severity:'S1',label:'Prueba física en celular económico/gama media/tablet',why:'Viewport y responsive de código no sustituyen dispositivo real ni conectividad intermitente.'},
     {id:'V5-BACKUP-REAL-001',area:'Continuidad',severity:'S0',label:'Backup y restauración real',why:'Debe recuperarse información desde una copia real; no basta declarar que existe respaldo.'},
+    {id:'V5-CONTINUITY-IA-001',area:'Continuidad',severity:'S1',label:'Continuidad operativa con proveedor IA no disponible',why:'V5 exige definir y probar que una caída de IA no impida abrir, editar o descargar documentos ya existentes.'},
     {id:'V5-E2E-DOC-001',area:'Docente',severity:'S1',label:'E2E Perfil→Programación→Unidad/Proyecto→Sesiones→Materiales→Evaluación→Registro→Seguimiento',why:'Debe probarse la cadena completa sin reescritura ni pérdida de datos.'},
     {id:'V5-E2E-DIR-001',area:'Director',severity:'S1',label:'E2E Perfil→Diagnóstico→Gestión→PAT→Documentación→Evidencias→Informes→Archivo→Seguimiento',why:'El módulo Director no se aprueba por mostrar tarjetas o borradores.'},
     {id:'V5-IA100-001',area:'IA',severity:'S1',label:'100 generaciones + anti-alucinación + finalidades abiertas',why:'Debe medirse coherencia, repetición, invenciones, exactitud y conservación de finalidad.'},
+    {id:'V5-YEAR-SCALE-001',area:'Escala',severity:'S1',label:'Año escolar completo y escala prevista',why:'V5 exige simular marzo–diciembre y comprobar grandes volúmenes; cuando exista arquitectura multiusuario productiva también debe probarse la escala progresiva prevista.'},
+    {id:'V5-MONITOR-COST-001',area:'Operación',severity:'S2',label:'Monitoreo productivo y costo IA medidos',why:'V5 exige controlar errores, latencia, generaciones, costo IA y fallos críticos, y medir costo por usuario y tipo de generación antes de escalar.'},
     {id:'V5-PILOT-001',area:'Usuarios reales',severity:'S1',label:'Pilotos reales progresivos',why:'La simplicidad y ahorro real no se pueden aprobar sin docentes/directores reales.'}
   ];
 
