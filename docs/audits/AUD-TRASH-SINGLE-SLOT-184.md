@@ -1,76 +1,64 @@
-# AUD-TRASH-SINGLE-SLOT-184 — Segundo borrado sobrescribe la recuperación del primero
+# AUD-TRASH-SINGLE-SLOT-184 — REVALIDADO / HALLAZGO HISTÓRICO CORREGIDO
 
-## ID
+## Estado actual — 2026-09-13
+
+Este ID conserva la evidencia histórica del defecto de ranura única, pero su resultado anterior ya no describe el runtime actual.
+
+**Hallazgo original:** eliminar A y después B sin resolver la recuperación de A podía sobrescribir `docenteDigitalPrototype_delete_backup` y dejar A sin vía de restauración.
+
+**Estado actual:** **CORREGIDO EN IMPLEMENTACIÓN / E2E REAL PENDIENTE**. `storage-recovery-v26.js` v26.6 conserva una sola ranura, pero antes de un segundo borrado comprueba si existe otra unidad pendiente y cancela la nueva eliminación hasta que el usuario elija **Restaurar** o **Descartar definitivamente**.
+
+El expediente canónico y más completo del defecto de sobrescritura es `AUD-UNIT-DELETE-SINGLE-BACKUP-OVERWRITE-210`.
+
+La ausencia de una Papelera multiítem sigue abierta y se mantiene canónicamente en `AUD-DOC-TRASH-179`.
+
+## ID de prueba
 **AUD-TRASH-SINGLE-SLOT-184**
 
-## Módulo
-Carpeta Docente → Mis unidades/proyectos → borrado y recuperación.
-
-## Entrada
-1. Tener dos unidades/proyectos guardados: A y B.
+## Entrada revalidada
+1. Tener A y B guardadas.
 2. Eliminar A y confirmar.
-3. No pulsar todavía `Restaurar` ni `Descartar` en la barra de recuperación.
-4. Eliminar B y confirmar.
-5. Intentar recuperar A y B.
+3. No restaurar ni descartar A.
+4. Intentar eliminar B.
 
 ## Esperado
-Conforme a V4 §23 y al gate de recuperación documental V5, cada documento eliminado debe permanecer recuperable hasta una acción explícita de eliminación definitiva. Un segundo borrado no debe destruir el respaldo del primero.
+A debe seguir recuperable y el intento de borrar B no debe sobrescribir su respaldo.
 
-## Obtenido
-`storage-recovery-v26.js` define una sola clave:
+## Resultado obtenido actual
+`installRecoverableUnitDelete()` lee primero `DELETE_BACKUP_KEY`. Si encuentra una unidad pendiente distinta de B:
+- muestra una advertencia;
+- vuelve a ofrecer la recuperación de A;
+- retorna sin invocar el `deleteUnit()` base.
 
-```js
-const DELETE_BACKUP_KEY='docenteDigitalPrototype_delete_backup';
-```
-
-Antes de cada borrado, `installRecoverableUnitDelete()` escribe directamente en esa misma clave:
-
-```js
-nativeSetItem.call(localStorage,DELETE_BACKUP_KEY,JSON.stringify({savedAt:new Date().toISOString(),unit,activeUnitId:before.activeUnitId||null}));
-```
-
-Por tanto:
-- al borrar A, la clave contiene A;
-- al borrar B antes de restaurar A, la misma clave se sobrescribe con B;
-- `offerUnitDeleteRestore()` además elimina la barra anterior y reconstruye la interfaz desde la única copia presente;
-- A ya no está en `state.units` y su único respaldo de este flujo fue sustituido por B.
-
-La consecuencia determinista es que A deja de ser recuperable mediante el mecanismo actual después del segundo borrado.
-
-## Evidencia
-- `storage-recovery-v26.js`: constante única `DELETE_BACKUP_KEY`.
-- `installRecoverableUnitDelete()`: `setItem` sobre la misma clave en cada eliminación.
-- `offerUnitDeleteRestore()`: elimina `#ddUnitDeleteRestore` anterior y trabaja con un único objeto `backup.unit`.
-- V4 §23: confirmación + papelera + recuperación antes de eliminación definitiva.
-- V5: pérdida de información y recuperación documental incompleta permanecen bloqueantes.
+Si la lectura de la copia pendiente falla, la eliminación también se cancela de forma conservadora.
 
 ## PASA / NO PASA
-**NO PASA**
+- Protección contra sobrescritura A→B: **PASA EN IMPLEMENTACIÓN**.
+- Restauración A→recarga→Restaurar y comportamiento en navegador/móvil real: **PENDIENTE**.
+- Papelera persistente con varios elementos: **NO PASA / INEXISTENTE**.
+
+## Clasificación actual
+- Prevención de sobrescritura de la ranura: **FUNCIONAL EN IMPLEMENTACIÓN**.
+- Recuperación real E2E: **PENDIENTE**.
+- Papelera multi-documento: **INEXISTENTE**.
 
 ## Severidad
-**S1 — CRÍTICO / bloqueante V5**, porque existe un camino reproducible de pérdida irreversible de una unidad ya eliminada sin que el usuario haya ordenado su eliminación definitiva. Las confirmaciones de borrado reducen accidentalidad, pero no autorizan a sobrescribir la copia recuperable previa.
+El **S0/S1 histórico por pérdida mediante sobrescritura deja de considerarse activo en código** tras la corrección ya desplegada. La falta de Papelera completa permanece como brecha **S2** de UX/recuperación, tratada en AUD-179.
 
-## Clasificación
-- Recuperación de un solo borrado: **FUNCIONAL/PARCIAL**.
-- Recuperación de dos o más borrados pendientes: **ROTA**.
-- Papelera multi-documento: **INEXISTENTE**.
-- Eliminación definitiva explícita por elemento: **INEXISTENTE**.
+## Acción pendiente
+No reemplazar la protección actual hasta disponer de una migración segura a una Papelera como colección. Probar al menos:
+1. A→Restaurar;
+2. A→recargar→Restaurar;
+3. A→intentar borrar B y confirmar que B permanece;
+4. A→Descartar→borrar B;
+5. `activeUnitId`, sesiones vinculadas y continuidad;
+6. navegador/móvil real y Storage restringido.
 
-## Acción recomendada
-Sustituir la clave única por una colección persistente de papelera, por ejemplo:
+## Riesgo de regresión
+**Bajo–medio** para la protección actual; **medio-alto** para una futura migración de modelo de datos.
 
-```text
-trash = [{ id, deletedAt, unit, previousActiveUnitId }, ...]
-```
+## Normativa externa
+No se aplicó ni declaró vigente normativa externa. La revalidación se deriva de V3/V4/V5 y del runtime actual.
 
-Requisitos mínimos:
-1. no sobrescribir elementos previos;
-2. restaurar cualquier elemento por `id`;
-3. conservar contenido, ID y relaciones;
-4. permitir eliminación definitiva separada;
-5. migrar la copia única existente si está presente;
-6. probar A→B→restaurar A, A→B→restaurar B, recarga entre borrados, y 10 borrados consecutivos;
-7. no declarar cierre V5 hasta probar también navegador/móvil real.
-
-## Corrección automática
-No aplicada. Convertir el respaldo único en una Papelera afecta ciclo de vida, persistencia, UI y relaciones Unidad→Sesiones; no es un parche pequeño suficientemente seguro para esta pasada.
+## Gate
+**V5 continúa BLOQUEADO. DocenteDigital no está aprobada para V1.0.**
