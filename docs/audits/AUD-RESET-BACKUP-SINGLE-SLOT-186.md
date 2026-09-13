@@ -1,102 +1,88 @@
-# AUD-RESET-BACKUP-SINGLE-SLOT-186 — Restablecimientos sucesivos pueden sobrescribir una copia recuperable
+# AUD-RESET-BACKUP-SINGLE-SLOT-186 — Restablecimientos sucesivos y copia recuperable
 
-## Fecha de verificación
-2026-09-05
+## Estado canónico
+Hallazgo original confirmado el 2026-09-05. Corrección implementada posteriormente en `storage-recovery-v26.js` v26.3. La corrección está validada a nivel de implementación; la recuperación E2E en navegador/dispositivo real continúa PENDIENTE y el gate V5 general permanece BLOQUEADO.
 
-## Especificaciones aplicadas
+## Especificaciones obligatorias
 - `docs/AUDITORIA_MAESTRA_INTEGRAL_V2.md`
 - `docs/ADENDA_AUDITORIA_EJECUTABLE_V3.md`
 - `docs/AUDITORIA_SIMPLICIDAD_USO_V4.md`
 - `docs/AUDITORIA_PRELANZAMIENTO_V5.md`
 - `docs/NUCLEO_IA_DOCENTEDIGITAL.md`
 
-No se aplica en este hallazgo una norma externa curricular o administrativa concreta; por tanto no se declara vigencia normativa externa. El criterio proviene de las especificaciones internas V3/V4/V5 sobre persistencia, recuperación, papelera/backup y prevención de pérdida de información.
+No se aplica en este hallazgo una norma curricular/administrativa MINEDU concreta; no se declara vigencia normativa externa nueva.
 
 ## Módulo
-Configuración → Restablecer datos → copia de recuperación local
+Configuración → Restablecer datos → persistencia y recuperación local.
 
 ## ID de prueba
 `AUD-RESET-BACKUP-SINGLE-SLOT-186`
 
-## Entrada
-1. Tener un estado A con unidades/sesiones/configuración almacenadas en `docenteDigitalPrototype`.
-2. Ejecutar `Restablecer datos` y aceptar.
-3. No pulsar todavía `Restaurar` ni `Descartar copia` del respaldo A.
-4. Crear/configurar un nuevo estado B.
-5. Ejecutar nuevamente `Restablecer datos` y aceptar.
-6. Intentar recuperar el estado A original.
+## Prueba A — segundo restablecimiento con copia anterior pendiente
 
-## Resultado esperado
-Mientras exista una copia recuperable pendiente, un segundo restablecimiento no debe destruirla silenciosamente. Debe existir historial/múltiples copias o, como mínimo, bloquear el nuevo restablecimiento hasta que el usuario restaure o descarte explícitamente la copia anterior.
+**Entrada:** estado A persistido → Restablecer → no Restaurar ni Descartar → crear/guardar estado B → intentar Restablecer nuevamente.
 
-## Resultado obtenido
-`storage-recovery-v26.js` utiliza una única clave:
+**Resultado esperado:** la copia recuperable A no debe sobrescribirse. El segundo restablecimiento debe bloquearse hasta que el usuario restaure o descarte explícitamente la copia anterior.
 
-```js
-const RESET_BACKUP_KEY='docenteDigitalPrototype_reset_backup';
-```
+**Resultado obtenido originalmente:** la versión anterior utilizaba una única clave `docenteDigitalPrototype_reset_backup` y escribía una copia nueva sin comprobar si existía otra pendiente. La copia A podía ser sustituida por B.
 
-En cada restablecimiento aceptado ejecuta:
+**Resultado original:** **NO PASA**.
 
-```js
-nativeSetItem.call(localStorage,RESET_BACKUP_KEY,JSON.stringify({savedAt:new Date().toISOString(),data:current}));
-```
+**Clasificación original:** **PARCIALMENTE FUNCIONAL / ROTA para dos restablecimientos pendientes**.
 
-No comprueba previamente si `RESET_BACKUP_KEY` ya contiene una copia pendiente. Por tanto el segundo restablecimiento reemplaza el respaldo A por B antes de borrar el estado principal. La UI posterior solo puede ofrecer restaurar el contenido más reciente de esa clave.
+**Severidad histórica corregida:** **S0 BLOQUEANTE**, porque V3 clasifica la pérdida irreversible como S0. El informe inicial la dejó en S1 por requerir dos confirmaciones explícitas; esa justificación era insuficiente frente a la taxonomía de V3.
+
+**Causa raíz:** respaldo de ranura única sin guardia previa contra sobrescritura.
+
+## Corrección aplicada
+`storage-recovery-v26.js` v26.3 consulta `RESET_BACKUP_KEY` antes de permitir un nuevo restablecimiento:
+
+- si existe una copia pendiente, cancela el segundo restablecimiento y vuelve a ofrecer Restaurar/Descartar;
+- si falla la comprobación del backup, cancela la operación de forma conservadora;
+- si falla la creación del nuevo backup, conserva el estado principal y cancela el restablecimiento.
+
+**Estado posterior:** **CORREGIDO EN IMPLEMENTACIÓN; E2E REAL PENDIENTE**.
+
+## Prueba B — fallo al comprobar backup pendiente
+**Entrada:** `localStorage.getItem(RESET_BACKUP_KEY)` lanza una excepción antes de restablecer.
+
+**Esperado:** no borrar el estado principal.
+
+**Obtenido en v26.3:** `try/catch` muestra un aviso y retorna antes de la operación destructiva.
+
+**Resultado:** **PASA A NIVEL DE IMPLEMENTACIÓN**.
+
+**Clasificación:** **FUNCIONAL EN IMPLEMENTACIÓN; navegador real con Storage restringido PENDIENTE**.
+
+## Prueba C — fallo al crear el backup
+**Entrada:** el estado principal existe pero `setItem` para `RESET_BACKUP_KEY` falla por cuota/permisos.
+
+**Esperado:** no borrar el estado principal.
+
+**Obtenido:** la excepción cancela el restablecimiento y conserva `docenteDigitalPrototype`.
+
+**Resultado:** **PASA A NIVEL DE IMPLEMENTACIÓN; E2E PENDIENTE**.
 
 ## Evidencia
-- `storage-recovery-v26.js`: `RESET_BACKUP_KEY`, `installRecoverableReset()` y `offerResetRestore()`.
-- La implementación de restauración lee exclusivamente `localStorage.getItem(RESET_BACKUP_KEY)`; no existe colección/historial de respaldos de restablecimiento.
+- `storage-recovery-v26.js` v26.3 conserva una sola `RESET_BACKUP_KEY`, pero ahora impide explícitamente sobrescribir una copia pendiente y falla de forma cerrada ante errores de lectura/escritura.
+- V4 exige recuperación segura del trabajo.
+- V5 exige probar persistencia, recuperación, interrupciones y restauración real; el código por sí solo no cierra esas pruebas.
 
-## PASA / NO PASA
-**NO PASA**
-
-## Clasificación funcional
-**PARCIALMENTE FUNCIONAL** para un único restablecimiento pendiente.
-
-**ROTA** para dos restablecimientos sucesivos sin resolver la copia anterior.
-
-## Severidad
-**S1 CRÍTICO — bloqueante V5**
-
-### Justificación
-V3 clasifica como crítico/bloqueante la pérdida irreversible y exige que backup/restauración sean probados, no declarados. V4 exige recuperación segura. V5 impide lanzamiento con pérdida de información o backup/restauración no comprobados. El camino es determinista: una copia que el sistema presenta como recuperable puede ser sustituida por una acción posterior antes de que el usuario ordene descartarla.
-
-No se eleva artificialmente a S0 en este informe porque el escenario requiere dos restablecimientos explícitamente confirmados. Si una prueba de navegador demuestra pérdida irreversible de información real considerada aún recuperable, la severidad debe reevaluarse conforme a V3.
-
-## Causa raíz
-Diseño de respaldo de restablecimiento de **slot único** sin control de versión, cola/historial ni protección frente a sobrescritura.
-
-## Acción correctiva segura recomendada
-Cambio mínimo antes de V1.0:
-
-1. Antes de escribir `RESET_BACKUP_KEY`, comprobar si ya existe una copia válida.
-2. Si existe, impedir el segundo restablecimiento y mostrar: `Ya existe una copia pendiente. Restáurala o descártala antes de volver a restablecer.`
-3. Mantener intacta la copia anterior.
-4. Como evolución posterior, migrar a una colección versionada de copias con fecha e identificador.
-
-No se aplicó automáticamente en esta pasada porque modificar el wrapper de recuperación sin una prueba de navegador real puede introducir regresión en un mecanismo de protección de datos. La corrección debe acompañarse de prueba ejecutable de cancelación, restauración y doble restablecimiento.
-
-## Retest obligatorio
-1. Crear estado A.
-2. Restablecer A → copia A creada.
-3. Crear estado B.
-4. Intentar restablecer B sin resolver A.
-5. Verificar que A no se sobrescribe.
-6. Restaurar A y comprobar igualdad del estado recuperado.
-7. Repetir después de descartar A y comprobar que B sí puede respaldarse.
-8. Recargar navegador entre pasos.
-9. Probar cuota llena/bloqueo de storage.
-10. Confirmar producción HTTP 200 y despliegue READY.
+## Retest obligatorio antes de cerrar definitivamente
+1. A → Restablecer → Restaurar A.
+2. A → Restablecer → recargar/cerrar/abrir → Restaurar A.
+3. A → Restablecer → crear B → segundo Restablecer: debe bloquearse y A debe permanecer íntegra.
+4. A → Restablecer → Descartar copia → Restablecer B: debe permitirse solo después del descarte explícito.
+5. Forzar fallo de `getItem` sobre la clave de recuperación: A no debe borrarse.
+6. Forzar fallo de `setItem`/cuota llena al crear backup: A no debe borrarse.
+7. Ejecutar en móvil físico y con interrupción/cierre de pestaña.
+8. Confirmar asset productivo, Vercel READY y HTTP 200 tras cualquier cambio relacionado.
 
 ## Riesgo de regresión
-**Medio**: el código está en la capa preventiva cargada antes de `app.js`; una modificación incorrecta puede afectar arranque o restablecimiento. Por ello requiere retest funcional real.
+**Medio-bajo.** La protección está localizada en la acción destructiva; vigilar bloqueo permanente por backup inválido, visibilidad/accesibilidad del aviso y restauración tras recarga.
 
 ## Impacto
-- **IUD:** riesgo de pérdida de trabajo recuperable.
-- **ICGD:** reduce confianza documental y continuidad.
-- **IFR:** afecta recuperación/persistencia.
-- **ISU:** el usuario puede creer que conserva una copia cuando ya fue sustituida.
-- **Prelaunch:** bloqueante hasta demostrar recuperación segura.
-
-No se calcula ninguna puntuación definitiva sin evidencia real de usuario/dispositivo/restauración.
+- **IUD:** mejora esperable al impedir sobrescritura, sin puntaje definitivo.
+- **ICGD:** mejora integridad local, sin puntaje definitivo.
+- **IFR / ISU / Prelaunch Score:** NO CALCULADOS por falta de pruebas reales obligatorias.
+- **Prelaunch:** este defecto histórico está corregido en implementación, pero el gate general continúa BLOQUEADO por pruebas esenciales y otros hallazgos abiertos.
