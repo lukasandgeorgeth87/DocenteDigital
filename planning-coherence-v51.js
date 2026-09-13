@@ -37,7 +37,7 @@
     if(c==='biohuerto')return{
       reto:'¿Cómo podemos aprovechar los saberes y prácticas de la siembra que conocemos en nuestro entorno para planificar y sembrar hortalizas en nuestro biohuerto, explicando las decisiones y cuidados que necesitamos realizar?',
       situations:[
-        {key:'A',title:'Propuesta 1',text:'Los estudiantes conocen, por sus familias y su entorno, diversos saberes y prácticas relacionados con la siembra de tubérculos. En esta experiencia recuperarán y comprenderán esos conocimientos para utilizarlos en una nueva tarea: planificar y sembrar hortalizas en el biohuerto escolar, tomando decisiones sobre el espacio, las semillas, los cuidados y el seguimiento del cultivo.'},
+        {key:'A',title:'Propuesta 1',text:'Los estudiantes conocen, por sus experiencias y su entorno, diversos saberes y prácticas relacionados con la siembra de tubérculos. En esta experiencia recuperarán y comprenderán esos conocimientos para utilizarlos en una nueva tarea: planificar y sembrar hortalizas en el biohuerto escolar, tomando decisiones sobre el espacio, las semillas, los cuidados y el seguimiento del cultivo.'},
         {key:'B',title:'Propuesta 2',text:'La siembra forma parte de las experiencias cercanas de los estudiantes. El reto será reconocer qué saberes de esas prácticas pueden aplicarse al cultivo de hortalizas en el biohuerto escolar. Así, observarán, preguntarán, compararán conocimientos, planificarán la siembra y explicarán por qué toman determinadas decisiones durante el proceso.'}
       ],
       products:[
