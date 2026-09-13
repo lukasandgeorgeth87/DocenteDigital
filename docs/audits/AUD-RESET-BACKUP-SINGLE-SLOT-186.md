@@ -68,6 +68,15 @@ Configuración → Restablecer datos → persistencia y recuperación local.
 - V4 exige recuperación segura del trabajo.
 - V5 exige probar persistencia, recuperación, interrupciones y restauración real; el código por sí solo no cierra esas pruebas.
 
+## Evidencia posterior de despliegue y smoke — 2026-09-12
+- GitHub `main` quedó en `b4240eb3466bb9b8d96c2c374f09909fc3ef34c0` tras consolidar el hallazgo canónico y retirar el duplicado 265.
+- Vercel desplegó ese SHA como `dpl_5aP48QA7pEsW1YAiffFqbCd5dF5a`, estado `READY`, target `production`.
+- La URL canónica `https://docente-digital.vercel.app/` respondió HTTP 200.
+- Vercel no reportó errores runtime en la ventana de una hora revisada.
+- GitHub Actions `Prelaunch Smoke` run #269 (`34728145645`) terminó `completed / success` exactamente sobre `b4240eb3466bb9b8d96c2c374f09909fc3ef34c0`.
+
+Esta evidencia cierra únicamente la comprobación técnica de despliegue/smoke que estaba pendiente en la ronda anterior. **No convierte la recuperación en PASA E2E**: siguen pendientes navegador real, recarga/cierre, almacenamiento restringido/cuota llena, móvil físico y verificación íntegra de Restaurar/Descartar.
+
 ## Retest obligatorio antes de cerrar definitivamente
 1. A → Restablecer → Restaurar A.
 2. A → Restablecer → recargar/cerrar/abrir → Restaurar A.
