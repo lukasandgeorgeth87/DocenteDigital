@@ -76,13 +76,19 @@ Se agregaron cuatro controles de evidencia:
 
 Todos nacen como `PENDIENTE_PRUEBA_REAL`, `passed:false`; no se simula ninguna aprobación. Los S0/S1 añadidos pasan al arreglo `blockers` de manera automática por la lógica existente.
 
-## Resultado posterior esperado
-`ddPrelaunchEvidenceGate.run()` debe devolver doce pruebas pendientes y mantener `productionGate:false`. Los nuevos S0/S1 deben aparecer en `blockers`; monitoreo/costo permanece como S2 de seguimiento y no se usa para falsear una aprobación.
+## Resultado posterior
+PASA EN IMPLEMENTACIÓN / PENDIENTE DE LAS PRUEBAS REALES QUE EL GATE ENUMERA.
 
-## Estado posterior
-CORREGIDO EN IMPLEMENTACIÓN / PENDIENTE REPRUEBA DE RUNTIME Y DESPLIEGUE.
+Evidencia posterior observada:
 
-No se declara PASA definitivo hasta comprobar sintaxis/smoke, producción exacta del SHA, HTTP 200 y que el módulo servido contiene la lista ampliada. Las pruebas físicas/usuarios/backend continúan PENDIENTES aun cuando el gate las enumere correctamente.
+- GitHub `main` posterior al registro inicial: `96a55cbf366f01dc24665a11ffff00e9e76aab32`, cuyo padre es el commit funcional `7035a6e69369f6802bd281f9c6b525361b950014`.
+- GitHub Actions `Prelaunch Smoke` run `34762491197` / #290: `completed / success` exactamente sobre `96a55cbf366f01dc24665a11ffff00e9e76aab32`.
+- Vercel deployment `dpl_HVKydJ1diXhbrzBigtNEupTg24rd`: `READY · production` exactamente sobre `96a55cbf366f01dc24665a11ffff00e9e76aab32`.
+- URL canónica `https://docente-digital.vercel.app/`: HTTP 200 en la reprueba posterior.
+- Asset productivo `prelaunch-evidence-gate-v50.js`: HTTP 200 y contiene los cuatro nuevos identificadores `V5-PDF-PRINT-REAL-001`, `V5-CONTINUITY-IA-001`, `V5-YEAR-SCALE-001` y `V5-MONITOR-COST-001`.
+- Observabilidad Vercel: sin errores runtime detectados en la última hora de la reprueba.
+
+La corrección demuestra cobertura del inventario del gate, no ejecución de PDF/impresión, caída de IA, año completo, escala, monitoreo/costo ni el resto de pruebas físicas/usuarios/backend. Esas pruebas permanecen `PENDIENTE_PRUEBA_REAL`.
 
 ## Acción correctiva adicional
 - Añadir en una futura suite automatizada una aserción que compare identificadores mínimos del gate con los requisitos V5 automatizables/no automatizables, para evitar regresión de cobertura.
@@ -101,3 +107,6 @@ MEDIO. Si V5 se amplía o cambia y el arreglo `mandatory` no se sincroniza, el g
 
 ## Fuente oficial externa
 No se aplicó ni declaró vigente ninguna norma externa nueva en esta prueba. La corrección se basa exclusivamente en las especificaciones internas obligatorias V2–V5 y Núcleo IA.
+
+## Estado
+CORREGIDO EN IMPLEMENTACIÓN Y DESPLEGADO / PRUEBAS V5 REALES SIGUEN PENDIENTES.
