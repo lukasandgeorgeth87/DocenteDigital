@@ -54,9 +54,12 @@
 
 /* Carga estable de módulos DocenteDigital.
    Regla central: comprender primero → conservar intención/finalidad → recién generar.
+   V3/V5: durante el arranque no se permite generar una Unidad/Proyecto con el runtime base
+   antes de que estén instaladas las guardas semánticas, territoriales y de coherencia.
 */
 (function(){
-  if(window.__ddStableModuleLoaderV49)return;window.__ddStableModuleLoaderV49=true;
+  if(window.__ddStableModuleLoaderV50)return;window.__ddStableModuleLoaderV50=true;
+  window.__ddPlanningRuntimeReady=false;
   const modules=[
     'schedule-integrity-v62.js',
     'config-state-guard-v42.js',
@@ -114,7 +117,59 @@
     'territorial-generation-guard-v61.js',
     'master-audit-v57.js'
   ];
+  const planningCritical=[
+    'meaning-engine-v25.js',
+    'title-context-v38.js',
+    'goal-alignment-v28.js',
+    'proposal-choice-v8.js',
+    'project-territorial-v31.js',
+    'planning-coherence-v51.js',
+    'significant-situation-core-v53.js',
+    'territorial-generation-guard-v61.js'
+  ];
   window.ddModuleLoadFailures=Array.isArray(window.ddModuleLoadFailures)?window.ddModuleLoadFailures:[];
+
+  function planningButtons(){
+    return [...document.querySelectorAll('#unitPanel button,#unitOutput button')].filter(button=>{
+      const action=button.getAttribute('onclick')||'';
+      return button.id==='ddBuildUnit'||/createUnitDemo/.test(action);
+    });
+  }
+  function lockPlanningButtons(){
+    planningButtons().forEach(button=>{
+      if(!button.dataset.ddBootLabel)button.dataset.ddBootLabel=(button.textContent||'Crear propuesta').trim();
+      button.disabled=true;
+      button.setAttribute('aria-disabled','true');
+      button.setAttribute('title','DocenteDigital está preparando la comprensión del contexto.');
+      button.textContent='Preparando DocenteDigital…';
+    });
+  }
+  function unlockPlanningButtons(){
+    planningButtons().forEach(button=>{
+      button.disabled=false;
+      button.removeAttribute('aria-disabled');
+      button.removeAttribute('title');
+      if(button.dataset.ddBootLabel){button.textContent=button.dataset.ddBootLabel;delete button.dataset.ddBootLabel;}
+    });
+  }
+  function finishPlanningBootstrap(){
+    const failedCritical=planningCritical.filter(src=>window.ddModuleLoadFailures.includes(src));
+    window.__ddPlanningRuntimeReady=failedCritical.length===0;
+    if(window.__ddPlanningRuntimeReady)unlockPlanningButtons();
+    else lockPlanningButtons();
+  }
+  document.addEventListener('click',event=>{
+    if(window.__ddPlanningRuntimeReady)return;
+    const button=event.target?.closest?.('button');if(!button)return;
+    const action=button.getAttribute('onclick')||'';
+    if(button.id==='ddBuildUnit'||/createUnitDemo/.test(action)){
+      event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+      lockPlanningButtons();
+    }
+  },true);
+  lockPlanningButtons();
+  document.addEventListener('DOMContentLoaded',lockPlanningButtons,{once:true});
+
   function showLoadFailure(){
     if(document.getElementById('ddModuleLoadFailure'))return;
     const bar=document.createElement('div');
@@ -143,7 +198,8 @@
   });
   let index=0;
   function next(){
-    if(index>=modules.length)return;
+    if(index>=modules.length){finishPlanningBootstrap();return;}
+    lockPlanningButtons();
     const src=modules[index++];
     if(document.querySelector(`script[data-dd-module="${src}"]`)){next();return;}
     const load=attempt=>{
