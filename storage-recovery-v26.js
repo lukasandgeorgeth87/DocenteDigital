@@ -1,4 +1,4 @@
-/* DocenteDigital – recuperación preventiva de almacenamiento v26.3 */
+/* DocenteDigital – recuperación preventiva de almacenamiento v26.4 */
 (function(){
   if(window.__ddStorageRecoveryV26)return;window.__ddStorageRecoveryV26=true;
   const KEY='docenteDigitalPrototype';
@@ -235,7 +235,18 @@
     window.deleteUnit=wrapped;
   }
 
-  const initSafety=()=>{installRecoverableReset();offerResetRestore();installRecoverableUnitDelete();if(localStorage.getItem(DELETE_BACKUP_KEY))offerUnitDeleteRestore();};
+  const initSafety=()=>{
+    installRecoverableReset();
+    offerResetRestore();
+    installRecoverableUnitDelete();
+    try{
+      if(localStorage.getItem(DELETE_BACKUP_KEY))offerUnitDeleteRestore();
+    }catch(error){
+      window.__ddStorageStartupError=window.__ddStorageStartupError||{at:new Date().toISOString(),error:String(error&&error.message||error)};
+      console.warn('DocenteDigital: no se pudo comprobar la recuperación de una unidad eliminada durante el arranque.',error);
+      if(document.body)showStorageWarning();
+    }
+  };
   if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',()=>setTimeout(initSafety,0),{once:true});
   else setTimeout(initSafety,0);
 })();
