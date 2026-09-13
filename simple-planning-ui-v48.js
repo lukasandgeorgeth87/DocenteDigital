@@ -1,6 +1,7 @@
-/* DocenteDigital – interfaz simple de planificación v50
+/* DocenteDigital – interfaz simple de planificación v50.1
    Filosofía: la IA piensa mucho por dentro y muestra poco por fuera.
    La capa visual simplifica SIN sustituir el significado aprobado por el núcleo.
+   V50.1: conserva visible la advertencia semántica cuando la interpretación es preliminar.
 */
 (function(){
   if(window.__ddSimplePlanningUIV50)return;window.__ddSimplePlanningUIV50=true;
@@ -116,9 +117,11 @@
   const oldShow=window.showUnit;if(typeof oldShow==='function')window.showUnit=function(){const r=oldShow.apply(this,arguments);setTimeout(simplifyAll,550);return r;};
 
   const css=document.createElement('style');css.textContent=`
-    /* Análisis interno: nunca ocupa la pantalla normal, ni Fácil ni Experto */
+    /* Análisis interno: nunca ocupa la pantalla normal, ni Fácil ni Experto.
+       La advertencia de comprensión insuficiente sí permanece visible porque
+       informa una decisión del usuario y no es telemetría técnica. */
     #ddKeywordBox,#ddProposalKeywords,#ddGoalDetected,#ddTitleSuggestions{display:none!important}
-    #ddIntentBox>.dd-intent-grid,#ddIntentBox>.dd-meaning-synthesis,#ddIntentBox>.dd-meaning-warning,#ddIntentBox>small,#ddIntentBox>b:first-child{display:none!important}
+    #ddIntentBox>.dd-intent-grid,#ddIntentBox>.dd-meaning-synthesis,#ddIntentBox>small,#ddIntentBox>b:first-child{display:none!important}
     #ddIntentBox{background:transparent!important;border:0!important;padding:4px 0!important;margin-top:7px!important}
     #ddIntentBox .dd-title-label{display:block!important;margin:4px 0 7px!important;font-size:14px}
     #ddIntentBox .dd-title-suggestions{gap:7px!important;margin:0!important}
