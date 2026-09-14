@@ -1,4 +1,4 @@
-/* DocenteDigital – recuperación preventiva de almacenamiento v26.6 */
+/* DocenteDigital – recuperación preventiva de almacenamiento v26.7 */
 (function(){
   if(window.__ddStorageRecoveryV26)return;window.__ddStorageRecoveryV26=true;
   const KEY='docenteDigitalPrototype';
@@ -183,6 +183,18 @@
     if(typeof window.deleteUnit!=='function'||window.deleteUnit.__ddRecoverable)return;
     const previous=window.deleteUnit;
     const wrapped=function(id){
+      let before=null;
+      try{
+        before=JSON.parse(strictGetItem(KEY)||'{}');
+        if(before.lastSession&&before.lastSession.unitId===id){
+          alert('Esta unidad tiene una sesión vinculada. Para conservar la trazabilidad, no puede eliminarse mientras esa sesión dependa de ella.');
+          return;
+        }
+      }catch(error){
+        alert('No se pudo verificar si la unidad tiene sesiones vinculadas. Para evitar pérdida de trazabilidad, la eliminación fue cancelada.');
+        console.warn('DocenteDigital: no se pudo verificar la dependencia Unidad→Sesión antes de eliminar.',error);
+        return;
+      }
       try{
         const pending=JSON.parse(strictGetItem(DELETE_BACKUP_KEY)||'null');
         if(pending&&pending.unit&&pending.unit.id&&pending.unit.id!==id){
@@ -195,9 +207,7 @@
         console.warn('DocenteDigital: no se pudo verificar la copia pendiente antes de eliminar.',error);
         return;
       }
-      let before=null;
       try{
-        before=JSON.parse(strictGetItem(KEY)||'{}');
         const unit=Array.isArray(before.units)?before.units.find(u=>u&&u.id===id):null;
         if(unit){
           nativeSetItem.call(localStorage,DELETE_BACKUP_KEY,JSON.stringify({savedAt:new Date().toISOString(),unit,activeUnitId:before.activeUnitId||null}));
