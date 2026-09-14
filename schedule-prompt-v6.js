@@ -52,14 +52,17 @@
   const style=document.createElement('style');style.textContent=`.dd-schedule-prompt{margin-top:12px;border:1px solid #cad9d1;background:linear-gradient(135deg,#f8fcfa,#eef7f2)}.dd-schedule-prompt h3{margin-top:0}.dd-schedule-prompt .actions{display:flex;gap:8px;flex-wrap:wrap}.dd-schedule-later{opacity:.9}`;document.head.appendChild(style);
 })();
 
-/* Carga estable de módulos DocenteDigital.
+/* Carga estable de módulos DocenteDigital v50.1.
    Regla central: comprender primero → conservar intención/finalidad → recién generar.
    V3/V5: durante el arranque no se permite generar una Unidad/Proyecto con el runtime base
    antes de que estén instaladas las guardas semánticas, territoriales y de coherencia.
+   Si cualquier módulo falla definitivamente, las acciones documentales quedan en modo seguro
+   hasta recargar: el aviso visible y el control técnico deben decir y hacer lo mismo.
 */
 (function(){
-  if(window.__ddStableModuleLoaderV50)return;window.__ddStableModuleLoaderV50=true;
+  if(window.__ddStableModuleLoaderV501)return;window.__ddStableModuleLoaderV501=true;
   window.__ddPlanningRuntimeReady=false;
+  window.__ddRuntimeFullyReady=false;
   const modules=[
     'schedule-integrity-v62.js',
     'config-state-guard-v42.js',
@@ -155,9 +158,41 @@
   function finishPlanningBootstrap(){
     const failedCritical=planningCritical.filter(src=>window.ddModuleLoadFailures.includes(src));
     window.__ddPlanningRuntimeReady=failedCritical.length===0;
+    window.__ddRuntimeFullyReady=window.ddModuleLoadFailures.length===0;
     if(window.__ddPlanningRuntimeReady)unlockPlanningButtons();
     else lockPlanningButtons();
+    if(!window.__ddRuntimeFullyReady)lockRiskyDocumentButtons();
   }
+
+  function isRiskyDocumentButton(button){
+    if(!button||button.id==='ddRuntimeReload')return false;
+    const action=button.getAttribute('onclick')||'';
+    if(/createUnitDemo|generateSession|generateMaterial|generateDiagnostic|demoAnnual|showEvaluation|download|export|deleteUnit|restoreDeleted|duplicate|save|emit|register|evaluate/i.test(action))return true;
+    if(!button.closest('#plan,#session,#materials,#evaluation,#director'))return false;
+    const text=(button.textContent||'').trim();
+    return /crear|generar|preparar|guardar|descargar|exportar|eliminar|restaurar|duplicar|registrar|evaluar|emitir/i.test(text);
+  }
+  function lockRiskyDocumentButtons(){
+    if(!window.ddModuleLoadFailures.length)return;
+    document.querySelectorAll('button').forEach(button=>{
+      if(!isRiskyDocumentButton(button))return;
+      if(!button.dataset.ddRuntimeFailureLabel)button.dataset.ddRuntimeFailureLabel=(button.textContent||'Acción no disponible').trim();
+      button.disabled=true;
+      button.setAttribute('aria-disabled','true');
+      button.setAttribute('data-dd-runtime-blocked','true');
+      button.setAttribute('title','Recarga DocenteDigital antes de crear, modificar o descargar documentos.');
+    });
+  }
+  function blockRiskyActionDuringFailure(event){
+    if(!window.ddModuleLoadFailures.length)return;
+    const button=event.target?.closest?.('button');
+    if(!isRiskyDocumentButton(button))return;
+    event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+    lockRiskyDocumentButtons();
+    showLoadFailure();
+  }
+  document.addEventListener('click',blockRiskyActionDuringFailure,true);
+
   document.addEventListener('click',event=>{
     if(window.__ddPlanningRuntimeReady)return;
     const button=event.target?.closest?.('button');if(!button)return;
@@ -171,22 +206,28 @@
   document.addEventListener('DOMContentLoaded',lockPlanningButtons,{once:true});
 
   function showLoadFailure(){
-    if(document.getElementById('ddModuleLoadFailure'))return;
-    const bar=document.createElement('div');
-    bar.id='ddModuleLoadFailure';
-    bar.setAttribute('role','alert');
-    bar.setAttribute('aria-live','assertive');
-    bar.innerHTML='<div><b>No se pudo cargar una parte necesaria de DocenteDigital.</b><span> Recarga la página antes de crear, guardar o descargar documentos.</span></div><button type="button">Recargar</button>';
-    bar.querySelector('button').onclick=()=>location.reload();
-    document.body.prepend(bar);
-    const css=document.createElement('style');
-    css.textContent='#ddModuleLoadFailure{position:sticky;top:0;z-index:99999;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;background:#fff4e5;border-bottom:2px solid #d97706;color:#713f12;font-size:14px;line-height:1.35}#ddModuleLoadFailure button{border:0;border-radius:9px;padding:9px 13px;background:#92400e;color:#fff;font-weight:800;cursor:pointer}@media(max-width:720px){#ddModuleLoadFailure{align-items:flex-start;flex-direction:column}#ddModuleLoadFailure button{width:100%}}';
-    document.head.appendChild(css);
+    let bar=document.getElementById('ddModuleLoadFailure');
+    if(!bar){
+      bar=document.createElement('div');
+      bar.id='ddModuleLoadFailure';
+      bar.setAttribute('role','alert');
+      bar.setAttribute('aria-live','assertive');
+      bar.innerHTML='<div><b>No se pudo cargar una parte necesaria de DocenteDigital.</b><span> Recarga la página antes de crear, guardar o descargar documentos.</span></div><button type="button" id="ddRuntimeReload">Recargar</button>';
+      bar.querySelector('button').onclick=()=>location.reload();
+      document.body.prepend(bar);
+      const css=document.createElement('style');
+      css.textContent='#ddModuleLoadFailure{position:sticky;top:0;z-index:99999;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;background:#fff4e5;border-bottom:2px solid #d97706;color:#713f12;font-size:14px;line-height:1.35}#ddModuleLoadFailure button{border:0;border-radius:9px;padding:9px 13px;background:#92400e;color:#fff;font-weight:800;cursor:pointer}@media(max-width:720px){#ddModuleLoadFailure{align-items:flex-start;flex-direction:column}#ddModuleLoadFailure button{width:100%}}';
+      document.head.appendChild(css);
+    }
+    lockRiskyDocumentButtons();
   }
   function rememberFailure(src){
     const name=String(src||'').split('/').pop().split('?')[0];
     if(name&&modules.includes(name)&&!window.ddModuleLoadFailures.includes(name))window.ddModuleLoadFailures.push(name);
-    if(name&&modules.includes(name))showLoadFailure();
+    if(name&&modules.includes(name)){
+      window.__ddRuntimeFullyReady=false;
+      showLoadFailure();
+    }
   }
   window.addEventListener('error',e=>{
     const src=e?.filename||e?.target?.src||'';
@@ -210,6 +251,7 @@
         s.remove();
         if(attempt===0)setTimeout(()=>load(1),350);else{
           if(!window.ddModuleLoadFailures.includes(src))window.ddModuleLoadFailures.push(src);
+          window.__ddRuntimeFullyReady=false;
           showLoadFailure();
           next();
         }
