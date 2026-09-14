@@ -1,4 +1,4 @@
-# AUD-BACK-NAVIGATION-MISSING-240 — Ruta clara de regreso no implementada de forma consistente
+# AUD-BACK-NAVIGATION-MISSING-240 — Ruta clara de regreso
 
 ## Especificaciones aplicadas
 - `docs/AUDITORIA_MAESTRA_INTEGRAL_V2.md`
@@ -10,39 +10,51 @@
 ## Regla aplicable
 V4, punto 18: **“Volver siempre fácil. El usuario no debe sentirse atrapado. Debe existir una ruta clara para volver.”**
 
-## Prueba
+## Prueba original
 **ID:** AUD-BACK-240-A  
 **Módulo:** Navegación transversal Docente/Director.  
 **Entrada:** entrar desde Inicio a Mi planificación, Crear sesión, Materiales, Evaluación o Director y buscar una acción visible para regresar al contexto anterior.  
 **Resultado esperado:** una ruta de regreso explícita, predecible y visible en el contenido o cabecera de cada flujo; en móvil no debe depender de adivinar el menú o usar el botón físico/gesto del navegador.  
-**Resultado obtenido:** el `index.html` actual tiene botones `← Atrás` únicamente dentro de los pasos 2–4 del setup inicial. Las pantallas principales (`plan`, `session`, `materials`, `evaluation`, `director`, `settings`) no exponen botón `Volver`, breadcrumb equivalente ni una acción contextual de regreso. La navegación principal lateral permite saltar a otras secciones, pero no representa la semántica “volver al punto anterior”. La búsqueda global del repositorio por `Volver` no devuelve implementación.  
-**Resultado:** NO PASA.  
-**Severidad:** S3 MEDIO.  
-**Clasificación:** PARCIALMENTE FUNCIONAL: navegación global existente; regreso contextual explícito INEXISTENTE fuera del setup.
+**Resultado obtenido originalmente:** el `index.html` tenía botones `← Atrás` únicamente dentro de los pasos 2–4 del setup inicial; las pantallas principales no exponían una acción contextual de regreso.  
+**Resultado original:** NO PASA.  
+**Severidad original:** S3 MEDIO.  
+**Clasificación original:** PARCIALMENTE FUNCIONAL.
 
-## Evidencia
-- `index.html`: `← Atrás` solo en setup; no hay `Volver` en pantallas funcionales principales.
-- `app.js`: `go(id)` cambia de pantalla, pero no mantiene historial de navegación ni expone `goBack()`/equivalente.
-- Búsqueda global `Volver`: sin resultados de implementación.
+## Revalidación 2026-09-14
+El expediente original quedó desactualizado frente al runtime actual. `home-surface-truth-v73.js` implementa ahora `ensureBackButton()` y `guardNavigationHistory()`:
+- crea un botón global visible `← Volver` con `aria-label="Volver a la pantalla anterior"`;
+- conserva `window.__ddPreviousScreen` al navegar con `go(id)`;
+- vuelve a la pantalla anterior válida y, si no existe, cae de forma segura a `home`;
+- no usa `history.back()` a ciegas;
+- integra el setup: si se está en pasos 2–4, retrocede con `nextSetup(visible-1)`;
+- mantiene foco/accesibilidad mediante `syncNavigationAccessibility()`;
+- aplica un objetivo táctil mínimo y reglas específicas para móvil/escritorio mediante CSS.
 
-## Causa raíz
-La arquitectura de navegación fue concebida como menú lateral por destinos, no como flujo con historial contextual. Esto funciona para saltar entre módulos, pero no satisface V4-18 cuando el usuario entra a una tarea y necesita regresar exactamente al contexto anterior.
+### AUD-BACK-240-R1
+**Entrada:** inspección de `home-surface-truth-v73.js` cargado por el runtime estable.  
+**Resultado esperado:** implementación de regreso interno, visible y no dependiente del historial externo del navegador.  
+**Resultado obtenido:** la implementación está presente y conectada al wrapper de `go()`.  
+**Evidencia:** `home-surface-truth-v73.js`: `ensureBackButton()`, `guardNavigationHistory()`, `syncNavigationAccessibility()`; `schedule-prompt-v6.js` incluye `home-surface-truth-v73.js` en la cola estable de módulos.  
+**Resultado:** PASA EN IMPLEMENTACIÓN.  
+**Clasificación actual:** FUNCIONAL EN IMPLEMENTACIÓN / E2E REAL PENDIENTE.  
+**Severidad actual del defecto de código:** cerrada a nivel de implementación; la evidencia de facilidad real permanece PENDIENTE.
 
-## Acción correctiva recomendada
-Implementar una regla transversal de regreso sin añadir ruido: una acción secundaria `← Volver` en cabecera de flujo o breadcrumb contextual que conserve el destino anterior válido. En móvil debe permanecer visible y táctil. No usar `history.back()` a ciegas si puede sacar al usuario de la app. Para flujos con cambios sin guardar, integrar primero el modelo de borradores/autosave antes de advertencias de salida.
+## Causa raíz original
+La arquitectura base de navegación fue concebida como menú lateral por destinos y no conservaba historial contextual. La capa `home-surface-truth-v73.js` añadió posteriormente historial interno y una acción global de regreso.
 
-## Corrección aplicada en esta ronda
-No se modificó runtime. Añadir una navegación de regreso aparentemente simple afecta historial, borradores, foco/accesibilidad y móvil; requiere diseño y retest transversal. Solo se documenta el hallazgo verificable.
+## Corrección existente
+No se aplicó un cambio de runtime en esta revalidación porque la corrección ya estaba presente. Se corrigió únicamente este expediente para que el informe acumulativo no siga declarando como INEXISTENTE una función ya implementada.
 
 ## Riesgo de regresión
-Medio si se implementa sin historial interno: podría sacar al usuario de la app, perder contexto o interferir con autosave pendiente.
+Medio. La navegación está compuesta por varios wrappers de `go()`. Debe comprobarse en navegador real que el orden de carga no sobrescribe `guardNavigationHistory()` y que Director/Configuración, setup y navegación móvil conservan el comportamiento esperado.
 
 ## Impacto cualitativo
-Afecta simplicidad/ISU y recuperación de contexto. No modifica por sí solo ICGD/IFR ni abre/cierra el Prelaunch Gate frente a S0/S1 ya existentes. No se calcula ISU ni Prelaunch Score definitivo.
+Mejora la conformidad V4 y el ISU cualitativo. No se calcula ISU ni Prelaunch Score definitivo. El cierre definitivo depende de evidencia E2E y usuarios reales, conforme V3/V5.
 
-## Pendientes reales
-- prueba física en celular con navegación por pulgar;
+## Pendientes reales antes de cierre definitivo
+- prueba interactiva escritorio: home → plan → volver; home → sesión → volver; configuración/director → volver;
+- prueba móvil física y navegación por pulgar;
+- prueba con cambios/borradores y autoguardado;
+- prueba de foco/teclado/lector de pantalla;
 - prueba con docentes/directores principiantes;
-- interacción con autosave/borradores;
-- accesibilidad de foco y teclado;
-- medición de retrocesos y abandono.
+- comprobar que la composición de wrappers de `go()` no rompe el historial después de carga completa.
