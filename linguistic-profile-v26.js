@@ -1,4 +1,4 @@
-/* DocenteDigital – perfil lingüístico v26.1
+/* DocenteDigital – perfil lingüístico v26.2
    Separa explícitamente IE EIB de IE monolingüe castellano.
    Catálogo de lenguas basado en denominaciones usadas por MINEDU; Cusco-Collao se muestra solo como sugerencia editable para el contexto Cusco.
 */
@@ -183,9 +183,11 @@
     if(!ml||!mo)return;
     if(state.linguisticMode==='Monolingüe castellano'){
       ml.value='Castellano';
-      mo.value=NONE;mo.disabled=true;
+      ml.disabled=true;ml.setAttribute('aria-disabled','true');
+      mo.value=NONE;mo.disabled=true;mo.setAttribute('aria-disabled','true');
     }else{
-      mo.disabled=false;
+      ml.disabled=false;ml.removeAttribute('aria-disabled');
+      mo.disabled=false;mo.removeAttribute('aria-disabled');
       if(['Castellano','Lengua originaria','Bilingüe'].includes(state.language))ml.value=state.language;
       const v=state.indigenousLanguage||NONE;
       mo.value=[NONE,...languages].includes(v)?v:NONE;
