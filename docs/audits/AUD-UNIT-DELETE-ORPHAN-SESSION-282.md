@@ -74,12 +74,14 @@ La corrección no modifica ni elimina la sesión histórica y no cambia document
 ## Evidencia posterior
 
 - Commit funcional: `56a8fe542da9f637b25f1d4ae2607eda27b3e0ac`.
-- Vercel desplegó ese commit en producción como `dpl_CEfwWPaZfQMKUTt6zska5ejSgxk8`, estado `READY`, target `production`.
+- HEAD auditado previo a esta actualización documental: `5257d2de64b906c1e46476d3249dc5512001cdae`.
+- Vercel desplegó ese HEAD como `dpl_EaBATcrPqidkzCaRY3EHqKYiDCPy`, estado `READY`, target `production`.
 - La URL canónica `https://docente-digital.vercel.app/` respondió HTTP 200.
 - `https://docente-digital.vercel.app/storage-recovery-v26.js` respondió HTTP 200 y sirve v26.7 con la defensa Unidad→Sesión.
 - Vercel no reportó errores runtime en la última hora consultada.
+- Prelaunch Smoke #323, run `34819145059`, terminó `completed / success` exactamente sobre `5257d2de64b906c1e46476d3249dc5512001cdae`.
 
-Estas evidencias acreditan implementación y disponibilidad técnica; no sustituyen la prueba E2E física exigida por V5.
+Estas evidencias acreditan implementación, integración automática y disponibilidad técnica; no sustituyen la prueba E2E física exigida por V5.
 
 ## Riesgo de regresión
 
