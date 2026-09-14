@@ -2,112 +2,65 @@
 
 ## Estado
 
-**NO PASA · PARCIALMENTE FUNCIONAL · S1 CRÍTICO · BLOQUEANTE V5**
+**ALIAS / AMPLIACIÓN DE AUD-CICD-GATE-160 · NO CONTAR COMO HALLAZGO INDEPENDIENTE**
 
-Fecha de evidencia: 2026-09-14.
+Fecha de reconciliación: 2026-09-14.
 
-## Alcance
+## Dictamen
 
-Control de publicación GitHub → Vercel production, branch `main`, Prelaunch Smoke y puerta V5 previa a producción.
+La evidencia registrada inicialmente bajo `AUD-PRODUCTION-PRECHECK-GATE-285` describe el mismo defecto ya abierto y confirmado como `AUD-CICD-GATE-160`: la integración GitHub→Vercel puede publicar un push de `main` en producción antes de que termine `Prelaunch Smoke`, y `main` no tiene protección/checks requeridos que conviertan el smoke en una barrera preventiva.
 
-## Especificaciones obligatorias aplicadas
+Por tanto, `AUD-285` se conserva únicamente como referencia histórica y ampliación de evidencia. **No debe sumarse nuevamente como S1 independiente** en conteos, métricas, IFR, ISU ni Prelaunch.
 
-- `docs/AUDITORIA_MAESTRA_INTEGRAL_V2.md`
-- `docs/ADENDA_AUDITORIA_EJECUTABLE_V3.md`
-- `docs/AUDITORIA_SIMPLICIDAD_USO_V4.md`
-- `docs/AUDITORIA_PRELANZAMIENTO_V5.md`
-- `docs/NUCLEO_IA_DOCENTEDIGITAL.md`
+## Hallazgo canónico
 
-V5 §15 exige ejecutar automáticamente pruebas mínimas **antes de cada publicación**, establece que si falla una función crítica **NO PUBLICAR**, y exige separar desarrollo, pruebas y producción con rollback rápido.
+Usar como expediente principal:
 
-## AUD-REL-285-A — ¿el smoke es una precondición real para producción?
+`docs/audits/AUD-CICD-GATE-160.md`
 
-**Entrada:** push al branch `main` del commit `167ec0fee10e1c735f2478c90ccd731bcb366b11` (`audit: append director gate regression evidence`).
+Clasificación canónica:
 
-**Resultado esperado:** el commit no debe quedar publicado en producción hasta que el conjunto de checks obligatorios haya terminado satisfactoriamente.
+- **PASA/NO PASA:** NO PASA.
+- **Estado funcional:** PARCIALMENTE FUNCIONAL.
+- **Severidad:** S1 CRÍTICO.
+- **Gate V5:** BLOQUEADO.
 
-**Resultado obtenido:** GitHub Actions `Prelaunch Smoke` se dispara por `push` a `main`, pero Vercel crea en paralelo un deployment con `target=production`. El deployment queda READY antes de que el smoke termine.
+## Evidencia adicional aportada por 285
 
-**Evidencia temporal concreta:**
+Para el commit `167ec0fee10e1c735f2478c90ccd731bcb366b11`:
 
-- Commit en GitHub: `2026-09-14T18:50:33Z`.
-- Prelaunch Smoke run `34883269971`: creado/iniciado `2026-09-14T18:50:36Z`; finalizado con `success` `2026-09-14T18:50:48Z`.
-- Vercel deployment `dpl_Gta56NwnwZQooEuipA8i1DHqUanY`: `target=production`, creado `2026-09-14T18:50:36.096Z`, `READY` `2026-09-14T18:50:39.112Z`.
-- Por tanto, el commit estuvo READY en producción aproximadamente 9 segundos antes de existir un resultado exitoso del smoke.
-- El deployment declara `githubCommitRef=main` y `githubCommitSha=167ec0fee10e1c735f2478c90ccd731bcb366b11`.
+- GitHub Actions `Prelaunch Smoke` run `34883269971` finalizó con `success` a `2026-09-14T18:50:48Z`.
+- Vercel deployment `dpl_Gta56NwnwZQooEuipA8i1DHqUanY` quedó `READY` a `2026-09-14T18:50:39.112Z`.
+- Producción estuvo READY aproximadamente 9 segundos antes de existir resultado exitoso del smoke.
 
-**PASA/NO PASA:** NO PASA.
+La rama `main` fue revalidada el 2026-09-14 con:
 
-**Severidad:** S1 CRÍTICO para gate de lanzamiento. La existencia del smoke no constituye una puerta preventiva si producción puede quedar activa antes de que el smoke finalice.
+- `protected=false`;
+- `protection.enabled=false`;
+- `required_status_checks.enforcement_level=off`;
+- `contexts=[]`;
+- `checks=[]`.
 
-## AUD-REL-285-B — ¿main impide integrar cambios sin checks obligatorios?
+El workflow `.github/workflows/prelaunch-smoke.yml` sigue ejecutándose en `push` y `pull_request`, y declara expresamente que es solo un `technical smoke gate`.
 
-**Entrada:** inspección del branch `main` mediante GitHub REST.
+## Acción correctiva
 
-**Resultado esperado:** la rama que alimenta producción debe tener una política efectiva que impida publicar cambios sin checks requeridos o debe existir otra puerta equivalente previa a la promoción a producción.
+La misma definida en `AUD-CICD-GATE-160`:
 
-**Resultado obtenido:** `main` aparece con `protected=false`; `protection.enabled=false`; `required_status_checks.enforcement_level=off`; `contexts=[]`; `checks=[]`.
+1. usar PR/preview para validar cambios;
+2. exigir checks requeridos antes de merge/promoción;
+3. proteger `main` o aplicar ruleset equivalente;
+4. promover a producción solo después de checks exitosos;
+5. mantener staging/preview separado;
+6. comprobar rollback real;
+7. mantener pruebas físicas, OWASP, restore, usuarios y pilotos como pendientes hasta evidencia real.
 
-**PASA/NO PASA:** NO PASA.
+## Regla de conteo
 
-**Severidad:** S1 CRÍTICO para prelaunch/release governance.
+Para el informe acumulativo:
 
-## AUD-REL-285-C — ¿el workflow actual demuestra la condición V5 completa?
-
-**Entrada:** `.github/workflows/prelaunch-smoke.yml`.
-
-**Resultado esperado:** pruebas automáticas suficientemente amplias y utilizadas como precondición de publicación.
-
-**Resultado obtenido:** el workflow ejecuta validaciones estáticas útiles (existencia de especificaciones, sintaxis JS, merge markers, archivos de entrada, referencias de assets y wiring de módulos). El propio workflow declara que es solo un `technical smoke gate` y que **no valida** dispositivos físicos, Word/PDF real, usuarios, backend, OWASP ASVS, restore, IA semántica, concurrencia ni pilotos. Además se ejecuta tanto en `pull_request` como en `push`, pero el push a `main` ya dispara producción en paralelo.
-
-**PASA/NO PASA:** PARCIAL / NO PASA como gate V5 de publicación.
-
-**Severidad:** S1 por la falta de una puerta preventiva; las pruebas físicas/usuarios siguen PENDIENTES por definición y no deben simularse.
-
-## Causa raíz
-
-La integración GitHub→Vercel promueve automáticamente cada commit de `main` a `production`, mientras `Prelaunch Smoke` corre en paralelo después del push. `main` no tiene protección/check requerido que convierta el smoke en condición previa de entrada a la rama productiva. Se confunde "tener CI" con "tener un release gate".
-
-## Acción correctiva requerida
-
-No aplicar un parche de código cliente: la corrección correcta es de control de entrega.
-
-1. Dejar de usar un push directo a `main` como publicación inmediata sin gate.
-2. Exigir PR/checks antes de integrar a la rama productiva o implementar una promoción explícita a producción solo después de checks exitosos.
-3. Configurar protección/ruleset equivalente para impedir integración cuando falle `Prelaunch Smoke` y las pruebas automáticas críticas que se incorporen.
-4. Mantener preview/staging para pruebas y producción separada.
-5. Incorporar progresivamente pruebas automáticas críticas de Docente, Director, persistencia, exportación, móvil emulado, seguridad técnica y anti-regresión; las pruebas físicas y pilotos deben seguir como evidencia externa pendiente.
-6. Verificar rollback real antes del lanzamiento.
-
-No se modifica configuración de GitHub/Vercel automáticamente en esta auditoría porque requiere una decisión explícita de estrategia de despliegue y cambios de plataforma, no un parche pequeño del runtime.
-
-## Reprueba obligatoria
-
-- Abrir PR con un cambio que haga fallar deliberadamente el smoke: debe ser imposible promoverlo a producción.
-- Abrir PR con smoke exitoso: debe poder integrarse/promoverse.
-- Confirmar que el deployment de producción se crea **después** del check exitoso, no en paralelo.
-- Confirmar que preview/staging sigue disponible para validación.
-- Confirmar rollback a deployment anterior.
-- Mantener pruebas físicas/usuarios/restore/OWASP como PENDIENTES hasta evidencia real.
-
-## Evidencia posterior requerida
-
-Registrar: SHA probado, run de CI, hora de finalización de checks, deployment ID, hora de creación y READY de producción, HTTP 200 y rollback comprobado cuando corresponda.
-
-## Impacto
-
-- **IUD:** sin cálculo definitivo; riesgo indirecto por regresiones publicadas.
-- **ICGD:** sin cálculo definitivo; afecta confiabilidad de entrega de funciones docentes/directivas.
-- **IFR:** negativo: existe un camino de publicación que no espera la prueba automática.
-- **ISU:** no se recalcula; una regresión de producción puede degradarlo.
-- **Prelaunch:** bloqueante explícito hasta convertir CI en gate preventivo y completar las demás evidencias reales V5.
-
-## Riesgo de regresión
-
-Alto mientras cualquier push a `main` siga generando production automáticamente sin una condición previa verificable.
-
-## Observación
-
-`READY` y HTTP 200 solo demuestran disponibilidad técnica del deployment; no prueban que una publicación haya pasado previamente todas las verificaciones requeridas ni que DocenteDigital esté lista para V1.0.
+- `AUD-CICD-GATE-160` = hallazgo canónico S1.
+- `AUD-PRODUCTION-PRECHECK-GATE-285` = alias/evidencia adicional.
+- No contar ambos como dos defectos.
 
 No se tocó `CUSCO-DECIDE-ELECCIONES-2026`.
