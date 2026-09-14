@@ -17,7 +17,7 @@ CI/CD · Publicación controlada · Prelaunch Gate
 5. Comprobar si `main` impide integrar/publicar cambios sin checks obligatorios.
 
 ## Resultado esperado
-Antes de que un cambio llegue a producción deben finalizar satisfactoriamente las pruebas automáticas mínimas aplicables. V5 exige: “Antes de cada publicación ejecutar automáticamente pruebas mínimas…” y “Si falla una función crítica: NO PUBLICAR”, además de separar desarrollo, pruebas y producción y mantener rollback.
+Antes de que un cambio llegue a producción deben finalizar satisfactoriamente las pruebas automáticas mínimas aplicables. V5 exige ejecutar pruebas mínimas antes de cada publicación, no publicar si falla una función crítica, separar desarrollo/pruebas/producción y mantener rollback.
 
 Por tanto, una comprobación ejecutada después o en paralelo al despliegue productivo no constituye una puerta preventiva.
 
@@ -43,27 +43,48 @@ La integración de GitHub permite ahora observar directamente el estado de la ra
 - `required_status_checks.contexts: []`;
 - `required_status_checks.checks: []`.
 
-Por tanto, ya no queda como “no confirmado”: **la rama principal no tiene protección ni checks requeridos activos** en la evidencia actual. El workflow existe y se ejecuta, pero su éxito no es una condición obligatoria para aceptar cambios en `main` ni para impedir que la integración Git de Vercel publique ese push.
+Por tanto, la rama principal no tiene protección ni checks requeridos activos. El workflow existe y se ejecuta, pero su éxito no es una condición obligatoria para aceptar cambios en `main` ni para impedir que la integración Git de Vercel publique ese push.
 
-Para el SHA actual `bcb672ba3e9e4cc4bfa8e5973f7d848bda3ba865`, el run `Prelaunch Smoke` n.° 224 terminó `success`, y Vercel mantiene el deployment productivo `dpl_9FpHheeUc8E8y7JhKniiHeMY7gBp` en estado `READY`. Esto demuestra que el smoke funciona como comprobación técnica, pero no corrige la falta de una barrera preventiva.
+Para el SHA `bcb672ba3e9e4cc4bfa8e5973f7d848bda3ba865`, el run `Prelaunch Smoke` n.° 224 terminó `success`, y Vercel mantuvo el deployment productivo `dpl_9FpHheeUc8E8y7JhKniiHeMY7gBp` en estado `READY`. Esto demuestra que el smoke funciona como comprobación técnica, pero no corrige la falta de una barrera preventiva.
 
 ### Revalidación 2026-09-12
 
 Se revalidó el HEAD `303656e0cdce651d08bb69ed23a97abc4271470f`.
 
-- Vercel despliega ese SHA directamente como `target: production` mediante `dpl_J6HtcbPpZyWvLnxZAb15HZtCgDLF`, actualmente `READY`.
-- La URL canónica `https://docente-digital.vercel.app/` responde HTTP 200 y sirve ese estado productivo.
+- Vercel desplegó ese SHA directamente como `target: production` mediante `dpl_J6HtcbPpZyWvLnxZAb15HZtCgDLF`, estado `READY`.
+- La URL canónica respondió HTTP 200.
 - GitHub Actions ejecutó por separado `Prelaunch Smoke` n.° 251 sobre el mismo SHA; terminó `completed/success`.
-- El estado combinado del commit muestra `Vercel: success`, pero esta evidencia no demuestra que el smoke sea un check requerido previo a la publicación productiva.
+- El estado combinado del commit mostró `Vercel: success`, pero esto no demostró que el smoke fuera un check requerido previo a la publicación.
 
-Por tanto, el hallazgo **permanece abierto**: la automatización smoke es útil, pero sigue sin demostrarse una secuencia obligatoria `preview/pruebas → checks requeridos → promoción a producción`. Un resultado exitoso del smoke no convierte por sí mismo el flujo actual en una puerta preventiva V5.
+### Revalidación 2026-09-14
+
+Se confirmó nuevamente el mismo defecto con evidencia más reciente.
+
+Para el commit `167ec0fee10e1c735f2478c90ccd731bcb366b11`:
+
+- `Prelaunch Smoke` run `34883269971` terminó con `success` a `2026-09-14T18:50:48Z`.
+- Vercel deployment `dpl_Gta56NwnwZQooEuipA8i1DHqUanY`, `target=production`, quedó `READY` a `2026-09-14T18:50:39.112Z`.
+- Producción estuvo READY aproximadamente 9 segundos antes de existir el resultado exitoso del smoke.
+
+La rama `main` fue revalidada otra vez con:
+
+- `protected=false`;
+- `protection.enabled=false`;
+- `required_status_checks.enforcement_level=off`;
+- `contexts=[]`;
+- `checks=[]`.
+
+El HEAD `f1522c6901abd5742c2845b2fa5561e7f6eb1cd8` se desplegó automáticamente como producción mediante `dpl_3ZuzZQzRuWfcq653akXzfCDwzjEB`, actualmente `READY`. La URL canónica `https://docente-digital.vercel.app/` respondió HTTP 200. El estado combinado del commit registra Vercel `success`; eso acredita despliegue, no una puerta previa de CI.
+
+`AUD-PRODUCTION-PRECHECK-GATE-285` fue reconciliado como alias/ampliación de este expediente y no debe contarse como un segundo S1 independiente.
 
 ## Evidencia
 - GitHub branch `main`: `protected=false`, protección deshabilitada y sin required status checks.
 - `.github/workflows/prelaunch-smoke.yml`: triggers `push`/`pull_request` y aviso explícito de alcance limitado.
-- GitHub Actions run n.° 224 del SHA `bcb672ba3e9e4cc4bfa8e5973f7d848bda3ba865`: `completed/success`.
 - Evidencia histórica del SHA `599a385b83ac6f086a0ce6850fb2ee98899eaccd`: Vercel producción finalizó antes del check `static-smoke`.
-- Revalidación 2026-09-12: deployment productivo `dpl_J6HtcbPpZyWvLnxZAb15HZtCgDLF` sobre SHA `303656e0cdce651d08bb69ed23a97abc4271470f`, estado `READY`; URL canónica HTTP 200; `Prelaunch Smoke` n.° 251 `completed/success`.
+- Revalidación 2026-09-12: deployment `dpl_J6HtcbPpZyWvLnxZAb15HZtCgDLF`, producción READY y URL canónica HTTP 200; smoke separado exitoso.
+- Revalidación 2026-09-14: `dpl_Gta56NwnwZQooEuipA8i1DHqUanY` READY ~9 s antes de que terminara el smoke del mismo SHA.
+- HEAD 2026-09-14 `f1522c6901abd5742c2845b2fa5561e7f6eb1cd8`: deployment productivo `dpl_3ZuzZQzRuWfcq653akXzfCDwzjEB` READY; URL canónica HTTP 200.
 
 ## PASA / NO PASA
 NO PASA
