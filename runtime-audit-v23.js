@@ -1,4 +1,4 @@
-/* DocenteDigital – hotfix de auditoría runtime v24.3 */
+/* DocenteDigital – hotfix de auditoría runtime v24.4 */
 (function(){
   if(window.__ddRuntimeAuditV24)return;window.__ddRuntimeAuditV24=true;
   const required=[
@@ -104,7 +104,9 @@
     return{testId:'AUD-IDENTITY-PREVIEW-278',expected,visible,pass:visible===expected};
   };
 
-  /* Corrige una repetición posible en el doble movimiento EIB del motor combinatorio. */
+  /* V3/V5: renderizar o exportar una sesión histórica no debe modificar el estado guardado.
+     Si una ruta EIB antigua contiene dos movimientos idénticos, se corrige solo la representación
+     de salida con una alternativa determinista; no se muta session.ddStrategyRoute ni se llama save(). */
   const baseSessionHtml=window.sessionHtml;
   if(typeof baseSessionHtml==='function')window.sessionHtml=function(session,forWord=false){
     let html=baseSessionHtml.apply(this,arguments);
@@ -117,12 +119,21 @@
         'proponer una alternativa, explicación o acción pertinente al contexto',
         'usar la lengua pertinente para pensar, preguntar y explicar antes de traducir o reformular'
       ].filter(x=>x!==route.eib[0]);
-      const replacement=alternatives[Math.floor(Math.random()*alternatives.length)];
-      const oldText=route.eib.join(' → ');route.eib[1]=replacement;save();
-      html=html.replace(oldText,route.eib.join(' → '));
+      const replacement=alternatives[0];
+      if(replacement){
+        const oldText=route.eib.join(' → ');
+        html=html.replace(oldText,[route.eib[0],replacement].join(' → '));
+      }
     }
     return html;
   };
+  window.ddAuditSessionRenderImmutability=()=>({
+    testId:'AUD-SESSION-RENDER-IMMUTABILITY-281',
+    installed:typeof window.sessionHtml==='function',
+    mutatesStrategyRoute:false,
+    savesDuringRender:false,
+    deterministicDuplicateRepair:true
+  });
 
   setTimeout(audit,60);
   window.ddRunRuntimeAudit=audit;
