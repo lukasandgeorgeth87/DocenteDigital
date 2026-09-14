@@ -1,8 +1,9 @@
-/* DocenteDigital – seguridad curricular específica de sesiones v67
+/* DocenteDigital – seguridad curricular específica de sesiones v67.1
    V3/V5: una sesión no puede presentar una heurística o propuesta generada como
    competencia/capacidad/desempeño oficial mientras la matriz curricular literal,
    versionada y verificada no esté conectada.
    Esta capa no inventa ni corrige currículo: solo evita una afirmación engañosa.
+   AUD-284: una sesión productiva tampoco puede nacer de la Unidad/actividad demo del runtime base.
 */
 (function(){
   if(window.__ddSessionCurriculumSafetyV67)return;window.__ddSessionCurriculumSafetyV67=true;
@@ -46,10 +47,47 @@
     window.renderSessionOutput=wrapped;
   }
 
+  function realSessionSelection(){
+    const unitId=document.getElementById('sessionUnit')?.value||'';
+    const unit=Array.isArray(state.units)?state.units.find(u=>u&&u.id===unitId):null;
+    if(!unit||!Array.isArray(unit.activities)||!unit.activities.length)return{ok:false,unit:null,activity:null};
+    const index=parseInt(document.getElementById('activity')?.value||'0',10);
+    const activity=Number.isInteger(index)?unit.activities[index]:null;
+    if(!activity||!activity.area||!activity.title)return{ok:false,unit,activity:null};
+    return{ok:true,unit,activity};
+  }
+
+  function explainMissingSessionSource(){
+    alert('Primero crea o elige una Unidad/Proyecto con una actividad programada. La sesión debe nacer de esa planificación.');
+  }
+
+  const baseBuild=window.buildSession;
+  if(typeof baseBuild==='function'&&!baseBuild.__ddRealUnitActivityGuard){
+    const wrapped=function(){
+      const selection=realSessionSelection();
+      if(!selection.ok){explainMissingSessionSource();return null;}
+      return baseBuild.apply(this,arguments);
+    };
+    wrapped.__ddRealUnitActivityGuard=true;
+    window.buildSession=wrapped;
+  }
+
+  const baseGenerate=window.generateSession;
+  if(typeof baseGenerate==='function'&&!baseGenerate.__ddRealUnitActivityGuard){
+    const wrapped=function(){
+      const selection=realSessionSelection();
+      if(!selection.ok){explainMissingSessionSource();return null;}
+      return baseGenerate.apply(this,arguments);
+    };
+    wrapped.__ddRealUnitActivityGuard=true;
+    window.generateSession=wrapped;
+  }
+
   window.ddAuditSessionCurriculumSafety=function(){
     const html=document.getElementById('sessionDocument')?.innerHTML||'';
     const unsafe=!ready()&&(/<b>Competencia priorizada:<\/b>/i.test(html)||/<b>Capacidades:<\/b>/i.test(html)||/<b>Desempeño precisado:<\/b>/i.test(html));
-    return{testId:'AUD-SES-CURR-043',matrixReady:ready(),unsafeOfficialLabels:unsafe,pass:!unsafe};
+    const source=realSessionSelection();
+    return{testId:'AUD-SES-CURR-043',matrixReady:ready(),unsafeOfficialLabels:unsafe,realUnitActivity:source.ok,pass:!unsafe&&source.ok};
   };
 
   const css=document.createElement('style');
