@@ -80,17 +80,26 @@ PASA EN IMPLEMENTACIÓN. El código v70.1 fuerza esas condiciones y vuelve a apl
 **Estado:** FUNCIONAL EN IMPLEMENTACIÓN para verdad de superficie.  
 **E2E real:** PENDIENTE hasta ejecutar la interacción en navegador/dispositivo real.
 
-## Evidencia posterior requerida
+## Evidencia posterior de producción
 
-Antes de cerrar completamente el hallazgo debe comprobarse en producción:
+Después de la corrección y del registro del expediente se verificó:
 
-- carga de v70.1;
-- botón realmente no accionable con ratón, teclado y toque;
-- ausencia de salida demostrativa al pulsar/activar;
+- despliegue Vercel del expediente `89268c8773ca8383c55db5afe70d6dbae8e0f644` como `dpl_z1CVPfUucVK4nHMGDXKQN3PQMFr2`, estado **READY**, target **production**;
+- `https://docente-digital.vercel.app/` responde **HTTP 200 OK**;
+- `https://docente-digital.vercel.app/material-surface-truth-v70.js` responde **HTTP 200 OK** y sirve efectivamente **v70.1** con `removeAttribute('onclick')`, `disabled=true`, `aria-disabled=true` y `simulatedGeneratorReachable`;
+- Vercel no reportó errores runtime en la última hora consultada;
+- GitHub Actions `Prelaunch Smoke` run **34795682001** terminó `completed / success` sobre el SHA `89268c8773ca8383c55db5afe70d6dbae8e0f644`.
+
+Esta evidencia confirma despliegue, asset e integración técnica. No sustituye la prueba E2E real con ratón, teclado, toque ni dispositivo físico.
+
+## Evidencia posterior todavía pendiente
+
+Antes de cerrar completamente el hallazgo debe comprobarse en navegador/dispositivo real:
+
+- botón no accionable con ratón, teclado y toque;
+- ausencia de salida demostrativa al intentar activarlo;
 - navegación móvil sin bloqueo colateral;
-- HTTP 200 de raíz y asset;
-- Vercel READY del SHA final;
-- smoke automatizado del SHA final cuando exista ejecución verificable.
+- prueba en celular físico y tablet.
 
 ## Riesgo de regresión
 
