@@ -4,17 +4,18 @@
 
 **Módulo:** bootstrap / carga dinámica / continuidad segura
 
-**Estado:** NO PASA
+**Estado:** PASA EN IMPLEMENTACIÓN / E2E DE FALLO INDUCIDO PENDIENTE
 
-**Clasificación:** PARCIALMENTE FUNCIONAL
+**Clasificación:** FUNCIONAL EN IMPLEMENTACIÓN; validación ejecutable completa pendiente
 
-**Severidad:** S2 ALTO
+**Severidad original:** S2 ALTO
 
 ## Especificaciones aplicables
 
 - V3: una función no aprueba por aparecer o responder; debe conservar corrección, datos y seguridad, y los errores silenciosos son especialmente peligrosos.
 - V5: si falla una función crítica, no publicar; la aplicación debe evitar ejecutar funciones principales con runtime incompleto.
 - V4: los errores deben ser comprensibles y no dejar al usuario en un estado engañoso.
+- Núcleo IA: comprender, verificar y proteger coherencia antes de permitir generación; no caer silenciosamente al generador base/prototipo.
 
 ## Prueba AUD-BOOT-283-A
 
@@ -27,70 +28,82 @@
 
 **Resultado esperado**
 
-Al existir un fallo definitivo de un módulo necesario, el runtime debe quedar en modo seguro/fail-closed: no debe permitir crear, guardar, evaluar, descargar ni ejecutar funciones que podrían depender del módulo faltante. Debe ofrecer únicamente una recuperación segura (recargar/reintentar) o bloquear de manera explícita las superficies afectadas.
+Al existir un fallo definitivo de un módulo necesario, el runtime debe quedar en modo seguro/fail-closed: no debe permitir crear, modificar, guardar, evaluar, descargar ni ejecutar funciones documentales que podrían depender del módulo faltante. Debe ofrecer una recuperación segura mediante recarga, sin impedir navegación informativa que no modifica documentos.
 
-**Resultado obtenido por inspección ejecutable del código**
+**Resultado obtenido antes de corregir**
 
-`schedule-prompt-v6.js` registra fallos en `window.ddModuleLoadFailures` y `showLoadFailure()` advierte: “Recarga la página antes de crear, guardar o descargar documentos”. Sin embargo, el bloqueo implementado mediante `lockPlanningButtons()` y el listener de captura solo reconoce `#ddBuildUnit` o botones cuyo `onclick` contenga `createUnitDemo`. Al finalizar la cadena, `finishPlanningBootstrap()` únicamente mantiene bloqueada la planificación si falló alguno de los módulos de `planningCritical`.
+`schedule-prompt-v6.js` registraba fallos en `window.ddModuleLoadFailures` y `showLoadFailure()` advertía: “Recarga la página antes de crear, guardar o descargar documentos”. Sin embargo, el bloqueo implementado mediante `lockPlanningButtons()` y el listener de captura solo reconocía `#ddBuildUnit` o botones cuyo `onclick` contuviera `createUnitDemo`. `finishPlanningBootstrap()` únicamente mantenía bloqueada planificación si fallaba alguno de los módulos de `planningCritical`.
 
-Por tanto, un fallo de módulos no incluidos en `planningCritical` puede coexistir con superficies funcionales todavía activas. Incluso ante un fallo crítico ajeno a Unidad/Proyecto (por ejemplo exportación o seguridad curricular de sesión), la barra instruye no continuar, pero el código no impide técnicamente continuar.
+Por tanto, un fallo de módulos no incluidos en `planningCritical` podía coexistir con superficies documentales activas. El mensaje visible era global pero el control técnico era parcial.
 
-## Evidencia
+## Evidencia inicial
 
-Archivo: `schedule-prompt-v6.js` (v49.1 / loader v50 en HEAD auditado).
+Archivo auditado: `schedule-prompt-v6.js` (loader v50).
 
-Elementos relevantes:
+Elementos relevantes antes de corregir:
 
-- `window.ddModuleLoadFailures` registra fallos definitivos.
-- `showLoadFailure()` solicita recargar antes de crear, guardar o descargar.
-- `planningButtons()` solo selecciona `#ddBuildUnit` y acciones `createUnitDemo`.
-- el listener de captura únicamente bloquea esos mismos botones mientras `__ddPlanningRuntimeReady` sea falso.
-- `finishPlanningBootstrap()` decide disponibilidad usando solo `planningCritical`, no el conjunto completo de módulos requeridos por las demás funciones.
+- `window.ddModuleLoadFailures` registraba fallos definitivos.
+- `showLoadFailure()` solicitaba recargar antes de crear, guardar o descargar.
+- `planningButtons()` solo seleccionaba `#ddBuildUnit` y acciones `createUnitDemo`.
+- el listener de captura únicamente bloqueaba esos mismos botones mientras `__ddPlanningRuntimeReady` fuera falso.
+- `finishPlanningBootstrap()` decidía disponibilidad usando `planningCritical`, no el conjunto completo de módulos requerido por las demás superficies.
 
-## Dictamen
+## Dictamen inicial
 
 **NO PASA · S2 ALTO · PARCIALMENTE FUNCIONAL.**
 
-No se clasifica S1 de forma automática porque esta auditoría no ha demostrado todavía que una salida pedagógica incorrecta o una exportación corrupta llegue a emitirse en navegador real bajo un fallo concreto; sí existe una ruta demostrable para operar con runtime parcial, por lo que el riesgo de error silencioso es alto.
+No se clasificó S1 automáticamente porque no se demostró una salida pedagógica incorrecta o una exportación corrupta emitida en navegador real bajo un fallo concreto; sí existía una ruta demostrable para operar con runtime parcial.
 
 ## Causa raíz
 
-La política de recuperación es global en el mensaje visible, pero parcial en el control técnico. La aplicación reconoce el estado degradado, pero solo aplica fail-closed a la creación de Unidad/Proyecto.
+La política de recuperación era global en el mensaje visible, pero parcial en el control técnico. La aplicación reconocía el estado degradado, pero solo aplicaba fail-closed a la creación de Unidad/Proyecto.
 
-## Acción correctiva recomendada
+## Corrección aplicada
 
-Implementar una guarda global y pequeña en el propio bootstrap:
+Commit funcional: `c955f9d164aca627faa87f40b2422351789c904e` — `fix: fail closed after runtime module load failure`.
 
-1. cuando `ddModuleLoadFailures.length > 0`, establecer un estado global de runtime degradado;
-2. bloquear en captura todas las acciones que creen, modifiquen, guarden, evalúen o descarguen documentos, excepto el botón explícito de recarga/recuperación;
-3. alternativamente, mantener una matriz módulo→superficies y bloquear solamente las funciones realmente dependientes, siempre que la cobertura sea demostrable;
-4. nunca permitir fallback silencioso al generador base/prototipo;
-5. añadir prueba automatizada que fuerce el fallo de cada módulo crítico y compruebe que la superficie dependiente queda bloqueada.
+`schedule-prompt-v6.js` pasa a loader **v50.1** y añade una guarda global acotada:
 
-## Corrección en esta ronda
+1. `window.__ddRuntimeFullyReady` representa el estado global de carga.
+2. `isRiskyDocumentButton()` identifica acciones documentales de creación, generación, guardado, evaluación, exportación, eliminación, restauración, duplicado, registro o emisión.
+3. `lockRiskyDocumentButtons()` deshabilita esas acciones cuando existe al menos un fallo definitivo en `ddModuleLoadFailures` y añade `aria-disabled`, `data-dd-runtime-blocked` y un mensaje simple de recuperación.
+4. un listener de captura `blockRiskyActionDuringFailure()` impide que botones dinámicos o creados después del fallo evadan la guarda.
+5. `showLoadFailure()` conserva un único botón explícito `ddRuntimeReload`, que nunca es bloqueado.
+6. tanto `rememberFailure()` como el `onerror` definitivo del cargador marcan el runtime como no listo y activan la defensa.
+7. si todos los módulos terminan correctamente, `__ddRuntimeFullyReady` queda verdadero y no se aplica el bloqueo global.
 
-**PENDIENTE.** No se modificó el runtime porque el cambio seguro requiere tocar el cargador central que coordina decenas de módulos. Se evita una modificación apresurada que pueda bloquear navegación legítima o introducir una regresión global. El hallazgo queda documentado para una corrección pequeña, revisable y con prueba de fallo inducido.
+La corrección no modifica contenido pedagógico, históricos, datos maestros ni documentos emitidos.
 
-## Repruebas obligatorias
+## Evidencia posterior de producción
 
-- AUD-BOOT-283-R1: fallo de `docx-export-v29.js` → exportación bloqueada.
-- AUD-BOOT-283-R2: fallo de `session-curriculum-safety-v67.js` → creación de sesión bloqueada.
-- AUD-BOOT-283-R3: fallo de `material-integrity-v65.js` → Materiales permanece no ejecutable.
-- AUD-BOOT-283-R4: fallo de módulo de planificación → Unidad/Proyecto permanece bloqueada.
-- AUD-BOOT-283-R5: todos los módulos cargan → las funciones permitidas recuperan su disponibilidad normal.
-- AUD-BOOT-283-R6: móvil y recarga tras fallo → no pantalla blanca/negra y recuperación comprensible.
+- Vercel desplegó el commit funcional `c955f9d164aca627faa87f40b2422351789c904e` como `dpl_81sVNVegpJ4bSzADBYNEM9fdd5mo`.
+- Estado observado: `READY`, target `production` y alias canónico `docente-digital.vercel.app`.
+- `https://docente-digital.vercel.app/` respondió HTTP 200.
+- `https://docente-digital.vercel.app/schedule-prompt-v6.js` respondió HTTP 200 y sirvió efectivamente loader v50.1 con `__ddRuntimeFullyReady`, `isRiskyDocumentButton`, `lockRiskyDocumentButtons` y `blockRiskyActionDuringFailure`.
+- La consulta de errores runtime de Vercel durante la última hora no reportó errores.
+
+Estas evidencias prueban despliegue e implementación, pero no sustituyen la inducción real de cada fallo en navegador.
+
+## Repruebas
+
+- **AUD-BOOT-283-R1:** fallo de `docx-export-v29.js` → exportación bloqueada. **PASA EN IMPLEMENTACIÓN / fallo inducido real pendiente.**
+- **AUD-BOOT-283-R2:** fallo de `session-curriculum-safety-v67.js` → creación de sesión bloqueada. **PASA EN IMPLEMENTACIÓN / fallo inducido real pendiente.**
+- **AUD-BOOT-283-R3:** fallo de `material-integrity-v65.js` → Materiales permanece no ejecutable. **PASA EN IMPLEMENTACIÓN / fallo inducido real pendiente.**
+- **AUD-BOOT-283-R4:** fallo de módulo de planificación → Unidad/Proyecto permanece bloqueada. **PASA EN IMPLEMENTACIÓN / fallo inducido real pendiente.**
+- **AUD-BOOT-283-R5:** todos los módulos cargan → las funciones permitidas recuperan su disponibilidad normal. **PASA por inspección + producción HTTP; E2E interactivo pendiente.**
+- **AUD-BOOT-283-R6:** móvil y recarga tras fallo → no pantalla blanca/negra y recuperación comprensible. **PENDIENTE físico.**
 
 ## Riesgo de regresión
 
-**Medio-alto** si se corrige con un bloqueo global indiscriminado; por ello debe preservarse el botón de recarga y verificarse que el estado normal no quede bloqueado cuando todos los módulos carguen correctamente.
+**Medio.** La guarda no bloquea navegación general y solo entra en efecto cuando `ddModuleLoadFailures.length > 0`; aun así debe probarse con fallos inducidos para verificar que ninguna acción documental legítima quede fuera y que el botón de recarga siempre permanezca utilizable.
 
 ## Impacto en métricas/gates
 
-- **IUD:** impacto indirecto; un estado degradado puede producir documentos no confiables.
-- **ICGD:** impacto por pérdida de confianza funcional y trazabilidad del runtime.
-- **IFR:** negativo mientras exista posibilidad de ejecutar con dependencias faltantes.
-- **ISU:** negativo porque el mensaje dice “recarga” pero la interfaz todavía permite actuar.
-- **Prelaunch:** mantiene V5 BLOQUEADO; no permite declarar continuidad segura ante fallos parciales.
+- **IUD:** mejora de integridad potencial; no se calcula puntaje definitivo.
+- **ICGD:** mejora de confianza y trazabilidad del estado degradado; pendiente E2E.
+- **IFR:** mejora técnica al cerrar ejecución documental cuando faltan módulos; sin puntaje definitivo.
+- **ISU:** mejora porque mensaje y comportamiento son ahora coherentes; prueba con usuarios pendiente.
+- **Prelaunch:** el hallazgo deja de ser una brecha abierta de implementación, pero V5 continúa BLOQUEADO por pruebas reales y otros bloqueantes esenciales.
 
 ## Normativa externa
 
