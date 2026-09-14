@@ -1,4 +1,4 @@
-/* DocenteDigital – guardia de coherencia de configuración entre niveles y tipos de IE */
+/* DocenteDigital – guardia de coherencia de configuración entre niveles y tipos de IE v42.1 */
 (function(){
   if(window.__ddConfigStateGuardV42)return;
   window.__ddConfigStateGuardV42=true;
@@ -102,13 +102,29 @@
     };
   }
 
+  /* app.js conserva un gate legado que envía a setup cuando no existe state.level.
+     Configuración debe abrir incluso desde cero para definir rol/Ficha Maestra, y un Director
+     explícito debe poder abrir su espacio sin completar primero el setup pedagógico. */
+  function openAdministrativeSurface(id){
+    document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+    document.getElementById(id)?.classList.add('active');
+    document.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===id));
+    if(typeof refresh==='function')refresh();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
   /* La configuración pedagógica completa se exige para las rutas Docente. Configuración
      siempre debe poder abrirse para definir/corregir el rol y la Ficha Maestra. Un Director
      explícito puede entrar a su espacio sin verse obligado a configurar grados, áreas o EIB
      que solo son requisito para funciones pedagógicas. */
   const originalGo=window.go;
   if(typeof originalGo==='function')window.go=function(id){
-    const exempt=id==='setup'||id==='settings'||(id==='director'&&isDirectorRole());
+    const administrativeExempt=id==='settings'||(id==='director'&&isDirectorRole());
+    const exempt=id==='setup'||administrativeExempt;
+    if(administrativeExempt&&!state.level){
+      openAdministrativeSurface(id);
+      return;
+    }
     if(!exempt&&!hasCompleteBaseConfiguration()){
       if(typeof showSetup==='function')showSetup();
       else originalGo.call(this,'setup');
@@ -176,7 +192,6 @@
   sanitizeConfiguration();
   if(typeof save==='function')save();
   const init=()=>{installSetupAutosave();enforceIncompleteConfiguration();};
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
-  else init();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
   setTimeout(enforceIncompleteConfiguration,0);
 })();
