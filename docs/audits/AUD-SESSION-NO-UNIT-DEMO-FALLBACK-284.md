@@ -1,8 +1,8 @@
 # AUD-SESSION-NO-UNIT-DEMO-FALLBACK-284
 
-**Estado:** ABIERTO · BLOQUEANTE V5  
-**Clasificación funcional:** SIMULADA  
-**Severidad:** S1 CRÍTICO  
+**Estado:** CORREGIDO EN IMPLEMENTACIÓN · E2E REAL PENDIENTE · BLOQUEANTE V5 HASTA REPRUEBA  
+**Clasificación funcional:** FUNCIONAL EN IMPLEMENTACIÓN / VALIDACIÓN REAL PENDIENTE  
+**Severidad original:** S1 CRÍTICO  
 **Módulo:** Docente → Sesiones → trazabilidad Unidad/Proyecto → actividad → sesión  
 
 ## Especificaciones obligatorias aplicadas
@@ -23,69 +23,75 @@ No se aplica ni declara vigente una norma externa en este hallazgo técnico.
 
 **Resultado esperado:** la aplicación debe impedir generar la sesión y mostrar una instrucción simple y accionable, por ejemplo: “Primero crea o elige una Unidad/Proyecto”. No debe crear Unidad, actividad, título, contexto ni trazabilidad demostrativos para aparentar continuidad pedagógica.
 
-**Resultado obtenido:**
+**Resultado obtenido originalmente:**
 
-1. `fillSessionUnits()` detecta que no existen unidades y carga en el selector una opción sintética `value="demo"` con el texto “Ejemplo: Proyecto Cuidamos la Pachamama”.
-2. `loadUnitForSession()` no encuentra una unidad real y carga dos actividades demostrativas, entre ellas “Matemática · Medimos espacios para organizar nuestra feria”.
-3. `selectedActivity()` devuelve un objeto con `unit:null` y una actividad sintética de Matemática.
-4. `buildSession()` continúa, usa `brief='la situación de nuestra comunidad'`, asigna `unitId:null`, `unitTitle:'Unidad de ejemplo'` y persiste la sesión en `state.lastSession` mediante `save()`.
-5. `session-learning-core-v54.js` sí detecta después que falta Unidad/Proyecto y actividad programada en `sessionAuditV54`, pero esa auditoría ocurre tras la construcción y no bloquea la creación/persistencia de la sesión.
+1. `fillSessionUnits()` detectaba que no existían unidades y cargaba en el selector una opción sintética `value="demo"` con el texto “Ejemplo: Proyecto Cuidamos la Pachamama”.
+2. `loadUnitForSession()` no encontraba una unidad real y cargaba actividades demostrativas.
+3. `selectedActivity()` devolvía un objeto con `unit:null` y una actividad sintética.
+4. `buildSession()` continuaba, asignaba `unitId:null`, `unitTitle:'Unidad de ejemplo'` y persistía la sesión en `state.lastSession` mediante `save()`.
+5. `session-learning-core-v54.js` detectaba después la falta de Unidad/Proyecto y actividad programada, pero demasiado tarde para impedir la creación/persistencia.
 
-**Evidencia:** `app.js` (`fillSessionUnits`, `loadUnitForSession`, `selectedActivity`, `buildSession`, `generateSession`) y `session-learning-core-v54.js` (`audit`, wrapper de `buildSession`).
+**Resultado original:** **NO PASA**.
 
-**Resultado:** **NO PASA**.
+**Clasificación original:** **SIMULADA**.
 
-**Clasificación:** **SIMULADA**. La función puede producir una sesión aparentemente coherente aun cuando no existe la fuente pedagógica real que debería originarla.
-
-**Severidad:** **S1 CRÍTICO**. Afecta una función esencial del flujo Docente y permite persistir contenido pedagógico construido desde contexto de demostración no proporcionado por el usuario. Esto vulnera directamente la trazabilidad y el principio de no inventar datos/contexto, por lo que bloquea el gate V5 aunque la pantalla responda y el documento tenga formato correcto.
+**Severidad:** **S1 CRÍTICO** por permitir crear contenido pedagógico desde una fuente demostrativa no proporcionada por el usuario.
 
 ## Causa raíz
 
-El prototipo base conserva fallbacks demostrativos dentro del flujo productivo. Las capas posteriores enriquecen y auditan la sesión, pero no aplican una guarda previa de fuente real antes de `buildSession()`/`save()`.
+El prototipo base conserva fallbacks demostrativos dentro del flujo productivo. Las capas posteriores enriquecían y auditaban la sesión, pero no aplicaban una guarda previa de fuente real antes de `buildSession()`/`save()`.
 
-## Acción correctiva requerida
+## Corrección implementada
 
-Aplicar una guarda previa y fail-closed antes de cualquier construcción o persistencia:
+Commit funcional: `e0fad5eff9abbb3c6960b6bd6f7a3e9aebee95c0` — `fix: block session generation without real unit activity`.
 
-1. exigir que `sessionUnit` resuelva a un objeto real de `state.units`;
-2. exigir que el índice seleccionado resuelva a una actividad real de esa Unidad/Proyecto;
-3. si falta cualquiera, no llamar a `buildSession()`, no modificar `state.lastSession` y no ejecutar `save()`;
-4. retirar de producción las opciones y actividades “demo” del selector de Sesiones;
-5. mostrar una única acción principal simple: “Crear Unidad/Proyecto” o “Elegir Unidad/Proyecto”; y
-6. mantener intactas las sesiones históricas ya emitidas.
+`session-curriculum-safety-v67.js` pasa a v67.1 y añade una guarda fail-closed previa a la generación:
 
-La corrección debe ser pequeña, reversible y probarse antes de declararse cerrada. No se aplica automáticamente en este expediente porque intervenir el runtime central sin una reprueba interactiva disponible elevaría el riesgo de regresión.
+1. `realSessionSelection()` exige que `sessionUnit` resuelva a un objeto real de `state.units`;
+2. exige que la Unidad tenga `activities` reales;
+3. exige que el índice seleccionado resuelva a una actividad con `area` y `title`;
+4. `generateSession()` se bloquea antes de llamar al generador base si falta cualquiera de esas condiciones;
+5. `buildSession()` también queda protegido para evitar invocaciones directas inseguras;
+6. el usuario recibe un mensaje simple: “Primero crea o elige una Unidad/Proyecto con una actividad programada. La sesión debe nacer de esa planificación.”;
+7. no se modifica ningún histórico emitido.
 
-## Repruebas obligatorias
-
-- `AUD-SESSION-284-R1`: sin unidades → generar sesión debe quedar bloqueado y no crear `lastSession`.
-- `AUD-SESSION-284-R2`: con una unidad y actividad reales → debe generar y conservar `unitId`, `unitTitle` y `activityTitle` reales.
-- `AUD-SESSION-284-R3`: unidad eliminada/restaurada → no debe aparecer fallback demostrativo ni sesión nueva huérfana.
-- `AUD-SESSION-284-R4`: recarga/direct link a Sesiones sin unidad → debe continuar bloqueado de forma comprensible.
-- `AUD-SESSION-284-R5`: doble clic → no debe saltar la guarda ni crear dos sesiones.
-- `AUD-SESSION-284-R6`: móvil físico → mismo comportamiento y acción principal visible.
-- `AUD-SESSION-284-R7`: exportación posterior → ningún DOCX puede declarar “Unidad de ejemplo” como origen productivo.
+La corrección no elimina todavía las opciones visuales demo del runtime base; las vuelve no ejecutables como fuente productiva. Retirarlas visualmente sigue siendo una mejora V4 pendiente, no un requisito para evitar la persistencia simulada.
 
 ## Evidencia posterior
 
-**PENDIENTE.** Este expediente documenta el defecto; no simula una corrección inexistente.
+- Vercel desplegó el commit funcional exacto `e0fad5eff9abbb3c6960b6bd6f7a3e9aebee95c0` como `dpl_6xs2Tu6bCjWaSN4d3gLXCgVviPeU` con estado **READY** y target **production**.
+- La URL canónica `https://docente-digital.vercel.app/` respondió **HTTP 200 OK** tras el despliegue.
+- El asset productivo `session-curriculum-safety-v67.js` respondió **HTTP 200** y contiene v67.1 con `realSessionSelection`, guardas de `buildSession` y `generateSession`, y el mensaje de bloqueo.
+- Vercel no reportó errores runtime durante la última hora posterior al cambio.
+
+Estas evidencias demuestran despliegue e implementación, no sustituyen la prueba E2E real de interacción.
+
+## Repruebas obligatorias
+
+- `AUD-SESSION-284-R1`: sin unidades → generar sesión debe quedar bloqueado y no crear/modificar `lastSession`. **PASA EN IMPLEMENTACIÓN / E2E PENDIENTE**.
+- `AUD-SESSION-284-R2`: con una unidad y actividad reales → debe generar y conservar `unitId`, `unitTitle` y `activityTitle` reales. **PENDIENTE E2E**.
+- `AUD-SESSION-284-R3`: unidad eliminada/restaurada → no debe aparecer una sesión nueva huérfana. **PENDIENTE E2E**.
+- `AUD-SESSION-284-R4`: recarga/direct link a Sesiones sin unidad → debe continuar bloqueado de forma comprensible. **PENDIENTE E2E**.
+- `AUD-SESSION-284-R5`: doble clic → no debe saltar la guarda ni crear dos sesiones. **PENDIENTE E2E**.
+- `AUD-SESSION-284-R6`: móvil físico → mismo comportamiento y acción principal visible. **PENDIENTE PRUEBA FÍSICA**.
+- `AUD-SESSION-284-R7`: exportación posterior → ningún DOCX puede declarar “Unidad de ejemplo” como origen productivo. **PENDIENTE WORD REAL**.
 
 ## Riesgo de regresión
 
-Medio: la eliminación del fallback debe preservar el flujo normal cuando sí existe Unidad/Proyecto y no debe impedir visualizar históricos válidos.
+Medio-bajo a nivel de implementación: la guarda se limita a la entrada de generación y no modifica `state.units`, `state.lastSession` histórico ni el contenido de las unidades válidas. Sigue siendo necesaria la reprueba E2E para comprobar interacción, doble clic y recuperación.
 
 ## Impacto en indicadores
 
-- **IUD:** impacto negativo por guía engañosa en un estado vacío.
-- **ICGD:** impacto alto por ruptura de coherencia y trazabilidad pedagógica.
-- **IFR:** impacto negativo por permitir persistencia desde una fuente no real.
+- **IUD:** mejora al impedir una ruta engañosa; la superficie demo visual todavía debe simplificarse.
+- **ICGD:** mejora alta por restaurar la precondición Unidad/Proyecto → actividad → sesión.
+- **IFR:** mejora en implementación al evitar persistencia de una sesión sin fuente real.
 - **ISU:** no calculable definitivamente sin usuarios/pruebas reales.
-- **Prelaunch:** bloqueante V5 por tratarse de una ruta esencial Docente.
+- **Prelaunch:** continúa bloqueado hasta terminar las pruebas reales esenciales y cerrar los demás S0/S1/bloqueantes V5.
 
 No se calculan puntuaciones definitivas.
 
 ## Gate V5
 
-**BLOQUEADO.** DocenteDigital no puede declararse lista para V1.0 mientras una sesión pueda nacer y persistirse sin una Unidad/Proyecto y actividad reales, además de los demás bloqueantes ya abiertos.
+**BLOQUEADO.** La falla específica queda corregida en implementación, pero DocenteDigital no puede declararse lista para V1.0 hasta completar las repruebas E2E/Word/móvil de este hallazgo y el resto de pruebas reales esenciales del gate V5.
 
 `CUSCO-DECIDE-ELECCIONES-2026` no fue modificado.
