@@ -1,4 +1,4 @@
-/* DocenteDigital – hotfix de auditoría runtime v24.2 */
+/* DocenteDigital – hotfix de auditoría runtime v24.3 */
 (function(){
   if(window.__ddRuntimeAuditV24)return;window.__ddRuntimeAuditV24=true;
   const required=[
@@ -70,6 +70,39 @@
     lastBlocked:window.__ddDuplicateActionBlocked||null,
     installed:true
   });
+
+  /* V3/V5: la vista previa no debe presentar etiquetas genéricas como si fueran
+     identidad real del docente o de la IE. Solo muestra datos realmente guardados. */
+  function syncUnitPreviewIdentity(){
+    const out=document.getElementById('unitOutput');
+    if(!out)return;
+    const footer=out.querySelector('.dd-preview-footer');
+    if(!footer)return;
+    const parts=[state?.teacherName,state?.schoolName]
+      .map(value=>String(value||'').trim())
+      .filter(Boolean);
+    if(parts.length)footer.textContent=parts.join(' · ');
+    else footer.remove();
+  }
+  const baseRenderUnitIdentity=window.renderUnitOutput;
+  if(typeof baseRenderUnitIdentity==='function'&&!baseRenderUnitIdentity.__ddIdentityPreviewTruth){
+    const wrapped=function(){
+      const result=baseRenderUnitIdentity.apply(this,arguments);
+      syncUnitPreviewIdentity();
+      return result;
+    };
+    wrapped.__ddIdentityPreviewTruth=true;
+    window.renderUnitOutput=wrapped;
+  }
+  setTimeout(syncUnitPreviewIdentity,0);
+  window.ddAuditIdentityPreviewTruth=()=>{
+    const expected=[state?.teacherName,state?.schoolName]
+      .map(value=>String(value||'').trim())
+      .filter(Boolean)
+      .join(' · ');
+    const visible=(document.querySelector('#unitOutput .dd-preview-footer')?.textContent||'').trim();
+    return{testId:'AUD-IDENTITY-PREVIEW-278',expected,visible,pass:visible===expected};
+  };
 
   /* Corrige una repetición posible en el doble movimiento EIB del motor combinatorio. */
   const baseSessionHtml=window.sessionHtml;
