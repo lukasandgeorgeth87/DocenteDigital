@@ -1,9 +1,9 @@
-/* DocenteDigital – salida simple v52.1
+/* DocenteDigital – salida simple v52.2
    Mantiene el análisis técnico en estado interno, pero no muestra porcentajes,
-   confianza ni diagnósticos semánticos al usuario en el flujo normal.
+   confianza, taxonomías ni diagnósticos semánticos al usuario en el flujo normal.
 */
 (function(){
-  if(window.__ddVisibleAnalysisGuardV521)return;window.__ddVisibleAnalysisGuardV521=true;
+  if(window.__ddVisibleAnalysisGuardV522)return;window.__ddVisibleAnalysisGuardV522=true;
   if(typeof state!=='object')return;
   const tidy=v=>String(v??'').replace(/\s+/g,' ').trim();
   const esc=v=>typeof window.escapeHtml==='function'?window.escapeHtml(String(v??'')):String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -18,15 +18,33 @@
       `<b>Tema principal:</b> ${esc(tidy(p.focus)||'Por precisar')}<br>`+
       `<b>Resultado esperado:</b> ${esc(tidy(p.desiredOutcome)||'No expresado todavía')}`+
       (missing.length?`<br><b>Antes de continuar, conviene precisar:</b> ${esc(missing.join('; '))}`:'')+
-      `<br><small>DocenteDigital usará esta interpretación como apoyo y verificará los requisitos correspondientes antes de construir el documento.</small>`;
+      `<br><small>Usaremos esta interpretación como apoyo y verificaremos los requisitos antes de construir el documento.</small>`;
   }
 
   function simplifyTeacherMeaning(){
     const box=document.getElementById('ddIntentBox');
     if(!box)return;
-    box.querySelectorAll('.dd-intent-grid > span').forEach(row=>{
-      const label=tidy(row.querySelector('small')?.textContent).toLowerCase();
-      if(label.includes('claridad de la interpretación')||label.includes('claridad de la interpretacion'))row.remove();
+
+    // El análisis detallado permanece en state.lastPlanningMeaning para auditoría,
+    // pero no debe convertirse en carga cognitiva para el docente.
+    box.querySelector('.dd-intent-grid')?.remove();
+    box.querySelector('.dd-meaning-synthesis')?.remove();
+
+    const lead=[...box.children].find(el=>el.tagName==='B'&&!el.classList.contains('dd-title-label'));
+    if(lead&&tidy(lead.textContent)!=='✨ Propuestas según tu idea')lead.textContent='✨ Propuestas según tu idea';
+
+    const titleLabel=box.querySelector('.dd-title-label');
+    if(titleLabel&&tidy(titleLabel.textContent)!=='Títulos propuestos:')titleLabel.textContent='Títulos propuestos:';
+
+    const warning=box.querySelector('.dd-meaning-warning');
+    if(warning){
+      const simple='⚠️ Falta precisar algunos datos. Puedes completar tu idea o continuar y revisar la propuesta antes de guardarla.';
+      if(tidy(warning.textContent)!==simple)warning.textContent=simple;
+    }
+
+    [...box.querySelectorAll(':scope > small')].forEach(note=>{
+      const text=tidy(note.textContent).toLowerCase();
+      if(text.includes('vista previa')||text.includes('historial')||text.includes('análisis se actualiza')||text.includes('analisis se actualiza'))note.remove();
     });
   }
 
