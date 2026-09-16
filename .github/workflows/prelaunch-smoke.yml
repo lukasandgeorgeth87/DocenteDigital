@@ -36,6 +36,48 @@ jobs:
             node --check "$file"
           done
 
+      - name: Verify planning redaction coherence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          proposal = Path('proposal-choice-v8.js').read_text(encoding='utf-8')
+          coherence = Path('planning-coherence-v51.js').read_text(encoding='utf-8')
+
+          # V4 + Núcleo IA: user-facing planning text must be natural and must not expose
+          # internal analysis wording as if it were part of the pedagogical document.
+          forbidden_surface = [
+              'La descripción del docente plantea la siguiente necesidad o problema:',
+              'La descripción reconoce además esta oportunidad o fortaleza:',
+              '🧠 <b>Lectura experta:</b>',
+              "Reto: ${reto}",
+          ]
+          found = [text for text in forbidden_surface if text in proposal]
+          if found:
+              raise SystemExit('Planning proposal exposes internal/meta wording: ' + ' | '.join(found))
+
+          required = [
+              "title:'Propuesta 1'",
+              "title:'Propuesta 2'",
+              'no añaden causas, problemas o finalidades que no estén sustentados',
+              'polishSituationText',
+          ]
+          missing = [text for text in required if text not in proposal + coherence]
+          if missing:
+              raise SystemExit('Planning coherence safeguards missing: ' + ' | '.join(missing))
+
+          # Known regression: a simple observation of ants in the classroom must not
+          # fabricate specific questions such as why they are there or how they live.
+          known_inventions = ['por qué están allí', 'cómo viven y qué características tienen']
+          leaked = [text for text in known_inventions if text in coherence]
+          if leaked:
+              raise SystemExit('Known classroom-ant regression reintroduced: ' + ' | '.join(leaked))
+
+          print('Planning redaction coherence checks passed.')
+          PY
+
       - name: Reject unresolved merge markers
         shell: bash
         run: |
