@@ -78,13 +78,25 @@ El HEAD `f1522c6901abd5742c2845b2fa5561e7f6eb1cd8` se desplegó automáticamente
 
 `AUD-PRODUCTION-PRECHECK-GATE-285` fue reconciliado como alias/ampliación de este expediente y no debe contarse como un segundo S1 independiente.
 
+### Revalidación 2026-09-15
+
+Se revalidó el HEAD `2fc7426ce561ae0f462db7319cb99ca1c203c416` sin encontrar cambios funcionales posteriores.
+
+- `main` continúa con `protected=false`.
+- `protection.enabled=false`.
+- `required_status_checks.enforcement_level=off`.
+- `required_status_checks.contexts=[]` y `checks=[]`.
+- `Prelaunch Smoke` n.° 340, run `34907882198`, sobre exactamente ese SHA terminó `completed/success`.
+
+La prueba confirma que el smoke técnico sigue sano, pero no es una condición requerida para integrar ni una barrera preventiva de publicación. Por tanto, el estado canónico permanece `NO PASA · PARCIALMENTE FUNCIONAL · S1 CRÍTICO` y V5 sigue bloqueado por este hallazgo. No se crea un hallazgo duplicado.
+
 ## Evidencia
 - GitHub branch `main`: `protected=false`, protección deshabilitada y sin required status checks.
 - `.github/workflows/prelaunch-smoke.yml`: triggers `push`/`pull_request` y aviso explícito de alcance limitado.
 - Evidencia histórica del SHA `599a385b83ac6f086a0ce6850fb2ee98899eaccd`: Vercel producción finalizó antes del check `static-smoke`.
 - Revalidación 2026-09-12: deployment `dpl_J6HtcbPpZyWvLnxZAb15HZtCgDLF`, producción READY y URL canónica HTTP 200; smoke separado exitoso.
 - Revalidación 2026-09-14: `dpl_Gta56NwnwZQooEuipA8i1DHqUanY` READY ~9 s antes de que terminara el smoke del mismo SHA.
-- HEAD 2026-09-14 `f1522c6901abd5742c2845b2fa5561e7f6eb1cd8`: deployment productivo `dpl_3ZuzZQzRuWfcq653akXzfCDwzjEB` READY; URL canónica HTTP 200.
+- Revalidación 2026-09-15: HEAD `2fc7426ce561ae0f462db7319cb99ca1c203c416`, rama sin protección/checks requeridos; `Prelaunch Smoke` n.° 340 `completed/success`.
 
 ## PASA / NO PASA
 NO PASA
