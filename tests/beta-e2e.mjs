@@ -14,6 +14,12 @@ async function state() {
   return page.evaluate(() => JSON.parse(localStorage.getItem('docenteDigitalPrototype') || '{}'));
 }
 
+async function waitPlanningRuntime() {
+  await page.waitForFunction(() => window.__ddPlanningRuntimeReady === true, null, { timeout: 20000 });
+  const failures = await page.evaluate(() => Array.isArray(window.ddModuleLoadFailures) ? [...window.ddModuleLoadFailures] : []);
+  assert(failures.length === 0, `Fallaron módulos críticos: ${failures.join(', ')}`);
+}
+
 try {
   console.log('1/8 Carga limpia y configuración multigrado');
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
@@ -52,13 +58,21 @@ try {
   assert(JSON.stringify(s).length >= beforeReload.length * 0.8, 'El estado persistido se redujo de forma inesperada');
 
   console.log('3/8 Unidad real sin invención territorial');
+  await waitPlanningRuntime();
   await page.evaluate(() => window.go('plan'));
   await page.locator('button[onclick="showUnit()"]', { hasText: 'Crear nueva' }).click();
-  await page.waitForSelector('#ddPlanningKindChooser', { timeout: 10000 });
-  await page.locator('#ddPlanningKindChooser [data-kind="Unidad de aprendizaje"]').click();
+  const kindChooser = page.locator('#ddPlanningKindChooser');
+  if (await kindChooser.count()) {
+    await kindChooser.waitFor({ state: 'visible', timeout: 10000 });
+    const unitKind = kindChooser.locator('[data-kind="Unidad de aprendizaje"]');
+    if (await unitKind.count()) await unitKind.click();
+  }
   const brief = 'Observamos cambios de la primavera en el entorno y queremos registrar lo que vemos.';
   await page.locator('#unitSituation').fill(brief);
-  await page.locator('button[onclick="createUnitDemo()"]', { hasText: /Crear propuesta/ }).click();
+  const createButton = page.locator('button[onclick="createUnitDemo()"]');
+  await createButton.waitFor({ state: 'visible', timeout: 10000 });
+  assert(await createButton.isEnabled(), 'Crear propuesta sigue bloqueado luego de cargar el runtime');
+  await createButton.click();
 
   await page.waitForSelector('#ddProposalChooser:not(.hidden)', { timeout: 10000 });
   await page.locator('input[name="ddSituation"]').first().check();
