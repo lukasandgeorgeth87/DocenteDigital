@@ -13,14 +13,25 @@ const fixture=()=>({
   activeUnitId:'u-continuity',lastSession:{unitId:'u-continuity',title:'Leemos para probar continuidad',area:'Comunicación',duration:'90 minutos',criterion:'Identifica información y explica lo comprendido.',evidence:'Respuesta y explicación.',instrument:'Lista de cotejo',createdAt:new Date().toISOString()}
 });
 
+async function openUnitDraft(){
+  await page.evaluate(()=>window.go('plan'));
+  await page.evaluate(()=>window.showUnit());
+  const chooser=page.locator('#ddPlanningKindChooser');
+  if(await chooser.count()){
+    await chooser.waitFor({state:'visible',timeout:10000});
+    const unitKind=chooser.locator('[data-kind="Unidad de aprendizaje"]');
+    if(await unitKind.count())await unitKind.click();
+  }
+  await page.locator('#unitSituation').waitFor({state:'visible',timeout:10000});
+}
+
 try{
   console.log('CONTINUITY 1/5 Autosave de borrador antes de crear una unidad');
   await page.goto(baseUrl,{waitUntil:'domcontentloaded'});
   await page.evaluate(data=>{localStorage.clear();localStorage.setItem('docenteDigitalPrototype',JSON.stringify(data));},fixture());
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.ddBetaDraftAutosave,null,{timeout:10000});
-  await page.evaluate(()=>window.go('plan'));
-  await page.evaluate(()=>window.showUnit());
+  await openUnitDraft();
   const draftText='Borrador rural de prueba que debe sobrevivir a una recarga antes de crear la unidad.';
   await page.locator('#unitSituation').fill(draftText);
   await page.waitForTimeout(700);
@@ -28,8 +39,7 @@ try{
   assert(storedDraft?.situation===draftText,'El borrador no se guardó mientras se escribía');
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.ddBetaDraftAutosave,null,{timeout:10000});
-  await page.evaluate(()=>window.go('plan'));
-  await page.evaluate(()=>window.showUnit());
+  await openUnitDraft();
   await page.waitForFunction(expected=>document.getElementById('unitSituation')?.value===expected,draftText,{timeout:10000});
   assert(await page.locator('#unitSituation').inputValue()===draftText,'El borrador no reapareció después de recargar');
   await page.evaluate(()=>window.ddBetaDraftAutosave.clear());
