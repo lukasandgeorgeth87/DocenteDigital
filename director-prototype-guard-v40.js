@@ -1,11 +1,11 @@
-/* DocenteDigital – guardia de acciones prototipo del Director v44
+/* DocenteDigital – guardia de acciones prototipo del Director v45
    Evita presentar botones aparentemente funcionales cuando todavía no existe un flujo real.
    Reaplica la verdad de superficie después de navegación, restauración o mutaciones del DOM.
-   Solo considera real una acción declarada explícitamente por atributo/dataset; no usa la
-   propiedad formAction porque el navegador puede resolverla aunque el atributo no exista.
+   V45: hace la guarda idempotente para no provocar bucles de MutationObserver al volver a
+   aplicar disabled sobre controles ya protegidos.
 */
 (function(){
-  if(window.__ddDirectorPrototypeGuardV44)return;window.__ddDirectorPrototypeGuardV44=true;
+  if(window.__ddDirectorPrototypeGuardV45)return;window.__ddDirectorPrototypeGuardV45=true;
 
   function ensureMobileNavigation(){
     if(window.__ddMobileNavigationGuardV60||document.querySelector('script[data-dd-early-mobile-nav]'))return;
@@ -29,21 +29,26 @@
 
   function guardButton(btn){
     if(!btn||hasRealAction(btn))return false;
-    btn.dataset.ddPrototypeGuard='1';
-    btn.type='button';
-    btn.disabled=true;
-    btn.setAttribute('aria-disabled','true');
-    btn.setAttribute('title','Esta opción aún está en desarrollo.');
+    let changed=false;
+    if(btn.dataset.ddPrototypeGuard!=='1'){btn.dataset.ddPrototypeGuard='1';changed=true;}
+    if(btn.type!=='button'){btn.type='button';changed=true;}
+    if(!btn.disabled){btn.disabled=true;changed=true;}
+    if(btn.getAttribute('aria-disabled')!=='true'){btn.setAttribute('aria-disabled','true');changed=true;}
+    if(btn.getAttribute('title')!=='Esta opción aún está en desarrollo.'){
+      btn.setAttribute('title','Esta opción aún está en desarrollo.');changed=true;
+    }
     const label=(btn.textContent||'').trim();
-    if(label&&!/(en desarrollo|próximamente)/i.test(label))btn.textContent=`${label} · En desarrollo`;
-    return true;
+    if(label&&!/(en desarrollo|próximamente)/i.test(label)){
+      btn.textContent=`${label} · En desarrollo`;changed=true;
+    }
+    return changed;
   }
 
   function mount(){
-    const screen=document.getElementById('director');if(!screen)return;
+    const screen=document.getElementById('director');if(!screen)return 0;
     const buttons=[...screen.querySelectorAll('button')];
-    let guarded=0;
-    buttons.forEach(btn=>{if(guardButton(btn))guarded++;});
+    let changed=0;
+    buttons.forEach(btn=>{if(guardButton(btn))changed++;});
 
     let note=document.getElementById('ddDirectorPrototypeNotice');
     if(!note&&buttons.some(b=>b.dataset.ddPrototypeGuard==='1')){
@@ -52,8 +57,9 @@
       note.innerHTML='<b>En desarrollo:</b> estas opciones se habilitarán cuando su flujo completo haya sido validado.';
       const sub=screen.querySelector('.sub');
       if(sub?.nextSibling)screen.insertBefore(note,sub.nextSibling);else screen.prepend(note);
+      changed++;
     }
-    return guarded;
+    return changed;
   }
 
   ensureMobileNavigation();
@@ -70,9 +76,15 @@
   }
 
   let observer=null;
+  let observerScheduled=false;
+  function scheduleMount(){
+    if(observerScheduled)return;
+    observerScheduled=true;
+    queueMicrotask(()=>{observerScheduled=false;mount();});
+  }
   function startObserver(){
     const screen=document.getElementById('director');if(!screen||observer)return;
-    observer=new MutationObserver(()=>mount());
+    observer=new MutationObserver(scheduleMount);
     observer.observe(screen,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','onclick','formaction','data-action','data-dd-real-action']});
   }
 
