@@ -55,15 +55,25 @@ try {
   const brief = 'Observamos cambios de la primavera en el entorno y queremos registrar lo que vemos.';
   await page.locator('#unitSituation').fill(brief);
   await page.locator('button[onclick="createUnitDemo()"]', { hasText: /Crear propuesta/ }).click();
+
+  // El flujo actual exige elección explícita de situación y producto antes de guardar.
+  await page.waitForSelector('#ddProposalChooser:not(.hidden)', { timeout: 10000 });
+  await page.locator('input[name="ddSituation"]').first().check();
+  await page.locator('#ddContinueProducts').click();
+  await page.waitForSelector('input[name="ddProduct"]', { timeout: 10000 });
+  await page.locator('input[name="ddProduct"]').first().check();
+  await page.locator('#ddBuildUnit').click();
+
   await page.waitForFunction(() => {
     const st = JSON.parse(localStorage.getItem('docenteDigitalPrototype') || '{}');
     return Array.isArray(st.units) && st.units.length > 0;
-  });
+  }, null, { timeout: 10000 });
   s = await state();
   const unit = s.units.find(u => u.id === s.activeUnitId) || s.units[0];
   assert(unit, 'No se creó la unidad');
   assert(unit.situationBrief === brief, 'No se preservó la intención original del docente');
   assert(unit.title && unit.title.toLowerCase() !== brief.toLowerCase(), 'El título copió literalmente la entrada');
+  assert(unit.selectionApproved === true, 'La unidad no conserva aprobación explícita de situación/producto');
   assert(!/Ccotataqui/i.test(unit.product || ''), 'Se inventó Ccotataqui sin estar en la entrada');
 
   console.log('4/8 Sesión vinculada a unidad real');
@@ -75,7 +85,7 @@ try {
   await page.waitForFunction(() => {
     const st = JSON.parse(localStorage.getItem('docenteDigitalPrototype') || '{}');
     return !!st.lastSession;
-  });
+  }, null, { timeout: 10000 });
   s = await state();
   assert(s.lastSession.unitId === s.activeUnitId, 'La sesión perdió la trazabilidad con la unidad');
 
@@ -100,16 +110,12 @@ try {
     acceptedReset = true;
     await dialog.accept();
   });
-  await Promise.all([
-    page.waitForLoadState('domcontentloaded'),
-    page.evaluate(() => window.resetDemo())
-  ]).catch(() => {});
+  await page.evaluate(() => window.resetDemo());
+  await page.waitForLoadState('domcontentloaded').catch(() => {});
   assert(acceptedReset, 'No apareció confirmación de restablecimiento recuperable');
   await page.waitForSelector('#ddResetRestore', { timeout: 10000 });
-  await Promise.all([
-    page.waitForLoadState('domcontentloaded'),
-    page.locator('#ddResetRestore [data-action="restore"]').click()
-  ]).catch(() => {});
+  await page.locator('#ddResetRestore [data-action="restore"]').click();
+  await page.waitForLoadState('domcontentloaded').catch(() => {});
   await page.waitForFunction(() => {
     const st = JSON.parse(localStorage.getItem('docenteDigitalPrototype') || '{}');
     return Array.isArray(st.units) && st.units.length > 0 && !!st.lastSession;
