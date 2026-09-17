@@ -1,4 +1,4 @@
-/* DocenteDigital – capa visible y reversible de Beta Privada v1.1
+/* DocenteDigital – capa visible y reversible de Beta Privada v1.2
    - No rebaja el gate de producción.
    - Identifica claramente el estado Beta.
    - Permite exportar/restaurar un respaldo JSON del estado local.
@@ -70,7 +70,7 @@
     banner.id='ddBetaBanner';
     banner.setAttribute('role','status');
     banner.style.cssText='position:relative;z-index:50;background:#fff7df;border-bottom:1px solid #e7c56d;color:#4c3907;padding:8px 14px;text-align:center;font:600 13px/1.35 system-ui,sans-serif';
-    banner.innerHTML='<b>BETA PRIVADA</b> · Revisa los documentos antes de usarlos. Las funciones marcadas “Próximamente” aún no forman parte de la versión disponible.';
+    banner.innerHTML='<b>BETA PRIVADA</b> · Revisa los documentos antes de usarlos. No ingreses DNI, teléfonos, direcciones, diagnósticos ni evidencias sensibles de estudiantes durante este piloto.';
     const topbar=document.querySelector('.topbar');
     if(topbar)topbar.insertAdjacentElement('afterend',banner);else document.body.prepend(banner);
   }
@@ -83,7 +83,7 @@
     card.className='card topgap';
     card.innerHTML=`<h2>💾 Respaldo de esta Beta</h2>
       <p class="sub">Guarda una copia local de tu configuración, unidades y última sesión antes de hacer cambios importantes.</p>
-      <div class="notice"><b>Importante:</b> el respaldo se descarga en tu dispositivo. No se envía automáticamente a DocenteDigital.</div>
+      <div class="notice"><b>Importante:</b> el respaldo se descarga en tu dispositivo y puede contener todo lo escrito en la Beta. Guárdalo de forma privada y no lo compartas si contiene información identificable.</div>
       <div class="actions topgap">
         <button type="button" class="btn" id="ddExportBackup">⬇ Descargar respaldo JSON</button>
         <button type="button" class="btn ghost" id="ddImportBackup">↩ Restaurar respaldo</button>
@@ -108,7 +108,7 @@
 
   function exposeStatus(){
     window.ddBetaLaunchSafety={
-      version:'v1.1',
+      version:'v1.2',
       backupFormat:'DocenteDigitalBackup',
       exportBackup,
       validState,
