@@ -7,6 +7,11 @@ const page = await context.newPage();
 
 function assert(condition, message){ if(!condition) throw new Error(message); }
 async function state(){ return page.evaluate(() => JSON.parse(localStorage.getItem('docenteDigitalPrototype') || '{}')); }
+async function waitPlanningRuntime(){
+  await page.waitForFunction(() => window.__ddPlanningRuntimeReady === true, null, { timeout: 20000 });
+  const failures = await page.evaluate(() => Array.isArray(window.ddModuleLoadFailures) ? [...window.ddModuleLoadFailures] : []);
+  assert(failures.length === 0, `Fallaron módulos críticos: ${failures.join(', ')}`);
+}
 
 const cases = [
   {name:'primavera', brief:'Observamos cambios de la primavera en el entorno.'},
@@ -33,16 +38,23 @@ async function configure(){
   for(const a of ['Comunicación','Matemática','Personal Social','Ciencia y Tecnología']) await page.locator('#areaChoices .choice',{hasText:a}).click();
   await page.locator('#linguisticMode').selectOption({label:'Monolingüe castellano'});
   await page.locator('#step4 .btn',{hasText:'Guardar y entrar'}).click();
+  await waitPlanningRuntime();
 }
 
 async function createAndChoose(brief){
   await page.evaluate(()=>window.go('plan'));
   await page.locator('button[onclick="showUnit()"]',{hasText:'Crear nueva'}).click();
-  await page.waitForSelector('#ddPlanningKindChooser',{timeout:10000});
-  await page.locator('#ddPlanningKindChooser [data-kind="Unidad de aprendizaje"]').click();
+  const chooser=page.locator('#ddPlanningKindChooser');
+  if(await chooser.count()){
+    await chooser.waitFor({state:'visible',timeout:10000});
+    const unitKind=chooser.locator('[data-kind="Unidad de aprendizaje"]');
+    if(await unitKind.count())await unitKind.click();
+  }
   await page.locator('#unitTitle').fill('');
   await page.locator('#unitSituation').fill(brief);
-  await page.locator('button[onclick="createUnitDemo()"]',{hasText:/Crear propuesta/}).click();
+  const createButton=page.locator('button[onclick="createUnitDemo()"]');
+  assert(await createButton.isEnabled(),`${brief}: crear propuesta sigue bloqueado con runtime listo`);
+  await createButton.click();
   await page.waitForSelector('#ddProposalChooser:not(.hidden)',{timeout:10000});
   await page.locator('input[name="ddSituation"]').first().check();
   await page.locator('#ddContinueProducts').click();
