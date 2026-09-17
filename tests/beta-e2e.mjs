@@ -17,8 +17,10 @@ async function state() {
 try {
   console.log('1/8 Carga limpia y configuración multigrado');
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
+  await page.waitForSelector('#ddBetaBanner', { timeout: 10000 });
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForSelector('#ddBetaBanner', { timeout: 10000 });
 
   await page.locator('#step1 .choice', { hasText: 'Primaria' }).click();
   await page.locator('#step1 .btn', { hasText: 'Continuar' }).click();
@@ -52,11 +54,12 @@ try {
   console.log('3/8 Unidad real sin invención territorial');
   await page.evaluate(() => window.go('plan'));
   await page.locator('button[onclick="showUnit()"]', { hasText: 'Crear nueva' }).click();
+  await page.waitForSelector('#ddPlanningKindChooser', { timeout: 10000 });
+  await page.locator('#ddPlanningKindChooser [data-kind="Unidad de aprendizaje"]').click();
   const brief = 'Observamos cambios de la primavera en el entorno y queremos registrar lo que vemos.';
   await page.locator('#unitSituation').fill(brief);
   await page.locator('button[onclick="createUnitDemo()"]', { hasText: /Crear propuesta/ }).click();
 
-  // El flujo actual exige elección explícita de situación y producto antes de guardar.
   await page.waitForSelector('#ddProposalChooser:not(.hidden)', { timeout: 10000 });
   await page.locator('input[name="ddSituation"]').first().check();
   await page.locator('#ddContinueProducts').click();
@@ -89,7 +92,7 @@ try {
   s = await state();
   assert(s.lastSession.unitId === s.activeUnitId, 'La sesión perdió la trazabilidad con la unidad');
 
-  console.log('5/8 Exportación DOCX real en navegador');
+  console.log('5/8 Exportación DOCX y respaldo Beta');
   await page.waitForFunction(() => typeof window.ddDocxSelfTest === 'function', null, { timeout: 10000 });
   const docxSelfTest = await page.evaluate(() => window.ddDocxSelfTest());
   assert(docxSelfTest === true, 'ddDocxSelfTest falló');
@@ -102,6 +105,18 @@ try {
   assert(bytes.length > 500, `DOCX demasiado pequeño: ${bytes.length} bytes`);
   assert(bytes[0] === 0x50 && bytes[1] === 0x4b, 'El archivo descargado no es un contenedor ZIP/OOXML válido');
   assert(download.suggestedFilename().toLowerCase().endsWith('.docx'), 'La exportación no usa extensión .docx');
+
+  await page.evaluate(() => window.go('settings'));
+  await page.waitForSelector('#ddBetaBackupCard', { timeout: 10000 });
+  const backupDownloadPromise = page.waitForEvent('download');
+  await page.locator('#ddExportBackup').click();
+  const backupDownload = await backupDownloadPromise;
+  const backupPath = await backupDownload.path();
+  assert(backupPath, 'No se descargó el respaldo JSON');
+  const backupEnvelope = JSON.parse(await fs.readFile(backupPath, 'utf8'));
+  assert(backupEnvelope.format === 'DocenteDigitalBackup', 'Formato de respaldo Beta inválido');
+  assert(Array.isArray(backupEnvelope.data?.units) && backupEnvelope.data.units.length > 0, 'El respaldo no contiene unidades');
+  assert(backupEnvelope.data?.lastSession, 'El respaldo no contiene la última sesión');
 
   console.log('6/8 Backup/restauración real del estado local');
   const backupBeforeReset = localStorageString(await state());
