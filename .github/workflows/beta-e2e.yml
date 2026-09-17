@@ -55,6 +55,16 @@ jobs:
           BASE_URL: http://127.0.0.1:4173
         run: node tests/continuity-resilience.mjs
 
+      - name: Validate DOCX internal OOXML structure
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/docx-structure.mjs
+
+      - name: Run critical accessibility smoke
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/accessibility-smoke.mjs
+
       - name: Show static server log on failure
         if: failure()
         run: cat /tmp/docentedigital-http.log || true
