@@ -12,4 +12,18 @@
   window.shareUnit=unavailable;
   window.downloadSessionWord=unavailable;
   window.shareSession=unavailable;
+
+  // Capa no crítica de Beta Privada: aviso visible + respaldo/restauración JSON.
+  // Si no carga, las funciones principales siguen operativas y el gate de producción no cambia.
+  function loadBetaSafety(){
+    if(window.__ddBetaLaunchSafetyV1||document.querySelector('script[data-dd-beta-safety]'))return;
+    const script=document.createElement('script');
+    script.src='beta-launch-safety-v1.js';
+    script.defer=true;
+    script.setAttribute('data-dd-beta-safety','true');
+    script.onerror=()=>console.warn('DocenteDigital: no se pudo cargar la capa visible de Beta Privada.');
+    document.body.appendChild(script);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadBetaSafety,{once:true});
+  else loadBetaSafety();
 })();
