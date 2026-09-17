@@ -167,9 +167,13 @@ try {
   assert(overflow <= 2, `Hay desborde horizontal móvil de ${overflow}px`);
   const mobileNavVisible = await page.locator('.mobile-nav').isVisible();
   assert(mobileNavVisible, 'La navegación móvil no es visible');
-  await page.waitForSelector('.mobile-nav [data-screen="director"]', { timeout: 10000 });
-  await page.locator('.mobile-nav [data-screen="director"]').click();
-  assert(await page.locator('#director').isVisible(), 'No se puede abrir Director desde móvil');
+  const moreButton = page.locator('#ddMobileMoreBtn');
+  await moreButton.waitFor({ state: 'visible', timeout: 10000 });
+  await moreButton.click();
+  const directorMenuItem = page.locator('#ddMobileMoreMenu [data-dd-go="director"]');
+  await directorMenuItem.waitFor({ state: 'visible', timeout: 10000 });
+  await directorMenuItem.click();
+  assert(await page.locator('#director').isVisible(), 'No se puede abrir Director desde Más en móvil');
 
   console.log('BETA_E2E_PASS');
 } finally {
