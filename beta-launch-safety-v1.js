@@ -1,7 +1,8 @@
-/* DocenteDigital – capa visible y reversible de Beta Privada v1
+/* DocenteDigital – capa visible y reversible de Beta Privada v1.1
    - No rebaja el gate de producción.
    - Identifica claramente el estado Beta.
    - Permite exportar/restaurar un respaldo JSON del estado local.
+   - Carga de forma no crítica el reporte local de incidencias del piloto.
 */
 (function(){
   if(window.__ddBetaLaunchSafetyV1)return;
@@ -10,10 +11,6 @@
   const KEY='docenteDigitalPrototype';
   const IMPORT_BACKUP_KEY='docenteDigitalPrototype_import_backup';
   const MAX_IMPORT_BYTES=5*1024*1024;
-
-  function esc(v){
-    return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
 
   function validState(value){
     if(!value||typeof value!=='object'||Array.isArray(value))return false;
@@ -36,13 +33,7 @@
     let data;
     try{data=JSON.parse(raw);}catch(error){alert('El estado local no es válido. No se generará un respaldo defectuoso.');return;}
     if(!validState(data)){alert('El estado local no supera la validación mínima.');return;}
-    const envelope={
-      format:'DocenteDigitalBackup',
-      version:1,
-      exportedAt:new Date().toISOString(),
-      app:'DocenteDigital',
-      data
-    };
+    const envelope={format:'DocenteDigitalBackup',version:1,exportedAt:new Date().toISOString(),app:'DocenteDigital',data};
     const blob=new Blob([JSON.stringify(envelope,null,2)],{type:'application/json;charset=utf-8'});
     const link=document.createElement('a');
     link.href=URL.createObjectURL(blob);
@@ -105,17 +96,27 @@
     input.onchange=async()=>{const file=input.files?.[0];input.value='';await importBackup(file);};
   }
 
+  function loadFeedback(){
+    if(window.__ddBetaFeedbackV1||document.querySelector('script[data-dd-beta-feedback]'))return;
+    const script=document.createElement('script');
+    script.src='beta-feedback-v1.js';
+    script.defer=true;
+    script.setAttribute('data-dd-beta-feedback','true');
+    script.onerror=()=>console.warn('DocenteDigital: no se pudo cargar el reporte local de la Beta.');
+    document.body.appendChild(script);
+  }
+
   function exposeStatus(){
     window.ddBetaLaunchSafety={
-      version:'v1',
+      version:'v1.1',
       backupFormat:'DocenteDigitalBackup',
       exportBackup,
       validState,
-      getStatus:()=>({beta:true,productionApproved:false,backupAvailable:true})
+      getStatus:()=>({beta:true,productionApproved:false,backupAvailable:true,feedbackAvailable:!!window.__ddBetaFeedbackV1})
     };
   }
 
-  function init(){addBanner();addBackupCard();exposeStatus();}
+  function init(){addBanner();addBackupCard();exposeStatus();loadFeedback();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
   else init();
 })();
