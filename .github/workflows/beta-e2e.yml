@@ -1,0 +1,52 @@
+name: Beta E2E Browser Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start static app
+        run: |
+          python3 -m http.server 4173 >/tmp/docentedigital-http.log 2>&1 &
+          echo $! > /tmp/docentedigital-http.pid
+          sleep 2
+          curl --fail --silent --show-error http://127.0.0.1:4173/ >/dev/null
+
+      - name: Run beta E2E browser gate
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/beta-e2e.mjs
+
+      - name: Show static server log on failure
+        if: failure()
+        run: cat /tmp/docentedigital-http.log || true
+
+      - name: Stop static app
+        if: always()
+        run: |
+          if [ -f /tmp/docentedigital-http.pid ]; then
+            kill "$(cat /tmp/docentedigital-http.pid)" || true
+          fi
