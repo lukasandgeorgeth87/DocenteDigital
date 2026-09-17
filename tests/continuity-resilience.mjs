@@ -40,7 +40,7 @@ try{
   });
   await page.reload({waitUntil:'domcontentloaded'});
   await page.evaluate(()=>window.go('settings'));
-  await page.waitForSelector('#ddImportBackupFile',{timeout:10000});
+  await page.waitForSelector('#ddImportBackupFile',{state:'attached',timeout:10000});
   let accepted=false;
   page.once('dialog',async dialog=>{accepted=true;await dialog.accept();});
   await page.locator('#ddImportBackupFile').setInputFiles(backupPath);
