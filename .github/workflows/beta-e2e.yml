@@ -50,6 +50,11 @@ jobs:
           BASE_URL: http://127.0.0.1:4173
         run: node tests/network-privacy.mjs
 
+      - name: Run continuity and resilience gate
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/continuity-resilience.mjs
+
       - name: Show static server log on failure
         if: failure()
         run: cat /tmp/docentedigital-http.log || true
