@@ -38,6 +38,8 @@ async function configure(){
 async function createAndChoose(brief){
   await page.evaluate(()=>window.go('plan'));
   await page.locator('button[onclick="showUnit()"]',{hasText:'Crear nueva'}).click();
+  await page.waitForSelector('#ddPlanningKindChooser',{timeout:10000});
+  await page.locator('#ddPlanningKindChooser [data-kind="Unidad de aprendizaje"]').click();
   await page.locator('#unitTitle').fill('');
   await page.locator('#unitSituation').fill(brief);
   await page.locator('button[onclick="createUnitDemo()"]',{hasText:/Crear propuesta/}).click();
@@ -72,7 +74,6 @@ try{
     assert(product.length>=20,`${c.name}: producto/evidencia insuficiente`);
   }
 
-  // Regresión concreta: observar un ser vivo no autoriza inventar preguntas/motivos específicos.
   const antBrief='Observamos hormigas en el aula.';
   const ant=await createAndChoose(antBrief);
   const antText=`${ant.situation||''} ${ant.product||''}`.toLowerCase();
