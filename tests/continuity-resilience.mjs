@@ -123,8 +123,25 @@ try{
   await page.reload({waitUntil:'networkidle'});
   await waitPlanningRuntime();
   await page.waitForFunction(()=>typeof window.ddDocxSelfTest==='function',null,{timeout:10000});
+  const beforePlan=await page.evaluate(()=>({
+    active:document.querySelector('.screen.active')?.id||'',
+    level:window.state?.level||'',
+    ieType:window.state?.ieType||'',
+    grades:Array.isArray(window.state?.grades)?window.state.grades:[],
+    areas:Array.isArray(window.state?.areas)?window.state.areas:[],
+    linguisticMode:window.state?.linguisticMode||'',
+    userRole:window.state?.userRole||'',
+    incomplete:window.__ddIncompleteBaseSetup||null
+  }));
+  console.log('CONTINUITY_STATE_BEFORE_OFFLINE',JSON.stringify(beforePlan));
   await page.evaluate(()=>window.go('plan'));
-  await page.waitForSelector('#plan.active',{timeout:10000});
+  await page.waitForTimeout(120);
+  const afterPlan=await page.evaluate(()=>({
+    active:document.querySelector('.screen.active')?.id||'',
+    incomplete:window.__ddIncompleteBaseSetup||null
+  }));
+  console.log('CONTINUITY_STATE_AFTER_GO_PLAN',JSON.stringify(afterPlan));
+  assert(afterPlan.active==='plan',`No se pudo abrir planificación con estado válido: ${JSON.stringify({beforePlan,afterPlan})}`);
   await page.waitForFunction(()=>document.querySelector('#unitsList')?.textContent?.includes('Unidad de continuidad'),null,{timeout:10000});
 
   console.log('CONTINUITY 5/5 Continuidad con red caída después de cargar');
