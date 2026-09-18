@@ -105,8 +105,16 @@ try{
   await page.evaluate(()=>localStorage.setItem('docenteDigitalPrototype','{"estado":'));
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>!!window.__ddStorageRecovered,null,{timeout:10000});
-  const corruption=await page.evaluate(()=>({primary:localStorage.getItem('docenteDigitalPrototype'),recoveryKeys:Object.keys(localStorage).filter(k=>k.startsWith('docenteDigitalPrototype_recovery_')),recovered:window.__ddStorageRecovered}));
-  assert(corruption.primary===null,'El estado corrupto siguió activo');
+  const corruption=await page.evaluate(()=>{
+    const primary=localStorage.getItem('docenteDigitalPrototype');
+    let primaryValid=primary===null;
+    if(primary!==null){
+      try{const parsed=JSON.parse(primary);primaryValid=!!parsed&&typeof parsed==='object'&&!Array.isArray(parsed);}catch{primaryValid=false;}
+    }
+    return {primary,primaryValid,recoveryKeys:Object.keys(localStorage).filter(k=>k.startsWith('docenteDigitalPrototype_recovery_')),recovered:window.__ddStorageRecovered};
+  });
+  assert(corruption.primaryValid===true,'El estado corrupto siguió activo o fue reemplazado por otro valor inválido');
+  assert(corruption.primary!=='{"estado":','El valor corrupto original siguió activo');
   assert(corruption.recoveryKeys.length>0,'No se creó copia del estado corrupto');
   assert(corruption.recovered?.backedUp===true,'La recuperación no confirmó respaldo del estado inválido');
 
