@@ -99,6 +99,47 @@ jobs:
           test -s curriculum-safety-v27.js
           test -s docx-export-v29.js
 
+      - name: Verify unavailable V5 surfaces fail closed in initial HTML
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html = Path('index.html').read_text(encoding='utf-8')
+
+          forbidden = [
+              'data-screen="materials" onclick="go(\'materials\')"',
+              'data-screen="evaluation" onclick="go(\'evaluation\')"',
+              'onclick="showDiagnostic()"',
+              'onclick="demoAnnual()"',
+              'onclick="generateMaterial()"',
+              'onclick="showEvaluation(',
+          ]
+          leaked = [item for item in forbidden if item in html]
+          if leaked:
+              raise SystemExit(
+                  'V5 fail-closed regression: unavailable actions are clickable in initial HTML: '
+                  + ', '.join(leaked)
+              )
+
+          required = [
+              'data-screen="materials" disabled aria-disabled="true"',
+              'data-screen="evaluation" disabled aria-disabled="true"',
+              'Crear diagnóstico · Próximamente',
+              'Abrir programación anual · Próximamente',
+              'Crear lectura · Próximamente',
+          ]
+          missing = [item for item in required if item not in html]
+          if missing:
+              raise SystemExit(
+                  'V5 fail-closed markers missing from initial HTML: '
+                  + ', '.join(missing)
+              )
+
+          print('Unavailable V5 surfaces are fail-closed before runtime guards load.')
+          PY
+
       - name: Verify local assets referenced by production HTML
         shell: bash
         run: |

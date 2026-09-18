@@ -106,3 +106,19 @@ No se modifica runtime en esta ronda. La corrección segura debe hacerse en la f
 - prueba automatizada de HTML inicial antes de ejecutar módulos dinámicos.
 
 No se aplicó ni se declaró vigente normativa MINEDU/UGEL externa en este hallazgo técnico. No se calculan ISU/IFR/Prelaunch Score definitivos.
+
+## Revalidación y corrección — 2026-09-18
+
+- **Cambio aplicado:** `index.html` ahora entrega Materiales, Evaluación, Diagnóstico y Programación anual en estado **fail-closed desde el HTML inicial**; también se deshabilitaron sus acciones internas y accesos móviles antes de que carguen las guardas dinámicas.
+- **Commit funcional:** `975aa270f22654c9b5deda90f1ddac361dd12fba` — `fix: fail closed unavailable V5 surfaces from initial HTML`.
+- **Evidencia previa al cambio:** el HTML inicial contenía `onclick="go('materials')"`, `onclick="go('evaluation')"`, `onclick="showDiagnostic()"`, `onclick="demoAnnual()"`, `onclick="generateMaterial()"` y acciones `showEvaluation(...)`.
+- **Evidencia posterior:** esas rutas ya no están presentes como acciones clicables en el HTML inicial; se conservan las guardas dinámicas como segunda barrera.
+- **Prelaunch Smoke #380:** PASA sobre el commit funcional.
+- **Beta E2E Browser Gate:** el recorrido principal de navegador pasó; el workflow continuaba ejecutando regresiones semánticas/resiliencia al registrar esta actualización.
+- **Prevención añadida:** el Prelaunch Smoke ahora falla si cualquiera de esas acciones vuelve a aparecer clicable en `index.html` o si desaparecen los marcadores de estado fail-closed.
+
+### Estado actualizado de AUD-BOOT-286
+
+`PASA EN IMPLEMENTACIÓN · FUNCIONAL EN IMPLEMENTACIÓN · S4 residual`.
+
+La causa técnica original (ventana de arranque con superficies no listas clicables) queda corregida y protegida contra regresión estática. Permanece **PENDIENTE** la validación física en dispositivos reales y no se interpreta este cierre como aprobación de las funciones Materiales, Evaluación ni Programación anual; sus capacidades reales siguen sujetas a sus hallazgos canónicos V5.
