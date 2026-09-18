@@ -19,6 +19,26 @@ async function waitPlanningRuntime(){
   assert(failures.length===0,`Fallaron módulos críticos antes de probar continuidad: ${failures.join(', ')}`);
 }
 
+async function configureValidTeacher(){
+  await page.goto(baseUrl,{waitUntil:'networkidle'});
+  await page.evaluate(()=>localStorage.clear());
+  await page.reload({waitUntil:'networkidle'});
+  await page.locator('#step1 .choice',{hasText:'Primaria'}).click();
+  await page.locator('#step1 .btn',{hasText:'Continuar'}).click();
+  await page.locator('#step2 .choice',{hasText:'Multigrado'}).click();
+  await page.locator('#step2 .btn',{hasText:'Continuar'}).click();
+  for(const grade of ['1.º','3.º','5.º'])await page.locator('#gradeChoices .choice',{hasText:grade}).click();
+  await page.locator('#step3 .btn',{hasText:'Continuar'}).click();
+  for(const area of ['Comunicación','Matemática'])await page.locator('#areaChoices .choice',{hasText:area}).click();
+  await page.locator('#linguisticMode').selectOption({label:'Monolingüe castellano'});
+  await page.locator('#step4 .btn',{hasText:'Guardar y entrar'}).click();
+  await waitPlanningRuntime();
+  const configured=await page.evaluate(()=>JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'{}'));
+  assert(configured.level==='Primaria'&&configured.ieType==='Multigrado','El setup real no dejó una configuración Docente válida');
+  assert(configured.linguisticMode==='Monolingüe castellano','El setup real no guardó el perfil lingüístico monolingüe');
+  return configured;
+}
+
 async function openUnitDraft(){
   await waitPlanningRuntime();
   await page.evaluate(()=>window.go('plan'));
@@ -37,9 +57,11 @@ async function openUnitDraft(){
 
 try{
   console.log('CONTINUITY 1/5 Autosave de borrador antes de crear una unidad');
-  await page.goto(baseUrl,{waitUntil:'domcontentloaded'});
-  await page.evaluate(data=>{localStorage.clear();localStorage.setItem('docenteDigitalPrototype',JSON.stringify(data));},fixture());
-  await page.reload({waitUntil:'domcontentloaded'});
+  const configured=await configureValidTeacher();
+  const seeded={...configured,units:fixture().units,activeUnitId:fixture().activeUnitId,lastSession:fixture().lastSession};
+  await page.evaluate(data=>localStorage.setItem('docenteDigitalPrototype',JSON.stringify(data)),seeded);
+  await page.reload({waitUntil:'networkidle'});
+  await waitPlanningRuntime();
   await page.waitForFunction(()=>!!window.ddBetaDraftAutosave,null,{timeout:10000});
   await openUnitDraft();
   const draftText='Borrador rural de prueba que debe sobrevivir a una recarga antes de crear la unidad.';
