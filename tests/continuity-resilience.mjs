@@ -118,16 +118,19 @@ try{
   assert(corruption.recoveryKeys.length>0,'No se creó copia del estado corrupto');
   assert(corruption.recovered?.backedUp===true,'La recuperación no confirmó respaldo del estado inválido');
 
-  console.log('CONTINUITY 4/5 Restablecer fixture para prueba sin red');
-  await page.evaluate(data=>localStorage.setItem('docenteDigitalPrototype',JSON.stringify(data)),fixture());
-  await page.reload({waitUntil:'domcontentloaded'});
+  console.log('CONTINUITY 4/5 Restablecer estado válido para prueba sin red');
+  await page.evaluate(data=>localStorage.setItem('docenteDigitalPrototype',JSON.stringify(data)),seeded);
+  await page.reload({waitUntil:'networkidle'});
+  await waitPlanningRuntime();
   await page.waitForFunction(()=>typeof window.ddDocxSelfTest==='function',null,{timeout:10000});
+  await page.evaluate(()=>window.go('plan'));
+  await page.waitForSelector('#plan.active',{timeout:10000});
+  await page.waitForFunction(()=>document.querySelector('#unitsList')?.textContent?.includes('Unidad de continuidad'),null,{timeout:10000});
 
   console.log('CONTINUITY 5/5 Continuidad con red caída después de cargar');
   await context.setOffline(true);
-  await page.evaluate(()=>window.go('plan'));
   const unitVisible=await page.locator('#unitsList').textContent();
-  assert(unitVisible?.includes('Unidad de continuidad'),'No se pudo consultar la unidad cargada sin red');
+  assert(unitVisible?.includes('Unidad de continuidad'),'No se pudo consultar la unidad ya cargada después de cortar la red');
   await page.evaluate(()=>window.go('session'));
   const docxOk=await page.evaluate(()=>window.ddDocxSelfTest());
   assert(docxOk===true,'La generación DOCX dejó de funcionar sin red');
