@@ -128,3 +128,9 @@ La causa técnica original (ventana de arranque con superficies no listas clicab
 La investigación del Beta E2E #33 confirmó que el fallo de continuidad no fue causado por el cierre inicial de Materiales/Evaluación: el mismo patrón ya existía en el HEAD anterior. La prueba fallaba porque abría Unidad/Proyecto antes de que `window.__ddPlanningRuntimeReady` fuese verdadero. El runtime bloqueaba los botones de generación, pero no la entrada `showUnit()` (“Crear nueva”).
 
 **Corrección:** el bootstrap incluye ahora `showUnit()` entre las acciones de planificación bloqueadas hasta completar los módulos críticos. La prueba `tests/continuity-resilience.mjs` espera explícitamente el runtime, comprueba que no existan fallos de módulos y usa el botón real “Crear nueva” en vez de invocar la función directamente. Esto convierte la prueba en un recorrido representativo del usuario y evita una carrera de arranque.
+
+### Corrección del fixture de continuidad — 2026-09-18
+
+El Beta E2E #35 volvió a detenerse antes del autosave porque su fixture no incluía `linguisticMode`. Desde `config-state-guard-v42.js`, una ruta Docente exige un perfil lingüístico completo; por ello el sistema actuó correctamente devolviendo el estado incompleto al setup. El test interpretaba erróneamente esa protección como un fallo de continuidad.
+
+**Acción:** el fixture de `tests/continuity-resilience.mjs` representa ahora una IE monolingüe válida con `linguisticMode: 'Monolingüe castellano'`, lengua castellana y lengua originaria `Ninguna`. No se relajó ninguna guarda de producción.

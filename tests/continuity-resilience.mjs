@@ -9,7 +9,7 @@ const page=await context.newPage();
 function assert(condition,message){if(!condition)throw new Error(message);}
 const fixture=()=>({
   mode:'easy',level:'Primaria',ieType:'Multigrado',grades:['1.º','3.º','5.º'],areas:['Comunicación','Matemática'],
-  language:'Castellano',quechuaVar:'Ninguna',units:[{id:'u-continuity',title:'Unidad de continuidad',type:'Unidad de aprendizaje',duration:'2 semanas',situationBrief:'Prueba de continuidad',situation:'Situación de prueba para continuidad.',grades:['1.º','3.º','5.º'],areas:['Comunicación','Matemática'],activities:[{area:'Comunicación',title:'Leemos para probar continuidad',week:1,order:1}],selectionApproved:true}],
+  linguisticMode:'Monolingüe castellano',language:'Castellano',indigenousLanguage:'Ninguna',quechuaVar:'Ninguna',linguisticSelectionConfirmed:false,units:[{id:'u-continuity',title:'Unidad de continuidad',type:'Unidad de aprendizaje',duration:'2 semanas',situationBrief:'Prueba de continuidad',situation:'Situación de prueba para continuidad.',grades:['1.º','3.º','5.º'],areas:['Comunicación','Matemática'],activities:[{area:'Comunicación',title:'Leemos para probar continuidad',week:1,order:1}],selectionApproved:true}],
   activeUnitId:'u-continuity',lastSession:{unitId:'u-continuity',title:'Leemos para probar continuidad',area:'Comunicación',duration:'90 minutos',criterion:'Identifica información y explica lo comprendido.',evidence:'Respuesta y explicación.',instrument:'Lista de cotejo',createdAt:new Date().toISOString()}
 });
 
