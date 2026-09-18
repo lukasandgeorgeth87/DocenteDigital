@@ -16,8 +16,8 @@
     <button class="nav active" data-screen="home" onclick="go('home')">🏠 Inicio</button>
     <button class="nav" data-screen="plan" onclick="go('plan')">📘 Mi planificación</button>
     <button class="nav" data-screen="session" onclick="go('session')">📝 Crear mi sesión</button>
-    <button class="nav" data-screen="materials" onclick="go('materials')">🧩 Materiales</button>
-    <button class="nav" data-screen="evaluation" onclick="go('evaluation')">📊 Evaluación</button>
+    <button class="nav" data-screen="materials" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">🧩 Materiales · Próximamente</button>
+    <button class="nav" data-screen="evaluation" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">📊 Evaluación · Próximamente</button>
     <button class="nav" data-screen="director" onclick="go('director')">🏫 Director</button>
     <button class="nav" data-screen="settings" onclick="go('settings')">⚙️ Configuración</button>
   </aside>
@@ -53,16 +53,16 @@
         <button class="card action-card span6" onclick="continueWork()"><span>▶️</span><h2>Continuar mi trabajo</h2><p>Retoma tu última unidad, proyecto o sesión.</p></button>
         <button class="card action-card span6" onclick="go('session')"><span>📝</span><h2>Crear mi sesión</h2><p>Usa la unidad/proyecto actual y completa solo lo que falta.</p></button>
         <button class="card action-card span4" onclick="go('plan')"><span>📘</span><h2>Mi planificación</h2><p>Diagnóstico, programación anual, horario, unidades y proyectos.</p></button>
-        <button class="card action-card span4" onclick="go('materials')"><span>🧩</span><h2>Materiales</h2><p>Lecturas y fichas en castellano, lengua originaria o formato bilingüe.</p></button>
-        <button class="card action-card span4" onclick="go('evaluation')"><span>📊</span><h2>Evaluación</h2><p>Registro, evaluación y conclusiones SIAGIE.</p></button>
+        <button class="card action-card span4" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento"><span>🧩</span><h2>Materiales · Próximamente</h2><p>Este flujo todavía está en construcción y no se considera disponible para lanzamiento.</p></button>
+        <button class="card action-card span4" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento"><span>📊</span><h2>Evaluación · Próximamente</h2><p>Este flujo todavía está en construcción y no se considera disponible para lanzamiento.</p></button>
       </div>
     </section>
 
     <section id="plan" class="screen">
       <h1>Mi planificación</h1><p class="sub">Nivel → Tipo de IE → grados/edades → áreas → horario → planificación.</p>
       <div class="grid">
-        <div class="card span4"><h2>🩺 Evaluación diagnóstica</h2><p>Toma como referencia aprendizajes del grado anterior.</p><button class="btn block" onclick="showDiagnostic()">Crear diagnóstico</button></div>
-        <div class="card span4"><h2>📅 Programación anual</h2><p>Se reajusta con diagnóstico, contexto y avances.</p><button class="btn alt block" onclick="demoAnnual()">Abrir</button></div>
+        <div class="card span4"><h2>🩺 Evaluación diagnóstica</h2><p>Toma como referencia aprendizajes del grado anterior.</p><button class="btn block" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">Crear diagnóstico · Próximamente</button></div>
+        <div class="card span4"><h2>📅 Programación anual</h2><p>Se reajusta con diagnóstico, contexto y avances.</p><button class="btn alt block" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">Abrir programación anual · Próximamente</button></div>
         <div class="card span4"><h2>📚 Unidad / Proyecto</h2><p>Crea y guarda unidades o proyectos para reutilizarlos en las sesiones.</p><button class="btn amber block" onclick="showUnit()">Crear nueva</button></div>
       </div>
 
@@ -98,12 +98,12 @@
 
     <section id="materials" class="screen">
       <h1>Materiales</h1><p class="sub">Lecturas, fichas y recursos en castellano, lengua originaria o formato bilingüe.</p>
-      <div class="card"><div class="form2"><label>Tipo<select><option>Lectura</option><option>Ficha</option><option>Tarjetas palabra-imagen</option></select></label><label>Idioma<select id="materialLanguage"><option>Castellano</option><option>Lengua originaria</option><option>Bilingüe</option></select></label><label>Lengua originaria / variedad<select id="materialQuechua"><option value="Ninguna">Ninguna</option></select></label><label>Grado<select id="materialGrade"></select></label><label class="full">Tema<input placeholder="Escribe el tema o interés que deseas trabajar"></label></div><div class="notice">Si seleccionas lengua originaria o bilingüe, confirma la lengua/variedad pertinente y revisa el material antes de imprimir.</div><button class="btn" onclick="generateMaterial()">✨ Crear lectura</button><div id="materialOutput" class="document hidden topgap"><h2>Lectura generada</h2><p id="materialText"></p></div></div>
+      <div class="card"><div class="form2"><label>Tipo<select><option>Lectura</option><option>Ficha</option><option>Tarjetas palabra-imagen</option></select></label><label>Idioma<select id="materialLanguage"><option>Castellano</option><option>Lengua originaria</option><option>Bilingüe</option></select></label><label>Lengua originaria / variedad<select id="materialQuechua"><option value="Ninguna">Ninguna</option></select></label><label>Grado<select id="materialGrade"></select></label><label class="full">Tema<input placeholder="Escribe el tema o interés que deseas trabajar"></label></div><div class="notice">Si seleccionas lengua originaria o bilingüe, confirma la lengua/variedad pertinente y revisa el material antes de imprimir.</div><button class="btn" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">✨ Crear lectura · Próximamente</button><div id="materialOutput" class="document hidden topgap"><h2>Lectura generada</h2><p id="materialText"></p></div></div>
     </section>
 
     <section id="evaluation" class="screen">
       <h1>Evaluación</h1><p class="sub">Registro, evaluación de unidad/proyecto y conclusiones descriptivas para SIAGIE.</p>
-      <div class="grid"><div class="card span4"><h2>📋 Registrar evaluación</h2><p>Usa criterios y evidencias ya registrados.</p><button class="btn alt block" onclick="showEvaluation('register')">Abrir</button></div><div class="card span4"><h2>🧪 Evaluación de unidad/proyecto</h2><p>Escrita, oral, de desempeño o mixta.</p><button class="btn amber block" onclick="showEvaluation('unit')">Crear</button></div><div class="card span4"><h2>📝 Conclusiones SIAGIE</h2><p>Propone conclusiones desde evidencias.</p><button class="btn block" onclick="showEvaluation('siagie')">Generar</button></div></div><div id="evaluationPanel" class="card hidden topgap"></div>
+      <div class="grid"><div class="card span4"><h2>📋 Registrar evaluación</h2><p>Usa criterios y evidencias ya registrados.</p><button class="btn alt block" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">Abrir · Próximamente</button></div><div class="card span4"><h2>🧪 Evaluación de unidad/proyecto</h2><p>Escrita, oral, de desempeño o mixta.</p><button class="btn amber block" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">Crear · Próximamente</button></div><div class="card span4"><h2>📝 Conclusiones SIAGIE</h2><p>Propone conclusiones desde evidencias.</p><button class="btn block" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">Generar · Próximamente</button></div></div><div id="evaluationPanel" class="card hidden topgap"></div>
     </section>
 
     <section id="director" class="screen"><h1>Espacio del Director</h1><p class="sub">Simple en la superficie y completo cuando se necesita.</p><div class="grid"><div class="card span6"><h2>▶ Continuar pendiente</h2><button class="btn">Continuar</button></div><div class="card span6"><h2>✍️ Crear documento</h2><button class="btn alt">Crear</button></div><div class="card span6"><h2>📘 DG y Planes</h2><button class="btn alt">Abrir</button></div><div class="card span6"><h2>💬 Asistente del Director</h2><button class="btn amber">Preguntar</button></div></div></section>
@@ -111,7 +111,7 @@
     <section id="settings" class="screen"><h1>Configuración</h1><p class="sub">Datos institucionales y pedagógicos reutilizables.</p><div class="card"><div id="settingsSummary" class="success"></div><button class="btn" onclick="restartSetup()">Editar Nivel/Tipo/Grados/Áreas</button> <button class="btn ghost" onclick="resetDemo()">Restablecer datos</button></div></section>
   </main>
 </div>
-<nav class="mobile-nav"><button class="active" data-screen="home" onclick="go('home')"><b>🏠</b>Inicio</button><button data-screen="plan" onclick="go('plan')"><b>📘</b>Plan</button><button data-screen="session" onclick="go('session')"><b>📝</b>Sesión</button><button data-screen="materials" onclick="go('materials')"><b>🧩</b>Materiales</button><button data-screen="evaluation" onclick="go('evaluation')"><b>📊</b>Evaluación</button></nav>
+<nav class="mobile-nav"><button class="active" data-screen="home" onclick="go('home')"><b>🏠</b>Inicio</button><button data-screen="plan" onclick="go('plan')"><b>📘</b>Plan</button><button data-screen="session" onclick="go('session')"><b>📝</b>Sesión</button><button data-screen="materials" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento"><b>🧩</b>Materiales</button><button data-screen="evaluation" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento"><b>📊</b>Evaluación</button></nav>
 <script src="storage-recovery-v26.js"></script>
 <script src="storage-access-guard-v71.js"></script>
 <script src="app.js"></script>
