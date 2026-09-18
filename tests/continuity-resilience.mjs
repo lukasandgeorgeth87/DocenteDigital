@@ -13,9 +13,19 @@ const fixture=()=>({
   activeUnitId:'u-continuity',lastSession:{unitId:'u-continuity',title:'Leemos para probar continuidad',area:'Comunicación',duration:'90 minutos',criterion:'Identifica información y explica lo comprendido.',evidence:'Respuesta y explicación.',instrument:'Lista de cotejo',createdAt:new Date().toISOString()}
 });
 
+async function waitPlanningRuntime(){
+  await page.waitForFunction(()=>window.__ddPlanningRuntimeReady===true,null,{timeout:20000});
+  const failures=await page.evaluate(()=>Array.isArray(window.ddModuleLoadFailures)?[...window.ddModuleLoadFailures]:[]);
+  assert(failures.length===0,`Fallaron módulos críticos antes de probar continuidad: ${failures.join(', ')}`);
+}
+
 async function openUnitDraft(){
+  await waitPlanningRuntime();
   await page.evaluate(()=>window.go('plan'));
-  await page.evaluate(()=>window.showUnit());
+  const create=page.locator('button[onclick="showUnit()"]',{hasText:'Crear nueva'}).first();
+  await create.waitFor({state:'visible',timeout:10000});
+  assert(await create.isEnabled(),'Crear nueva sigue bloqueado después de completar el runtime');
+  await create.click();
   const chooser=page.locator('#ddPlanningKindChooser');
   if(await chooser.count()){
     await chooser.waitFor({state:'visible',timeout:10000});

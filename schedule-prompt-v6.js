@@ -133,9 +133,9 @@
   window.ddModuleLoadFailures=Array.isArray(window.ddModuleLoadFailures)?window.ddModuleLoadFailures:[];
 
   function planningButtons(){
-    return [...document.querySelectorAll('#unitPanel button,#unitOutput button')].filter(button=>{
+    return [...document.querySelectorAll('#plan button,#unitPanel button,#unitOutput button')].filter(button=>{
       const action=button.getAttribute('onclick')||'';
-      return button.id==='ddBuildUnit'||/createUnitDemo/.test(action);
+      return button.id==='ddBuildUnit'||/createUnitDemo|showUnit/.test(action);
     });
   }
   function lockPlanningButtons(){
@@ -197,7 +197,7 @@
     if(window.__ddPlanningRuntimeReady)return;
     const button=event.target?.closest?.('button');if(!button)return;
     const action=button.getAttribute('onclick')||'';
-    if(button.id==='ddBuildUnit'||/createUnitDemo/.test(action)){
+    if(button.id==='ddBuildUnit'||/createUnitDemo|showUnit/.test(action)){
       event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
       lockPlanningButtons();
     }
