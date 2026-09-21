@@ -215,10 +215,13 @@ function activityVariants(area,brief){
       `Reflexionamos sobre el agradecimiento, la vida y el cuidado de la creación`,
       `Expresamos compromisos de respeto y solidaridad desde nuestra fe y cultura`
     ],
-    'Castellano como Segunda Lengua':[
+    'Castellano como Segunda Lengua': state.level==='Inicial' ? [
+      `Conversamos en castellano sobre experiencias cercanas mediante palabras, frases, gestos e imágenes`,
+      `Escuchamos y comprendemos mensajes orales sencillos en castellano`
+    ] : [
       `Conversamos en castellano sobre experiencias del contexto`,
-      `Comprendemos mensajes y textos breves en castellano`,
-      `Producimos mensajes escritos sencillos en castellano según el nivel`
+      `Leemos textos breves vinculados con el contexto`,
+      `Producimos mensajes escritos en castellano según el propósito comunicativo`
     ],
     'Inglés como Lengua Extranjera':[
       `Comprendemos expresiones sencillas relacionadas con el contexto de la unidad`,
@@ -235,10 +238,6 @@ function activityVariants(area,brief){
     'Desarrollo Personal, Ciudadanía y Cívica':[
       `Deliberamos sobre decisiones y responsabilidades relacionadas con ${topic}`,
       `Construimos propuestas y acuerdos para el bien común`
-    ],
-    'Inglés como Lengua Extranjera':[
-      `Comprendemos expresiones sencillas relacionadas con el contexto de la unidad`,
-      `Comunicamos información breve sobre nuestra experiencia`
     ],
     'Educación para el Trabajo':[
       `Identificamos necesidades y oportunidades vinculadas con ${topic}`,
