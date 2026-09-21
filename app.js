@@ -229,15 +229,35 @@ function proposeUnitTitleOptions(brief,type){
   }else{
     const first=ctx.raw.split(/[.!?]/)[0].replace(/^(los|las|el|la)\s+/i,'').trim();
     const rawClause=/^(?:se\s+)?(?:arrojan?|botan?|tiran?|dejan?|usan?|hacen?|tienen?|quieren?|comen?|juegan?|pelean?|contaminan?|desperdician?|malgastan?)\b/i.test(first);
-    if(level==='Secundaria'&&rawClause){
-      options.push(project?'Del problema a la acción: investigamos una situación de nuestro entorno y proponemos mejoras':'Una situación que nos interpela: analizamos causas, consecuencias y alternativas');
-      options.push('Comprender para decidir: estudiamos una situación de nuestro entorno');
-      options.push('Del análisis a la propuesta: construimos respuestas sustentadas');
+    if(rawClause){
+      if(level==='Inicial'){
+        options.push('Descubrimos cómo cuidarnos y convivir mejor');
+        options.push('Pequeñas acciones que hacen bien a todos');
+        options.push('Jugamos, conversamos y encontramos mejores formas de actuar');
+      }else if(level==='Primaria'){
+        options.push(project?'Observamos lo que ocurre, investigamos y proponemos mejoras':'Comprendemos lo que ocurre y buscamos mejores formas de actuar');
+        options.push('De una situación cotidiana a una solución compartida');
+        options.push('Investigamos nuestro entorno para aprender y tomar buenas decisiones');
+      }else{
+        options.push(project?'Del problema a la acción: investigamos una situación de nuestro entorno y proponemos mejoras':'Una situación que nos interpela: analizamos causas, consecuencias y alternativas');
+        options.push('Comprender para decidir: estudiamos una situación de nuestro entorno');
+        options.push('Del análisis a la propuesta: construimos respuestas sustentadas');
+      }
     }else{
       const short=first.length>70?first.slice(0,67).replace(/\s+\S*$/,'')+'…':first;
-      if(short)options.push(project?`Investigamos nuestro contexto: ${short}`:`Aprendemos desde nuestro contexto: ${short}`);
-      options.push(project?'Investigamos y transformamos una situación de nuestra comunidad':'Comprendemos y aprendemos desde una situación de nuestra comunidad');
-      options.push('Aprendemos con sentido: observamos, investigamos y proponemos');
+      if(level==='Inicial'){
+        options.push(short?`Descubrimos más sobre ${short}`:'Exploramos y descubrimos desde nuestra experiencia');
+        options.push('Jugamos, observamos y aprendemos juntos');
+        options.push('Preguntamos, exploramos y contamos lo que descubrimos');
+      }else if(level==='Primaria'){
+        if(short)options.push(project?`Investigamos nuestro contexto: ${short}`:`Aprendemos desde nuestro contexto: ${short}`);
+        options.push(project?'Investigamos y transformamos una situación de nuestra comunidad':'Comprendemos y aprendemos desde una situación de nuestra comunidad');
+        options.push('Aprendemos con sentido: observamos, investigamos y proponemos');
+      }else{
+        if(short)options.push(project?`Investigamos y analizamos: ${short}`:`Analizamos y comprendemos: ${short}`);
+        options.push(project?'Investigamos una situación de nuestro contexto y construimos una propuesta':'Comprendemos una situación de nuestro contexto a partir de evidencias');
+        options.push('Analizamos, contrastamos y sustentamos nuestras conclusiones');
+      }
     }
   }
 
