@@ -1,0 +1,142 @@
+name: Build Ñawinchay public pilot
+
+on:
+  push:
+    branches:
+      - nawinchay-pilot-public
+    paths:
+      - .github/workflows/nawinchay-publish.yml
+
+permissions:
+  contents: write
+
+jobs:
+  build-public-pilot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: nawinchay-pilot-public
+
+      - name: Download verified Ñawinchay resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://frhtvbcuaufeybpokomz.supabase.co"
+          mkdir -p nawinchay/data nawinchay/icons
+          curl -fsSL "$BASE/storage/v1/object/public/nawinchay-public/index.html" -o nawinchay/index.html
+          curl -fsSL "$BASE/functions/v1/nawinchay-css" -o nawinchay/styles.css
+          curl -fsSL "$BASE/functions/v1/nawinchay-js1" -o nawinchay/js1.js
+          curl -fsSL "$BASE/functions/v1/nawinchay-js2" -o nawinchay/js2.js
+          curl -fsSL "$BASE/functions/v1/nawinchay-js3" -o nawinchay/js3.js
+          curl -fsSL "$BASE/functions/v1/nawinchay-js4" -o nawinchay/js4.js
+          curl -fsSL "$BASE/functions/v1/nawinchay-data" -o nawinchay/data/readings.json
+          curl -fsSL "$BASE/functions/v1/nawinchay-icon192" -o nawinchay/icons/icon-192.png
+          curl -fsSL "$BASE/functions/v1/nawinchay-icon512" -o nawinchay/icons/icon-512.png
+
+      - name: Localize frontend paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("nawinchay/index.html")
+          s=p.read_text()
+          repl={
+            "/functions/v1/nawinchay-css":"styles.css",
+            "/functions/v1/nawinchay-config":"config.js",
+            "/functions/v1/nawinchay-js1":"js1.js",
+            "/functions/v1/nawinchay-js2":"js2.js",
+            "/functions/v1/nawinchay-js3":"js3.js",
+            "/functions/v1/nawinchay-js4":"js4.js",
+            "/functions/v1/nawinchay-manifest":"manifest.webmanifest",
+            "/functions/v1/nawinchay-icon192":"icons/icon-192.png",
+            "/functions/v1/nawinchay-icon512":"icons/icon-512.png",
+          }
+          for a,b in repl.items(): s=s.replace(a,b)
+          p.write_text(s)
+          for f in Path("nawinchay").glob("js*.js"):
+              t=f.read_text()
+              t=t.replace("CONFIG.swUrl","'./sw.js'").replace("CONFIG.swScope","'./'")
+              f.write_text(t)
+          PY
+
+      - name: Write production-local config and PWA files
+        shell: bash
+        run: |
+          cat > nawinchay/config.js <<'EOF'
+          window.NAWINCHAY_CONFIG = {
+            supabaseUrl: 'https://frhtvbcuaufeybpokomz.supabase.co',
+            publishableKey: 'sb_publishable_KoLopKwK43F6JL6Uw0IoLg_m_llkv-A',
+            grade: 1,
+            language: 'es',
+            pilotReadingIds: ["2a10bff0-ded5-43f0-b7be-00b203842bee","12889848-18e3-49ef-8031-83e176d84fe7","da4090d8-7092-4c0e-8c9c-0735ccb8011d","ab3dfc13-c00b-4340-99e9-e701145812ab","fa69c34b-a044-43bd-97a2-5abdd3f885ba","f22577a2-2417-455c-a92b-667346750d90","19f59a77-8156-4d55-869c-9e0f1013edb4","e11a5dbd-1197-4e63-9780-99c941b0a730","aa608ba4-3607-4340-9a54-10c5eb6f0887","c0858834-3d6c-4ab8-84d6-c7593bf394f7"],
+            pilotDate: '2026-09-18',
+            readingsUrl: './data/readings.json',
+            manifestUrl: './manifest.webmanifest',
+            iconUrl: './icons/icon-192.png',
+            swUrl: './sw.js',
+            swScope: './'
+          };
+          EOF
+
+          cat > nawinchay/manifest.webmanifest <<'EOF'
+          {
+            "name":"Ñawinchay — Cuaderno Auxiliar Lector",
+            "short_name":"Ñawinchay",
+            "start_url":"./index.html",
+            "scope":"./",
+            "display":"standalone",
+            "background_color":"#f7f5fb",
+            "theme_color":"#7356d8",
+            "lang":"es-PE",
+            "description":"Piloto offline-first de 10 lecturas para 1.º de primaria.",
+            "orientation":"portrait-primary",
+            "categories":["education"],
+            "icons":[
+              {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+              {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+            ]
+          }
+          EOF
+
+          cat > nawinchay/sw.js <<'EOF'
+          const CACHE='nawinchay-github-v1';
+          const ASSETS=['./','./index.html','./styles.css','./config.js','./js1.js','./js2.js','./js3.js','./js4.js','./data/readings.json','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'];
+          self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
+          self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+          self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url);if(u.origin!==self.location.origin)return;e.respondWith(caches.match(e.request).then(hit=>hit||fetch(e.request).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));return r}).catch(()=>caches.match('./index.html'))));});
+          EOF
+
+      - name: Validate static package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(python - <<'PY'
+          import json
+          x=json.load(open('nawinchay/data/readings.json'))
+          print(len(x))
+          PY
+          )" = "10"
+          node --check nawinchay/js1.js
+          node --check nawinchay/js2.js
+          node --check nawinchay/js3.js
+          node --check nawinchay/js4.js
+          python -m http.server 4173 -d nawinchay >/tmp/nawinchay-http.log 2>&1 &
+          PID=$!
+          trap 'kill $PID || true' EXIT
+          sleep 1
+          for f in index.html styles.css config.js js1.js js2.js js3.js js4.js data/readings.json manifest.webmanifest sw.js icons/icon-192.png icons/icon-512.png; do
+            curl -fsS "http://127.0.0.1:4173/$f" >/dev/null
+          done
+
+      - name: Commit isolated public build
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add nawinchay
+          git diff --cached --quiet && exit 0
+          git commit -m "build: publish isolated Ñawinchay pilot"
+          git push origin nawinchay-pilot-public
