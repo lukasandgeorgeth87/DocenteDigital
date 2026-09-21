@@ -246,6 +246,26 @@
     return `<h2>6. MOMENTOS DE LA SESIÓN</h2>${table(body,['MOMENTOS','ESTRATEGIAS / ACTIVIDADES','TIEMPO'])}`;
   }
 
+  function selectedVisualForSession(session){
+    try{
+      const r=JSON.parse(localStorage.getItem('docenteDigitalSelectedResource')||'null');
+      if(!r||!r.previewUrl)return null;
+      if(r.selectedForSessionId&&session?.id&&r.selectedForSessionId!==session.id)return null;
+      return r;
+    }catch{return null;}
+  }
+
+  function coverVisualHtml(session){
+    const r=selectedVisualForSession(session);
+    if(!r)return '';
+    return `<div class="dd-session-cover-visual">
+      <a href="${E(r.previewUrl)}" target="_blank" rel="noopener noreferrer">
+        <img src="${E(r.previewUrl)}" alt="${E(r.title||'Imagen de referencia')}" loading="lazy">
+      </a>
+      <div><b>${E(r.title||'Imagen de referencia')}</b><br><small>Miniatura real de referencia · <a href="${E(r.previewUrl)}" target="_blank" rel="noopener noreferrer">abrir imagen</a></small></div>
+    </div>`;
+  }
+
   function officialSources(session){
     const base=SRC();
     if(!base)return '';
@@ -293,6 +313,11 @@
   if(typeof prev==='function'){
     window.sessionHtml=function(session,forWord=false){
       let html=prev(session,forWord);
+      const cover=coverVisualHtml(session);
+      if(cover){
+        const titleNeedle=`<h2 style="text-align:center">“${E(session.title)}”</h2>`;
+        if(html.includes(titleNeedle))html=html.replace(titleNeedle,titleNeedle+cover);
+      }
       const master=momentsHtml(session);
       const re=/<h2>6\. MOMENTOS DE LA SESIÓN<\/h2>[\s\S]*?(?=<h2>7\. INSTRUMENTO DE EVALUACIÓN<\/h2>)/;
       if(re.test(html))html=html.replace(re,master);
@@ -314,6 +339,10 @@
     .dd-adai{padding:8px 10px;background:#eef4ff;border:1px solid #c8d7ef;border-radius:8px;margin:7px 0}
     .dd-sources,.dd-material-note{padding:10px 12px;margin:10px 0;border:1px solid #d7e2dc;border-radius:10px;background:#fbfdfc}
     .dd-sources a,.dd-material-note a{color:#205d46;font-weight:700}
+    .dd-session-cover-visual{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:center;margin:10px auto 14px;max-width:650px;padding:8px;border:1px solid #d7e2dc;border-radius:12px;background:#fbfdfc}
+    .dd-session-cover-visual img{width:120px;height:88px;object-fit:cover;border-radius:9px;display:block}
+    .dd-session-cover-visual a{color:#205d46;font-weight:700}
+    @media(max-width:600px){.dd-session-cover-visual{grid-template-columns:90px 1fr}.dd-session-cover-visual img{width:90px;height:70px}}
     .dd-table ul{margin:0;padding-left:18px}.dd-table li{margin:5px 0}
   `;
   document.head.appendChild(style);
