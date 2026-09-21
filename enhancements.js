@@ -157,8 +157,10 @@
       alert('Falta matriz curricular oficial para: '+missing.join(', ')+'. Corrige la configuración antes de continuar.');
       return;
     }
-    const type=byId('unitType').value, duration=byId('unitDuration').value, brief=byId('unitSituation').value.trim();
-    if(!brief)return alert('Escribe una idea breve del contexto o situación de tu comunidad.');
+    const type=byId('unitType').value, duration=byId('unitDuration').value;
+    let brief=byId('unitSituation').value.trim();
+    if(!brief&&typeof window.ddAssistPlanningContext==='function')brief=window.ddAssistPlanningContext(true)||'';
+    if(!brief)brief=byId('unitTitle').value.trim()||'una experiencia cercana y significativa para los estudiantes';
     let title=byId('unitTitle').value.trim(); if(!title){title=proposeUnitTitle(brief,type);byId('unitTitle').value=title;}
     const unit=ddEnrich({id:'u'+Date.now(),title,type,duration,situationBrief:brief,situation:expandSituation(brief),level:state.level,ieType:state.ieType,grades:[...state.grades],areas:[...state.areas],language:state.language,quechuaVar:state.quechuaVar,purpose:'Desarrollar competencias de manera articulada a partir de una situación real y retadora de la comunidad, integrando saberes locales y conocimientos escolares, con atención diferenciada según grado.',product:ddProduct(brief,type),activities:buildActivities(brief,duration),createdAt:new Date().toISOString()});
     state.units.unshift(unit);state.activeUnitId=unit.id;save();byId('unitReady').classList.remove('hidden');renderUnits();renderUnitOutput(unit);fillSessionUnits();byId('unitOutput').scrollIntoView({behavior:'smooth'});
