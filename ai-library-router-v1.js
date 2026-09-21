@@ -393,7 +393,29 @@
       }catch(_e){}
     }
     const low=String(seed).toLowerCase();
-    if(/animal/.test(low)){
+    if(/basura|residuo|recicl|contamin/.test(low)){
+      if(level==='Inicial')options=[
+        'Cada residuo en su lugar: cuidamos nuestros espacios',
+        '¿Dónde va la basura? Descubrimos y aprendemos a cuidar',
+        'Pequeñas acciones para mantener limpio nuestro entorno',
+        'Cuidamos juntos el lugar donde aprendemos',
+        'Jugamos y aprendemos a ordenar nuestros residuos'
+      ];
+      else if(level==='Secundaria')options=[
+        'Residuos y convivencia: analizamos cómo nuestras decisiones afectan los espacios comunes',
+        'Del problema a la solución: comprendemos la gestión responsable de los residuos',
+        'Basura en el piso: analizamos causas y proponemos soluciones sostenibles',
+        'Espacios limpios, decisiones responsables: investigamos y proponemos mejoras',
+        'Del residuo a la acción: comprendemos, decidimos y transformamos'
+      ];
+      else options=[
+        'Cuidamos nuestros espacios: aprendemos a manejar responsablemente los residuos',
+        'Basura en el piso: observamos, pensamos y proponemos soluciones',
+        'Menos residuos, más cuidado: aprendemos a convivir en un ambiente limpio',
+        'Guardianes de nuestros espacios: reducimos, reutilizamos y cuidamos',
+        'Cada residuo en su lugar: actuamos por una escuela limpia'
+      ];
+    }else if(/animal/.test(low)){
       if(level==='Inicial')options=[
         'Pequeños exploradores del mundo animal',
         '¿Quién vive, salta, vuela o se arrastra?',
