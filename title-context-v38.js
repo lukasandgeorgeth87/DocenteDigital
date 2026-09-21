@@ -60,13 +60,157 @@
     if(!/primavera/i.test(theme))return null;
     return['Descubrimos los cambios que trae la primavera a nuestro entorno','¿Qué cambia en nuestro entorno cuando llega la primavera?','Conocemos y cuidamos la vida que florece durante la primavera'];
   }
+  function titleLevel(){
+    try{return (typeof state!=='undefined'&&state.level)||'Primaria';}catch(e){return 'Primaria';}
+  }
+
+  function semanticIssue(raw,theme){
+    const s=low(raw+' '+theme);
+    if(/\b(?:basura|residu|recicl|desperdicio)\b/.test(s)&&/\b(?:arrojan?|botan?|tiran?|dejan?|piso|suelo|acumulan?|contamin|manejo|separ|recicl)\b/.test(s)){
+      return {key:'waste',theme:'la gestión responsable de los residuos y el cuidado de los espacios comunes'};
+    }
+    if(/\b(?:desperdici|malgast|derroch)\w*\s+(?:el\s+)?agua\b|\bagua\b.*\b(?:desperdici|malgast|derroch)\w*/.test(s)){
+      return {key:'water',theme:'el uso responsable del agua'};
+    }
+    if(/\b(?:pele|agred|insult|acoso|bullying|conflict|no\s+respet)\w*/.test(s)){
+      return {key:'coexistence',theme:'la convivencia, el respeto y la resolución pacífica de conflictos'};
+    }
+    if(/\b(?:aliment|comida\s+chatarra|nutric|lonchera)\b/.test(s)){
+      return {key:'nutrition',theme:'la alimentación saludable y las decisiones que favorecen nuestro bienestar'};
+    }
+    if(/\b(?:redes\s+sociales|celular|telefono|internet)\b/.test(s)&&/\b(?:exces|mal\s+uso|riesgo|adic|distrac)\w*/.test(s)){
+      return {key:'digital',theme:'el uso responsable y seguro de la tecnología'};
+    }
+    return null;
+  }
+
+  function clauseLike(theme){
+    const t=low(theme);
+    return /^(?:se\s+)?(?:arrojan?|botan?|tiran?|dejan?|usan?|hacen?|tienen?|quieren?|comen?|juegan?|pelean?|contaminan?|desperdician?|malgastan?|usan?|llegan?|faltan?|rompen?|gritan?|copian?|votan?|cuidan?|maltratan?)\b/.test(t);
+  }
+
+  function issueTitles(issue,type,level){
+    const project=/proyecto/i.test(type||'');
+    if(issue.key==='waste'){
+      if(level==='Inicial')return [
+        'Cada residuo en su lugar: cuidamos nuestros espacios',
+        '¿Dónde va la basura? Descubrimos y aprendemos a cuidar',
+        'Pequeñas acciones para mantener limpio nuestro entorno'
+      ];
+      if(level==='Secundaria')return project ? [
+        'Del residuo a la acción: investigamos y transformamos nuestros espacios',
+        'Basura en el piso: analizamos causas y proponemos soluciones sostenibles',
+        'Espacios limpios, decisiones responsables: actuamos frente a los residuos'
+      ] : [
+        'Residuos y convivencia: analizamos cómo nuestras decisiones afectan los espacios comunes',
+        'Del problema a la solución: comprendemos la gestión responsable de los residuos',
+        'Espacios limpios, decisiones responsables: investigamos y proponemos mejoras'
+      ];
+      return project ? [
+        'Menos basura, más cuidado: investigamos y mejoramos nuestros espacios',
+        'Basura en el piso: observamos, comprendemos y actuamos',
+        'Cuidamos nuestra escuela: proponemos soluciones para manejar mejor los residuos'
+      ] : [
+        'Cuidamos nuestros espacios: aprendemos a manejar responsablemente los residuos',
+        'Basura en el piso: observamos, pensamos y proponemos soluciones',
+        'Menos residuos, más cuidado: aprendemos a convivir en un ambiente limpio'
+      ];
+    }
+    if(issue.key==='water'){
+      if(level==='Secundaria')return [
+        'Cada gota cuenta: analizamos el uso del agua y tomamos decisiones responsables',
+        'Agua y sostenibilidad: investigamos prácticas de uso y cuidado',
+        'Del consumo a la conciencia: proponemos un uso responsable del agua'
+      ];
+      if(level==='Inicial')return ['El agua es vida: aprendemos a cuidarla','Cada gotita cuenta','Jugamos, descubrimos y cuidamos el agua'];
+      return ['Cada gota cuenta: aprendemos a cuidar el agua','Guardianes del agua: observamos, comprendemos y actuamos','El agua en nuestra vida: usamos y cuidamos con responsabilidad'];
+    }
+    if(issue.key==='coexistence'){
+      if(level==='Secundaria')return ['Convivir también se aprende: analizamos conflictos y construimos acuerdos','Del conflicto al diálogo: comprendemos, decidimos y actuamos','Respeto y convivencia: proponemos formas pacíficas de resolver desacuerdos'];
+      if(level==='Inicial')return ['Nos tratamos con cariño y respeto','Aprendemos a jugar y convivir juntos','Hablamos, escuchamos y resolvemos juntos'];
+      return ['Convivimos mejor cuando dialogamos y respetamos','Del conflicto al acuerdo: aprendemos a resolver problemas juntos','Construimos acuerdos para convivir con respeto'];
+    }
+    if(issue.key==='nutrition'){
+      if(level==='Secundaria')return ['Decisiones que alimentan: analizamos hábitos y construimos bienestar','Alimentación y salud: comprendemos para decidir mejor','Lo que elegimos comer importa: investigamos y proponemos hábitos saludables'];
+      if(level==='Inicial')return ['Alimentos que nos ayudan a crecer','Descubrimos sabores que cuidan nuestro cuerpo','Comemos variado para crecer fuertes'];
+      return ['Elegimos alimentos que cuidan nuestra salud','Comer bien para vivir mejor: aprendemos y decidimos','Nuestra alimentación bajo la lupa: observamos y mejoramos hábitos'];
+    }
+    if(issue.key==='digital'){
+      if(level==='Secundaria')return ['Conectados con criterio: analizamos el uso responsable de la tecnología','Pantallas, decisiones y bienestar: comprendemos riesgos y oportunidades','Tecnología con propósito: construimos hábitos digitales responsables'];
+      return ['Usamos la tecnología con responsabilidad','Pantallas con propósito: aprendemos a decidir mejor','Cuidamos nuestro tiempo y seguridad al usar tecnología'];
+    }
+    return [];
+  }
+
   function titlesFromIntent(raw,type){
-    const u=mci(raw,type),theme=tidy(u.theme)||'esta experiencia',kind=u.intentKind||'exploración/comprensión',goal=tidy(u.finality),project=/proyecto/i.test(type||u.document||'');
+    const u=mci(raw,type),baseTheme=tidy(u.theme)||'esta experiencia',kind=u.intentKind||'exploración/comprensión',goal=tidy(u.finality),project=/proyecto/i.test(type||u.document||''),level=titleLevel();
+    const issue=semanticIssue(raw,baseTheme);
+    if(issue)return issueTitles(issue,type,level);
+
+    const theme=baseTheme;
     const school=returnToSchool(raw);if(school)return school;
     const season=seasonal(theme);if(season)return season;
+
+    if(clauseLike(theme)){
+      if(level==='Secundaria')return project?[
+        'Una situación de nuestro entorno bajo investigación: analizamos, explicamos y proponemos',
+        'Del problema a la acción: construimos respuestas sustentadas',
+        'Comprender para transformar: investigamos una situación cercana'
+      ]:[
+        'Una situación que nos interpela: analizamos causas, consecuencias y alternativas',
+        'Comprender para decidir: estudiamos una situación de nuestro entorno',
+        'Del análisis a la propuesta: construimos respuestas sustentadas'
+      ];
+      if(level==='Inicial')return ['Descubrimos lo que ocurre a nuestro alrededor','Observamos, conversamos y buscamos respuestas','Aprendemos a cuidar y convivir mejor'];
+      return ['Observamos lo que ocurre y buscamos explicaciones','Comprendemos una situación de nuestro entorno y proponemos mejoras','Aprendemos para actuar: pensamos, dialogamos y proponemos'];
+    }
+
+    if(level==='Secundaria'){
+      if(isSimpleInterest(raw))return [
+        `${cap(theme)} bajo la lupa: preguntas para comprender mejor`,
+        `Exploramos ${theme} con evidencias y nuevas preguntas`,
+        `Comprender ${theme}: del interés inicial a una explicación sustentada`
+      ];
+      if(isSimpleObservation(raw))return [
+        `Lo que observamos nos plantea preguntas: analizamos ${theme}`,
+        `De la observación a la explicación: comprendemos ${theme}`,
+        `${cap(theme)}: interpretamos evidencias y construimos conclusiones`
+      ];
+      if(investigative(raw)||observed(raw)||kind==='indagación/curiosidad')return project?[
+        `Investigamos ${theme}: de las preguntas a las evidencias`,
+        `Bajo la lupa: analizamos ${theme} y construimos explicaciones`,
+        `Comprender para comunicar: presentamos hallazgos sobre ${theme}`
+      ]:[
+        `${cap(theme)}: analizamos evidencias para comprenderlo mejor`,
+        `Preguntar, contrastar y explicar: estudiamos ${theme}`,
+        `De las ideas iniciales a las conclusiones: comprendemos ${theme}`
+      ];
+      if(kind==='aplicación/acción'||goal)return project?[
+        `${cap(theme)} en acción: analizamos, decidimos y proponemos`,
+        `Comprender para actuar: construimos respuestas frente a ${theme}`,
+        `Del análisis a la propuesta: aplicamos lo aprendido sobre ${theme}`
+      ]:[
+        `Comprender para decidir: analizamos ${theme}`,
+        `${cap(theme)} y toma de decisiones: aplicamos lo aprendido`,
+        `Del conocimiento a la acción: resolvemos situaciones vinculadas con ${theme}`
+      ];
+      return [
+        `${cap(theme)}: comprendemos relaciones, causas y consecuencias`,
+        `Miradas sobre ${theme}: analizamos, contrastamos y explicamos`,
+        `Comprender ${theme}: construimos explicaciones y las sustentamos`
+      ];
+    }
+
+    if(level==='Inicial'){
+      if(isSimpleInterest(raw))return [`Descubrimos ${theme}`,`¿Qué queremos saber sobre ${theme}?`,`Exploramos ${theme} jugando y conversando`];
+      if(isSimpleObservation(raw))return [`Observamos ${theme}`,`¿Qué descubrimos al mirar ${theme}?`,`Exploramos ${theme} y contamos lo que vemos`];
+      return [`Pequeños exploradores de ${theme}`,`Descubrimos ${theme} con nuestros sentidos`,`Jugamos, observamos y aprendemos sobre ${theme}`];
+    }
+
     if(isSimpleInterest(raw))return [`Descubrimos ${theme}`,`¿Qué queremos saber sobre ${theme}?`,`Exploramos ${theme} y compartimos lo aprendido`];
     if(isSimpleObservation(raw))return [`Observamos ${theme}`,`Conocemos más sobre ${theme}`,`Descubrimos ${theme} y compartimos lo aprendido`];
     if(isSimpleDescription(raw))return [`Conocemos ${theme}`,`Describimos ${theme} con nuestras propias palabras`,`Comprendemos ${theme} y explicamos lo aprendido`];
+
     let list=[];
     if(investigative(raw)||observed(raw)||kind==='indagación/curiosidad'){
       list=project?[`Investigamos ${theme} para responder nuestras preguntas`,`De nuestras preguntas a los hallazgos: exploramos ${theme}`,`Compartimos lo que descubrimos sobre ${theme}`]:[`Descubrimos ${theme} a partir de nuestras preguntas`,`Exploramos ${theme} para comprenderlo mejor`,`Lo que queremos saber sobre ${theme}`];
