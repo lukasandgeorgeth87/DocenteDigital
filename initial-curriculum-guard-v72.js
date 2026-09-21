@@ -207,13 +207,19 @@
   function markPlanningAsPreliminary(){
     const panel=document.getElementById('unitPanel');
     if(!panel)return;
+    const officialReady=Boolean(window.DD_OFFICIAL_CURRICULUM?.verified&&window.DD_PEDAGOGICAL_SOURCES);
+    if(officialReady){
+      const createButton=[...panel.querySelectorAll('button')].find(button=>/createUnitDemo/.test(button.getAttribute('onclick')||''));
+      if(createButton)createButton.textContent='✨ Crear propuesta completa';
+      const ready=document.getElementById('unitReady');
+      if(ready)ready.textContent='Unidad/proyecto creado y guardado en “Mis unidades/proyectos”.';
+      return;
+    }
     const situation=document.getElementById('unitSituation');
     const help=situation?.parentElement?.querySelector('small');
-    if(help)help.textContent='La propuesta actual usa interpretación local preliminar y debe revisarse. La comprensión semántica con IA real aún no está conectada.';
+    if(help)help.textContent='La fuente curricular oficial no está disponible. Revisa la conexión antes de crear la propuesta.';
     const createButton=[...panel.querySelectorAll('button')].find(button=>/createUnitDemo/.test(button.getAttribute('onclick')||''));
-    if(createButton)createButton.textContent='✨ Crear propuesta preliminar';
-    const ready=document.getElementById('unitReady');
-    if(ready)ready.textContent='Propuesta preliminar creada y guardada en “Mis unidades/proyectos”. Revísala antes de utilizarla.';
+    if(createButton)createButton.textContent='Fuente oficial requerida';
   }
 
   function preventHardcodedCcotataquiProduct(){
