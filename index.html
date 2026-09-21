@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>DocenteDigital</title>
 <link rel="stylesheet" href="styles.css">
+<style>
+.dd-setup-block{padding:18px 0;border-bottom:1px solid #e4ece8}
+.dd-setup-block:last-child{border-bottom:0}
+.dd-setup-block h1{font-size:clamp(22px,5vw,30px);margin-bottom:6px}
+#setup .steps{position:static;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+#setup .step{opacity:.9}
+#setup .choice.active{background:#e8f7f2;border-color:#57a98b;color:#185e49}
+@media(max-width:650px){#setup .card{padding:14px}#setup .dd-setup-block{padding:14px 0}#setup .choices{gap:8px}}
+</style>
 </head>
 <body>
 <header class="topbar">
@@ -24,25 +33,68 @@
   <main class="content">
     <section id="setup" class="screen setup">
       <div class="card">
-        <div class="steps"><span id="s1" class="step active">1. Nivel</span><span id="s2" class="step">2. Tipo de IE</span><span id="s3" class="step">3. Grados/edades</span><span id="s4" class="step">4. Áreas</span></div>
-        <div id="step1">
-          <h1>Selecciona el nivel educativo</h1><p class="sub">Este es el primer requisito. Define grados, áreas y forma de planificación.</p>
-          <div class="choices"><button class="choice" onclick="chooseOne('level','Inicial',this)">🧸 Inicial</button><button class="choice" onclick="chooseOne('level','Primaria',this)">📚 Primaria</button><button class="choice" onclick="chooseOne('level','Secundaria',this)">🎓 Secundaria</button></div>
-          <div class="actions"><button class="btn" onclick="nextSetup(2)">Continuar →</button></div>
+        <div class="steps"><span class="step active">1. Nivel</span><span class="step active">2. Tipo de IE</span><span class="step active">3. Grados/edades</span><span class="step active">4. Áreas</span></div>
+
+        <div id="step1" class="dd-setup-block">
+          <h1>1. Selecciona el nivel educativo</h1>
+          <p class="sub">Define la estructura pedagógica de tu planificación.</p>
+          <div class="choices">
+            <button type="button" class="choice" data-dd-setup-level="Inicial">🧸 Inicial</button>
+            <button type="button" class="choice" data-dd-setup-level="Primaria">📚 Primaria</button>
+            <button type="button" class="choice" data-dd-setup-level="Secundaria">🎓 Secundaria</button>
+          </div>
         </div>
-        <div id="step2" class="hidden">
-          <h1>Selecciona el tipo de IE</h1><p class="sub">Esto define si trabajarás con uno o varios grados en una misma planificación.</p>
-          <div class="choices"><button class="choice" onclick="chooseOne('ieType','Unidocente',this)">👩‍🏫 Unidocente</button><button class="choice" onclick="chooseOne('ieType','Multigrado',this)">👥 Multigrado</button><button class="choice" onclick="chooseOne('ieType','Polidocente',this)">🏫 Polidocente</button></div>
-          <div class="actions"><button class="btn ghost" onclick="nextSetup(1)">← Atrás</button><button class="btn" onclick="nextSetup(3)">Continuar →</button></div>
+
+        <div id="step2" class="dd-setup-block">
+          <h1>2. Selecciona el tipo de IE</h1>
+          <p class="sub">Esto define si trabajarás con uno o varios grados/edades en una misma planificación.</p>
+          <div class="choices">
+            <button type="button" class="choice" data-dd-setup-ie="Unidocente">👩‍🏫 Unidocente</button>
+            <button type="button" class="choice" data-dd-setup-ie="Multigrado">👥 Multigrado</button>
+            <button type="button" class="choice" data-dd-setup-ie="Polidocente">🏫 Polidocente</button>
+          </div>
         </div>
-        <div id="step3" class="hidden">
-          <h1>Selecciona grados o edades</h1><p id="gradeHelp" class="sub"></p><div id="gradeChoices" class="choices"></div>
-          <div class="actions"><button class="btn ghost" onclick="nextSetup(2)">← Atrás</button><button class="btn" onclick="nextSetup(4)">Continuar →</button></div>
+
+        <div id="step3" class="dd-setup-block">
+          <h1>3. Selecciona grados o edades</h1>
+          <p id="gradeHelp" class="sub">Primero selecciona el nivel y el tipo de IE.</p>
+          <div id="gradeChoices" class="choices"></div>
         </div>
-        <div id="step4" class="hidden">
-          <h1>Selecciona las áreas</h1><p id="areaHelp" class="sub"></p><div id="areaChoices" class="choices"></div>
-          <div class="card inner"><h3>🌎 Perfil lingüístico de la IE</h3><p class="sub">Indica si la institución brinda atención EIB o trabaja de manera monolingüe en castellano.</p><div class="form2"><label>Tipo de atención lingüística<select id="linguisticMode"><option value="">Selecciona una opción</option><option value="EIB">Educación Intercultural Bilingüe (EIB)</option><option value="Monolingüe castellano">Monolingüe castellano</option></select></label><label>Lengua de trabajo<select id="language"><option value="Castellano">Castellano</option><option value="Lengua originaria">Lengua originaria</option><option value="Bilingüe">Bilingüe</option></select></label><label class="full">Lengua originaria / variedad principal<select id="quechuaVar"><option value="Ninguna">Ninguna</option></select></label></div><small>En EIB, la lengua o variedad pertinente debe confirmarse antes de generar materiales. No se asigna automáticamente por ubicación.</small></div>
-          <div class="actions"><button class="btn ghost" onclick="nextSetup(3)">← Atrás</button><button class="btn" onclick="finishSetup()">Guardar y entrar</button></div>
+
+        <div id="step4" class="dd-setup-block">
+          <h1>4. Selecciona las áreas</h1>
+          <p id="areaHelp" class="sub">Las áreas se mostrarán según el nivel seleccionado.</p>
+          <div id="areaChoices" class="choices"></div>
+
+          <div class="card inner">
+            <h3>🌎 Perfil lingüístico de la IE</h3>
+            <p class="sub">Indica si la institución brinda atención EIB o trabaja de manera monolingüe en castellano.</p>
+            <div class="form2">
+              <label>Tipo de atención lingüística
+                <select id="linguisticMode">
+                  <option value="">Selecciona una opción</option>
+                  <option value="EIB">Educación Intercultural Bilingüe (EIB)</option>
+                  <option value="Monolingüe castellano">Monolingüe castellano</option>
+                </select>
+              </label>
+              <label>Lengua de trabajo
+                <select id="language">
+                  <option value="Castellano">Castellano</option>
+                  <option value="Lengua originaria">Lengua originaria</option>
+                  <option value="Bilingüe">Bilingüe</option>
+                </select>
+              </label>
+              <label class="full">Lengua originaria / variedad principal
+                <select id="quechuaVar"><option value="Ninguna">Ninguna</option></select>
+              </label>
+            </div>
+            <small>En EIB, la lengua o variedad pertinente debe confirmarse antes de generar materiales. No se asigna automáticamente por ubicación.</small>
+          </div>
+
+          <div class="actions topgap">
+            <button class="btn" type="button" id="ddSetupSaveEnter">Guardar y entrar →</button>
+          </div>
+          <div id="ddSetupMessage" class="notice hidden"></div>
         </div>
       </div>
     </section>
@@ -251,5 +303,104 @@
 <script src="initial-surface-guard-v1.js"></script>
 <script src="product-audit-runtime-v1.js"></script>
 <script src="setup-navigation-hotfix-v1.js"></script>
+<script>
+(function(){
+  function el(id){return document.getElementById(id)}
+  function st(){return window.state||{}}
+  function saveSafe(){try{window.save&&window.save()}catch(e){}}
+
+  function gradeOptions(level){
+    if(level==='Inicial')return ['3 años','4 años','5 años'];
+    if(level==='Primaria')return ['1.º','2.º','3.º','4.º','5.º','6.º'];
+    if(level==='Secundaria')return ['1.º','2.º','3.º','4.º','5.º'];
+    return [];
+  }
+  function areaOptions(level){
+    if(level==='Inicial')return ['Comunicación','Matemática','Personal Social','Ciencia y Tecnología','Psicomotriz','Arte y Cultura'];
+    if(level==='Primaria')return ['Comunicación','Matemática','Personal Social','Ciencia y Tecnología','Arte y Cultura','Educación Física','Educación Religiosa'];
+    if(level==='Secundaria')return ['Comunicación','Matemática','Ciencia y Tecnología','Ciencias Sociales','DPCC','Inglés','Educación Física','Arte y Cultura','Educación Religiosa','EPT'];
+    return [];
+  }
+  function mark(group,attr,value){
+    document.querySelectorAll(group).forEach(function(b){b.classList.toggle('active',b.getAttribute(attr)===value)})
+  }
+  function renderGrades(){
+    var state=st(),wrap=el('gradeChoices');if(!wrap)return;
+    var opts=gradeOptions(state.level);
+    if(!opts.length){wrap.innerHTML='<span class="sub">Selecciona primero el nivel.</span>';return}
+    var multi=state.ieType==='Multigrado'||state.ieType==='Unidocente';
+    if(el('gradeHelp'))el('gradeHelp').textContent=state.ieType?(multi?'Puedes seleccionar varios grados o edades.':'Selecciona el grado o edad con el que trabajarás.'):'Selecciona también el tipo de IE.';
+    wrap.innerHTML='';
+    opts.forEach(function(g){
+      var b=document.createElement('button');b.type='button';b.className='choice'+((state.grades||[]).includes(g)?' active':'');b.textContent=g;
+      b.onclick=function(){
+        var cur=Array.isArray(state.grades)?state.grades:[];
+        state.grades=multi?(cur.includes(g)?cur.filter(function(x){return x!==g}):cur.concat([g])):[g];
+        saveSafe();renderGrades();
+      };
+      wrap.appendChild(b);
+    });
+  }
+  function renderAreas(){
+    var state=st(),wrap=el('areaChoices');if(!wrap)return;
+    var opts=areaOptions(state.level);
+    if(!opts.length){wrap.innerHTML='<span class="sub">Selecciona primero el nivel.</span>';return}
+    var multiple=state.level!=='Secundaria';
+    if(el('areaHelp'))el('areaHelp').textContent=multiple?'Puedes seleccionar varias áreas.':'En Secundaria selecciona el área principal de esta planificación.';
+    wrap.innerHTML='';
+    opts.forEach(function(a){
+      var b=document.createElement('button');b.type='button';b.className='choice'+((state.areas||[]).includes(a)?' active':'');b.textContent=a;
+      b.onclick=function(){
+        var cur=Array.isArray(state.areas)?state.areas:[];
+        state.areas=multiple?(cur.includes(a)?cur.filter(function(x){return x!==a}):cur.concat([a])):[a];
+        saveSafe();renderAreas();
+      };
+      wrap.appendChild(b);
+    });
+  }
+  function showMessage(msg){
+    var m=el('ddSetupMessage');if(!m)return;
+    m.textContent=msg;m.classList.remove('hidden');m.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  function wire(){
+    document.querySelectorAll('[data-dd-setup-level]').forEach(function(b){
+      b.onclick=function(){
+        var state=st();state.level=b.getAttribute('data-dd-setup-level');state.grades=[];state.areas=[];
+        mark('[data-dd-setup-level]','data-dd-setup-level',state.level);saveSafe();renderGrades();renderAreas();
+        document.getElementById('step2')?.scrollIntoView({behavior:'smooth',block:'start'});
+      };
+    });
+    document.querySelectorAll('[data-dd-setup-ie]').forEach(function(b){
+      b.onclick=function(){
+        var state=st();state.ieType=b.getAttribute('data-dd-setup-ie');state.grades=[];
+        mark('[data-dd-setup-ie]','data-dd-setup-ie',state.ieType);saveSafe();renderGrades();
+        document.getElementById('step3')?.scrollIntoView({behavior:'smooth',block:'start'});
+      };
+    });
+    var state=st();
+    if(state.level)mark('[data-dd-setup-level]','data-dd-setup-level',state.level);
+    if(state.ieType)mark('[data-dd-setup-ie]','data-dd-setup-ie',state.ieType);
+    renderGrades();renderAreas();
+    var btn=el('ddSetupSaveEnter');
+    if(btn)btn.onclick=function(){
+      var state=st();
+      if(!state.level)return showMessage('Selecciona el nivel educativo.');
+      if(!state.ieType)return showMessage('Selecciona el tipo de IE.');
+      if(!Array.isArray(state.grades)||!state.grades.length)return showMessage('Selecciona al menos un grado o edad.');
+      if(!Array.isArray(state.areas)||!state.areas.length)return showMessage('Selecciona al menos un área.');
+      var mode=el('linguisticMode')?.value||'';
+      if(!mode)return showMessage('Selecciona el tipo de atención lingüística.');
+      state.linguisticMode=mode;
+      state.language=el('language')?.value||'Castellano';
+      state.quechuaVar=el('quechuaVar')?.value||'Ninguna';
+      saveSafe();
+      try{window.fillSelects&&window.fillSelects()}catch(e){}
+      if(typeof window.go==='function')window.go('home');
+      else{document.querySelectorAll('.screen').forEach(function(x){x.classList.remove('active')});el('home')?.classList.add('active')}
+    };
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire,{once:true});else wire();
+})();
+</script>
 </body>
 </html>
