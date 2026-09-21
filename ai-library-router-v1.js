@@ -103,7 +103,8 @@
       '1. Buscar en biblioteca',
       '2. Reutilizar si encaja',
       '3. Adaptar si requiere cambios menores',
-      '4. Generar imagen nueva solo si no existe una opción adecuada'
+      '4. Probar primero en ChatGPT Gratis con la cuenta del docente',
+      '5. Usar crédito premium solo si todavía necesita una imagen nueva'
     ]
   };
 
@@ -186,6 +187,70 @@
     ta.remove();
   }
 
+  function imagePrompt(){
+    const s=appState();
+    const last=s.lastSession||{};
+    const level=s.level||'nivel educativo';
+    const grades=(s.grades||[]).join(', ')||'grado correspondiente';
+    const area=last.area||(s.areas||[])[0]||'área correspondiente';
+    const title=last.title||'el tema de la sesión';
+    return [
+      'Crea una imagen educativa clara y de buena calidad para una ficha escolar.',
+      'Tema: '+title+'.',
+      'Nivel: '+level+'. Grado(s): '+grades+'. Área: '+area+'.',
+      'Debe ser pedagógicamente útil, visualmente limpia, sin exceso de elementos y adecuada para impresión en A4.',
+      'Evita texto largo dentro de la imagen; deja el texto principal fuera cuando sea posible.',
+      'No incluyas datos personales de estudiantes ni información privada de la institución.'
+    ].join(' ');
+  }
+
+  async function tryChatGPTFreeForImage(){
+    const prompt=imagePrompt();
+    try{
+      await navigator.clipboard.writeText(prompt);
+      openChatGPTFree();
+      setTimeout(()=>alert('Copiamos una indicación para crear la imagen. Pégala en ChatGPT Gratis. Si el límite gratuito de tu cuenta no está disponible, puedes volver y usar un crédito premium.'),250);
+    }catch{
+      promptFallback(prompt);
+      openChatGPTFree();
+    }
+  }
+
+  function closeCreditGate(){
+    document.getElementById('ddCreditGate')?.remove();
+  }
+
+  function openCreditGate(){
+    closeCreditGate();
+    const wrap=document.createElement('div');
+    wrap.id='ddCreditGate';
+    wrap.className='dd-modal-backdrop';
+    wrap.innerHTML=`
+      <div class="dd-modal" role="dialog" aria-modal="true" aria-labelledby="ddCreditTitle">
+        <button class="dd-modal-x" type="button" aria-label="Cerrar" onclick="window.DocenteDigitalAI.closeCreditGate()">×</button>
+        <span class="pill">Antes de gastar</span>
+        <h2 id="ddCreditTitle">¿Necesitas una imagen nueva?</h2>
+        <p>DocenteDigital intenta ahorrar en este orden: biblioteca, ChatGPT Gratis y recién después un crédito premium.</p>
+        <div class="dd-save-route">
+          <div><b>1</b><span>Biblioteca incluida</span></div>
+          <div><b>2</b><span>ChatGPT Gratis</span></div>
+          <div><b>3</b><span>Crédito premium</span></div>
+        </div>
+        <div class="dd-modal-actions">
+          <button class="btn alt" type="button" onclick="window.DocenteDigitalAI.closeCreditGate();window.DocenteDigitalAI.showSessionSuggestions()">📚 Buscar en biblioteca</button>
+          <button class="btn" type="button" onclick="window.DocenteDigitalAI.tryChatGPTFreeForImage()">💬 Probar ChatGPT Gratis</button>
+          <button class="btn amber" type="button" onclick="window.DocenteDigitalAI.confirmPremiumImage()">✨ Usar 1 crédito</button>
+        </div>
+        <p class="dd-small">El uso de ChatGPT Gratis depende de los límites disponibles en la cuenta del propio docente y no consume la API de DocenteDigital.</p>
+      </div>`;
+    document.body.appendChild(wrap);
+  }
+
+  function confirmPremiumImage(){
+    closeCreditGate();
+    alert('Crédito premium confirmado para la siguiente fase. Todavía no se descuenta ni genera la imagen: primero implementaremos el contador de créditos y la API de imágenes.');
+  }
+
   function renderResourceCards(items){
     if(!items.length) return '<div class="dd-empty">No encontramos recursos con esos filtros. En la siguiente fase se buscará primero en fuentes con licencia clara antes de generar una imagen nueva.</div>';
     return items.map(r => `
@@ -261,6 +326,7 @@
     block.innerHTML=`
       <div class="dd-inline-actions">
         <button class="btn alt" type="button" onclick="window.DocenteDigitalAI.showSessionSuggestions()">🖼 Usar imagen incluida</button>
+        <button class="btn" type="button" onclick="window.DocenteDigitalAI.tryChatGPTFreeForImage()">💬 Probar ChatGPT Gratis</button>
         <button class="btn ghost" type="button" onclick="window.DocenteDigitalAI.newPremiumImage()">✨ Nueva imagen · crédito</button>
       </div>
       <div id="ddSessionSuggestions"></div>`;
@@ -275,7 +341,7 @@
   }
 
   function newPremiumImage(){
-    alert('La generación de imagen nueva quedará detrás de créditos y límites mensuales. Antes se buscará una coincidencia útil en la biblioteca.');
+    openCreditGate();
   }
 
   function injectStyles(){
@@ -307,8 +373,16 @@
       .dd-cost{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
       .dd-cost strong{display:block;font-size:26px;color:var(--p)}
       .dd-image-actions{margin-top:14px}
+      .dd-modal-backdrop{position:fixed;inset:0;z-index:999;background:rgba(11,31,48,.55);display:grid;place-items:center;padding:16px}
+      .dd-modal{position:relative;width:min(620px,100%);background:#fff;border-radius:20px;border:1px solid var(--line);box-shadow:0 24px 70px rgba(0,0,0,.25);padding:22px}
+      .dd-modal h2{margin:8px 0}
+      .dd-modal-x{position:absolute;right:12px;top:10px;border:0;background:transparent;font-size:28px;color:var(--muted)}
+      .dd-modal-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+      .dd-save-route{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+      .dd-save-route div{display:flex;align-items:center;gap:8px;background:#f7fafc;border:1px solid var(--line);border-radius:13px;padding:10px}
+      .dd-save-route b{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#eaf7f5;color:var(--p)}
       @media(max-width:850px){
-        .dd-two,.dd-resource-grid,.dd-library-controls,.dd-cost{grid-template-columns:1fr}
+        .dd-two,.dd-resource-grid,.dd-library-controls,.dd-cost,.dd-save-route{grid-template-columns:1fr}
         .dd-resource{grid-template-columns:70px 1fr}
       }`;
     document.head.appendChild(style);
@@ -424,6 +498,10 @@
     renderLibrary,
     selectResource,
     showSessionSuggestions,
+    tryChatGPTFreeForImage,
+    openCreditGate,
+    closeCreditGate,
+    confirmPremiumImage,
     newPremiumImage,
     bestResources,
     catalog:CATALOG,
