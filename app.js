@@ -423,7 +423,7 @@ function loadUnitForSession(){
   const unit=state.units.find(u=>u.id===sel.value);
   if(!unit){activity.innerHTML='<option value="0">Matemática · Medimos espacios para organizar nuestra feria</option><option value="1">Comunicación · Dialogamos sobre saberes de nuestra comunidad</option>';syncTitle();return;}
   state.activeUnitId=unit.id;save();
-  activity.innerHTML=unit.activities.map((a,i)=>`<option value="${i}">${escapeHtml(a.area)} · ${escapeHtml(a.title)}</option>`).join('');
+  activity.innerHTML=unit.activities.map((a,i)=>`<option value="${i}">${escapeHtml(a.kindLabel||a.area)} · ${escapeHtml(a.title)}</option>`).join('');
   syncTitle();
 }
 
@@ -439,6 +439,13 @@ function syncTitle(){
   const {activity}=selectedActivity();
   title.value=activity?.title||activitySelect.options[activitySelect.selectedIndex]?.textContent||'';
   title.readOnly=state.mode==='easy';
+  const duration=byId('sessionDuration');
+  if(duration&&state.level==='Inicial'&&activity){
+    const desired=activity.kind==='taller'?'40 minutos':'60 minutos';
+    if([...duration.options].some(o=>o.value===desired||o.textContent===desired))duration.value=desired;
+  }
+  const heading=document.querySelector('#session h1');
+  if(heading&&state.level==='Inicial')heading.textContent='Crear actividad o taller';
 }
 
 function competenceFor(area,title=''){
@@ -512,10 +519,15 @@ function buildSession(){
   const times=sessionTimes(duration);
   const session={
     id:'s'+Date.now(),unitId:unit?.id||null,unitTitle:unit?.title||'Unidad de ejemplo',title,area,duration,resources,
+    activityKind:activity?.kind||'sesion',activityKindLabel:activity?.kindLabel||(state.level==='Inicial'?'Actividad de aprendizaje':'Sesión de aprendizaje'),workshopType:activity?.workshopType||'',
     level:state.level,ieType:state.ieType,grades:[...state.grades],brief,
     competence:competenceFor(area,title),criterion:criterionFor(area,brief),evidence:evidenceFor(area),instrument:instrumentFor(area),
     challenge:challengeFor(area,brief),times,
-    purpose:`Desarrollar la competencia priorizada del área de ${area} mediante un reto contextualizado en ${brief}, diferenciando las tareas según el grado y promoviendo que los estudiantes expliquen lo que hacen y aprenden.`,
+    purpose:state.level==='Inicial'
+      ? (activity?.kind==='taller'
+          ? `Favorecer la exploración, expresión, autonomía y participación de las niñas y los niños mediante el taller de ${activity?.workshopType||'expresión'}, vinculado con ${brief}.`
+          : `Movilizar la competencia priorizada mediante una experiencia lúdica, significativa y pertinente vinculada con ${brief}, respetando los ritmos, intereses y formas de expresión de las niñas y los niños.`)
+      : `Desarrollar la competencia priorizada del área de ${area} mediante un reto contextualizado en ${brief}, diferenciando las tareas según el grado y promoviendo que los estudiantes expliquen lo que hacen y aprenden.`,
     createdAt:new Date().toISOString()
   };
   state.lastSession=session;save();return session;
