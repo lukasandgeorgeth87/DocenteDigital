@@ -16,7 +16,7 @@
     <button class="nav active" data-screen="home" onclick="go('home')">🏠 Inicio</button>
     <button class="nav" data-screen="plan" onclick="go('plan')">📘 Mi planificación</button>
     <button class="nav" data-screen="session" onclick="go('session')">📝 Crear mi sesión</button>
-    <button class="nav" data-screen="materials" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">🧩 Materiales · Próximamente</button>
+    <button class="nav" data-screen="materials" onclick="go('materials')">🧩 Materiales</button>
     <button class="nav" data-screen="evaluation" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">📊 Evaluación · Próximamente</button>
     <button class="nav" data-screen="director" onclick="go('director')">🏫 Director</button>
     <button class="nav" data-screen="settings" onclick="go('settings')">⚙️ Configuración</button>
@@ -112,8 +112,77 @@
     </section>
 
     <section id="materials" class="screen">
-      <h1>Materiales</h1><p class="sub">Lecturas, fichas y recursos en castellano, lengua originaria o formato bilingüe.</p>
-      <div class="card"><div class="form2"><label>Tipo<select><option>Lectura</option><option>Ficha</option><option>Tarjetas palabra-imagen</option></select></label><label>Idioma<select id="materialLanguage"><option>Castellano</option><option>Lengua originaria</option><option>Bilingüe</option></select></label><label>Lengua originaria / variedad<select id="materialQuechua"><option value="Ninguna">Ninguna</option></select></label><label>Grado<select id="materialGrade"></select></label><label class="full">Tema<input placeholder="Escribe el tema o interés que deseas trabajar"></label></div><div class="notice">Si seleccionas lengua originaria o bilingüe, confirma la lengua/variedad pertinente y revisa el material antes de imprimir.</div><button class="btn" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">✨ Crear lectura · Próximamente</button><div id="materialOutput" class="document hidden topgap"><h2>Lectura generada</h2><p id="materialText"></p></div></div>
+      <h1>Materiales</h1>
+      <p class="sub">Crea lecturas, fichas, tarjetas, problemas y recursos conectados con tu unidad, proyecto o sesión. DocenteDigital reutiliza el contexto, grado, área y perfil de tu institución.</p>
+
+      <div class="card">
+        <div class="form2">
+          <label>Tomar como referencia
+            <select id="materialSource">
+              <option value="session">Última actividad/sesión creada</option>
+              <option value="unit">Unidad/proyecto actual</option>
+              <option value="free">Tema libre</option>
+            </select>
+          </label>
+
+          <label>Tipo de material
+            <select id="materialType">
+              <option>Lectura</option>
+              <option>Ficha de trabajo</option>
+              <option>Tarjetas palabra-imagen</option>
+              <option>Banco de problemas</option>
+              <option>Conceptos para pizarra</option>
+              <option>Organizador de aprendizaje</option>
+            </select>
+          </label>
+
+          <label>Área
+            <select id="materialArea"></select>
+          </label>
+
+          <label>Grado / edad
+            <select id="materialGrade"></select>
+          </label>
+
+          <label>Idioma
+            <select id="materialLanguage">
+              <option>Castellano</option>
+              <option>Lengua originaria</option>
+              <option>Bilingüe</option>
+            </select>
+          </label>
+
+          <label>Lengua originaria / variedad
+            <select id="materialQuechua"><option value="Ninguna">Ninguna</option></select>
+          </label>
+
+          <label class="full">Tema o propósito del material
+            <input id="materialTopic" placeholder="Ej.: animales mamíferos, germinación, igualdades, la siembra...">
+            <small>Si lo dejas vacío, DocenteDigital tomará el tema de tu última sesión o unidad/proyecto.</small>
+          </label>
+
+          <label class="full">Indicación adicional <span class="pill">Opcional</span>
+            <textarea id="materialInstruction" placeholder="Ej.: para 1.° usar frases cortas; incluir 10 ejercicios; preparar para colorear; mayor nivel de análisis para 5.°..."></textarea>
+          </label>
+        </div>
+
+        <div class="notice">En materiales EIB, confirma la lengua y variedad antes de generar. DocenteDigital no debe presentar como validada una traducción que no haya sido revisada.</div>
+
+        <div class="actions topgap">
+          <button class="btn" type="button" onclick="window.DDMaterials?.create()">✨ Crear material</button>
+          <button class="btn alt" type="button" onclick="window.DDMaterials?.useCurrent()">↻ Usar mi planificación actual</button>
+          <button class="btn ghost" type="button" onclick="go('aihub')">🖼 Buscar imagen en biblioteca</button>
+        </div>
+
+        <div id="materialOutput" class="document hidden topgap"></div>
+      </div>
+
+      <div class="card topgap">
+        <div class="dd-panel-head">
+          <div><span class="pill">Reutilizar antes de volver a crear</span><h2>Mis materiales recientes</h2></div>
+        </div>
+        <div id="materialHistory" class="dd-material-history"></div>
+      </div>
     </section>
 
     <section id="evaluation" class="screen">
@@ -126,7 +195,7 @@
     <section id="settings" class="screen"><h1>Configuración</h1><p class="sub">Datos institucionales y pedagógicos reutilizables.</p><div class="card"><div id="settingsSummary" class="success"></div><button class="btn" onclick="restartSetup()">Editar Nivel/Tipo/Grados/Áreas</button> <button class="btn ghost" onclick="resetDemo()">Restablecer datos</button></div></section>
   </main>
 </div>
-<nav class="mobile-nav"><button class="active" data-screen="home" onclick="go('home')"><b>🏠</b>Inicio</button><button data-screen="plan" onclick="go('plan')"><b>📘</b>Plan</button><button data-screen="session" onclick="go('session')"><b>📝</b>Sesión</button><button data-screen="materials" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento"><b>🧩</b>Materiales</button><button data-screen="evaluation" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento"><b>📊</b>Evaluación</button></nav>
+<nav class="mobile-nav"><button class="active" data-screen="home" onclick="go('home')"><b>🏠</b>Inicio</button><button data-screen="plan" onclick="go('plan')"><b>📘</b>Plan</button><button data-screen="session" onclick="go('session')"><b>📝</b>Sesión</button><button data-screen="materials" onclick="go('materials')"><b>🧩</b>Materiales</button><button data-screen="evaluation" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento"><b>📊</b>Evaluación</button></nav>
 <script src="storage-recovery-v26.js"></script>
 <script src="storage-access-guard-v71.js"></script>
 <script src="app.js"></script>
@@ -145,6 +214,7 @@
 <script src="resources-v5.js"></script>
 <script src="schedule-prompt-v6.js"></script>
 <script src="ai-library-router-v1.js"></script>
+<script src="materials-v1.js"></script>
 <script src="initial-surface-guard-v1.js"></script>
 </body>
 </html>
