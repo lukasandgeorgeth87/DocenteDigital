@@ -236,14 +236,71 @@
 
   function table(rows,heads){return `<div class="dd-scroll"><table class="dd-table"><thead><tr>${heads.map(h=>`<th>${E(h)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;}
 
+  function initialActivityMoments(session){
+    const q=highQuestions(session);
+    const rows=`
+      <tr><td><b>INICIO</b><br><small>Acogida y conexión</small></td><td>
+        <ul>
+          <li>Se acoge a las niñas y los niños en un clima afectivo y seguro, se recupera una experiencia cercana vinculada con <b>${E(context(session))}</b> y se presenta un objeto, imagen, situación, relato breve o material concreto que despierte curiosidad.</li>
+          <li>Los niños observan, manipulan, comentan, preguntan o representan libremente lo que saben; la docente escucha sin corregir de inmediato y recoge sus ideas iniciales.</li>
+          <li>Se comunica el propósito con lenguaje sencillo y se plantea una pregunta abierta como: <b>${E(q[0])}</b></li>
+        </ul>
+      </td><td>${session.times?.start||10} min</td></tr>
+      <tr><td><b>DESARROLLO</b><br><small>Exploración, juego y construcción</small></td><td>
+        <div class="dd-master-process">
+          <p><b>Exploración activa:</b> las niñas y los niños manipulan, juegan, observan, comparan, se desplazan, conversan, representan o prueban posibilidades según la competencia movilizada.</p>
+          <p><b>Mediación docente:</b> observa, escucha, formula preguntas breves, amplía vocabulario, ofrece materiales pertinentes y acompaña sin reemplazar la iniciativa infantil.</p>
+          <p><b>Interacciones:</b> se promueven pequeños grupos, parejas, asamblea breve o trabajo individual según el interés y la actividad, respetando ritmos y autonomía.</p>
+          <p><b>Evaluación formativa:</b> la docente recoge evidencias mediante observación, producciones, expresiones orales, acciones y decisiones de los niños; retroalimenta con preguntas, gestos, reformulaciones o nuevos retos.</p>
+        </div>
+      </td><td>${session.times?.dev||40} min</td></tr>
+      <tr><td><b>CIERRE</b><br><small>Comunicación y valoración</small></td><td>
+        <ul>
+          <li>Los niños muestran, cuentan, representan o explican lo que hicieron y qué descubrieron.</li>
+          <li>La docente recupera algunas ideas, reconoce estrategias y ayuda a relacionar la experiencia con la vida cotidiana.</li>
+          <li>Se conversa brevemente sobre qué les gustó, qué les sorprendió y qué les gustaría seguir explorando.</li>
+        </ul>
+      </td><td>${session.times?.close||10} min</td></tr>`;
+    return `<h2>6. MOMENTOS DE LA ACTIVIDAD DE APRENDIZAJE</h2>${table(rows,['MOMENTO','EXPERIENCIAS / MEDIACIÓN','TIEMPO'])}`;
+  }
+
+  function initialWorkshopMoments(session){
+    const type=session.workshopType||'expresión';
+    const rows=`
+      <tr><td><b>INICIO</b><br><small>Encuentro y acuerdos</small></td><td>
+        <ul>
+          <li>La docente reúne al grupo, presenta el taller de <b>${E(type)}</b>, dispone los materiales de manera accesible y recuerda acuerdos simples de seguridad, cuidado y convivencia.</li>
+          <li>Las niñas y los niños observan los materiales, expresan qué desean hacer y anticipan algunas posibilidades sin recibir un modelo único que deban copiar.</li>
+        </ul>
+      </td><td>${session.times?.start||5} min</td></tr>
+      <tr><td><b>DESARROLLO</b><br><small>Exploración y expresión</small></td><td>
+        <div class="dd-master-process">
+          <p><b>Experiencia central:</b> los niños exploran libremente materiales, movimientos, sonidos, dramatizaciones, textos o situaciones de indagación propias del taller, toman decisiones y crean de manera individual o colectiva.</p>
+          <p><b>Rol docente:</b> organiza un ambiente seguro, observa, acompaña, interviene cuando es necesario, plantea nuevos retos sin dirigir el producto y respeta los diferentes ritmos de participación.</p>
+          <p><b>Autonomía:</b> se favorece que elijan materiales, formas de expresión, compañeros o procedimientos posibles, evitando convertir el taller en una ficha dirigida.</p>
+        </div>
+      </td><td>${session.times?.dev||30} min</td></tr>
+      <tr><td><b>CIERRE</b><br><small>Expresión y despedida</small></td><td>
+        <ul>
+          <li>Se ordenan los materiales con participación de los niños.</li>
+          <li>Quienes desean comparten qué hicieron, cómo se sintieron o qué les gustaría intentar la próxima vez.</li>
+          <li>La docente registra observaciones relevantes para la evaluación formativa y la planificación siguiente.</li>
+        </ul>
+      </td><td>${session.times?.close||5} min</td></tr>`;
+    return `<h2>6. TALLER DE ${E(type.toUpperCase())}</h2>${table(rows,['MOMENTO','EXPERIENCIAS / MEDIACIÓN','TIEMPO'])}`;
+  }
+
   function momentsHtml(session){
+    if(session.level==='Inicial'){
+      return session.activityKind==='taller'?initialWorkshopMoments(session):initialActivityMoments(session);
+    }
     const start=startActions(session);
     const close=closeActions(session);
     const body=`
       <tr><td><b>INICIO</b><br><small>Involucramiento, propósito y reto</small></td><td><ul>${start.map(x=>`<li>${x}</li>`).join('')}</ul></td><td>${session.times?.start||15} min</td></tr>
       <tr><td><b>DESARROLLO</b><br><small>Procesos del área, mediación y evaluación formativa</small></td><td>
         ${developmentRows(session)}
-        ${differentiatedBlock(session)}
+        ${session.level==='Inicial'?'':differentiatedBlock(session)}
       </td><td>${session.times?.dev||60} min</td></tr>
       <tr><td><b>CIERRE</b><br><small>Metacognición, mejora y transferencia</small></td><td><ul>${close.map(x=>`<li>${x}</li>`).join('')}</ul></td><td>${session.times?.close||15} min</td></tr>`;
     return `<h2>6. MOMENTOS DE LA SESIÓN</h2>${table(body,['MOMENTOS','ESTRATEGIAS / ACTIVIDADES','TIEMPO'])}`;
