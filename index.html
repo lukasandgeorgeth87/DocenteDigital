@@ -77,10 +77,13 @@
       <div id="unitPanel" class="card hidden topgap">
         <h2>📚 Crear unidad/proyecto</h2><div id="unitContext" class="success"></div>
         <div class="form2">
-          <label>Tipo<select id="unitType"><option>Unidad de aprendizaje</option><option>Proyecto de aprendizaje</option></select></label>
+          <label>Tipo<select id="unitType" onchange="refreshUnitTitleSuggestions()"><option>Unidad de aprendizaje</option><option>Proyecto de aprendizaje</option></select></label>
           <label>Duración<select id="unitDuration"><option>1 semana</option><option>2 semanas</option><option>3 semanas</option><option>4 semanas</option><option>5 semanas</option><option>6 semanas</option></select></label>
-          <label class="full">Título de la unidad/proyecto<input id="unitTitle" placeholder="La app propondrá y mejorará el título a partir del contexto"></label>
-          <label class="full">Idea o contexto de partida<textarea id="unitSituation" placeholder="Ejemplo: describe un interés, necesidad, problema u oportunidad real de tus estudiantes y su contexto"></textarea><small>Escribe una idea breve. La app analizará primero lo expresado y redactará una propuesta sin inventar problemas, causas, actores o finalidades no mencionados.</small></label>
+          <label class="full">Título de la unidad/proyecto
+  <input id="unitTitle" placeholder="DocenteDigital propondrá un título coherente a partir del contexto" oninput="this.dataset.autoTitle='false'">
+  <div id="unitTitleSuggestions" class="dd-title-suggestions"><small>Describe el contexto para recibir títulos más precisos.</small></div>
+</label>
+          <label class="full">Idea o contexto de partida<textarea id="unitSituation" oninput="refreshUnitTitleSuggestions()" placeholder="Ejemplo: describe un interés, necesidad, problema u oportunidad real de tus estudiantes y su contexto"></textarea><small>Escribe una idea breve. DocenteDigital propondrá títulos coherentes con lo que escribas, sin inventar problemas, causas, actores o finalidades no mencionados.</small></label>
         </div>
         <div class="expert-only notice">Modo Experto: competencias, capacidades, desempeños, criterios, enfoques y fuentes normativas.</div>
         <button class="btn" onclick="createUnitDemo()">✨ Crear propuesta completa</button>
