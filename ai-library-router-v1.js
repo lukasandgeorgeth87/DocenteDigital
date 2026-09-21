@@ -354,50 +354,139 @@
     ].join(' ');
   }
 
-  function titlePrompt(){
+  function titleAssistantContext(){
     const s=appState();
     const brief=(document.getElementById('unitSituation')?.value||'').trim();
     const type=(document.getElementById('unitType')?.value||'Proyecto de aprendizaje').trim();
     const current=(document.getElementById('unitTitle')?.value||'').trim();
-    const level=s.level||'nivel educativo';
-    const grades=(s.grades||[]).join(', ')||'grados configurados';
+    const level=s.level||'Primaria';
+    const grades=(s.grades||[]).join(', ')||'grados/edades configurados';
+    const topic=current||brief||'una experiencia significativa del contexto';
+    return {s,brief,type,current,level,grades,topic};
+  }
+
+  function titlePrompt(){
+    const {brief,type,current,level,grades,topic}=titleAssistantContext();
     return [
-      'Actúa como especialista en planificación curricular MINEDU Perú.',
-      'Propón 5 títulos breves, naturales, pedagógicamente coherentes y atractivos para '+type+'.',
-      'Contexto escrito por el docente: '+brief,
-      'Nivel: '+level+'. Grados/edades: '+grades+'.',
-      current?'Título actual a mejorar: '+current:'No existe título definitivo todavía.',
-      'Reglas: no inventes problemas, actores, productos ni finalidades que no aparecen en el contexto; evita títulos genéricos o excesivamente largos; usa lenguaje adecuado al nivel; conserva términos locales solo cuando realmente correspondan; entrega únicamente 5 títulos numerados.'
+      'Actúa como especialista en Educación '+level+' y planificación curricular del MINEDU Perú.',
+      'Genera 5 títulos breves, motivadores, potentes, naturales y pedagógicamente coherentes para un '+type+'.',
+      'Tema o intención principal: '+topic+'.',
+      'Grados/edades: '+grades+'.',
+      brief?'Contexto aportado por el docente: '+brief+'.':'El docente todavía no escribió un contexto; formula títulos prudentes a partir del tema sin inventar hechos locales.',
+      current?'Título inicial del docente: '+current+'.':'No existe título definitivo todavía.',
+      'Evita títulos demasiado largos, repetitivos o burocráticos. Evita frases genéricas como "para construir una respuesta con sentido".',
+      'El título debe despertar curiosidad, anticipar una experiencia de aprendizaje y sonar como algo que un buen docente realmente pondría en su unidad o proyecto.',
+      'Usa lenguaje adecuado al nivel educativo y entrega únicamente 5 títulos.'
     ].join('\n');
   }
 
-  async function openTitleAssistant(){
-    const prompt=titlePrompt();
-    try{await navigator.clipboard.writeText(prompt);}catch(_e){promptFallback(prompt);}
-    document.getElementById('ddTitleChatPanel')?.remove();
-    const panel=document.createElement('div');
-    panel.id='ddTitleChatPanel';
-    panel.className='dd-modal-backdrop';
-    panel.innerHTML=`
-      <div class="dd-modal dd-chat-helper" role="dialog" aria-modal="true">
-        <button class="dd-modal-x" type="button" aria-label="Cerrar" onclick="document.getElementById('ddTitleChatPanel')?.remove()">×</button>
-        <span class="pill">Asistente para mejorar título</span>
-        <h2>Tu consulta ya está copiada</h2>
-        <p>DocenteDigital preparó automáticamente el contexto, nivel, grados y reglas del título. No necesitas escribir el prompt.</p>
-        <textarea class="dd-chat-prompt" readonly>${esc(prompt)}</textarea>
-        <div class="dd-inline-actions">
-          <button class="btn" type="button" onclick="window.DocenteDigitalAI.goChatGPTSameTab()">💬 Continuar en ChatGPT Gratis</button>
-          <button class="btn ghost" type="button" onclick="navigator.clipboard?.writeText(window.DocenteDigitalAI.titlePrompt())">📋 Copiar otra vez</button>
-          <button class="btn ghost" type="button" onclick="document.getElementById('ddTitleChatPanel')?.remove()">Seguir aquí</button>
-        </div>
-        <p class="dd-small">ChatGPT no puede incrustarse como una cuenta Gratis dentro de un sitio externo; por eso el texto queda copiado y ChatGPT se abre en esta misma pestaña. Al volver con el navegador, tu proyecto permanece guardado.</p>
-      </div>`;
-    document.body.appendChild(panel);
+  function localTitleSuggestions(){
+    const {brief,type,current,level,topic}=titleAssistantContext();
+    const seed=brief||current||topic;
+    let options=[];
+    try{
+      if(typeof window.ddCreativeTitleOptions==='function')options=window.ddCreativeTitleOptions(seed,type)||[];
+    }catch(_e){}
+    if(!options.length){
+      try{
+        if(typeof window.proposeUnitTitleOptions==='function')options=window.proposeUnitTitleOptions(seed,type)||[];
+      }catch(_e){}
+    }
+    const low=String(seed).toLowerCase();
+    if(/animal/.test(low)){
+      if(level==='Inicial')options=[
+        'Pequeños exploradores del mundo animal',
+        '¿Quién vive, salta, vuela o se arrastra?',
+        'Descubrimos a los animales que nos rodean',
+        'Pelos, plumas y muchas sorpresas',
+        'Conocemos y cuidamos a nuestros amigos animales'
+      ];
+      else if(level==='Secundaria')options=[
+        'Biodiversidad animal: evidencias para comprender la vida',
+        'Adaptarse para sobrevivir: investigamos el mundo animal',
+        'Animales y ambiente: relaciones que sostienen la vida',
+        'Fauna de nuestro entorno: observar, explicar y conservar',
+        'Del comportamiento a la adaptación: comprendemos la diversidad animal'
+      ];
+      else options=[
+        'Detectives de la naturaleza: pelos, plumas y escamas',
+        'Animales sorprendentes: descubrimos cómo viven y se adaptan',
+        'Huellas de vida: investigamos a los animales de nuestro entorno',
+        '¿Cómo viven los animales? Observamos, comparamos y explicamos',
+        'Entre pelos, plumas y escamas: exploramos el mundo animal'
+      ];
+    }
+    return [...new Set(options.map(x=>String(x||'').replace(/\s+/g,' ').trim()).filter(Boolean))].slice(0,5);
   }
 
-  function goChatGPTSameTab(){
-    document.getElementById('ddTitleChatPanel')?.remove();
-    openChatGPTFree(true,true);
+  function applyAssistantTitle(title){
+    const input=document.getElementById('unitTitle');
+    if(input){
+      input.value=title;
+      input.dataset.autoTitle='false';
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+    document.querySelectorAll('.dd-side-title-option').forEach(b=>b.classList.toggle('selected',b.dataset.title===title));
+  }
+
+  function refreshTitleSideAssistant(){
+    const panel=document.getElementById('ddTitleSidePanel');
+    if(!panel)return;
+    const {type,level,grades,topic}=titleAssistantContext();
+    const prompt=titlePrompt();
+    const suggestions=localTitleSuggestions();
+    const meta=panel.querySelector('[data-dd-title-meta]');
+    const promptBox=panel.querySelector('[data-dd-title-prompt]');
+    const list=panel.querySelector('[data-dd-title-list]');
+    if(meta)meta.innerHTML='<b>'+esc(level)+'</b> · '+esc(type)+' · '+esc(grades)+'<br><span>Tema: '+esc(topic)+'</span>';
+    if(promptBox)promptBox.value=prompt;
+    if(list)list.innerHTML=suggestions.map(t=>'<button type="button" class="dd-side-title-option" data-title="'+esc(t)+'"><b>'+esc(t)+'</b><span>Usar este título</span></button>').join('');
+    list?.querySelectorAll('.dd-side-title-option').forEach(b=>b.onclick=()=>applyAssistantTitle(b.dataset.title));
+  }
+
+  function closeTitleAssistant(){
+    document.getElementById('ddTitleSidePanel')?.classList.remove('open');
+    document.getElementById('ddTitleSideShade')?.remove();
+  }
+
+  async function openTitleAssistant(){
+    let panel=document.getElementById('ddTitleSidePanel');
+    if(!panel){
+      panel=document.createElement('aside');
+      panel.id='ddTitleSidePanel';
+      panel.className='dd-title-side-panel';
+      panel.innerHTML=`
+        <div class="dd-side-head">
+          <div><span class="pill">Asistente de títulos</span><h2>Mejora el título sin salir de DocenteDigital</h2></div>
+          <button class="dd-side-close" type="button" aria-label="Cerrar">×</button>
+        </div>
+        <div class="dd-side-meta" data-dd-title-meta></div>
+        <p class="dd-small">La instrucción se completa automáticamente como si consultaras a un especialista del nivel seleccionado.</p>
+        <textarea class="dd-chat-prompt" data-dd-title-prompt readonly></textarea>
+        <div class="dd-side-actions">
+          <button type="button" class="btn ghost" data-dd-copy-title-prompt>📋 Copiar instrucción</button>
+          <button type="button" class="btn alt" data-dd-refresh-title>↻ Otras propuestas</button>
+        </div>
+        <h3>Propuestas potentes</h3>
+        <div class="dd-side-title-list" data-dd-title-list></div>
+        <div class="notice topgap">Este panel funciona dentro de DocenteDigital. No abre otra pestaña. Cuando conectemos la API de OpenAI, este mismo panel podrá conversar con el modelo directamente.</div>`;
+      document.body.appendChild(panel);
+      panel.querySelector('.dd-side-close').onclick=closeTitleAssistant;
+      panel.querySelector('[data-dd-copy-title-prompt]').onclick=async()=>{
+        try{await navigator.clipboard.writeText(titlePrompt());}catch(_e){promptFallback(titlePrompt());}
+      };
+      panel.querySelector('[data-dd-refresh-title]').onclick=refreshTitleSideAssistant;
+    }
+    let shade=document.getElementById('ddTitleSideShade');
+    if(!shade){
+      shade=document.createElement('div');
+      shade.id='ddTitleSideShade';
+      shade.className='dd-title-side-shade';
+      shade.onclick=closeTitleAssistant;
+      document.body.appendChild(shade);
+    }
+    refreshTitleSideAssistant();
+    requestAnimationFrame(()=>panel.classList.add('open'));
   }
 
   async function improveTitleWithChatGPTFree(){
@@ -689,6 +778,18 @@
       .dd-modal-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
       .dd-chat-helper{max-width:720px}
       .dd-chat-prompt{width:100%;min-height:180px;resize:vertical;border:1px solid var(--line);border-radius:12px;padding:11px;font:13px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;background:#f8fafb}
+      .dd-title-side-shade{position:fixed;inset:0;background:rgba(10,30,45,.18);z-index:997}
+      .dd-title-side-panel{position:fixed;top:0;right:0;z-index:998;width:min(430px,92vw);height:100vh;background:#fff;border-left:1px solid var(--line);box-shadow:-18px 0 46px rgba(24,46,62,.18);padding:18px;overflow:auto;transform:translateX(104%);transition:transform .22s ease}
+      .dd-title-side-panel.open{transform:translateX(0)}
+      .dd-side-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+      .dd-side-head h2{font-size:21px;margin:7px 0 4px}
+      .dd-side-close{border:0;background:#f3f6f7;border-radius:50%;width:36px;height:36px;font-size:24px;cursor:pointer}
+      .dd-side-meta{margin:10px 0;padding:10px 12px;background:#eef8f4;border:1px solid #d4e8de;border-radius:12px;line-height:1.45}
+      .dd-side-actions{display:flex;gap:8px;flex-wrap:wrap;margin:9px 0 14px}
+      .dd-side-title-list{display:grid;gap:8px}
+      .dd-side-title-option{display:flex;flex-direction:column;align-items:flex-start;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:13px;padding:11px 12px;cursor:pointer}
+      .dd-side-title-option:hover,.dd-side-title-option.selected{border-color:var(--p);background:#eef8f4}
+      .dd-side-title-option span{font-size:11px;color:var(--muted);margin-top:4px}
       .dd-save-route{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
       .dd-save-route div{display:flex;align-items:center;gap:8px;background:#f7fafc;border:1px solid var(--line);border-radius:13px;padding:10px}
       .dd-save-route b{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#eaf7f5;color:var(--p)}
@@ -816,7 +917,8 @@
     copyGeneralPrompt,
     improveTitleWithChatGPTFree,
     openTitleAssistant,
-    goChatGPTSameTab,
+    closeTitleAssistant,
+    refreshTitleSideAssistant,
     titlePrompt,
     renderLibrary,
     selectResource,
