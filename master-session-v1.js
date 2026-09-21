@@ -195,26 +195,36 @@
     return `<div class="dd-adai"><b>Atención simultánea AD/AI:</b> el docente realiza Atención Directa con <b>${E(focus)}</b>: observa procedimientos, formula una repregunta de comprensión, recoge evidencia del criterio y retroalimenta por descubrimiento. Mientras tanto, ${rest.map(g=>`<b>${E(g)}</b> trabaja en Atención Indirecta: ${E(gradeDepth(session,g))}`).join('; ')}. Luego rota la atención para que ningún grado quede esperando.</div>`;
   }
 
+  function processStudentSequence(session,p,i){
+    const q=highQuestions(session);
+    const route=session.ddStrategyRoute||{};
+    const spec=session.topicSpec||{};
+    const objects=spec.objects||'los materiales, textos, datos o recursos previstos para la actividad';
+    const observable=spec.observable||'la información, relaciones o características vinculadas con el propósito';
+    const main=learnerAction(session,i,p);
+    const multi=Array.isArray(session.grades)&&session.grades.length>1&&session.level==='Primaria';
+    const focus=multi?session.grades[i%session.grades.length]:'';
+    const other=multi?session.grades.filter(g=>g!==focus):[];
+    const steps=[
+      `Los estudiantes <b>comprenden la tarea de este momento</b> a partir de una consigna breve y verificable. Revisan ${E(objects)} y reconocen qué deben observar, resolver, producir o explicar.`,
+      `Luego <b>${E(main.charAt(0).toLowerCase()+main.slice(1))}</b>`,
+      `Organizan lo realizado para hacer visible ${E(observable)} mediante una representación pertinente: dibujo, esquema, tabla, texto, procedimiento, clasificación, registro, modelo o explicación oral, según el área y el grado.`,
+      `Contrastan su producción con otra estrategia, ejemplo, dato, fuente o respuesta. La pregunta que orienta la comparación es: <b>${E(q[i%q.length])}</b>`,
+      `Explican qué decisión tomaron y qué evidencia la sostiene. Si detectan una diferencia, error o dato insuficiente, revisan su producción y realizan un segundo intento más preciso.`
+    ];
+    if(route.grouping)steps.splice(2,0,`La organización del trabajo cambia según la tarea: ${E(route.grouping.charAt(0).toLowerCase()+route.grouping.slice(1))}. La organización sirve para que todos produzcan evidencia, no para dejar a un estudiante esperando.`);
+    if(multi)steps.splice(3,0,`Mientras el docente acompaña directamente a <b>${E(focus)}</b> con una pregunta o modelado breve, ${other.map(g=>`<b>${E(g)}</b> desarrolla una tarea autónoma coherente con su nivel: ${E(gradeDepth(session,g))}`).join('; ')}. Después rota la atención y recoge una evidencia corta de cada grado.`);
+    if(route.eib?.length)steps.push(`Cuando corresponda al contexto EIB, recuperan saberes y formas de nombrar o explicar propias de la comunidad, las contrastan respetuosamente con otras fuentes y comunican lo aprendido en la lengua pertinente para el propósito.`);
+    return `<ol class="dd-logical-sequence">${steps.map(s=>`<li>${s}</li>`).join('')}</ol>`;
+  }
+
   function developmentRows(session){
     const ps=processes(session);
-    const q=highQuestions(session);
-    const selected=(session.strategies||[]).filter(Boolean);
-    const rows=[];
-    ps.forEach((p,i)=>{
-      const strategy=selected.length?selected[i%selected.length]:null;
-      rows.push(`<div class="dd-master-process"><h4>PROCESO ${i+1} — ${E(p[0])}</h4>
-        ${strategy?`<p><b>Estrategia activa:</b> ${E(strategy.name)} — ${E(strategy.desc)}</p>`:''}
-        <p><b>Acción cognitiva principal:</b> ${E(learnerAction(session,i,p))}</p>
-        <p><b>Mediación docente:</b> modela solo lo necesario, observa estrategias, contrasta producciones y formula preguntas que obliguen a explicar decisiones, no a adivinar la respuesta.</p>
-        <p><b>Pregunta de alta demanda:</b> <strong>${E(q[i%q.length])}</strong></p>
-        ${adai(session,i)}
-        <p><b>Monitoreo y retroalimentación:</b> revisa una evidencia breve, describe un avance concreto, formula una pregunta o pista y exige un <b>segundo intento</b> para que la retroalimentación produzca mejora observable.</p>
-      </div>`);
-      if(i<ps.length-1 && i%2===1){
-        rows.push(`<div class="dd-microstrategy"><b>Variación de dinámica:</b> cambia de canal con una acción pertinente —galería breve, comparación de soluciones, tutoría entre pares, estación, mini debate, clasificación, manipulación, análisis de error o nuevo caso— evitando repetir la misma rutina durante toda la sesión.</div>`);
-      }
-    });
-    return rows.join('');
+    return ps.map((p,i)=>`<div class="dd-master-process">
+      <h4>${E(p[0])}</h4>
+      <p class="dd-process-purpose">${E(p[1])}</p>
+      ${processStudentSequence(session,p,i)}
+    </div>`).join('');
   }
 
   function differentiatedBlock(session){
@@ -404,8 +414,8 @@
 
   const style=document.createElement('style');
   style.textContent=`
-    .dd-master-process{padding:10px 12px;margin:10px 0;border-left:4px solid #2e7656;background:#f7fbf8;border-radius:8px}
-    .dd-master-process h4{margin:0 0 6px;color:#245c46}.dd-master-process p{margin:6px 0}
+    .dd-master-process{padding:12px 14px;margin:12px 0;border-left:4px solid #2e7656;background:#f7fbf8;border-radius:8px}
+    .dd-master-process h4{margin:0 0 6px;color:#245c46}.dd-master-process p{margin:6px 0}.dd-process-purpose{font-weight:650;color:#38564a}.dd-logical-sequence{margin:8px 0 0;padding-left:22px}.dd-logical-sequence li{margin:8px 0;line-height:1.48}
     .dd-microstrategy{padding:9px 11px;margin:8px 0;background:#fff8df;border:1px solid #ead58b;border-radius:9px}
     .dd-adai{padding:8px 10px;background:#eef4ff;border:1px solid #c8d7ef;border-radius:8px;margin:7px 0}
     .dd-sources,.dd-material-note{padding:10px 12px;margin:10px 0;border:1px solid #d7e2dc;border-radius:10px;background:#fbfdfc}
