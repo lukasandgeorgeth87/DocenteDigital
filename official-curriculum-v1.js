@@ -382,6 +382,63 @@
   function getTransversals(level){return MATRIX[level]?.transversals||[];}
   function sourceFor(level){return SOURCES[level]||null;}
 
+  function pickCompetence(level,area,title=''){
+    const list=getArea(level,area);
+    if(!list.length)return null;
+    const t=String(title||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const find=(re)=>list.find(x=>re.test(x.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')));
+    const a=canonicalArea(area);
+
+    if(['Comunicación','Castellano como Segunda Lengua','Inglés como Lengua Extranjera'].includes(a)){
+      if(/lee|lectura|texto escrito|comprension lectora/.test(t))return find(/lee diversos tipos/)||list[0];
+      if(/escrib|produc|redact|revis|texto/.test(t))return find(/escribe diversos tipos/)||list[0];
+      return find(/se comunica oralmente/)||list[0];
+    }
+    if(a==='Matemática'){
+      if(/tabla|grafico|dato|estadistic|probabil|encuesta/.test(t))return find(/gestion de datos/)||list[0];
+      if(/forma|geometr|ubic|espacio|medida|perimet|area|movimiento|localiz/.test(t))return find(/forma, movimiento y localizacion/)||list[0];
+      if(/patron|regular|equival|igualdad|ecuacion|cambio/.test(t))return find(/regularidad, equivalencia y cambio/)||list[0];
+      return find(/cantidad/)||list[0];
+    }
+    if(a==='Ciencia y Tecnología'){
+      if(/disen|constru|solucion|prototipo|tecnolog/.test(t))return find(/disena y construye/)||list[0];
+      if(/indag|observ|pregunta|hipotes|exper|dato|resultado|germin/.test(t))return find(/indaga mediante/)||list[0];
+      return find(/explica el mundo fisico/)||list[0];
+    }
+    if(a==='Personal Social'){
+      if(/histori|pasado|cambio|permanencia|fuente/.test(t))return find(/interpretaciones historicas/)||list[0];
+      if(/ambiente|espacio|territorio|mapa|riesgo/.test(t))return find(/espacio y el ambiente/)||list[0];
+      if(/econom|dinero|ahorro|recurso econom/.test(t))return find(/recursos economicos/)||list[0];
+      if(/identidad|emocion|familia|caracteristica personal/.test(t))return find(/construye su identidad/)||list[0];
+      return find(/convive y participa/)||list[0];
+    }
+    if(a==='Desarrollo Personal, Ciudadanía y Cívica'){
+      if(/identidad|emocion|sexualidad|etica|autoconoc/.test(t))return find(/construye su identidad/)||list[0];
+      return find(/convive y participa/)||list[0];
+    }
+    if(a==='Ciencias Sociales'){
+      if(/histori|pasado|fuente|tiempo/.test(t))return find(/interpretaciones historicas/)||list[0];
+      if(/econom|dinero|mercado|recurso/.test(t))return find(/recursos economicos/)||list[0];
+      return find(/espacio y el ambiente/)||list[0];
+    }
+    if(a==='Educación Física'){
+      if(/salud|aliment|higiene|postura|actividad fisica/.test(t))return find(/vida saludable/)||list[0];
+      if(/motric|cuerpo|movimiento|expresion corporal/.test(t))return find(/motricidad/)||list[0];
+      return find(/sociomotrices/)||list[0];
+    }
+    if(a==='Arte y Cultura'){
+      if(/aprecia|analiza|manifestacion|obra|cultura/.test(t))return find(/aprecia/)||list[0];
+      return find(/crea proyectos/)||list[0];
+    }
+    if(a==='Comunicación'&&level==='Inicial')return list[0];
+    if(a==='Personal Social'&&level==='Inicial'){
+      if(/dios|fe|relig|oracion/.test(t))return list.find(x=>/amada por dios/i.test(x.name))||list[0];
+      if(/identidad|emocion|familia/.test(t))return find(/construye su identidad/)||list[0];
+      return find(/convive y participa/)||list[0];
+    }
+    return list[0];
+  }
+
   function sourceBadge(level){
     const s=sourceFor(level);
     if(!s)return '';
@@ -400,6 +457,7 @@
     getTransversals,
     sourceFor,
     sourceBadge,
+    pickCompetence,
     canonicalArea
   };
 
