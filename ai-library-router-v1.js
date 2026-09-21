@@ -850,32 +850,9 @@
         <div id="ddLibraryResults" class="dd-resource-grid"></div>
       </div>
 
-      <div class="dd-panel">
-        <div class="dd-panel-head">
-          <div><span class="pill">Medición real del piloto</span><h2>Rutas de ahorro utilizadas</h2></div>
-        </div>
-        <div id="ddRouteStats" class="dd-route-stats"></div>
-      </div>
-
-      <div class="dd-two">
-        <div class="dd-panel">
-          <h2>♻️ Regla de ahorro</h2>
-          <div class="dd-policy">
-            ${POLICY.imageStrategy.map(x=>`<div>${esc(x)}</div>`).join('')}
-          </div>
-        </div>
-        <div class="dd-panel expert-only">
-          <h2>💰 Presupuesto interno inicial</h2>
-          <div class="dd-cost">
-            <div><strong>S/ ${POLICY.teacherMonthlyAiBudgetSoles}</strong><span>objetivo máximo IA / docente / mes</span></div>
-            <div><strong>S/ ${POLICY.directorMonthlyAiBudgetSoles}</strong><span>reserva máxima IA / director / mes</span></div>
-          </div>
-          <p class="dd-small">Registro, conclusiones, Word/PDF/PPT y reutilización de biblioteca deben resolverse sin nuevas llamadas de IA cuando los datos ya existen.</p>
-        </div>
-      </div>`;
+`;
     content.appendChild(section);
     renderLibrary();
-    renderRouteStats();
 
     const sidebar=document.querySelector('.sidebar');
     if(sidebar && !sidebar.querySelector('[data-screen="aihub"]')){
@@ -891,7 +868,7 @@
       const card=document.createElement('button');
       card.id='ddHomeAiCard';card.className='card action-card span4';
       card.onclick=()=>go('aihub');
-      card.innerHTML='<span>🤖</span><h2>IA y Biblioteca</h2><p>Reutiliza imágenes, abre ChatGPT Gratis y controla el consumo.</p>';
+      card.innerHTML='<span>🤖</span><h2>IA y Biblioteca</h2><p>Encuentra recursos, reutiliza imágenes y recibe ayuda para crear materiales.</p>';
       homeGrid.appendChild(card);
     }
   }
