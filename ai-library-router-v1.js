@@ -92,6 +92,54 @@
       license:'Recurso propio / generado para el proyecto',
       fileName:'Colección carteles biohuerto',
       reusable:true
+    },
+    {
+      id:'WEB-CYT-GERMINACION-001',
+      title:'Etapas secuenciales de germinación de una semilla de frijol',
+      level:'Primaria',
+      area:'Ciencia y Tecnología',
+      topic:'germinación semilla frijol raíz tallo crecimiento planta',
+      kind:'Secuencia visual',
+      quality:'A',
+      source:'Wikimedia Commons',
+      author:'HudsonFlagg',
+      license:'CC0 1.0',
+      sourcePage:'https://commons.wikimedia.org/wiki/File:Sequential_Steps_of_Bean_Seedling_Germination.svg',
+      previewUrl:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Sequential_Steps_of_Bean_Seedling_Germination.svg?width=900',
+      reusable:true,
+      webLicensed:true
+    },
+    {
+      id:'WEB-CYT-RECICLAJE-002',
+      title:'Contenedor de reciclaje para trabajar clasificación de residuos',
+      level:'Secundaria',
+      area:'Ciencia y Tecnología',
+      topic:'reciclaje residuos sólidos clasificación contenedor ambiente',
+      kind:'Fotografía educativa',
+      quality:'A',
+      source:'Wikimedia Commons',
+      author:'Jose M. Zarate Diaz',
+      license:'CC0 1.0',
+      sourcePage:'https://commons.wikimedia.org/wiki/File:USC_Recycling_Bin.png',
+      previewUrl:'https://commons.wikimedia.org/wiki/Special:Redirect/file/USC_Recycling_Bin.png?width=650',
+      reusable:true,
+      webLicensed:true
+    },
+    {
+      id:'WEB-CYT-PLANTAS-003',
+      title:'Crecimiento de plantas — fotografía de referencia',
+      level:'Primaria',
+      area:'Ciencia y Tecnología',
+      topic:'plantas crecimiento observación naturaleza',
+      kind:'Fotografía educativa',
+      quality:'A',
+      source:'Wikimedia Commons',
+      author:'Bhuvaneshwari kandhasamy',
+      license:'CC BY-SA 4.0',
+      sourcePage:'https://commons.wikimedia.org/wiki/File:Plant_growth.jpg',
+      previewUrl:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Plant_growth.jpg?width=800',
+      reusable:true,
+      webLicensed:true
     }
   ];
 
@@ -252,22 +300,31 @@
   }
 
   function renderResourceCards(items){
-    if(!items.length) return '<div class="dd-empty">No encontramos recursos con esos filtros. En la siguiente fase se buscará primero en fuentes con licencia clara antes de generar una imagen nueva.</div>';
-    return items.map(r => `
+    if(!items.length) return '<div class="dd-empty">No encontramos recursos con esos filtros. Prueba ChatGPT Gratis antes de usar un crédito premium.</div>';
+    return items.map(r => {
+      const preview=r.previewUrl
+        ? `<div class="dd-resource-preview image"><img loading="lazy" src="${esc(r.previewUrl)}" alt="${esc(r.title)}" onerror="this.closest('.dd-resource-preview').innerHTML='${iconFor(r.kind)}'"></div>`
+        : `<div class="dd-resource-preview" aria-hidden="true">${iconFor(r.kind)}</div>`;
+      const sourceLink=r.sourcePage
+        ? ` <a class="dd-source-link" href="${esc(r.sourcePage)}" target="_blank" rel="noopener noreferrer">ver fuente</a>`
+        : '';
+      const author=r.author ? `<br><b>Autor:</b> ${esc(r.author)}` : '';
+      return `
       <article class="dd-resource">
-        <div class="dd-resource-preview" aria-hidden="true">${iconFor(r.kind)}</div>
+        ${preview}
         <div class="dd-resource-body">
           <div class="dd-badges">
             <span class="dd-badge">${esc(r.level)}</span>
             <span class="dd-badge green">Calidad ${esc(r.quality)}</span>
+            ${r.webLicensed?'<span class="dd-badge gold">Web con licencia</span>':'<span class="dd-badge">Biblioteca propia</span>'}
           </div>
           <h3>${esc(r.title)}</h3>
           <p><b>Área:</b> ${esc(r.area)} · <b>Tipo:</b> ${esc(r.kind)}</p>
-          <p class="dd-small"><b>Origen:</b> ${esc(r.source)}<br><b>Uso:</b> reutilizable · <b>Licencia:</b> ${esc(r.license)}</p>
+          <p class="dd-small"><b>Origen:</b> ${esc(r.source)}${sourceLink}${author}<br><b>Uso:</b> reutilizable · <b>Licencia:</b> ${esc(r.license)}</p>
           <button class="btn alt" type="button" onclick="window.DocenteDigitalAI.selectResource('${esc(r.id)}')">Usar como referencia</button>
         </div>
-      </article>
-    `).join('');
+      </article>`;
+    }).join('');
   }
 
   function iconFor(kind){
@@ -360,12 +417,17 @@
       .dd-library-controls select,.dd-library-controls input{margin:0}
       .dd-resource-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
       .dd-resource{display:grid;grid-template-columns:90px 1fr;gap:12px;border:1px solid var(--line);border-radius:16px;padding:12px;background:#fff}
-      .dd-resource-preview{display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,#eaf7f5,#eef4ff);min-height:90px;font-size:36px}
+      .dd-resource-preview{display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,#eaf7f5,#eef4ff);min-height:90px;font-size:36px;overflow:hidden}
+      .dd-resource-preview.image{background:#f3f6f8}
+      .dd-resource-preview.image img{width:100%;height:100%;min-height:90px;max-height:128px;object-fit:cover;display:block}
+      .dd-source-link{color:var(--p2);font-weight:800;text-decoration:none}
+      .dd-source-link:hover{text-decoration:underline}
       .dd-resource-body h3{margin:6px 0 4px;font-size:17px}
       .dd-resource-body p{margin:4px 0;color:var(--muted)}
       .dd-badges{display:flex;flex-wrap:wrap;gap:5px}
       .dd-badge{font-size:11px;font-weight:900;border-radius:999px;padding:4px 7px;background:#eef4ff;color:#315a94}
       .dd-badge.green{background:#eaf8ef;color:#235f38}
+      .dd-badge.gold{background:#fff5d9;color:#7a5b00}
       .dd-small{font-size:12px}
       .dd-empty{padding:18px;border:1px dashed #bfd0da;border-radius:14px;color:var(--muted)}
       .dd-policy{counter-reset:step;display:grid;gap:8px;margin-top:10px}
