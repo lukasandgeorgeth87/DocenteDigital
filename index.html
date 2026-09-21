@@ -187,8 +187,14 @@
     </section>
 
     <section id="evaluation" class="screen">
-      <h1>Evaluación</h1><p class="sub">Registro, evaluación de unidad/proyecto y conclusiones descriptivas para SIAGIE.</p>
-      <div class="grid"><div class="card span4"><h2>📋 Registrar evaluación</h2><p>Usa criterios y evidencias ya registrados.</p><button class="btn alt block" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">Abrir · Próximamente</button></div><div class="card span4"><h2>🧪 Evaluación de unidad/proyecto</h2><p>Escrita, oral, de desempeño o mixta.</p><button class="btn amber block" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">Crear · Próximamente</button></div><div class="card span4"><h2>📝 Conclusiones SIAGIE</h2><p>Propone conclusiones desde evidencias.</p><button class="btn block" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">Generar · Próximamente</button></div></div><div id="evaluationPanel" class="card hidden topgap"></div>
+      <h1>Evaluación</h1>
+      <p class="sub">Registra evidencias y niveles a partir de los criterios ya existentes. DocenteDigital reutiliza unidad, sesiones, criterios e instrumentos sin volver a generar información innecesaria.</p>
+      <div class="grid">
+        <div class="card span4"><h2>📋 Registro de evaluación</h2><p>Usa criterios y evidencias de la planificación.</p><button class="btn alt block" type="button" onclick="window.DDEvaluation?.openRegister()">Abrir registro</button></div>
+        <div class="card span4"><h2>🧪 Evaluación de unidad/proyecto</h2><p>Construye una evaluación alineada con los criterios trabajados.</p><button class="btn amber block" type="button" onclick="window.DDEvaluation?.openAssessment()">Crear evaluación</button></div>
+        <div class="card span4"><h2>📝 Conclusiones descriptivas</h2><p>Genera borradores desde los registros existentes, sin repetir el trabajo docente.</p><button class="btn block" type="button" onclick="window.DDEvaluation?.openConclusions()">Generar borradores</button></div>
+      </div>
+      <div id="evaluationPanel" class="card hidden topgap"></div>
     </section>
 
     <section id="director" class="screen"><h1>Espacio del Director</h1><p class="sub">Simple en la superficie y completo cuando se necesita.</p><div class="grid"><div class="card span6"><h2>▶ Continuar pendiente</h2><button class="btn">Continuar</button></div><div class="card span6"><h2>✍️ Crear documento</h2><button class="btn alt">Crear</button></div><div class="card span6"><h2>📘 DG y Planes</h2><button class="btn alt">Abrir</button></div><div class="card span6"><h2>💬 Asistente del Director</h2><button class="btn amber">Preguntar</button></div></div></section>
@@ -196,7 +202,7 @@
     <section id="settings" class="screen"><h1>Configuración</h1><p class="sub">Datos institucionales y pedagógicos reutilizables.</p><div class="card"><div id="settingsSummary" class="success"></div><button class="btn" onclick="restartSetup()">Editar Nivel/Tipo/Grados/Áreas</button> <button class="btn ghost" onclick="resetDemo()">Restablecer datos</button></div></section>
   </main>
 </div>
-<nav class="mobile-nav"><button class="active" data-screen="home" onclick="go('home')"><b>🏠</b>Inicio</button><button data-screen="plan" onclick="go('plan')"><b>📘</b>Plan</button><button data-screen="session" onclick="go('session')"><b>📝</b>Sesión</button><button data-screen="materials" onclick="go('materials')"><b>🧩</b>Materiales</button><button data-screen="evaluation" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento"><b>📊</b>Evaluación</button></nav>
+<nav class="mobile-nav"><button class="active" data-screen="home" onclick="go('home')"><b>🏠</b>Inicio</button><button data-screen="plan" onclick="go('plan')"><b>📘</b>Plan</button><button data-screen="session" onclick="go('session')"><b>📝</b>Sesión</button><button data-screen="materials" onclick="go('materials')"><b>🧩</b>Materiales</button><button data-screen="evaluation" onclick="go('evaluation')"><b>📊</b>Evaluación</button></nav>
 <script src="storage-recovery-v26.js"></script>
 <script src="storage-access-guard-v71.js"></script>
 <script src="app.js"></script>
@@ -218,6 +224,7 @@
 <script src="schedule-prompt-v6.js"></script>
 <script src="ai-library-router-v1.js"></script>
 <script src="materials-v1.js"></script>
+<script src="evaluation-v1.js"></script>
 <script src="initial-surface-guard-v1.js"></script>
 </body>
 </html>
