@@ -1,4 +1,14 @@
-const state=JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'{}');
+let __ddPersistedState={};
+try{
+  const raw=localStorage.getItem('docenteDigitalPrototype');
+  __ddPersistedState=raw?JSON.parse(raw):{};
+  if(!__ddPersistedState||typeof __ddPersistedState!=='object'||Array.isArray(__ddPersistedState))__ddPersistedState={};
+}catch(error){
+  console.warn('DocenteDigital: almacenamiento local no disponible; la app continuará en memoria.',error);
+  __ddPersistedState={};
+}
+const state=__ddPersistedState;
+window.state=state;
 state.mode=state.mode||'easy';
 state.level=state.level||'';
 state.ieType=state.ieType||'';
@@ -10,7 +20,19 @@ state.units=Array.isArray(state.units)?state.units:[];
 state.activeUnitId=state.activeUnitId||null;
 state.lastSession=state.lastSession||null;
 
-const save=()=>localStorage.setItem('docenteDigitalPrototype',JSON.stringify(state));
+const save=()=>{
+  try{
+    localStorage.setItem('docenteDigitalPrototype',JSON.stringify(state));
+    window.__ddMemoryOnly=false;
+    return true;
+  }catch(error){
+    window.__ddMemoryOnly=true;
+    window.__ddMemoryState=state;
+    console.warn('DocenteDigital: no se pudo persistir; se mantiene el trabajo en memoria durante esta sesión.',error);
+    return false;
+  }
+};
+window.save=save;
 const byId=id=>document.getElementById(id);
 const escapeHtml=value=>String(value??'').replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]));
 const cleanFileName=value=>String(value||'documento').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9-_ ]/g,'').trim().replace(/\s+/g,'_').slice(0,80)||'documento';
@@ -25,12 +47,21 @@ function setMode(mode){
 
 function go(id){
   if(!state.level&&id!=='setup'){showSetup();return}
+  const target=byId(id);
+  if(!target){
+    console.warn('DocenteDigital: pantalla no encontrada:',id);
+    return;
+  }
   document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
-  byId(id)?.classList.add('active');
+  target.classList.add('active');
   document.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===id));
-  refresh();
-  window.scrollTo({top:0,behavior:'smooth'});
+  try{refresh();}catch(error){
+    console.error('DocenteDigital: la pantalla abrió, pero falló una actualización secundaria.',error);
+    window.__ddLastNavigationError={screen:id,message:String(error),at:new Date().toISOString()};
+  }
+  try{window.scrollTo({top:0,behavior:'smooth'});}catch(_e){window.scrollTo(0,0);}
 }
+window.go=go;
 
 function showSetup(){
   document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
@@ -846,7 +877,7 @@ function showEvaluation(kind){
 }
 
 function restartSetup(){showSetup();nextSetup(1)}
-function resetDemo(){if(confirm('¿Restablecer la configuración y los datos del prototipo?')){localStorage.removeItem('docenteDigitalPrototype');location.reload()}}
+function resetDemo(){if(confirm('¿Restablecer la configuración y los datos del prototipo?')){try{localStorage.removeItem('docenteDigitalPrototype')}catch(_e){}location.reload()}}
 
 setMode(state.mode);
 if(state.level){fillSelects();go('home')}else showSetup();
