@@ -490,10 +490,16 @@ function differentiatedTasks(grades,area,brief){
 }
 
 function sessionTimes(durationText){
-  const m=parseInt(durationText)||45;
-  if(m>=90)return {start:15,dev:60,close:15};
-  if(m>=60)return {start:15,dev:35,close:10};
-  return {start:10,dev:25,close:10};
+  const m=Math.max(30,parseInt(durationText)||45);
+  // Distribución flexible: el desarrollo concentra la mayor parte del tiempo.
+  // Evita tratar toda sesión >=90 min como si durara exactamente 90.
+  let start=Math.round(m*0.15);
+  let close=Math.round(m*0.15);
+  start=Math.min(25,Math.max(10,start));
+  close=Math.min(25,Math.max(10,close));
+  let dev=m-start-close;
+  if(dev<20){start=10;close=10;dev=Math.max(10,m-20);}
+  return {start,dev,close,total:m};
 }
 
 function buildSession(){
