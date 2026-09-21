@@ -28,6 +28,10 @@
     const wrap=button?.closest('.choices');
     wrap?.querySelectorAll('.choice').forEach(b=>b.classList.toggle('active',b===button));
     persist();
+    // Este hotfix intercepta el toque antes del onclick original.
+    // Por eso debe avanzar aquí mismo después de seleccionar.
+    if(key==='level')setTimeout(()=>advance(2),70);
+    if(key==='ieType')setTimeout(()=>advance(3),70);
   }
 
   function gradeOptionsSafe(){
