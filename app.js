@@ -571,6 +571,55 @@ function sessionTimes(durationText){
   return {start,dev,close,total:m};
 }
 
+function ddSessionTopicSpec(area,title,brief,level){
+  const text=((title||'')+' '+(brief||'')).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const spec={
+    topic:(title||brief||'el tema trabajado'),
+    objects:'materiales concretos vinculados con el tema',
+    observable:'características, cambios, semejanzas, diferencias o relaciones pertinentes',
+    action:'observar, comparar, explicar y representar lo descubierto',
+    purpose:'Comprender el tema mediante una experiencia concreta, recoger evidencias y comunicar lo aprendido.'
+  };
+
+  if(/animal|fauna|pelo|pluma|escama|huella/.test(text)){
+    spec.objects='fotografías o tarjetas de animales del entorno, figuras o modelos, plumas caídas limpias, lana o fibras seguras y tarjetas de huellas';
+    spec.observable='cobertura corporal (pelo, plumas o escamas), número de patas, forma de desplazarse, hábitat y otras características visibles';
+    spec.action='observar y comparar animales, agruparlos por características visibles y explicar qué criterio utilizaron';
+    spec.purpose=level==='Inicial'
+      ? 'Que las niñas y los niños observen y comparen animales del entorno a partir de imágenes, modelos y materiales seguros, reconozcan algunas características visibles —como pelo, plumas, escamas, patas o forma de desplazarse— y comuniquen sus descubrimientos mediante el lenguaje oral, el dibujo, el movimiento o la clasificación.'
+      : 'Que los estudiantes observen, comparen y organicen información sobre animales del entorno, identifiquen características visibles y relaciones básicas, y comuniquen conclusiones usando evidencias de lo observado.';
+  }else if(/semill|germin|siembr|biohuerto|planta/.test(text)){
+    spec.objects='semillas reales de la zona, vasos o recipientes transparentes, algodón o tierra, agua, lupa sencilla y registros de crecimiento';
+    spec.observable='tamaño, forma, color, presencia de raíz o tallo, cambios entre días y condiciones de germinación';
+    spec.action='observar semillas o plantas, comparar cambios, registrar evidencias y explicar qué condiciones favorecen el crecimiento';
+    spec.purpose=level==='Inicial'
+      ? 'Que las niñas y los niños exploren semillas y plantas reales, observen cambios visibles como la aparición de raíz o tallo, comparen tamaños y formas, y comuniquen lo que descubren mediante dibujos, palabras, gestos o registros sencillos.'
+      : 'Que los estudiantes observen y registren cambios en semillas o plantas, comparen evidencias y expliquen qué condiciones favorecen la germinación o el crecimiento.';
+  }else if(/agua|yaku/.test(text)){
+    spec.objects='dos recipientes transparentes con agua, gotero o cucharita, piedras, tierra, hojas y una ficha o dibujo para registrar';
+    spec.observable='cantidad, transparencia, cambios al mezclar materiales, usos y formas de cuidado';
+    spec.action='observar, comparar usos o cambios del agua, registrar hallazgos y proponer acciones de cuidado';
+    spec.purpose='Que los estudiantes observen y comparen situaciones vinculadas con el agua, registren evidencias y expliquen por qué su cuidado es importante en su vida cotidiana y comunidad.';
+  }else if(/residuo|basura|recic|contamin/.test(text)){
+    spec.objects='residuos limpios y seguros previamente seleccionados —papel, cartón, plástico, metal o restos orgánicos representados—, recipientes de clasificación y tarjetas con situaciones cotidianas';
+    spec.observable='tipo de material, posibilidad de reutilización o reciclaje, cantidad y forma adecuada de clasificación';
+    spec.action='clasificar residuos, justificar criterios y proponer acciones de reducción, reutilización o disposición responsable';
+    spec.purpose='Que los estudiantes clasifiquen residuos según características observables, justifiquen sus decisiones y propongan acciones viables para reducir o manejar mejor los residuos de su entorno.';
+  }else if(area==='Matemática'){
+    spec.objects='material concreto, tarjetas con datos, semillas, chapas, bloques, regla, cinta métrica, balanza o representaciones según el problema';
+    spec.observable='cantidades, relaciones, medidas, patrones, datos y procedimientos usados para resolver el reto';
+    spec.action='representar el problema, elegir una estrategia, resolver, comprobar y explicar por qué la respuesta tiene sentido';
+    spec.purpose='Que los estudiantes resuelvan un problema contextualizado usando representaciones y estrategias pertinentes, expliquen su procedimiento y comprueben la razonabilidad de su respuesta.';
+  }else if(area==='Comunicación'){
+    spec.objects='texto breve, imagen, cartel, audio, testimonio o producción modelo vinculada con el propósito comunicativo';
+    spec.observable='información explícita e implícita, organización de ideas, propósito, destinatario, recursos del texto y decisiones de comunicación';
+    spec.action='leer, escuchar, dialogar o producir un texto con un propósito claro y revisar la producción usando criterios';
+    spec.purpose='Que los estudiantes comprendan o produzcan mensajes con un propósito comunicativo claro, organicen sus ideas y revisen sus decisiones a partir de criterios.';
+  }
+
+  return spec;
+}
+
 function buildSession(){
   const {unit,activity}=selectedActivity();
   const duration=byId('sessionDuration')?.value||'45 minutos';
@@ -579,17 +628,19 @@ function buildSession(){
   const area=activity?.area||'Área';
   const title=byId('sessionTitle')?.value||activity?.title||'Sesión de aprendizaje';
   const times=sessionTimes(duration);
+  const topicSpec=ddSessionTopicSpec(area,title,brief,state.level);
   const session={
     id:'s'+Date.now(),unitId:unit?.id||null,unitTitle:unit?.title||'Unidad de ejemplo',title,area,duration,resources,
+    topicSpec,
     activityKind:activity?.kind||'sesion',activityKindLabel:activity?.kindLabel||(state.level==='Inicial'?'Actividad de aprendizaje':'Sesión de aprendizaje'),workshopType:activity?.workshopType||'',
     level:state.level,ieType:state.ieType,grades:[...state.grades],brief,
     competence:competenceFor(area,title),criterion:criterionFor(area,brief),evidence:evidenceFor(area),instrument:instrumentFor(area),
     challenge:challengeFor(area,brief),times,
     purpose:state.level==='Inicial'
       ? (activity?.kind==='taller'
-          ? `Favorecer la exploración, expresión, autonomía y participación de las niñas y los niños mediante el taller de ${activity?.workshopType||'expresión'}, vinculado con ${brief}.`
-          : `Movilizar la competencia priorizada mediante una experiencia lúdica, significativa y pertinente vinculada con ${brief}, respetando los ritmos, intereses y formas de expresión de las niñas y los niños.`)
-      : `Desarrollar la competencia priorizada del área de ${area} mediante un reto contextualizado en ${brief}, diferenciando las tareas según el grado y promoviendo que los estudiantes expliquen lo que hacen y aprenden.`,
+          ? `Que las niñas y los niños participen en el taller de ${activity?.workshopType||'expresión'} explorando materiales, movimientos o lenguajes propios del taller, tomando decisiones y comunicando lo que hicieron y sintieron.`
+          : topicSpec.purpose)
+      : topicSpec.purpose,
     createdAt:new Date().toISOString()
   };
   state.lastSession=session;save();return session;
