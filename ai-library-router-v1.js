@@ -349,6 +349,9 @@
       'Tema: '+title+'.',
       'Nivel: '+level+'. Grado(s): '+grades+'. Área: '+area+'.',
       'Debe ser pedagógicamente útil, visualmente limpia, sin exceso de elementos y adecuada para impresión en A4.',
+      level==='Inicial'
+        ? 'Si se trata de una ficha de Inicial, usa las fichas de referencia solo como inspiración visual, no como plantilla obligatoria. Varía composición, tipo de actividad, personajes, distribución y recursos gráficos según el propósito pedagógico, la edad y la consigna.'
+        : 'Adapta la complejidad visual y cognitiva al nivel y al grado; no repitas una misma plantilla para todos los materiales.',
       'Evita texto largo dentro de la imagen; deja el texto principal fuera cuando sea posible.',
       'No incluyas datos personales de estudiantes ni información privada de la institución.'
     ].join(' ');
