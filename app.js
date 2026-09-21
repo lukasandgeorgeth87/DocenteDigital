@@ -436,9 +436,10 @@ function selectedVisualResource(){
   catch{return null;}
 }
 
-function selectedVisualHtml(forWord=false){
+function selectedVisualHtml(session,forWord=false){
   const r=selectedVisualResource();
   if(!r)return '';
+  if(r.selectedForSessionId && session?.id && r.selectedForSessionId!==session.id)return '';
   const img=r.previewUrl
     ? `<p style="text-align:center"><img src="${escapeHtml(r.previewUrl)}" alt="${escapeHtml(r.title||'Recurso visual')}" style="max-width:100%;max-height:${forWord?'360px':'300px'};object-fit:contain"></p>`
     : '';
@@ -462,7 +463,7 @@ function sessionHtml(session,forWord=false){
   <p><b>Evidencia:</b> ${escapeHtml(session.evidence)}</p>
   <p><b>Instrumento:</b> ${escapeHtml(session.instrument)}</p>
   <p><b>Recursos:</b> ${escapeHtml(session.resources)}. Se debe ofrecer alternativa no digital cuando corresponda.</p>
-  ${selectedVisualHtml(forWord)}
+  ${selectedVisualHtml(session,forWord)}
   ${attention}
   <h3>Inicio · ${session.times.start} min</h3>
   <p>Acogida, conexión con la experiencia de los estudiantes y recuperación de saberes previos. El docente comunica el propósito y el criterio en lenguaje comprensible, acuerda normas breves de trabajo y presenta el reto.</p>
