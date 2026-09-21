@@ -294,7 +294,7 @@
     const s = appState();
     const last = s.lastSession || {};
     return [
-      s.level, s.ieType, ...(s.grades || []), ...(s.areas || []),
+      s.level, s.ieType, ...(s.grades || []),
       last.title, last.area, last.brief, last.unitTitle
     ].filter(Boolean).join(' ');
   }
@@ -304,6 +304,7 @@
     const usage=usageStats();
     return CATALOG
       .map(r => ({...r, score:scoreResource(r, ctx)+(Math.min(usage[r.id]||0,10)*0.01)}))
+      .filter(r => r.score >= 0.20)
       .sort((a,b) => b.score - a.score)
       .slice(0, limit);
   }
@@ -454,7 +455,8 @@
   function selectResource(id){
     const r=CATALOG.find(x=>x.id===id);
     if(!r) return;
-    const selected={...r,selectedAt:new Date().toISOString()};
+    const s=appState();
+    const selected={...r,selectedAt:new Date().toISOString(),selectedForSessionId:s.lastSession?.id||null};
     localStorage.setItem('docenteDigitalSelectedResource', JSON.stringify(selected));
     recordResourceUse(id);
     bumpRoute('libraryUses');
@@ -525,14 +527,25 @@
     const items=bestResources(5);
     const box=document.getElementById('ddSessionSuggestions');
     if(!box) return;
+    const content=items.length
+      ? `<div class="dd-resource-grid">${renderResourceCards(items)}</div>`
+      : `<div class="dd-empty">
+          <b>No encontramos una coincidencia suficientemente buena.</b>
+          <p>No mostraremos una imagen irrelevante solo por ahorrar. Puedes buscar manualmente, probar ChatGPT Gratis o usar un crédito premium.</p>
+          <div class="dd-inline-actions">
+            <button class="btn ghost" type="button" onclick="go('aihub')">📚 Buscar manualmente</button>
+            <button class="btn" type="button" onclick="window.DocenteDigitalAI.tryChatGPTFreeForImage()">💬 Probar ChatGPT Gratis</button>
+            <button class="btn amber" type="button" onclick="window.DocenteDigitalAI.newPremiumImage()">✨ Imagen nueva</button>
+          </div>
+        </div>`;
     box.innerHTML = `
       <div class="dd-panel">
         <div class="dd-panel-head">
           <div><span class="pill">Biblioteca primero</span><h3>Imágenes sugeridas para esta sesión</h3></div>
           <button class="btn ghost" type="button" onclick="go('aihub')">Ver biblioteca</button>
         </div>
-        <p class="sub">Se priorizan recursos ya existentes para ahorrar tiempo y consumo. Una imagen nueva será opcional y con crédito.</p>
-        <div class="dd-resource-grid">${renderResourceCards(items)}</div>
+        <p class="sub">Solo se muestran recursos con coincidencia suficiente de nivel, área y tema.</p>
+        ${content}
       </div>`;
     box.scrollIntoView({behavior:'smooth',block:'start'});
   }
