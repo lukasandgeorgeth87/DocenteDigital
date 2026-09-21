@@ -140,6 +140,70 @@
       previewUrl:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Plant_growth.jpg?width=800',
       reusable:true,
       webLicensed:true
+    },
+    {
+      id:'WEB-INI-MAT-FORMAS-004',
+      title:'Formas básicas para clasificación, seriación y reconocimiento',
+      level:'Inicial',
+      area:'Matemática',
+      topic:'formas figuras geométricas círculo cuadrado triángulo clasificación inicial',
+      kind:'Lámina visual',
+      quality:'A',
+      source:'Wikimedia Commons',
+      author:'RaviC',
+      license:'Dominio público',
+      sourcePage:'https://commons.wikimedia.org/wiki/File:BasicShapes_0001.svg',
+      previewUrl:'https://commons.wikimedia.org/wiki/Special:Redirect/file/BasicShapes_0001.svg?width=650',
+      reusable:true,
+      webLicensed:true
+    },
+    {
+      id:'WEB-PRI-CYT-AGUA-005',
+      title:'Ciclo del agua — diagrama visual',
+      level:'Primaria',
+      area:'Ciencia y Tecnología',
+      topic:'agua ciclo evaporación condensación precipitación naturaleza',
+      kind:'Diagrama',
+      quality:'A',
+      source:'Wikimedia Commons',
+      author:'j4p4n / NASA Precipitation Measurement Missions',
+      license:'Dominio público / NASA',
+      sourcePage:'https://commons.wikimedia.org/wiki/File:Water_cycle.svg',
+      previewUrl:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Water_cycle.svg?width=900',
+      reusable:true,
+      webLicensed:true
+    },
+    {
+      id:'WEB-SEC-CYT-CELULA-006',
+      title:'Esquema simple de una célula',
+      level:'Secundaria',
+      area:'Ciencia y Tecnología',
+      topic:'célula biología organelos citoplasma núcleo',
+      kind:'Diagrama científico',
+      quality:'A',
+      source:'Wikimedia Commons',
+      author:'Maxmath12',
+      license:'CC0 1.0',
+      sourcePage:'https://commons.wikimedia.org/wiki/File:Cell_diagram.svg',
+      previewUrl:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Cell_diagram.svg?width=700',
+      reusable:true,
+      webLicensed:true
+    },
+    {
+      id:'WEB-DIR-IE-007',
+      title:'Edificio escolar — recurso institucional de referencia',
+      level:'Director',
+      area:'Gestión institucional',
+      topic:'escuela institución educativa portada gestión director',
+      kind:'Fotografía institucional',
+      quality:'A',
+      source:'Wikimedia Commons',
+      author:'YMR Musslim',
+      license:'CC0 1.0',
+      sourcePage:'https://commons.wikimedia.org/wiki/File:Face_of_the_School_building.jpg',
+      previewUrl:'https://commons.wikimedia.org/wiki/Special:Redirect/file/Face_of_the_School_building.jpg?width=800',
+      reusable:true,
+      webLicensed:true
     }
   ];
 
@@ -489,11 +553,11 @@
         <div class="dd-library-controls">
           <select id="ddLibLevel" onchange="window.DocenteDigitalAI.renderLibrary()">
             <option value="">Todos los niveles</option>
-            <option>Inicial</option><option>Primaria</option><option>Secundaria</option>
+            <option>Inicial</option><option>Primaria</option><option>Secundaria</option><option>Director</option>
           </select>
           <select id="ddLibArea" onchange="window.DocenteDigitalAI.renderLibrary()">
             <option value="">Todas las áreas</option>
-            <option>Comunicación</option><option>Matemática</option><option>Ciencia y Tecnología</option><option>Personal Social</option><option>Ciencias Sociales</option>
+            <option>Comunicación</option><option>Matemática</option><option>Ciencia y Tecnología</option><option>Personal Social</option><option>Ciencias Sociales</option><option>Gestión institucional</option>
           </select>
           <input id="ddLibQuery" placeholder="Buscar: germinación, residuos, biohuerto..." oninput="window.DocenteDigitalAI.renderLibrary()">
         </div>
