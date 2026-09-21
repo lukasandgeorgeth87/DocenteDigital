@@ -304,7 +304,7 @@
     const usage=usageStats();
     return CATALOG
       .map(r => ({...r, score:scoreResource(r, ctx)+(Math.min(usage[r.id]||0,10)*0.01)}))
-      .filter(r => r.score >= 0.20)
+      .filter(r => r.score >= 0.20 && r.previewUrl)
       .sort((a,b) => b.score - a.score)
       .slice(0, limit);
   }
@@ -455,16 +455,20 @@
   function renderResourceCards(items){
     if(!items.length) return '<div class="dd-empty">No encontramos recursos con esos filtros. Prueba ChatGPT Gratis antes de usar un crédito premium.</div>';
     return items.map(r => {
-      const preview=r.previewUrl
-        ? `<div class="dd-resource-preview image"><img loading="lazy" src="${esc(r.previewUrl)}" alt="${esc(r.title)}" onerror="this.closest('.dd-resource-preview').innerHTML='${iconFor(r.kind)}'"></div>`
-        : `<div class="dd-resource-preview" aria-hidden="true">${iconFor(r.kind)}</div>`;
+      const ready=Boolean(r.previewUrl);
+      const preview=ready
+        ? `<a class="dd-resource-preview image" href="${esc(r.previewUrl)}" target="_blank" rel="noopener noreferrer" title="Abrir imagen en tamaño mayor"><img loading="lazy" src="${esc(r.previewUrl)}" alt="${esc(r.title)}" onerror="this.closest('.dd-resource-preview').classList.add('broken');this.remove()"></a>`
+        : `<div class="dd-resource-preview pending"><span>Miniatura pendiente</span></div>`;
       const sourceLink=r.sourcePage
         ? ` <a class="dd-source-link" href="${esc(r.sourcePage)}" target="_blank" rel="noopener noreferrer">ver fuente</a>`
+        : '';
+      const imageLink=ready
+        ? `<a class="btn ghost dd-image-link" href="${esc(r.previewUrl)}" target="_blank" rel="noopener noreferrer">🔎 Abrir imagen</a>`
         : '';
       const used=usageStats()[r.id]||0;
       const author=r.author ? `<br><b>Autor:</b> ${esc(r.author)}` : '';
       return `
-      <article class="dd-resource">
+      <article class="dd-resource ${ready?'':'not-ready'}">
         ${preview}
         <div class="dd-resource-body">
           <div class="dd-badges">
@@ -475,7 +479,10 @@
           <h3>${esc(r.title)}</h3>
           <p><b>Área:</b> ${esc(r.area)} · <b>Tipo:</b> ${esc(r.kind)}</p>
           <p class="dd-small"><b>Origen:</b> ${esc(r.source)}${sourceLink}${author}<br><b>Uso:</b> reutilizable · <b>Licencia:</b> ${esc(r.license)}${used?'<br><b>Reutilizado:</b> '+used+' vez/veces':''}</p>
-          <button class="btn alt" type="button" onclick="window.DocenteDigitalAI.selectResource('${esc(r.id)}')">Usar como referencia</button>
+          <div class="dd-inline-actions">
+            ${ready?`<button class="btn alt" type="button" onclick="window.DocenteDigitalAI.selectResource('${esc(r.id)}')">Usar como referencia</button>`:'<button class="btn alt" type="button" disabled title="Se habilitará cuando la miniatura real esté registrada">Referencia no disponible</button>'}
+            ${imageLink}
+          </div>
         </div>
       </article>`;
     }).join('');
@@ -533,10 +540,10 @@
   function resourceVisualHtml(r){
     if(!r)return '';
     const image=r.previewUrl
-      ? `<img src="${esc(r.previewUrl)}" alt="${esc(r.title)}" loading="lazy" style="max-width:100%;max-height:320px;object-fit:contain;border-radius:12px;border:1px solid #dbe7ef">`
-      : `<div class="dd-resource-large-icon">${iconFor(r.kind)}</div>`;
+      ? `<a href="${esc(r.previewUrl)}" target="_blank" rel="noopener noreferrer"><img src="${esc(r.previewUrl)}" alt="${esc(r.title)}" loading="lazy" style="max-width:100%;max-height:320px;object-fit:contain;border-radius:12px;border:1px solid #dbe7ef"></a>`
+      : '';
     const source=r.sourcePage
-      ? `<a href="${esc(r.sourcePage)}" target="_blank" rel="noopener noreferrer">Fuente</a>`
+      ? `<a href="${esc(r.sourcePage)}" target="_blank" rel="noopener noreferrer">Fuente y licencia</a>`
       : esc(r.source||'Biblioteca DocenteDigital');
     return `<div class="dd-selected-resource">
       <div>${image}</div>
@@ -546,6 +553,7 @@
         <p><b>Momento sugerido:</b> ${esc(usageMoment(r))}</p>
         <p class="dd-small"><b>Crédito:</b> ${r.author?esc(r.author)+' · ':''}${source} · ${esc(r.license||'')}</p>
         <div class="dd-inline-actions">
+          ${r.previewUrl?`<a class="btn ghost" href="${esc(r.previewUrl)}" target="_blank" rel="noopener noreferrer">🔎 Abrir imagen</a>`:''}
           <button class="btn ghost" type="button" onclick="window.DocenteDigitalAI.clearSelectedResource()">Quitar</button>
           <button class="btn alt" type="button" onclick="go('aihub')">Cambiar recurso</button>
         </div>
@@ -646,7 +654,11 @@
       .dd-resource-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
       .dd-resource{display:grid;grid-template-columns:90px 1fr;gap:12px;border:1px solid var(--line);border-radius:16px;padding:12px;background:#fff}
       .dd-resource-preview{display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,#eaf7f5,#eef4ff);min-height:90px;font-size:36px;overflow:hidden}
-      .dd-resource-preview.image{background:#f3f6f8}
+      .dd-resource-preview.image{background:#f3f6f8;text-decoration:none}
+      .dd-resource-preview.pending{background:#f5f6f7;color:#7b858d;font-size:12px;text-align:center;padding:8px}
+      .dd-resource-preview.broken{background:#fff1f1}
+      .dd-resource.not-ready{opacity:.72}
+      .dd-image-link{text-decoration:none;display:inline-flex;align-items:center}
       .dd-resource-preview.image img{width:100%;height:100%;min-height:90px;max-height:128px;object-fit:cover;display:block}
       .dd-source-link{color:var(--p2);font-weight:800;text-decoration:none}
       .dd-source-link:hover{text-decoration:underline}
