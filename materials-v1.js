@@ -444,8 +444,10 @@
 
   function downloadWord(){
     const item=state.lastMaterial;if(!item)return alert('Primero crea un material.');
+    const html=materialWordHtml(item);
+    if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml(item.topic,html,false,item.type+'_'+item.topic);
     if(typeof wordBlob!=='function'||typeof downloadBlob!=='function')return alert('No se pudo preparar el Word en este dispositivo.');
-    downloadBlob(wordBlob(item.topic,materialWordHtml(item)),cleanFileName(item.type+'_'+item.topic)+'.doc');
+    downloadBlob(wordBlob(item.topic,html),cleanFileName(item.type+'_'+item.topic)+'.doc');
   }
 
   function reopen(id){
