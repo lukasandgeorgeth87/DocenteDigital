@@ -156,10 +156,20 @@
     return topic;
   }
 
-  function readingMaterial(topic,level,grade,area){
+  function readingMaterial(topic,level,grade,area,sourceText=''){
     const info=topicInfo(topic),n=gradeNumber(grade),title=readingTitle(topic,level,grade,info);
     let paragraphs=[],questions=[];
-    if(level==='Inicial'){
+    const pasted=String(sourceText||'').trim();
+    if(pasted){
+      paragraphs=pasted.split(/\n{2,}|(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ])/).map(x=>x.trim()).filter(Boolean).slice(0,10);
+      questions=level==='Inicial'
+        ? ['¿Qué parte llamó más tu atención?','¿Qué observas o imaginas a partir del texto?','Representa con dibujo, gesto o palabras una idea del texto.']
+        : n<=2
+          ? ['¿De qué trata el texto?','¿Qué información encontraste de manera directa?','Dibuja o explica una idea importante.']
+          : n<=4
+            ? ['¿Cuál es la idea principal?','¿Qué dato del texto ayuda a comprenderla?','¿Qué relación encuentras entre dos ideas?','Formula una pregunta que todavía podría investigarse.']
+            : ['¿Cuál es la idea central y qué evidencias del texto la sostienen?','¿Qué relación o contraste importante aparece?','¿Qué afirmación necesitaría más evidencia?','Aplica una idea del texto a una situación distinta.'];
+    }else if(level==='Inicial'){
       if(info.key==='animals')paragraphs=[
         'Algunos animales tienen pelo. Otros tienen plumas o escamas. Podemos mirar sus patas, su cuerpo y la manera en que se mueven.',
         'Un perro corre, una oveja camina y una vizcacha salta. Cada animal tiene características que podemos observar sin hacerle daño.',
@@ -240,12 +250,14 @@
     ];
   }
 
-  function worksheetMaterial(topic,level,grade,area){
+  function worksheetMaterial(topic,level,grade,area,sourceText=''){
     const acts=worksheetActivities(topic,level,grade,area);
+    const source=String(sourceText||'').trim();
     return `<article class="dd-material-sheet">
       <div class="dd-material-kicker">Ficha de trabajo · ${E(area)} · ${E(grade)}</div>
       <h1>${E(topic)}</h1>
       <p><b>Propósito:</b> desarrollar una evidencia observable mediante acciones de comprensión, aplicación y explicación.</p>
+      ${source?`<div class="dd-source-base"><b>Recurso base proporcionado por el docente</b><p>${E(source.slice(0,2200))}${source.length>2200?'…':''}</p></div>`:''}
       <ol class="dd-big-list">${acts.map((a,i)=>`<li><b>${i+1}.</b> ${E(a)}<div class="dd-answer-lines"></div></li>`).join('')}</ol>
       <div class="dd-material-reflect"><b>Al final:</b> ¿qué aprendiste?, ¿qué estrategia te ayudó?, ¿qué mejorarías?</div>
     </article>`;
@@ -314,9 +326,9 @@
     return `<div class="notice"><b>Revisión lingüística requerida:</b> el material fue solicitado en ${E(lang)} ${variety&&variety!=='Ninguna'?'· '+E(variety):''}. Antes de imprimir una versión en lengua originaria, debe ser revisada por un hablante competente o docente EIB de la variedad seleccionada.</div>`;
   }
 
-  function renderByType(type,topic,level,grade,area){
-    if(type==='Lectura')return readingMaterial(topic,level,grade,area);
-    if(type==='Ficha de trabajo')return worksheetMaterial(topic,level,grade,area);
+  function renderByType(type,topic,level,grade,area,sourceText=''){
+    if(type==='Lectura')return readingMaterial(topic,level,grade,area,sourceText);
+    if(type==='Ficha de trabajo')return worksheetMaterial(topic,level,grade,area,sourceText);
     if(type==='Tarjetas palabra-imagen')return cardsMaterial(topic,grade);
     if(type==='Banco de problemas')return problemMaterial(topic,grade);
     if(type==='Conceptos para pizarra')return conceptsMaterial(topic,level,grade,area);
@@ -332,9 +344,10 @@
     const lang=$('materialLanguage')?.value||'Castellano';
     const variety=$('materialQuechua')?.value||state.quechuaVar||'Ninguna';
     const topic=($('materialTopic')?.value||'').trim()||ctx.topic||ctx.title||'Aprendemos desde nuestro contexto';
+    const sourceText=($('materialSourceText')?.value||'').trim();
     const instruction=($('materialInstruction')?.value||'').trim();
 
-    const body=renderByType(type,topic,level,grade,area);
+    const body=renderByType(type,topic,level,grade,area,sourceText);
     const p=profile();
     const meta=`<div class="dd-material-meta"><b>${E(p.institutionName||'')}</b>${placeText()?'<span>'+E(placeText())+'</span>':''}<span>${E(level)} · ${E(grade)} · ${E(area)}</span></div>`;
     const extra=instruction?`<div class="dd-material-instruction"><b>Indicación del docente:</b> ${E(instruction)}</div>`:'';
@@ -349,7 +362,7 @@
       </div>`;
 
     const item={
-      id:'m'+Date.now(),createdAt:new Date().toISOString(),type,level,grade,area,lang,variety,topic,instruction,
+      id:'m'+Date.now(),createdAt:new Date().toISOString(),type,level,grade,area,lang,variety,topic,sourceText,instruction,
       source:ctx.source,sourceTitle:ctx.title||'',html
     };
     state.materials.unshift(item);
@@ -388,6 +401,7 @@
     const ctx=sourceContext();
     const topic=($('materialTopic')?.value||'').trim()||ctx.topic||ctx.title||'Aprendemos desde nuestro contexto';
     const area=$('materialArea')?.value||ctx.area||state.areas?.[0]||'Comunicación';
+    const sourceText=($('materialSourceText')?.value||'').trim();
     const level=state.level||'Primaria';
     const grades=(ctx.grades&&ctx.grades.length?ctx.grades:(state.grades||[])).length
       ? (ctx.grades&&ctx.grades.length?ctx.grades:(state.grades||[]))
@@ -406,7 +420,7 @@
             :t==='Lectura'?`LEC-${codeGrade}-01`
             :t==='Conceptos para pizarra'?`PIZ-${codeGrade}-01`
             :`ORG-${codeGrade}-01`;
-          return `<section class="dd-bundle-section"><div class="dd-resource-code">${E(code)}</div><h3>${E(t)}</h3>${renderByType(t,topic,level,grade,area)}</section>`;
+          return `<section class="dd-bundle-section"><div class="dd-resource-code">${E(code)}</div><h3>${E(t)}</h3>${renderByType(t,topic,level,grade,area,sourceText)}</section>`;
         }).join('')}
       </section>`;
     }).join('');
@@ -521,7 +535,7 @@
     .dd-material-kicker{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#3e705e}
     .dd-material-meta{display:flex;gap:10px;flex-wrap:wrap;padding:8px 10px;margin-bottom:10px;border-bottom:1px solid #dbe5df}
     .dd-material-meta span{font-size:12px;color:#667}
-    .dd-material-task,.dd-material-reflect,.dd-material-instruction{margin:14px 0;padding:12px;border-radius:12px;background:#f4f8f6;border:1px solid #dce8e1}
+    .dd-material-task,.dd-material-reflect,.dd-material-instruction,.dd-source-base{margin:14px 0;padding:12px;border-radius:12px;background:#f4f8f6;border:1px solid #dce8e1}.dd-source-base p{white-space:pre-wrap;line-height:1.5}
     .dd-big-list,.dd-problem-list{padding-left:22px}.dd-big-list li,.dd-problem-list li{margin:13px 0}
     .dd-answer-lines{height:52px;margin-top:8px;background:repeating-linear-gradient(to bottom,transparent 0,transparent 22px,#c8d1cc 23px,#c8d1cc 24px)}
     .dd-answer-lines.tall{height:88px}
