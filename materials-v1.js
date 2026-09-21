@@ -387,14 +387,32 @@
   function createBundle(){
     const ctx=sourceContext();
     const topic=($('materialTopic')?.value||'').trim()||ctx.topic||ctx.title||'Aprendemos desde nuestro contexto';
-    const grade=$('materialGrade')?.value||ctx.grades?.[0]||state.grades?.[0]||'1.º';
     const area=$('materialArea')?.value||ctx.area||state.areas?.[0]||'Comunicación';
     const level=state.level||'Primaria';
+    const grades=(ctx.grades&&ctx.grades.length?ctx.grades:(state.grades||[])).length
+      ? (ctx.grades&&ctx.grades.length?ctx.grades:(state.grades||[]))
+      : [$('materialGrade')?.value||'1.º'];
     const types=area==='Matemática'
       ? ['Ficha de trabajo','Banco de problemas','Conceptos para pizarra','Organizador de aprendizaje']
       : ['Lectura','Ficha de trabajo','Conceptos para pizarra','Organizador de aprendizaje'];
-    const bundleHtml=`<article class="dd-material-bundle"><div class="dd-material-kicker">Paquete de materiales · ${E(area)} · ${E(grade)}</div><h1>Paquete: ${E(topic)}</h1>${types.map(t=>`<section class="dd-bundle-section"><h2>${E(t)}</h2>${renderByType(t,topic,level,grade,area)}</section>`).join('')}</article>`;
-    const item={id:'m'+Date.now(),createdAt:new Date().toISOString(),type:'Paquete de materiales',level,grade,area,lang:'Castellano',variety:'Ninguna',topic,instruction:'',source:ctx.source,sourceTitle:ctx.title||'',html:`<div class="dd-editable-material" contenteditable="true" spellcheck="true">${bundleHtml}</div><div class="actions topgap dd-material-actions"><button class="btn" type="button" onclick="window.DDMaterials.saveEdits()">💾 Guardar cambios</button><button class="btn alt" type="button" onclick="window.DDMaterials.downloadWord()">⬇ Word</button><button class="btn alt" type="button" onclick="window.print()">🖨 Imprimir / PDF</button></div>`};
+
+    const gradeBlocks=grades.map((grade,gi)=>{
+      const codeGrade=String(grade).match(/\d+/)?.[0]||String(gi+1);
+      return `<section class="dd-grade-pack">
+        <div class="dd-grade-pack-head"><span class="pill">Grado / edad: ${E(grade)}</span><h2>Materiales diferenciados · ${E(grade)}</h2></div>
+        ${types.map((t,ti)=>{
+          const code=t==='Ficha de trabajo'?`FIC-${codeGrade}-01`
+            :t==='Banco de problemas'?`MAT-${codeGrade}-10P`
+            :t==='Lectura'?`LEC-${codeGrade}-01`
+            :t==='Conceptos para pizarra'?`PIZ-${codeGrade}-01`
+            :`ORG-${codeGrade}-01`;
+          return `<section class="dd-bundle-section"><div class="dd-resource-code">${E(code)}</div><h3>${E(t)}</h3>${renderByType(t,topic,level,grade,area)}</section>`;
+        }).join('')}
+      </section>`;
+    }).join('');
+
+    const bundleHtml=`<article class="dd-material-bundle"><div class="dd-material-kicker">Paquete de materiales · ${E(area)}</div><h1>Paquete: ${E(topic)}</h1><p><b>Diferenciación:</b> cada grado/edad recibe su propio bloque; no se mezclan fichas de distintos grados en una sola lámina.</p>${gradeBlocks}</article>`;
+    const item={id:'m'+Date.now(),createdAt:new Date().toISOString(),type:'Paquete de materiales',level,grade:grades.join(', '),area,lang:'Castellano',variety:'Ninguna',topic,instruction:'',source:ctx.source,sourceTitle:ctx.title||'',html:`<div class="dd-editable-material" contenteditable="true" spellcheck="true">${bundleHtml}</div><div class="actions topgap dd-material-actions"><button class="btn" type="button" onclick="window.DDMaterials.saveEdits()">💾 Guardar cambios</button><button class="btn alt" type="button" onclick="window.DDMaterials.downloadWord()">⬇ Word</button><button class="btn alt" type="button" onclick="window.print()">🖨 Imprimir / PDF</button></div>`};
     state.materials.unshift(item);state.materials=state.materials.slice(0,40);state.lastMaterial=item;save();renderItem(item);renderHistory();
   }
 
@@ -510,7 +528,7 @@
     .dd-word-icon{font-size:50px}.dd-word-card b{font-size:20px}.dd-word-card span{color:#89958f}
     .dd-concept-grid,.dd-organizer{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
     .dd-concept-grid section,.dd-organizer section{border:1px solid #d9e4de;border-radius:12px;padding:12px;background:#fbfdfc}
-    .dd-editable-material{outline:none;border-radius:10px}.dd-editable-material:focus{box-shadow:0 0 0 2px rgba(47,126,90,.15)}.dd-material-bundle>.dd-bundle-section{margin:22px 0;padding-top:16px;border-top:2px dashed #c8d8cf}.dd-material-history{display:grid;gap:8px}.dd-material-history-item{display:flex;justify-content:space-between;gap:12px;align-items:center;border:1px solid #dce5e0;border-radius:12px;padding:11px;background:#fff}
+    .dd-editable-material{outline:none;border-radius:10px}.dd-editable-material:focus{box-shadow:0 0 0 2px rgba(47,126,90,.15)}.dd-material-bundle>.dd-bundle-section{margin:22px 0;padding-top:16px;border-top:2px dashed #c8d8cf}.dd-grade-pack{margin:24px 0;padding:14px;border:1px solid #d7e3dc;border-radius:14px;background:#fbfdfc}.dd-grade-pack-head{margin-bottom:10px}.dd-resource-code{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.04em;background:#eaf5ef;border-radius:8px;padding:5px 8px;margin-bottom:6px}.dd-material-history{display:grid;gap:8px}.dd-material-history-item{display:flex;justify-content:space-between;gap:12px;align-items:center;border:1px solid #dce5e0;border-radius:12px;padding:11px;background:#fff}
     .dd-material-history-item h3{margin:5px 0 2px}.dd-material-history-item p{margin:0;color:#677}
     @media(max-width:650px){.dd-word-cards,.dd-concept-grid,.dd-organizer{grid-template-columns:1fr}.dd-material-history-item{align-items:flex-start;flex-direction:column}}
     @media print{body>*:not(.layout){display:none!important}.sidebar,.topbar,.mobile-nav,.dd-material-actions{display:none!important}.content,.screen#materials,.screen#materials.active{display:block!important;padding:0!important}.screen#materials>*:not(.card){display:none!important}#materials .card>*:not(#materialOutput){display:none!important}#materialOutput{display:block!important;border:0!important;box-shadow:none!important}}
