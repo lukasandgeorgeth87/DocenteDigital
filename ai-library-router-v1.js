@@ -353,6 +353,31 @@
     ].join(' ');
   }
 
+  async function improveTitleWithChatGPTFree(){
+    const s=appState();
+    const brief=(document.getElementById('unitSituation')?.value||'').trim();
+    const type=(document.getElementById('unitType')?.value||'Proyecto de aprendizaje').trim();
+    const current=(document.getElementById('unitTitle')?.value||'').trim();
+    const level=s.level||'nivel educativo';
+    const grades=(s.grades||[]).join(', ')||'grados configurados';
+    const prompt=[
+      'Actúa como especialista en planificación curricular MINEDU Perú.',
+      'Propón 5 títulos breves, naturales, pedagógicamente coherentes y atractivos para '+type+'.',
+      'Contexto escrito por el docente: '+brief,
+      'Nivel: '+level+'. Grados/edades: '+grades+'.',
+      current?'Título actual a mejorar: '+current:'No existe título definitivo todavía.',
+      'Reglas: no inventes problemas, actores ni productos que no aparecen en el contexto; evita frases genéricas como "para construir una respuesta con sentido"; evita títulos excesivamente largos; usa lenguaje adecuado al nivel; entrega solo los 5 títulos numerados.'
+    ].join('\n');
+    try{
+      await navigator.clipboard.writeText(prompt);
+      openChatGPTFree(true);
+      setTimeout(()=>alert('Copiamos el contexto y las reglas para mejorar el título. Pégalos en ChatGPT Gratis y luego copia el título elegido en DocenteDigital.'),250);
+    }catch{
+      promptFallback(prompt);
+      openChatGPTFree(true);
+    }
+  }
+
   async function tryChatGPTFreeForImage(){
     const prompt=imagePrompt();
     try{
@@ -749,6 +774,7 @@
   window.DocenteDigitalAI={
     openChatGPTFree,
     copyGeneralPrompt,
+    improveTitleWithChatGPTFree,
     renderLibrary,
     selectResource,
     selectedResource,
