@@ -159,10 +159,15 @@ function proposeUnitTitleOptions(brief,type){
   const s=ctx.s;
   const crops=ddListWords(ctx.crops);
   const project=type==='Proyecto de aprendizaje';
+  const level=state.level||'Primaria';
   const options=[];
 
   if(/siembr|semill|tarpuy|papa|anu|oca|olluco/.test(s)){
-    if(crops){
+    if(level==='Secundaria'){
+      options.push(project?'Semillas, territorio y producción: investigamos prácticas de siembra y sus desafíos':'Siembra y territorio: analizamos saberes, procesos y decisiones productivas');
+      options.push('De la semilla al sistema productivo: comprendemos relaciones entre ambiente, cultura y producción');
+      options.push('Saberes agrícolas y conocimiento científico: contrastamos prácticas para comprender la siembra');
+    }else if(crops){
       options.push(project
         ? `Semillas que dan vida: investigamos la siembra de ${crops}`
         : `Nos preparamos para la siembra: conocemos y valoramos semillas de ${crops}`);
@@ -174,32 +179,70 @@ function proposeUnitTitleOptions(brief,type){
       options.push('Saberes de nuestra tierra: aprendemos y participamos en la siembra');
     }
   }else if(/pachamama|madre tierra/.test(s)){
-    options.push('Saberes que cuidan la tierra: valoramos a la Pachamama');
-    options.push('Pachamama nos enseña: aprendemos a agradecer, valorar y cuidar');
-    options.push('Nuestra tierra, nuestros saberes: cuidamos la Pachamama');
+    if(level==='Secundaria'){
+      options.push('Pachamama y territorio: analizamos saberes, identidad y cuidado ambiental');
+      options.push('Saberes ancestrales y sostenibilidad: dialogamos sobre nuestra relación con la tierra');
+      options.push('Territorio, cultura y responsabilidad: comprendemos distintas formas de cuidar la tierra');
+    }else{
+      options.push('Saberes que cuidan la tierra: valoramos a la Pachamama');
+      options.push('Pachamama nos enseña: aprendemos a agradecer, valorar y cuidar');
+      options.push('Nuestra tierra, nuestros saberes: cuidamos la Pachamama');
+    }
   }else if(/agua|yaku/.test(s)){
-    options.push('Guardianes del agua: investigamos cómo cuidarla en nuestra comunidad');
-    options.push('Cada gota cuenta: aprendemos a usar y cuidar el agua');
-    options.push('Yaku para la vida: conocemos, valoramos y protegemos el agua');
+    if(level==='Secundaria'){
+      options.push('Agua y sostenibilidad: analizamos usos, riesgos y decisiones responsables');
+      options.push('Cada gota cuenta: investigamos el uso del agua y proponemos mejoras');
+      options.push('Del consumo al cuidado: comprendemos el valor del agua en nuestro entorno');
+    }else{
+      options.push('Guardianes del agua: investigamos cómo cuidarla en nuestra comunidad');
+      options.push('Cada gota cuenta: aprendemos a usar y cuidar el agua');
+      options.push('Yaku para la vida: conocemos, valoramos y protegemos el agua');
+    }
   }else if(/residuo|basura|contamin|recicla/.test(s)){
-    options.push('Menos residuos, más vida: cuidamos nuestra comunidad');
-    options.push('Transformamos nuestros residuos en acciones para cuidar el ambiente');
-    options.push('Una comunidad más limpia: investigamos, reducimos y reutilizamos residuos');
+    if(level==='Secundaria'){
+      options.push(project?'Del residuo a la acción: investigamos y transformamos nuestros espacios':'Residuos y convivencia: analizamos cómo nuestras decisiones afectan los espacios comunes');
+      options.push('Basura en el piso: analizamos causas y proponemos soluciones sostenibles');
+      options.push('Espacios limpios, decisiones responsables: investigamos y proponemos mejoras');
+    }else if(level==='Inicial'){
+      options.push('Cada residuo en su lugar: cuidamos nuestros espacios');
+      options.push('¿Dónde va la basura? Descubrimos y aprendemos a cuidar');
+      options.push('Pequeñas acciones para mantener limpio nuestro entorno');
+    }else{
+      options.push('Menos residuos, más vida: cuidamos nuestra comunidad');
+      options.push('Basura en el piso: observamos, pensamos y proponemos soluciones');
+      options.push('Una comunidad más limpia: investigamos, reducimos y reutilizamos residuos');
+    }
   }else if(/animal|pluma|pelo|naturaleza/.test(s)){
-    options.push('Detectives de la naturaleza: observamos, comparamos y descubrimos');
-    options.push('Entre plantas y animales: investigamos la vida que nos rodea');
-    options.push('Exploradores de nuestra naturaleza: aprendemos observando el entorno');
+    if(level==='Secundaria'){
+      options.push('Biodiversidad animal: analizamos características, relaciones y adaptaciones');
+      options.push('Animales y ambiente: interpretamos cómo se relacionan con su entorno');
+      options.push('De la observación a la explicación: comprendemos la diversidad animal');
+    }else if(level==='Inicial'){
+      options.push('Pequeños exploradores del mundo animal');
+      options.push('¿Quién vive, salta, vuela o se arrastra?');
+      options.push('Pelos, plumas y muchas sorpresas');
+    }else{
+      options.push('Detectives de la naturaleza: observamos, comparamos y descubrimos');
+      options.push('Entre plantas y animales: investigamos la vida que nos rodea');
+      options.push('Exploradores de nuestra naturaleza: aprendemos observando el entorno');
+    }
   }else{
     const first=ctx.raw.split(/[.!?]/)[0].replace(/^(los|las|el|la)\s+/i,'').trim();
-    const short=first.length>70?first.slice(0,67).replace(/\s+\S*$/,'')+'…':first;
-    if(short)options.push(project?`Investigamos nuestro contexto: ${short}`:`Aprendemos desde nuestro contexto: ${short}`);
-    options.push(project?'Investigamos y transformamos una situación de nuestra comunidad':'Comprendemos y aprendemos desde una situación de nuestra comunidad');
-    options.push('Aprendemos con sentido: observamos, investigamos y proponemos');
+    const rawClause=/^(?:se\s+)?(?:arrojan?|botan?|tiran?|dejan?|usan?|hacen?|tienen?|quieren?|comen?|juegan?|pelean?|contaminan?|desperdician?|malgastan?)\b/i.test(first);
+    if(level==='Secundaria'&&rawClause){
+      options.push(project?'Del problema a la acción: investigamos una situación de nuestro entorno y proponemos mejoras':'Una situación que nos interpela: analizamos causas, consecuencias y alternativas');
+      options.push('Comprender para decidir: estudiamos una situación de nuestro entorno');
+      options.push('Del análisis a la propuesta: construimos respuestas sustentadas');
+    }else{
+      const short=first.length>70?first.slice(0,67).replace(/\s+\S*$/,'')+'…':first;
+      if(short)options.push(project?`Investigamos nuestro contexto: ${short}`:`Aprendemos desde nuestro contexto: ${short}`);
+      options.push(project?'Investigamos y transformamos una situación de nuestra comunidad':'Comprendemos y aprendemos desde una situación de nuestra comunidad');
+      options.push('Aprendemos con sentido: observamos, investigamos y proponemos');
+    }
   }
 
   return [...new Set(options.map(x=>x.replace(/\s+/g,' ').trim()))].slice(0,3);
 }
-
 function proposeUnitTitle(brief,type){
   return proposeUnitTitleOptions(brief,type)[0]||'Proyecto de aprendizaje';
 }
