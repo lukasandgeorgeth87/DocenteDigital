@@ -215,14 +215,25 @@ function ddAssistPlanningContext(apply=true){
     : 'una experiencia cercana y significativa para los estudiantes');
   const level=state.level||'Primaria';
   const grades=(state.grades||[]).join(', ');
+  const p=state.teacherContext||{};
+  const institution=p.institutionName||state.schoolName||'';
+  const locality=p.community?((p.localityType||'localidad')+' de '+p.community):'';
+  const place=[
+    institution?('la '+institution):'',
+    locality,
+    p.district?('distrito de '+p.district):'',
+    p.province?('provincia de '+p.province):'',
+    p.region?('región '+p.region):''
+  ].filter(Boolean).join(', ');
+  const where=place||'el entorno cercano de los estudiantes';
   let brief='';
 
   if(level==='Inicial'){
-    brief=`Se propone partir de una experiencia cercana y lúdica relacionada con ${topic}. Las niñas y los niños de ${grades||'las edades configuradas'} podrán observar, explorar, jugar, conversar, representar y formular preguntas a partir de materiales, imágenes, relatos u objetos pertinentes. La docente recogerá sus ideas e intereses para orientar la actividad de aprendizaje y los talleres, sin asumir como hecho una situación que no haya sido observada previamente.`;
+    brief=`En ${where}, se propone partir de una experiencia cercana y lúdica relacionada con ${topic}. Las niñas y los niños de ${grades||'las edades configuradas'} podrán observar, explorar, jugar, conversar, representar y formular preguntas a partir de materiales, imágenes, relatos u objetos pertinentes. La docente recogerá sus ideas e intereses para orientar la actividad de aprendizaje y los talleres, sin asumir como hecho una situación que no haya sido observada previamente.`;
   }else if(level==='Secundaria'){
-    brief=`Se propone abordar ${topic} mediante una situación retadora y cercana a la vida de los estudiantes de ${grades||'los grados configurados'}. A partir de información, casos, datos, fuentes o experiencias pertinentes, los estudiantes analizarán el tema, formularán preguntas, contrastarán evidencias y construirán una respuesta, explicación o propuesta. El docente podrá precisar después el contexto local, actores, datos o problemática real para aumentar la autenticidad del aprendizaje.`;
+    brief=`En ${where}, se propone abordar ${topic} mediante una situación retadora y cercana a la vida de los estudiantes de ${grades||'los grados configurados'}. A partir de información, casos, datos, fuentes o experiencias pertinentes, los estudiantes analizarán el tema, formularán preguntas, contrastarán evidencias y construirán una respuesta, explicación o propuesta. El docente podrá precisar actores, datos o una problemática real cuando cuente con esa información.`;
   }else{
-    brief=`Se propone desarrollar ${topic} a partir de una situación cercana a la vida cotidiana de los estudiantes de ${grades||'los grados configurados'}. Mediante observación, preguntas, diálogo, lectura, resolución de problemas, indagación y producción según las áreas seleccionadas, los estudiantes construirán aprendizajes y los aplicarán en una tarea con sentido. El docente podrá completar después datos reales de la comunidad, intereses observados o una necesidad específica para contextualizar mejor la propuesta.`;
+    brief=`En ${where}, se propone desarrollar ${topic} a partir de una situación cercana a la vida cotidiana de los estudiantes de ${grades||'los grados configurados'}. Mediante observación, preguntas, diálogo, lectura, resolución de problemas, indagación y producción según las áreas seleccionadas, los estudiantes construirán aprendizajes y los aplicarán en una tarea con sentido. El docente podrá completar luego intereses observados, prácticas locales o una necesidad específica para enriquecer la contextualización.`;
   }
 
   if(apply&&ta){
