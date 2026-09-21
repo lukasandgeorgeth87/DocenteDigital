@@ -133,13 +133,102 @@ function showUnit(){
   byId('unitPanel').scrollIntoView({behavior:'smooth'});
 }
 
+function ddListWords(items){
+  const clean=[...new Set(items.filter(Boolean))];
+  if(!clean.length)return '';
+  if(clean.length===1)return clean[0];
+  if(clean.length===2)return clean.join(' y ');
+  return clean.slice(0,-1).join(', ')+' y '+clean[clean.length-1];
+}
+
+function ddTitleContext(brief=''){
+  const raw=String(brief||'').trim();
+  const s=raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const crops=[
+    ['papa','papa'],['anu','añu'],['oca','oca'],['olluco','olluco'],['lisa','lisas'],
+    ['haba','habas'],['tarwi','tarwi'],['arveja','arvejas'],['cebolla','cebolla'],
+    ['culantro','culantro'],['lechuga','lechuga'],['rabano','rábano'],['maiz','maíz']
+  ].filter(([key])=>new RegExp('\\b'+key+'s?\\b').test(s)).map(([,label])=>label);
+  const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const month=months.find(m=>s.includes(m))||'';
+  return {raw,s,crops,month};
+}
+
+function proposeUnitTitleOptions(brief,type){
+  const ctx=ddTitleContext(brief);
+  const s=ctx.s;
+  const crops=ddListWords(ctx.crops);
+  const project=type==='Proyecto de aprendizaje';
+  const options=[];
+
+  if(/siembr|semill|tarpuy|papa|anu|oca|olluco/.test(s)){
+    if(crops){
+      options.push(project
+        ? `Semillas que dan vida: investigamos la siembra de ${crops}`
+        : `Nos preparamos para la siembra: conocemos y valoramos semillas de ${crops}`);
+      options.push(`De la semilla a la chacra: aprendemos con ${crops}`);
+      options.push(`Saberes de nuestra tierra: organizamos la siembra de ${crops}`);
+    }else{
+      options.push(project?'Semillas que dan vida: investigamos la siembra de nuestra comunidad':'Nos preparamos para la siembra y aprendemos de nuestra comunidad');
+      options.push('De la semilla a la chacra: descubrimos cómo empieza una nueva cosecha');
+      options.push('Saberes de nuestra tierra: aprendemos y participamos en la siembra');
+    }
+  }else if(/pachamama|madre tierra/.test(s)){
+    options.push('Saberes que cuidan la tierra: valoramos a la Pachamama');
+    options.push('Pachamama nos enseña: aprendemos a agradecer, valorar y cuidar');
+    options.push('Nuestra tierra, nuestros saberes: cuidamos la Pachamama');
+  }else if(/agua|yaku/.test(s)){
+    options.push('Guardianes del agua: investigamos cómo cuidarla en nuestra comunidad');
+    options.push('Cada gota cuenta: aprendemos a usar y cuidar el agua');
+    options.push('Yaku para la vida: conocemos, valoramos y protegemos el agua');
+  }else if(/residuo|basura|contamin|recicla/.test(s)){
+    options.push('Menos residuos, más vida: cuidamos nuestra comunidad');
+    options.push('Transformamos nuestros residuos en acciones para cuidar el ambiente');
+    options.push('Una comunidad más limpia: investigamos, reducimos y reutilizamos residuos');
+  }else if(/animal|pluma|pelo|naturaleza/.test(s)){
+    options.push('Detectives de la naturaleza: observamos, comparamos y descubrimos');
+    options.push('Entre plantas y animales: investigamos la vida que nos rodea');
+    options.push('Exploradores de nuestra naturaleza: aprendemos observando el entorno');
+  }else{
+    const first=ctx.raw.split(/[.!?]/)[0].replace(/^(los|las|el|la)\s+/i,'').trim();
+    const short=first.length>70?first.slice(0,67).replace(/\s+\S*$/,'')+'…':first;
+    if(short)options.push(project?`Investigamos nuestro contexto: ${short}`:`Aprendemos desde nuestro contexto: ${short}`);
+    options.push(project?'Investigamos y transformamos una situación de nuestra comunidad':'Comprendemos y aprendemos desde una situación de nuestra comunidad');
+    options.push('Aprendemos con sentido: observamos, investigamos y proponemos');
+  }
+
+  return [...new Set(options.map(x=>x.replace(/\s+/g,' ').trim()))].slice(0,3);
+}
+
 function proposeUnitTitle(brief,type){
-  const s=(brief||'').toLowerCase();
-  if(/siembr|papa|tarpuy|añu|oca|olluco/.test(s))return 'Aprendemos y participamos en la siembra de nuestra comunidad';
-  if(/pachamama|madre tierra/.test(s))return 'Cuidamos y valoramos la Pachamama';
-  if(/agua|yaku/.test(s))return 'Cuidamos y usamos responsablemente el agua';
-  if(/residuo|basura|contamin/.test(s))return 'Cuidamos nuestra comunidad reduciendo la contaminación';
-  return type==='Proyecto de aprendizaje'?'Investigamos y aprendemos desde nuestra comunidad':'Aprendemos a partir de situaciones de nuestra comunidad';
+  return proposeUnitTitleOptions(brief,type)[0]||'Proyecto de aprendizaje';
+}
+
+function refreshUnitTitleSuggestions(){
+  const brief=byId('unitSituation')?.value.trim()||'';
+  const type=byId('unitType')?.value||'Proyecto de aprendizaje';
+  const input=byId('unitTitle');
+  const box=byId('unitTitleSuggestions');
+  if(!brief){
+    if(box)box.innerHTML='<small>Describe primero el contexto para proponer un título coherente.</small>';
+    return;
+  }
+  const options=proposeUnitTitleOptions(brief,type);
+  if(input&&(!input.value.trim()||input.dataset.autoTitle==='true')){
+    input.value=options[0]||'';
+    input.dataset.autoTitle='true';
+  }
+  if(box){
+    box.innerHTML='<small><b>Propuestas de título:</b> elige una o edita la que prefieras.</small><div class="dd-title-options">'+
+      options.map((title,i)=>`<button type="button" class="dd-title-option${i===0?' active':''}" onclick="chooseUnitTitle(${JSON.stringify(title)})">${escapeHtml(title)}</button>`).join('')+
+      '</div>';
+  }
+}
+
+function chooseUnitTitle(title){
+  const input=byId('unitTitle');
+  if(input){input.value=title;input.dataset.autoTitle='false';input.focus();}
+  document.querySelectorAll('.dd-title-option').forEach(b=>b.classList.toggle('active',b.textContent.trim()===title));
 }
 
 function expandSituation(brief){
