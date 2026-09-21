@@ -389,6 +389,18 @@
     const find=(re)=>list.find(x=>re.test(x.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')));
     const a=canonicalArea(area);
 
+    if(level==='Inicial'&&a==='Personal Social'){
+      if(/dios|fe|relig|oracion|creacion/.test(t))return list.find(x=>/amada por dios/i.test(x.name))||list[0];
+      if(/identidad|emocion|familia|caracteristica personal|quien soy/.test(t))return find(/construye su identidad/)||list[0];
+      return find(/convive y participa/)||list[0];
+    }
+    if(level==='Inicial'&&a==='Comunicación'){
+      if(/arte|artist|dibu|pint|model|crea proyecto/.test(t))return find(/crea proyectos/)||list[0];
+      if(/lee|lectura|texto escrito|cuento|libro/.test(t))return find(/lee diversos tipos/)||list[0];
+      if(/escrib|produc|trazo|texto/.test(t))return find(/escribe diversos tipos/)||list[0];
+      return find(/se comunica oralmente/)||list[0];
+    }
+
     if(['Comunicación','Castellano como Segunda Lengua','Inglés como Lengua Extranjera'].includes(a)){
       if(/lee|lectura|texto escrito|comprension lectora/.test(t))return find(/lee diversos tipos/)||list[0];
       if(/escrib|produc|redact|revis|texto/.test(t))return find(/escribe diversos tipos/)||list[0];
@@ -429,12 +441,6 @@
     if(a==='Arte y Cultura'){
       if(/aprecia|analiza|manifestacion|obra|cultura/.test(t))return find(/aprecia/)||list[0];
       return find(/crea proyectos/)||list[0];
-    }
-    if(a==='Comunicación'&&level==='Inicial')return list[0];
-    if(a==='Personal Social'&&level==='Inicial'){
-      if(/dios|fe|relig|oracion/.test(t))return list.find(x=>/amada por dios/i.test(x.name))||list[0];
-      if(/identidad|emocion|familia/.test(t))return find(/construye su identidad/)||list[0];
-      return find(/convive y participa/)||list[0];
     }
     return list[0];
   }
