@@ -68,20 +68,14 @@
     session.ddStrategyRoute={signature:signature(parts),activation:parts[0],grouping:parts[1],reasoning:parts[2],evidence:parts[3],feedback:parts[4],differentiation:parts[5],closure:parts[6],area:[...area],eib,total:TOTAL};
     save();return session.ddStrategyRoute;
   }
-  function block(session){
-    const r=routeFor(session);const rows=[['1. Activación',r.activation],['2. Organización',r.grouping],['3. Movimiento didáctico del área',r.area.join(' → ')],['4. Razonamiento',r.reasoning],['5. Evidencia durante el proceso',r.evidence],['6. Retroalimentación',r.feedback],['7. Diferenciación',r.differentiation],...(r.eib.length?[['8. Diálogo de saberes / EIB',r.eib.join(' → ')]]:[]),['Cierre',r.closure]];
-    return `<div class="dd-combo-strategy"><h3>RUTA ESTRATÉGICA ÚNICA DE ESTA SESIÓN</h3><p>Combinación seleccionada según área, contexto, evidencia y atención diferenciada. El motor dispone de <b>${Number(TOTAL).toLocaleString('es-PE')}</b> combinaciones base antes de considerar área, EIB, recursos y contexto.</p>${rows.map(x=>`<div class="dd-combo-row"><b>${E(x[0])}</b><span>${E(x[1])}</span></div>`).join('')}<small>La variación nunca modifica competencia, capacidad, estándar, desempeño ni criterio aprobado. Las estrategias son medios pedagógicos, no requisitos normativos.</small></div>`;
-  }
-
   const base=window.sessionHtml;
   if(typeof base==='function')window.sessionHtml=function(session,forWord=false){
-    let html=base.apply(this,arguments);const b=block(session);
-    const marker='<b>Atención diferenciada y simultánea:</b>';
-    if(html.includes('<div class="dd-strategy-section">')&&html.includes(marker))html=html.replace(/<div class="dd-strategy-section">[\s\S]*?<b>Atención diferenciada y simultánea:<\/b>/,b+marker);
-    else if(html.includes('<h2>7. INSTRUMENTO DE EVALUACIÓN</h2>'))html=html.replace('<h2>7. INSTRUMENTO DE EVALUACIÓN</h2>',b+'<h2>7. INSTRUMENTO DE EVALUACIÓN</h2>');
-    else html+=b;
-    return html;
+    // El combinador trabaja en segundo plano. Su ruta sirve al motor maestro para
+    // variar y enriquecer la secuencia, pero no se muestra al docente como tabla,
+    // conteo de combinaciones ni explicación técnica.
+    session.ddStrategyRoute=routeFor(session);
+    return base.apply(this,arguments);
   };
-  const css=document.createElement('style');css.textContent=`.dd-combo-strategy{margin:13px 0;padding:13px;border:1.5px dashed #7d9b8c;border-radius:13px;background:#f8fbf9}.dd-combo-strategy h3{margin-top:0}.dd-combo-row{display:grid;grid-template-columns:180px 1fr;gap:8px;padding:7px 0;border-bottom:1px solid #e3ebe6}.dd-combo-row:last-of-type{border-bottom:0}.dd-combo-row span{line-height:1.4}@media(max-width:650px){.dd-combo-row{grid-template-columns:1fr}}`;document.head.appendChild(css);
+
   window.ddStrategyCombinationCount=TOTAL;
 })();
