@@ -147,6 +147,16 @@
   }
 
   createUnitDemo=function(){
+    const core=window.DD_OFFICIAL_CURRICULUM;
+    if(!core?.verified){
+      alert('No se pudo cargar la fuente curricular oficial MINEDU. Por seguridad, DocenteDigital no generará la unidad/proyecto.');
+      return;
+    }
+    const missing=(state.areas||[]).filter(area=>!core.getArea(state.level,area).length);
+    if(missing.length){
+      alert('Falta matriz curricular oficial para: '+missing.join(', ')+'. Corrige la configuración antes de continuar.');
+      return;
+    }
     const type=byId('unitType').value, duration=byId('unitDuration').value, brief=byId('unitSituation').value.trim();
     if(!brief)return alert('Escribe una idea breve del contexto o situación de tu comunidad.');
     let title=byId('unitTitle').value.trim(); if(!title){title=proposeUnitTitle(brief,type);byId('unitTitle').value=title;}
