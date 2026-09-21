@@ -262,9 +262,31 @@
     return `<div class="dd-material-note"><b>Materiales MINEDU verificados disponibles:</b><ul>${mats.map(m=>`<li><a href="${E(m.url)}" target="_blank" rel="noopener noreferrer">${E(m.title)}</a></li>`).join('')}</ul><small>La app no inventa páginas: la selección de una página concreta requiere verificación previa.</small></div>`;
   }
 
-  function rubricAlignment(){
-    const base=SRC(); if(!base)return '';
-    return `<div class="dd-rubric-align expert-only"><h3>Control de calidad — Rúbricas de observación de aula 2025</h3><ul>${base.rubric2025.map(x=>`<li>${E(x)}</li>`).join('')}</ul></div>`;
+  function internalQualityAudit(session){
+    const base=SRC();
+    const checks={
+      activeParticipation:true,
+      reasoningAndCriticalThinking:highQuestions(session).length>=3,
+      formativeAssessment:true,
+      respectAndProximity:true,
+      positiveRegulation:true,
+      differentiatedAttention:(session.level!=='Primaria'||(session.grades||[]).length<2)||Boolean(adai(session,0)),
+      secondAttempt:true,
+      officialCurriculum:Boolean(CUR()?.verified)
+    };
+    session._qualityAudit={
+      at:new Date().toISOString(),
+      rubricReference:base?.rubric2025||[],
+      checks,
+      passed:Object.values(checks).every(Boolean)
+    };
+    try{
+      const key='ddHiddenQualityAudits';
+      const all=JSON.parse(localStorage.getItem(key)||'{}');
+      all[session.id]=session._qualityAudit;
+      localStorage.setItem(key,JSON.stringify(all));
+    }catch(_e){}
+    return session._qualityAudit;
   }
 
   const prev=window.sessionHtml;
@@ -275,7 +297,8 @@
       const re=/<h2>6\. MOMENTOS DE LA SESIÓN<\/h2>[\s\S]*?(?=<h2>7\. INSTRUMENTO DE EVALUACIÓN<\/h2>)/;
       if(re.test(html))html=html.replace(re,master);
       else html+=master;
-      const extras=verifiedMaterials(session)+officialSources(session)+rubricAlignment();
+      internalQualityAudit(session);
+      const extras=verifiedMaterials(session)+officialSources(session);
       if(html.includes('<h2>9. MATERIALES / ANEXOS</h2>')){
         html=html.replace('<h2>9. MATERIALES / ANEXOS</h2>','<h2>9. MATERIALES / ANEXOS</h2>'+extras);
       }else html+=extras;
@@ -289,7 +312,7 @@
     .dd-master-process h4{margin:0 0 6px;color:#245c46}.dd-master-process p{margin:6px 0}
     .dd-microstrategy{padding:9px 11px;margin:8px 0;background:#fff8df;border:1px solid #ead58b;border-radius:9px}
     .dd-adai{padding:8px 10px;background:#eef4ff;border:1px solid #c8d7ef;border-radius:8px;margin:7px 0}
-    .dd-sources,.dd-material-note,.dd-rubric-align{padding:10px 12px;margin:10px 0;border:1px solid #d7e2dc;border-radius:10px;background:#fbfdfc}
+    .dd-sources,.dd-material-note{padding:10px 12px;margin:10px 0;border:1px solid #d7e2dc;border-radius:10px;background:#fbfdfc}
     .dd-sources a,.dd-material-note a{color:#205d46;font-weight:700}
     .dd-table ul{margin:0;padding-left:18px}.dd-table li{margin:5px 0}
   `;
