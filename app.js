@@ -70,8 +70,32 @@ function showSetup(){
 
 function chooseOne(key,val,btn){
   state[key]=val;
-  btn.parentElement.querySelectorAll('.choice').forEach(x=>x.classList.remove('active'));
-  btn.classList.add('active');
+  btn?.parentElement?.querySelectorAll('.choice').forEach(x=>x.classList.remove('active'));
+  btn?.classList.add('active');
+  save();
+
+  // En móvil, avanzar automáticamente evita que el flujo dependa de un segundo toque.
+  if(key==='level'){
+    setTimeout(()=>{
+      try{nextSetup(2);}catch(error){
+        byId('step1')?.classList.add('hidden');
+        byId('step2')?.classList.remove('hidden');
+        byId('s2')?.classList.add('active');
+        console.error('DocenteDigital setup level fallback',error);
+      }
+    },80);
+  }
+  if(key==='ieType'){
+    setTimeout(()=>{
+      try{nextSetup(3);}catch(error){
+        byId('step2')?.classList.add('hidden');
+        byId('step3')?.classList.remove('hidden');
+        byId('s3')?.classList.add('active');
+        try{renderGrades();}catch(_e){}
+        console.error('DocenteDigital setup IE fallback',error);
+      }
+    },80);
+  }
 }
 
 function nextSetup(n){
