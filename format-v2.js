@@ -32,9 +32,13 @@
   };
 
   window.ddSuggestTitles=function(){
-    const brief=byId('unitSituation')?.value.trim()||'';
-    if(!brief)return alert('Primero escribe la idea o contexto de partida.');
+    let brief=byId('unitSituation')?.value.trim()||'';
+    if(!brief&&typeof window.ddAssistPlanningContext==='function'){
+      brief=window.ddAssistPlanningContext(true)||'';
+    }
     const type=byId('unitType')?.value||'Unidad de aprendizaje';
+    const titleSeed=byId('unitTitle')?.value.trim()||'';
+    if(!brief)brief=titleSeed||'una experiencia cercana y significativa para los estudiantes';
     const opts=titleOptions(brief,type);
     let box=byId('ddTitleSuggestions');
     if(!box){box=document.createElement('div');box.id='ddTitleSuggestions';box.className='dd-title-suggestions';byId('unitTitle').parentElement.appendChild(box);}
