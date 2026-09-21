@@ -17,7 +17,7 @@
     <button class="nav" data-screen="plan" onclick="go('plan')">📘 Mi planificación</button>
     <button class="nav" data-screen="session" onclick="go('session')">📝 Crear mi sesión</button>
     <button class="nav" data-screen="materials" onclick="go('materials')">🧩 Materiales</button>
-    <button class="nav" data-screen="evaluation" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">📊 Evaluación · Próximamente</button>
+    <button class="nav" data-screen="evaluation" onclick="go('evaluation')">📊 Evaluación</button>
     <button class="nav" data-screen="director" onclick="go('director')">🏫 Director</button>
     <button class="nav" data-screen="settings" onclick="go('settings')">⚙️ Configuración</button>
   </aside>
@@ -53,16 +53,16 @@
         <button class="card action-card span6" onclick="continueWork()"><span>▶️</span><h2>Continuar mi trabajo</h2><p>Retoma tu última unidad, proyecto o sesión.</p></button>
         <button class="card action-card span6" onclick="go('session')"><span>📝</span><h2>Crear mi sesión</h2><p>Usa la unidad/proyecto actual y completa solo lo que falta.</p></button>
         <button class="card action-card span4" onclick="go('plan')"><span>📘</span><h2>Mi planificación</h2><p>Diagnóstico, programación anual, horario, unidades y proyectos.</p></button>
-        <button class="card action-card span4" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento"><span>🧩</span><h2>Materiales · Próximamente</h2><p>Este flujo todavía está en construcción y no se considera disponible para lanzamiento.</p></button>
-        <button class="card action-card span4" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento"><span>📊</span><h2>Evaluación · Próximamente</h2><p>Este flujo todavía está en construcción y no se considera disponible para lanzamiento.</p></button>
+        <button class="card action-card span4" onclick="go('materials')"><span>🧩</span><h2>Materiales</h2><p>Crea lecturas, fichas, problemas y paquetes a partir de tu planificación.</p></button>
+        <button class="card action-card span4" onclick="go('evaluation')"><span>📊</span><h2>Evaluación</h2><p>Registra evidencias, crea evaluaciones y redacta conclusiones desde lo ya planificado.</p></button>
       </div>
     </section>
 
     <section id="plan" class="screen">
       <h1>Mi planificación</h1><p class="sub">Nivel → Tipo de IE → grados/edades → áreas → horario → planificación.</p>
       <div class="grid">
-        <div class="card span4"><h2>🩺 Evaluación diagnóstica</h2><p>Toma como referencia aprendizajes del grado anterior.</p><button class="btn block" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">Crear diagnóstico · Próximamente</button></div>
-        <div class="card span4"><h2>📅 Programación anual</h2><p>Se reajusta con diagnóstico, contexto y avances.</p><button class="btn alt block" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">Abrir programación anual · Próximamente</button></div>
+        <div class="card span4"><h2>🩺 Evaluación diagnóstica</h2><p>Recoge evidencias iniciales y ayuda a decidir apoyos y prioridades.</p><button class="btn block" onclick="window.DDPlanningTools?.openDiagnostic()">Crear diagnóstico</button></div>
+        <div class="card span4"><h2>📅 Programación anual</h2><p>Organiza periodos, unidades/proyectos, competencias y evidencias de manera editable.</p><button class="btn alt block" onclick="window.DDPlanningTools?.openAnnual()">Abrir programación anual</button></div>
         <div class="card span4"><h2>📚 Unidad / Proyecto</h2><p>Crea y guarda unidades o proyectos para reutilizarlos en las sesiones.</p><button class="btn amber block" onclick="showUnit()">Crear nueva</button></div>
       </div>
 
@@ -226,6 +226,7 @@
 <script src="materials-v1.js"></script>
 <script src="evaluation-v1.js"></script>
 <script src="sesiones-maestras-core-v1.js"></script>
+<script src="planning-tools-v1.js"></script>
 <script src="initial-surface-guard-v1.js"></script>
 </body>
 </html>
