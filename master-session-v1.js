@@ -238,27 +238,35 @@
 
   function initialActivityMoments(session){
     const q=highQuestions(session);
+    const spec=session.topicSpec||{};
+    const objects=spec.objects||'materiales concretos seleccionados para el tema';
+    const observable=spec.observable||'características y cambios pertinentes';
+    const action=spec.action||'observar, comparar y comunicar lo descubierto';
     const rows=`
       <tr><td><b>INICIO</b><br><small>Acogida y conexión</small></td><td>
         <ul>
-          <li>Se acoge a las niñas y los niños en un clima afectivo y seguro, se recupera una experiencia cercana vinculada con <b>${E(context(session))}</b> y se presenta un objeto, imagen, situación, relato breve o material concreto que despierte curiosidad.</li>
-          <li>Los niños observan, manipulan, comentan, preguntan o representan libremente lo que saben; la docente escucha sin corregir de inmediato y recoge sus ideas iniciales.</li>
-          <li>Se comunica el propósito con lenguaje sencillo y se plantea una pregunta abierta como: <b>${E(q[0])}</b></li>
+          <li>Se acoge a las niñas y los niños en un clima afectivo y seguro y se recupera una experiencia cercana vinculada con <b>${E(context(session))}</b>.</li>
+          <li>La docente presenta concretamente <b>${E(objects)}</b>. Los niños los observan, tocan o manipulan cuando sea seguro, comentan qué reconocen y expresan qué les llama la atención.</li>
+          <li>La docente orienta la observación hacia <b>${E(observable)}</b> sin dar respuestas anticipadas.</li>
+          <li><b>Propósito para los niños:</b> ${E(session.purpose)}</li>
+          <li>Se plantea una pregunta abierta como: <b>${E(q[0])}</b></li>
         </ul>
       </td><td>${session.times?.start||10} min</td></tr>
       <tr><td><b>DESARROLLO</b><br><small>Exploración, juego y construcción</small></td><td>
         <div class="dd-master-process">
-          <p><b>Exploración activa:</b> las niñas y los niños manipulan, juegan, observan, comparan, se desplazan, conversan, representan o prueban posibilidades según la competencia movilizada.</p>
-          <p><b>Mediación docente:</b> observa, escucha, formula preguntas breves, amplía vocabulario, ofrece materiales pertinentes y acompaña sin reemplazar la iniciativa infantil.</p>
-          <p><b>Interacciones:</b> se promueven pequeños grupos, parejas, asamblea breve o trabajo individual según el interés y la actividad, respetando ritmos y autonomía.</p>
-          <p><b>Evaluación formativa:</b> la docente recoge evidencias mediante observación, producciones, expresiones orales, acciones y decisiones de los niños; retroalimenta con preguntas, gestos, reformulaciones o nuevos retos.</p>
+          <p><b>¿Qué observan?</b> ${E(observable)}.</p>
+          <p><b>¿Qué manipulan o usan?</b> ${E(objects)}.</p>
+          <p><b>¿Qué hacen con ello?</b> ${E(action)}.</p>
+          <p><b>Mediación docente:</b> observa, escucha, formula preguntas breves —“¿qué ves?”, “¿en qué se parecen?”, “¿qué es diferente?”, “¿cómo lo sabes?”—, amplía vocabulario y ofrece apoyo sin reemplazar la iniciativa infantil.</p>
+          <p><b>Interacciones:</b> se organizan pequeños grupos, parejas, asamblea breve o trabajo individual según la experiencia; los niños muestran objetos, comparan hallazgos y comunican sus ideas mediante oralidad, dibujo, movimiento, clasificación o representación.</p>
+          <p><b>Evaluación formativa:</b> la docente recoge evidencias concretas de lo que cada niño observa, compara, clasifica, explica o representa, y retroalimenta con una pregunta o nuevo reto.</p>
         </div>
       </td><td>${session.times?.dev||40} min</td></tr>
       <tr><td><b>CIERRE</b><br><small>Comunicación y valoración</small></td><td>
         <ul>
-          <li>Los niños muestran, cuentan, representan o explican lo que hicieron y qué descubrieron.</li>
-          <li>La docente recupera algunas ideas, reconoce estrategias y ayuda a relacionar la experiencia con la vida cotidiana.</li>
-          <li>Se conversa brevemente sobre qué les gustó, qué les sorprendió y qué les gustaría seguir explorando.</li>
+          <li>Los niños muestran, cuentan o representan un descubrimiento concreto relacionado con <b>${E(observable)}</b>.</li>
+          <li>La docente recupera dos o tres hallazgos del grupo y los relaciona con el propósito de la actividad.</li>
+          <li>Se conversa brevemente: “¿qué observaste?”, “¿qué comparaste?”, “¿qué te sorprendió?” y “¿qué te gustaría seguir investigando?”.</li>
         </ul>
       </td><td>${session.times?.close||10} min</td></tr>`;
     return `<h2>6. MOMENTOS DE LA ACTIVIDAD DE APRENDIZAJE</h2>${table(rows,['MOMENTO','EXPERIENCIAS / MEDIACIÓN','TIEMPO'])}`;
@@ -383,10 +391,13 @@
       if(re.test(html))html=html.replace(re,master);
       else html+=master;
       internalQualityAudit(session);
-      const extras=verifiedMaterials(session)+officialSources(session);
-      if(html.includes('<h2>9. MATERIALES / ANEXOS</h2>')){
-        html=html.replace('<h2>9. MATERIALES / ANEXOS</h2>','<h2>9. MATERIALES / ANEXOS</h2>'+extras);
-      }else html+=extras;
+      try{
+        session._sourceAudit={
+          officialSourcesChecked:Boolean(SRC()?.official?.length),
+          verifiedMaterials:(SRC()?.materialFor?.(session.level,session.area,session.grades)||[]).map(x=>x.id),
+          checkedAt:new Date().toISOString()
+        };
+      }catch(_e){}
       return html;
     };
   }
