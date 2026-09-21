@@ -450,6 +450,7 @@
     verified:true,
     scope:'areas-competencies-capacities-transversal-competencies',
     performanceMatrixReady:false,
+    requiredForGeneration:true,
     sources:SOURCES,
     matrix:MATRIX,
     areas,
@@ -473,6 +474,61 @@
       return previousAreaOptions.apply(this,arguments);
     };
   }
+
+  function sourceLinksHtml(level){
+    const src=sourceFor(level);
+    const cneb=SOURCES.cneb;
+    const rm=SOURCES.rm159;
+    const link=(url,label)=>url?`<a class="btn ghost" href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`:'';
+    return `
+      <div class="dd-official-source-card success">
+        <b>✓ Fuente curricular oficial MINEDU cargada</b>
+        <p style="margin:6px 0 10px">DocenteDigital toma áreas, competencias, capacidades y competencias transversales de las fuentes oficiales. Los criterios, evidencias y actividades se muestran como contextualizaciones pedagógicas.</p>
+        <div class="actions" style="flex-wrap:wrap">
+          ${link(cneb.officialUrl,'📘 Abrir/descargar CNEB')}
+          ${link(src?.officialUrl||src?.repositoryUrl,'📚 Programa curricular de '+(level||'nivel'))}
+          ${link(rm.officialUrl,'⚖️ RM 159-2017-MINEDU')}
+        </div>
+      </div>`;
+  }
+
+  function renderOfficialSourceStatus(){
+    const level=(typeof state==='object'&&state?.level)||'';
+    const plan=document.getElementById('plan');
+    if(plan){
+      let box=plan.querySelector('[data-dd-official-source]');
+      if(!box){
+        box=document.createElement('div');
+        box.setAttribute('data-dd-official-source','true');
+        const sub=plan.querySelector('.sub');
+        if(sub)sub.insertAdjacentElement('afterend',box);else plan.prepend(box);
+      }
+      box.innerHTML=sourceLinksHtml(level);
+    }
+    const settings=document.getElementById('settings');
+    if(settings){
+      let box=settings.querySelector('[data-dd-official-source]');
+      if(!box){
+        box=document.createElement('div');
+        box.className='topgap';
+        box.setAttribute('data-dd-official-source','true');
+        settings.appendChild(box);
+      }
+      box.innerHTML=sourceLinksHtml(level);
+    }
+  }
+
+  const previousRefresh=window.refresh;
+  if(typeof previousRefresh==='function'){
+    window.refresh=function(){
+      const result=previousRefresh.apply(this,arguments);
+      renderOfficialSourceStatus();
+      return result;
+    };
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',renderOfficialSourceStatus,{once:true});
+  else renderOfficialSourceStatus();
 
   window.__ddOfficialCurriculumV1=true;
 })();
