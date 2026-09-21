@@ -215,6 +215,15 @@ function activityVariants(area,brief){
       `Reflexionamos sobre el agradecimiento, la vida y el cuidado de la creación`,
       `Expresamos compromisos de respeto y solidaridad desde nuestra fe y cultura`
     ],
+    'Castellano como Segunda Lengua':[
+      `Conversamos en castellano sobre experiencias del contexto`,
+      `Comprendemos mensajes y textos breves en castellano`,
+      `Producimos mensajes escritos sencillos en castellano según el nivel`
+    ],
+    'Inglés como Lengua Extranjera':[
+      `Comprendemos expresiones sencillas relacionadas con el contexto de la unidad`,
+      `Comunicamos información breve sobre nuestra experiencia`
+    ],
     'Psicomotriz':[
       `Exploramos movimientos, espacios y materiales del contexto`,
       `Representamos corporalmente experiencias de nuestra comunidad`
@@ -223,15 +232,15 @@ function activityVariants(area,brief){
       `Analizamos actores, cambios y relaciones sociales presentes en ${topic}`,
       `Interpretamos fuentes y explicamos procesos del contexto`
     ],
-    'DPCC':[
+    'Desarrollo Personal, Ciudadanía y Cívica':[
       `Deliberamos sobre decisiones y responsabilidades relacionadas con ${topic}`,
       `Construimos propuestas y acuerdos para el bien común`
     ],
-    'Inglés':[
+    'Inglés como Lengua Extranjera':[
       `Comprendemos expresiones sencillas relacionadas con el contexto de la unidad`,
       `Comunicamos información breve sobre nuestra experiencia`
     ],
-    'EPT':[
+    'Educación para el Trabajo':[
       `Identificamos necesidades y oportunidades vinculadas con ${topic}`,
       `Diseñamos y mejoramos una propuesta o producto`
     ]
@@ -345,25 +354,12 @@ function syncTitle(){
 }
 
 function competenceFor(area,title=''){
-  const t=title.toLowerCase();
-  if(area==='Comunicación'){
-    if(/lee|lectura|texto/.test(t))return 'Lee diversos tipos de textos escritos en su lengua materna.';
-    if(/escrib|produc|revis/.test(t))return 'Escribe diversos tipos de textos en su lengua materna.';
-    return 'Se comunica oralmente en su lengua materna.';
+  const core=window.DD_OFFICIAL_CURRICULUM;
+  const official=core?.pickCompetence?.(state.level,area,title);
+  if(!official){
+    throw new Error(`No se encontró una competencia oficial MINEDU para ${state.level} / ${area}`);
   }
-  if(area==='Matemática'){
-    if(/tabla|gráfico|dato/.test(t))return 'Resuelve problemas de gestión de datos e incertidumbre.';
-    if(/med|forma|ubic|espacio/.test(t))return 'Resuelve problemas de forma, movimiento y localización.';
-    if(/patrón|regular/.test(t))return 'Resuelve problemas de regularidad, equivalencia y cambio.';
-    return 'Resuelve problemas de cantidad.';
-  }
-  if(area==='Personal Social')return 'Convive y participa democráticamente en la búsqueda del bien común.';
-  if(area==='Ciencia y Tecnología')return /indag|observ|pregunta|resultado/.test(t)?'Indaga mediante métodos científicos para construir sus conocimientos.':'Explica el mundo físico basándose en conocimientos sobre los seres vivos, materia y energía, biodiversidad, Tierra y universo.';
-  if(area==='Arte y Cultura')return 'Crea proyectos desde los lenguajes artísticos.';
-  if(area==='Educación Física')return 'Interactúa a través de sus habilidades sociomotrices.';
-  if(area==='Educación Religiosa')return 'Asume la experiencia del encuentro personal y comunitario con Dios en su proyecto de vida.';
-  if(area==='Psicomotriz')return 'Se desenvuelve de manera autónoma a través de su motricidad.';
-  return `Desarrolla la competencia priorizada del área de ${area}, de acuerdo con la unidad y el grado.`;
+  return official.name;
 }
 
 function criterionFor(area,brief){
