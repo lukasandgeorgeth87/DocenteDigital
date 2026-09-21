@@ -198,9 +198,12 @@
   function developmentRows(session){
     const ps=processes(session);
     const q=highQuestions(session);
+    const selected=(session.strategies||[]).filter(Boolean);
     const rows=[];
     ps.forEach((p,i)=>{
+      const strategy=selected.length?selected[i%selected.length]:null;
       rows.push(`<div class="dd-master-process"><h4>PROCESO ${i+1} — ${E(p[0])}</h4>
+        ${strategy?`<p><b>Estrategia activa:</b> ${E(strategy.name)} — ${E(strategy.desc)}</p>`:''}
         <p><b>Acción cognitiva principal:</b> ${E(learnerAction(session,i,p))}</p>
         <p><b>Mediación docente:</b> modela solo lo necesario, observa estrategias, contrasta producciones y formula preguntas que obliguen a explicar decisiones, no a adivinar la respuesta.</p>
         <p><b>Pregunta de alta demanda:</b> <strong>${E(q[i%q.length])}</strong></p>
@@ -208,7 +211,7 @@
         <p><b>Monitoreo y retroalimentación:</b> revisa una evidencia breve, describe un avance concreto, formula una pregunta o pista y exige un <b>segundo intento</b> para que la retroalimentación produzca mejora observable.</p>
       </div>`);
       if(i<ps.length-1 && i%2===1){
-        rows.push(`<div class="dd-microstrategy"><b>Microestrategia de variación:</b> cambian de canal mediante galería breve, comparación de soluciones, tutoría entre pares, estación, mini debate, clasificación, manipulación o análisis de un error, según el área y los recursos disponibles.</div>`);
+        rows.push(`<div class="dd-microstrategy"><b>Variación de dinámica:</b> cambia de canal con una acción pertinente —galería breve, comparación de soluciones, tutoría entre pares, estación, mini debate, clasificación, manipulación, análisis de error o nuevo caso— evitando repetir la misma rutina durante toda la sesión.</div>`);
       }
     });
     return rows.join('');
