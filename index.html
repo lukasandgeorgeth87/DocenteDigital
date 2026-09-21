@@ -17,6 +17,18 @@ body.dd-setup-mode .mobile-nav{display:none!important}
 body.dd-setup-mode .content{padding-bottom:24px!important}
 .dd-setup-selected{margin-top:8px;font-weight:800;color:#17694f}
 @media(max-width:650px){#setup .card{padding:14px}#setup .dd-setup-block{padding:14px 0}#setup .choices{gap:8px}}
+
+#setup{position:relative;z-index:80;pointer-events:auto}
+#setup *{pointer-events:auto}
+body.dd-setup-mode .mobile-nav{display:none!important}
+body.dd-setup-mode .chatbar{display:none!important}
+.dd-native-label{display:block;font-weight:800;margin-top:8px}
+.dd-native-label select,#ddSetupNativeForm select{margin-top:7px;min-height:54px;font-size:18px;background:#fff}
+.dd-native-group{border:1px solid #dbe7ef;border-radius:16px;padding:12px;margin:12px 0;background:#fbfdfc}
+.dd-native-group legend{font-weight:900;color:#17694f;padding:0 6px}
+.dd-native-group label{display:flex;align-items:center;gap:10px;min-height:46px;padding:7px 8px;border-radius:10px;font-weight:750}
+.dd-native-group input[type="checkbox"]{width:24px;height:24px;accent-color:#0f766e;flex:0 0 auto}
+.dd-native-group.dd-native-hidden{display:none}
 </style>
 </head>
 <body>
@@ -36,48 +48,109 @@ body.dd-setup-mode .content{padding-bottom:24px!important}
   </aside>
   <main class="content">
     <section id="setup" class="screen setup">
-      <div class="card">
+      <form id="ddSetupNativeForm" class="card" novalidate>
         <div class="steps"><span class="step active">1. Nivel</span><span class="step active">2. Tipo de IE</span><span class="step active">3. Grados/edades</span><span class="step active">4. Áreas</span></div>
 
-        <div id="step1" class="dd-setup-block">
-          <h1>1. Selecciona el nivel educativo</h1>
-          <p class="sub">Define la estructura pedagógica de tu planificación.</p>
-          <div class="choices">
-            <button type="button" class="choice" data-dd-setup-level="Inicial" onclick="return window.DDSetupDirect.selectLevel('Inicial',this)">🧸 Inicial</button>
-            <button type="button" class="choice" data-dd-setup-level="Primaria" onclick="return window.DDSetupDirect.selectLevel('Primaria',this)">📚 Primaria</button>
-            <button type="button" class="choice" data-dd-setup-level="Secundaria" onclick="return window.DDSetupDirect.selectLevel('Secundaria',this)">🎓 Secundaria</button>
-          </div>
-          <div id="ddSelectedLevel" class="dd-setup-selected"></div>
+        <div class="dd-setup-block">
+          <h1>1. Nivel educativo</h1>
+          <p class="sub">Selecciona el nivel. Este control es nativo del teléfono para evitar bloqueos al tocar.</p>
+          <label class="dd-native-label">Nivel
+            <select id="ddNativeLevel" required>
+              <option value="">Selecciona</option>
+              <option value="Inicial">🧸 Inicial</option>
+              <option value="Primaria">📚 Primaria</option>
+              <option value="Secundaria">🎓 Secundaria</option>
+            </select>
+          </label>
         </div>
 
-        <div id="step2" class="dd-setup-block">
-          <h1>2. Selecciona el tipo de IE</h1>
-          <p class="sub">Esto define si trabajarás con uno o varios grados/edades en una misma planificación.</p>
-          <div class="choices">
-            <button type="button" class="choice" data-dd-setup-ie="Unidocente" onclick="return window.DDSetupDirect.selectIE('Unidocente',this)">👩‍🏫 Unidocente</button>
-            <button type="button" class="choice" data-dd-setup-ie="Multigrado" onclick="return window.DDSetupDirect.selectIE('Multigrado',this)">👥 Multigrado</button>
-            <button type="button" class="choice" data-dd-setup-ie="Polidocente" onclick="return window.DDSetupDirect.selectIE('Polidocente',this)">🏫 Polidocente</button>
-          </div>
-          <div id="ddSelectedIE" class="dd-setup-selected"></div>
+        <div class="dd-setup-block">
+          <h1>2. Tipo de IE</h1>
+          <label class="dd-native-label">Tipo de institución
+            <select id="ddNativeIE" required>
+              <option value="">Selecciona</option>
+              <option value="Unidocente">👩‍🏫 Unidocente</option>
+              <option value="Multigrado">👥 Multigrado</option>
+              <option value="Polidocente">🏫 Polidocente</option>
+            </select>
+          </label>
         </div>
 
-        <div id="step3" class="dd-setup-block">
-          <h1>3. Selecciona grados o edades</h1>
-          <p id="gradeHelp" class="sub">Primero selecciona el nivel y el tipo de IE.</p>
-          <div id="gradeChoices" class="choices"></div>
+        <div class="dd-setup-block">
+          <h1>3. Grados o edades</h1>
+          <p class="sub">Marca uno o varios según corresponda. DocenteDigital usará solo el grupo del nivel seleccionado.</p>
+
+          <fieldset class="dd-native-group" data-dd-grade-group="Inicial">
+            <legend>Inicial</legend>
+            <label><input type="checkbox" value="3 años"> 3 años</label>
+            <label><input type="checkbox" value="4 años"> 4 años</label>
+            <label><input type="checkbox" value="5 años"> 5 años</label>
+          </fieldset>
+
+          <fieldset class="dd-native-group" data-dd-grade-group="Primaria">
+            <legend>Primaria</legend>
+            <label><input type="checkbox" value="1.º"> 1.º</label>
+            <label><input type="checkbox" value="2.º"> 2.º</label>
+            <label><input type="checkbox" value="3.º"> 3.º</label>
+            <label><input type="checkbox" value="4.º"> 4.º</label>
+            <label><input type="checkbox" value="5.º"> 5.º</label>
+            <label><input type="checkbox" value="6.º"> 6.º</label>
+          </fieldset>
+
+          <fieldset class="dd-native-group" data-dd-grade-group="Secundaria">
+            <legend>Secundaria</legend>
+            <label><input type="checkbox" value="1.º"> 1.º</label>
+            <label><input type="checkbox" value="2.º"> 2.º</label>
+            <label><input type="checkbox" value="3.º"> 3.º</label>
+            <label><input type="checkbox" value="4.º"> 4.º</label>
+            <label><input type="checkbox" value="5.º"> 5.º</label>
+          </fieldset>
         </div>
 
-        <div id="step4" class="dd-setup-block">
-          <h1>4. Selecciona las áreas</h1>
-          <p id="areaHelp" class="sub">Las áreas se mostrarán según el nivel seleccionado.</p>
-          <div id="areaChoices" class="choices"></div>
+        <div class="dd-setup-block">
+          <h1>4. Áreas</h1>
+          <p class="sub">Marca las áreas con las que trabajarás. En Secundaria podrás cambiar después el área principal de cada planificación.</p>
+
+          <fieldset class="dd-native-group" data-dd-area-group="Inicial">
+            <legend>Áreas de Inicial</legend>
+            <label><input type="checkbox" value="Comunicación"> Comunicación</label>
+            <label><input type="checkbox" value="Matemática"> Matemática</label>
+            <label><input type="checkbox" value="Personal Social"> Personal Social</label>
+            <label><input type="checkbox" value="Ciencia y Tecnología"> Ciencia y Tecnología</label>
+            <label><input type="checkbox" value="Psicomotriz"> Psicomotriz</label>
+            <label><input type="checkbox" value="Arte y Cultura"> Arte y Cultura</label>
+          </fieldset>
+
+          <fieldset class="dd-native-group" data-dd-area-group="Primaria">
+            <legend>Áreas de Primaria</legend>
+            <label><input type="checkbox" value="Comunicación"> Comunicación</label>
+            <label><input type="checkbox" value="Matemática"> Matemática</label>
+            <label><input type="checkbox" value="Personal Social"> Personal Social</label>
+            <label><input type="checkbox" value="Ciencia y Tecnología"> Ciencia y Tecnología</label>
+            <label><input type="checkbox" value="Arte y Cultura"> Arte y Cultura</label>
+            <label><input type="checkbox" value="Educación Física"> Educación Física</label>
+            <label><input type="checkbox" value="Educación Religiosa"> Educación Religiosa</label>
+          </fieldset>
+
+          <fieldset class="dd-native-group" data-dd-area-group="Secundaria">
+            <legend>Áreas de Secundaria</legend>
+            <label><input type="checkbox" value="Comunicación"> Comunicación</label>
+            <label><input type="checkbox" value="Matemática"> Matemática</label>
+            <label><input type="checkbox" value="Ciencia y Tecnología"> Ciencia y Tecnología</label>
+            <label><input type="checkbox" value="Ciencias Sociales"> Ciencias Sociales</label>
+            <label><input type="checkbox" value="DPCC"> DPCC</label>
+            <label><input type="checkbox" value="Inglés"> Inglés</label>
+            <label><input type="checkbox" value="Educación Física"> Educación Física</label>
+            <label><input type="checkbox" value="Arte y Cultura"> Arte y Cultura</label>
+            <label><input type="checkbox" value="Educación Religiosa"> Educación Religiosa</label>
+            <label><input type="checkbox" value="EPT"> EPT</label>
+          </fieldset>
 
           <div class="card inner">
             <h3>🌎 Perfil lingüístico de la IE</h3>
-            <p class="sub">Indica si la institución brinda atención EIB o trabaja de manera monolingüe en castellano.</p>
             <div class="form2">
               <label>Tipo de atención lingüística
-                <select id="linguisticMode">
+                <select id="linguisticMode" required>
                   <option value="">Selecciona una opción</option>
                   <option value="EIB">Educación Intercultural Bilingüe (EIB)</option>
                   <option value="Monolingüe castellano">Monolingüe castellano</option>
@@ -94,15 +167,15 @@ body.dd-setup-mode .content{padding-bottom:24px!important}
                 <select id="quechuaVar"><option value="Ninguna">Ninguna</option></select>
               </label>
             </div>
-            <small>En EIB, la lengua o variedad pertinente debe confirmarse antes de generar materiales. No se asigna automáticamente por ubicación.</small>
+            <small>En EIB, la lengua o variedad pertinente debe confirmarse. No se asigna automáticamente por ubicación.</small>
           </div>
 
+          <div id="ddNativeSetupMessage" class="notice hidden"></div>
           <div class="actions topgap">
-            <button class="btn" type="button" id="ddSetupSaveEnter">Guardar y entrar →</button>
+            <button class="btn block" type="submit">Guardar configuración y entrar →</button>
           </div>
-          <div id="ddSetupMessage" class="notice hidden"></div>
         </div>
-      </div>
+      </form>
     </section>
 
     <section id="home" class="screen">
@@ -308,128 +381,7 @@ body.dd-setup-mode .content{padding-bottom:24px!important}
 <script src="beta-launch-safety-v1.js"></script>
 <script src="initial-surface-guard-v1.js"></script>
 <script src="product-audit-runtime-v1.js"></script>
-<script>
-window.DDSetupDirect=(function(){
-  function el(id){return document.getElementById(id);}
-  function st(){return window.state||{};}
-  function saveSafe(){try{if(window.save)window.save();}catch(e){}}
-  function mark(selector,attr,value){
-    var nodes=document.querySelectorAll(selector);
-    for(var i=0;i<nodes.length;i++)nodes[i].classList.toggle('active',nodes[i].getAttribute(attr)===value);
-  }
-  function scrollToId(id){
-    var node=el(id);if(!node)return;
-    setTimeout(function(){try{node.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){node.scrollIntoView();}},60);
-  }
-  function gradeOptions(level){
-    if(level==='Inicial')return ['3 años','4 años','5 años'];
-    if(level==='Primaria')return ['1.º','2.º','3.º','4.º','5.º','6.º'];
-    if(level==='Secundaria')return ['1.º','2.º','3.º','4.º','5.º'];
-    return [];
-  }
-  function areaOptions(level){
-    if(level==='Inicial')return ['Comunicación','Matemática','Personal Social','Ciencia y Tecnología','Psicomotriz','Arte y Cultura'];
-    if(level==='Primaria')return ['Comunicación','Matemática','Personal Social','Ciencia y Tecnología','Arte y Cultura','Educación Física','Educación Religiosa'];
-    if(level==='Secundaria')return ['Comunicación','Matemática','Ciencia y Tecnología','Ciencias Sociales','DPCC','Inglés','Educación Física','Arte y Cultura','Educación Religiosa','EPT'];
-    return [];
-  }
-  function renderGrades(){
-    var state=st(),wrap=el('gradeChoices');if(!wrap)return;
-    var opts=gradeOptions(state.level);
-    if(!opts.length){wrap.innerHTML='<span class="sub">Selecciona primero el nivel.</span>';return;}
-    var multi=state.ieType==='Multigrado'||state.ieType==='Unidocente';
-    if(el('gradeHelp'))el('gradeHelp').textContent=state.ieType?(multi?'Puedes seleccionar varios grados o edades.':'Selecciona el grado o edad con el que trabajarás.'):'Selecciona también el tipo de IE.';
-    wrap.innerHTML='';
-    for(var i=0;i<opts.length;i++){
-      (function(g){
-        var b=document.createElement('button');b.type='button';b.className='choice'+((state.grades||[]).indexOf(g)>=0?' active':'');b.textContent=g;
-        b.onclick=function(){
-          var cur=Array.isArray(state.grades)?state.grades:[];
-          if(multi){
-            state.grades=cur.indexOf(g)>=0?cur.filter(function(x){return x!==g;}):cur.concat([g]);
-          }else state.grades=[g];
-          saveSafe();renderGrades();renderAreas();
-          if(state.grades.length)scrollToId('step4');
-          return false;
-        };
-        wrap.appendChild(b);
-      })(opts[i]);
-    }
-  }
-  function renderAreas(){
-    var state=st(),wrap=el('areaChoices');if(!wrap)return;
-    var opts=areaOptions(state.level);
-    if(!opts.length){wrap.innerHTML='<span class="sub">Selecciona primero el nivel.</span>';return;}
-    var multiple=state.level!=='Secundaria';
-    if(el('areaHelp'))el('areaHelp').textContent=multiple?'Puedes seleccionar varias áreas.':'En Secundaria selecciona el área principal de esta planificación.';
-    wrap.innerHTML='';
-    for(var i=0;i<opts.length;i++){
-      (function(a){
-        var b=document.createElement('button');b.type='button';b.className='choice'+((state.areas||[]).indexOf(a)>=0?' active':'');b.textContent=a;
-        b.onclick=function(){
-          var cur=Array.isArray(state.areas)?state.areas:[];
-          if(multiple)state.areas=cur.indexOf(a)>=0?cur.filter(function(x){return x!==a;}):cur.concat([a]);
-          else state.areas=[a];
-          saveSafe();renderAreas();
-          return false;
-        };
-        wrap.appendChild(b);
-      })(opts[i]);
-    }
-  }
-  function selectLevel(value,button){
-    var state=st();
-    state.level=value;state.grades=[];state.areas=[];
-    mark('[data-dd-setup-level]','data-dd-setup-level',value);
-    if(el('ddSelectedLevel'))el('ddSelectedLevel').textContent='✓ Nivel seleccionado: '+value;
-    saveSafe();renderGrades();renderAreas();scrollToId('step2');
-    return false;
-  }
-  function selectIE(value,button){
-    var state=st();
-    state.ieType=value;state.grades=[];
-    mark('[data-dd-setup-ie]','data-dd-setup-ie',value);
-    if(el('ddSelectedIE'))el('ddSelectedIE').textContent='✓ Tipo de IE seleccionado: '+value;
-    saveSafe();renderGrades();scrollToId('step3');
-    return false;
-  }
-  function message(msg){
-    var m=el('ddSetupMessage');if(!m){alert(msg);return;}
-    m.textContent=msg;m.classList.remove('hidden');scrollToId('ddSetupMessage');
-  }
-  function finish(){
-    var state=st();
-    if(!state.level){message('Selecciona el nivel educativo.');return false;}
-    if(!state.ieType){message('Selecciona el tipo de IE.');return false;}
-    if(!Array.isArray(state.grades)||!state.grades.length){message('Selecciona al menos un grado o edad.');return false;}
-    if(!Array.isArray(state.areas)||!state.areas.length){message('Selecciona al menos un área.');return false;}
-    var mode=el('linguisticMode')?el('linguisticMode').value:'';
-    if(!mode){message('Selecciona el tipo de atención lingüística.');return false;}
-    state.linguisticMode=mode;
-    state.language=el('language')?el('language').value:'Castellano';
-    state.quechuaVar=el('quechuaVar')?el('quechuaVar').value:'Ninguna';
-    saveSafe();
-    document.body.classList.remove('dd-setup-mode');
-    try{if(window.fillSelects)window.fillSelects();}catch(e){}
-    if(typeof window.go==='function')window.go('home');
-    else{
-      var screens=document.querySelectorAll('.screen');
-      for(var i=0;i<screens.length;i++)screens[i].classList.remove('active');
-      if(el('home'))el('home').classList.add('active');
-    }
-    return false;
-  }
-  function init(){
-    document.body.classList.add('dd-setup-mode');
-    var state=st();
-    if(state.level){mark('[data-dd-setup-level]','data-dd-setup-level',state.level);if(el('ddSelectedLevel'))el('ddSelectedLevel').textContent='✓ Nivel seleccionado: '+state.level;}
-    if(state.ieType){mark('[data-dd-setup-ie]','data-dd-setup-ie',state.ieType);if(el('ddSelectedIE'))el('ddSelectedIE').textContent='✓ Tipo de IE seleccionado: '+state.ieType;}
-    renderGrades();renderAreas();
-    var btn=el('ddSetupSaveEnter');if(btn)btn.onclick=finish;
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-  return {selectLevel:selectLevel,selectIE:selectIE,finish:finish,renderGrades:renderGrades,renderAreas:renderAreas};
-})();
-</script>
+<script src="setup-native-v2.js"></script>
+
 </body>
 </html>
