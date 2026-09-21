@@ -715,7 +715,7 @@ function renderSessionOutput(session){
     tools=document.createElement('div');tools.id='sessionTools';tools.className='actions topgap';
     const chat=out.querySelector('.chatbar');out.insertBefore(tools,chat||null);
   }
-  tools.innerHTML=`<button class="btn alt" onclick="downloadSessionWord()">⬇ Descargar Word</button><button class="btn ghost" onclick="shareSession()">📤 Compartir</button>`;
+  tools.innerHTML=`<button class="btn alt" onclick="downloadSessionWord()">⬇ Descargar Word</button><button class="btn ghost" onclick="shareSession()">📤 Compartir</button><button class="btn" onclick="go('materials');setTimeout(()=>window.DDMaterials?.useCurrent?.(),60)">🧩 Crear materiales de esta sesión</button>`;
   out.classList.remove('hidden');out.scrollIntoView({behavior:'smooth'});
 }
 
