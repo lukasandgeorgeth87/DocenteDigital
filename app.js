@@ -391,8 +391,9 @@ function buildActivities(brief,duration){
 function createUnitDemo(){
   const type=byId('unitType').value;
   const duration=byId('unitDuration').value;
-  const brief=byId('unitSituation').value.trim();
-  if(!brief)return alert('Escribe una idea breve del contexto o situación de tu comunidad.');
+  let brief=byId('unitSituation').value.trim();
+  if(!brief&&typeof window.ddAssistPlanningContext==='function')brief=window.ddAssistPlanningContext(true)||'';
+  if(!brief)brief=byId('unitTitle').value.trim()||'una experiencia cercana y significativa para los estudiantes';
   let title=byId('unitTitle').value.trim();
   if(!title){title=proposeUnitTitle(brief,type);byId('unitTitle').value=title;}
   const situation=expandSituation(brief);
