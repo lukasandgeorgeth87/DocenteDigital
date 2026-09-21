@@ -158,6 +158,7 @@
   function downloadAssessmentWord(){
     var a=state.lastAssessment;if(!a)return;
     var edited=$('ddAssBody').querySelector('.dd-editable-material').innerHTML;
+    if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml(a.unitTitle||'Evaluación',edited,false,'Evaluacion_'+a.area+'_'+a.grade);
     downloadBlob(wordBlob(a.unitTitle||'Evaluación',edited),cleanFileName('Evaluacion_'+a.area+'_'+a.grade)+'.doc');
   }
 
@@ -194,6 +195,7 @@
   function downloadConclusionsWord(){
     var unit=activeUnit(),cards=[...document.querySelectorAll('#ddConBody article')];
     var body='<h1>Conclusiones descriptivas</h1><p><b>'+E((unit&&unit.title)||'')+'</b></p>'+cards.map(function(x){return '<h3>'+E(x.querySelector('h3').textContent)+'</h3><p>'+E(x.querySelector('textarea').value)+'</p>';}).join('');
+    if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml('Conclusiones descriptivas',body,false,'Conclusiones_'+((unit&&unit.title)||''));
     downloadBlob(wordBlob('Conclusiones descriptivas',body),cleanFileName('Conclusiones_'+((unit&&unit.title)||''))+'.doc');
   }
 
