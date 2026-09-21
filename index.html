@@ -11,7 +11,11 @@
 .dd-setup-block h1{font-size:clamp(22px,5vw,30px);margin-bottom:6px}
 #setup .steps{position:static;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 #setup .step{opacity:.9}
-#setup .choice.active{background:#e8f7f2;border-color:#57a98b;color:#185e49}
+#setup .choice{min-height:52px;touch-action:manipulation;-webkit-tap-highlight-color:rgba(20,120,90,.12)}
+#setup .choice.active{background:#dff5ec;border:2px solid #208966;color:#145b46;box-shadow:0 0 0 2px rgba(32,137,102,.08)}
+body.dd-setup-mode .mobile-nav{display:none!important}
+body.dd-setup-mode .content{padding-bottom:24px!important}
+.dd-setup-selected{margin-top:8px;font-weight:800;color:#17694f}
 @media(max-width:650px){#setup .card{padding:14px}#setup .dd-setup-block{padding:14px 0}#setup .choices{gap:8px}}
 </style>
 </head>
@@ -39,20 +43,22 @@
           <h1>1. Selecciona el nivel educativo</h1>
           <p class="sub">Define la estructura pedagógica de tu planificación.</p>
           <div class="choices">
-            <button type="button" class="choice" data-dd-setup-level="Inicial">🧸 Inicial</button>
-            <button type="button" class="choice" data-dd-setup-level="Primaria">📚 Primaria</button>
-            <button type="button" class="choice" data-dd-setup-level="Secundaria">🎓 Secundaria</button>
+            <button type="button" class="choice" data-dd-setup-level="Inicial" onclick="return window.DDSetupDirect.selectLevel('Inicial',this)">🧸 Inicial</button>
+            <button type="button" class="choice" data-dd-setup-level="Primaria" onclick="return window.DDSetupDirect.selectLevel('Primaria',this)">📚 Primaria</button>
+            <button type="button" class="choice" data-dd-setup-level="Secundaria" onclick="return window.DDSetupDirect.selectLevel('Secundaria',this)">🎓 Secundaria</button>
           </div>
+          <div id="ddSelectedLevel" class="dd-setup-selected"></div>
         </div>
 
         <div id="step2" class="dd-setup-block">
           <h1>2. Selecciona el tipo de IE</h1>
           <p class="sub">Esto define si trabajarás con uno o varios grados/edades en una misma planificación.</p>
           <div class="choices">
-            <button type="button" class="choice" data-dd-setup-ie="Unidocente">👩‍🏫 Unidocente</button>
-            <button type="button" class="choice" data-dd-setup-ie="Multigrado">👥 Multigrado</button>
-            <button type="button" class="choice" data-dd-setup-ie="Polidocente">🏫 Polidocente</button>
+            <button type="button" class="choice" data-dd-setup-ie="Unidocente" onclick="return window.DDSetupDirect.selectIE('Unidocente',this)">👩‍🏫 Unidocente</button>
+            <button type="button" class="choice" data-dd-setup-ie="Multigrado" onclick="return window.DDSetupDirect.selectIE('Multigrado',this)">👥 Multigrado</button>
+            <button type="button" class="choice" data-dd-setup-ie="Polidocente" onclick="return window.DDSetupDirect.selectIE('Polidocente',this)">🏫 Polidocente</button>
           </div>
+          <div id="ddSelectedIE" class="dd-setup-selected"></div>
         </div>
 
         <div id="step3" class="dd-setup-block">
@@ -302,13 +308,19 @@
 <script src="beta-launch-safety-v1.js"></script>
 <script src="initial-surface-guard-v1.js"></script>
 <script src="product-audit-runtime-v1.js"></script>
-<script src="setup-navigation-hotfix-v1.js"></script>
 <script>
-(function(){
-  function el(id){return document.getElementById(id)}
-  function st(){return window.state||{}}
-  function saveSafe(){try{window.save&&window.save()}catch(e){}}
-
+window.DDSetupDirect=(function(){
+  function el(id){return document.getElementById(id);}
+  function st(){return window.state||{};}
+  function saveSafe(){try{if(window.save)window.save();}catch(e){}}
+  function mark(selector,attr,value){
+    var nodes=document.querySelectorAll(selector);
+    for(var i=0;i<nodes.length;i++)nodes[i].classList.toggle('active',nodes[i].getAttribute(attr)===value);
+  }
+  function scrollToId(id){
+    var node=el(id);if(!node)return;
+    setTimeout(function(){try{node.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){node.scrollIntoView();}},60);
+  }
   function gradeOptions(level){
     if(level==='Inicial')return ['3 años','4 años','5 años'];
     if(level==='Primaria')return ['1.º','2.º','3.º','4.º','5.º','6.º'];
@@ -321,85 +333,102 @@
     if(level==='Secundaria')return ['Comunicación','Matemática','Ciencia y Tecnología','Ciencias Sociales','DPCC','Inglés','Educación Física','Arte y Cultura','Educación Religiosa','EPT'];
     return [];
   }
-  function mark(group,attr,value){
-    document.querySelectorAll(group).forEach(function(b){b.classList.toggle('active',b.getAttribute(attr)===value)})
-  }
   function renderGrades(){
     var state=st(),wrap=el('gradeChoices');if(!wrap)return;
     var opts=gradeOptions(state.level);
-    if(!opts.length){wrap.innerHTML='<span class="sub">Selecciona primero el nivel.</span>';return}
+    if(!opts.length){wrap.innerHTML='<span class="sub">Selecciona primero el nivel.</span>';return;}
     var multi=state.ieType==='Multigrado'||state.ieType==='Unidocente';
     if(el('gradeHelp'))el('gradeHelp').textContent=state.ieType?(multi?'Puedes seleccionar varios grados o edades.':'Selecciona el grado o edad con el que trabajarás.'):'Selecciona también el tipo de IE.';
     wrap.innerHTML='';
-    opts.forEach(function(g){
-      var b=document.createElement('button');b.type='button';b.className='choice'+((state.grades||[]).includes(g)?' active':'');b.textContent=g;
-      b.onclick=function(){
-        var cur=Array.isArray(state.grades)?state.grades:[];
-        state.grades=multi?(cur.includes(g)?cur.filter(function(x){return x!==g}):cur.concat([g])):[g];
-        saveSafe();renderGrades();
-      };
-      wrap.appendChild(b);
-    });
+    for(var i=0;i<opts.length;i++){
+      (function(g){
+        var b=document.createElement('button');b.type='button';b.className='choice'+((state.grades||[]).indexOf(g)>=0?' active':'');b.textContent=g;
+        b.onclick=function(){
+          var cur=Array.isArray(state.grades)?state.grades:[];
+          if(multi){
+            state.grades=cur.indexOf(g)>=0?cur.filter(function(x){return x!==g;}):cur.concat([g]);
+          }else state.grades=[g];
+          saveSafe();renderGrades();renderAreas();
+          if(state.grades.length)scrollToId('step4');
+          return false;
+        };
+        wrap.appendChild(b);
+      })(opts[i]);
+    }
   }
   function renderAreas(){
     var state=st(),wrap=el('areaChoices');if(!wrap)return;
     var opts=areaOptions(state.level);
-    if(!opts.length){wrap.innerHTML='<span class="sub">Selecciona primero el nivel.</span>';return}
+    if(!opts.length){wrap.innerHTML='<span class="sub">Selecciona primero el nivel.</span>';return;}
     var multiple=state.level!=='Secundaria';
     if(el('areaHelp'))el('areaHelp').textContent=multiple?'Puedes seleccionar varias áreas.':'En Secundaria selecciona el área principal de esta planificación.';
     wrap.innerHTML='';
-    opts.forEach(function(a){
-      var b=document.createElement('button');b.type='button';b.className='choice'+((state.areas||[]).includes(a)?' active':'');b.textContent=a;
-      b.onclick=function(){
-        var cur=Array.isArray(state.areas)?state.areas:[];
-        state.areas=multiple?(cur.includes(a)?cur.filter(function(x){return x!==a}):cur.concat([a])):[a];
-        saveSafe();renderAreas();
-      };
-      wrap.appendChild(b);
-    });
+    for(var i=0;i<opts.length;i++){
+      (function(a){
+        var b=document.createElement('button');b.type='button';b.className='choice'+((state.areas||[]).indexOf(a)>=0?' active':'');b.textContent=a;
+        b.onclick=function(){
+          var cur=Array.isArray(state.areas)?state.areas:[];
+          if(multiple)state.areas=cur.indexOf(a)>=0?cur.filter(function(x){return x!==a;}):cur.concat([a]);
+          else state.areas=[a];
+          saveSafe();renderAreas();
+          return false;
+        };
+        wrap.appendChild(b);
+      })(opts[i]);
+    }
   }
-  function showMessage(msg){
-    var m=el('ddSetupMessage');if(!m)return;
-    m.textContent=msg;m.classList.remove('hidden');m.scrollIntoView({behavior:'smooth',block:'center'});
-  }
-  function wire(){
-    document.querySelectorAll('[data-dd-setup-level]').forEach(function(b){
-      b.onclick=function(){
-        var state=st();state.level=b.getAttribute('data-dd-setup-level');state.grades=[];state.areas=[];
-        mark('[data-dd-setup-level]','data-dd-setup-level',state.level);saveSafe();renderGrades();renderAreas();
-        document.getElementById('step2')?.scrollIntoView({behavior:'smooth',block:'start'});
-      };
-    });
-    document.querySelectorAll('[data-dd-setup-ie]').forEach(function(b){
-      b.onclick=function(){
-        var state=st();state.ieType=b.getAttribute('data-dd-setup-ie');state.grades=[];
-        mark('[data-dd-setup-ie]','data-dd-setup-ie',state.ieType);saveSafe();renderGrades();
-        document.getElementById('step3')?.scrollIntoView({behavior:'smooth',block:'start'});
-      };
-    });
+  function selectLevel(value,button){
     var state=st();
-    if(state.level)mark('[data-dd-setup-level]','data-dd-setup-level',state.level);
-    if(state.ieType)mark('[data-dd-setup-ie]','data-dd-setup-ie',state.ieType);
-    renderGrades();renderAreas();
-    var btn=el('ddSetupSaveEnter');
-    if(btn)btn.onclick=function(){
-      var state=st();
-      if(!state.level)return showMessage('Selecciona el nivel educativo.');
-      if(!state.ieType)return showMessage('Selecciona el tipo de IE.');
-      if(!Array.isArray(state.grades)||!state.grades.length)return showMessage('Selecciona al menos un grado o edad.');
-      if(!Array.isArray(state.areas)||!state.areas.length)return showMessage('Selecciona al menos un área.');
-      var mode=el('linguisticMode')?.value||'';
-      if(!mode)return showMessage('Selecciona el tipo de atención lingüística.');
-      state.linguisticMode=mode;
-      state.language=el('language')?.value||'Castellano';
-      state.quechuaVar=el('quechuaVar')?.value||'Ninguna';
-      saveSafe();
-      try{window.fillSelects&&window.fillSelects()}catch(e){}
-      if(typeof window.go==='function')window.go('home');
-      else{document.querySelectorAll('.screen').forEach(function(x){x.classList.remove('active')});el('home')?.classList.add('active')}
-    };
+    state.level=value;state.grades=[];state.areas=[];
+    mark('[data-dd-setup-level]','data-dd-setup-level',value);
+    if(el('ddSelectedLevel'))el('ddSelectedLevel').textContent='✓ Nivel seleccionado: '+value;
+    saveSafe();renderGrades();renderAreas();scrollToId('step2');
+    return false;
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire,{once:true});else wire();
+  function selectIE(value,button){
+    var state=st();
+    state.ieType=value;state.grades=[];
+    mark('[data-dd-setup-ie]','data-dd-setup-ie',value);
+    if(el('ddSelectedIE'))el('ddSelectedIE').textContent='✓ Tipo de IE seleccionado: '+value;
+    saveSafe();renderGrades();scrollToId('step3');
+    return false;
+  }
+  function message(msg){
+    var m=el('ddSetupMessage');if(!m){alert(msg);return;}
+    m.textContent=msg;m.classList.remove('hidden');scrollToId('ddSetupMessage');
+  }
+  function finish(){
+    var state=st();
+    if(!state.level){message('Selecciona el nivel educativo.');return false;}
+    if(!state.ieType){message('Selecciona el tipo de IE.');return false;}
+    if(!Array.isArray(state.grades)||!state.grades.length){message('Selecciona al menos un grado o edad.');return false;}
+    if(!Array.isArray(state.areas)||!state.areas.length){message('Selecciona al menos un área.');return false;}
+    var mode=el('linguisticMode')?el('linguisticMode').value:'';
+    if(!mode){message('Selecciona el tipo de atención lingüística.');return false;}
+    state.linguisticMode=mode;
+    state.language=el('language')?el('language').value:'Castellano';
+    state.quechuaVar=el('quechuaVar')?el('quechuaVar').value:'Ninguna';
+    saveSafe();
+    document.body.classList.remove('dd-setup-mode');
+    try{if(window.fillSelects)window.fillSelects();}catch(e){}
+    if(typeof window.go==='function')window.go('home');
+    else{
+      var screens=document.querySelectorAll('.screen');
+      for(var i=0;i<screens.length;i++)screens[i].classList.remove('active');
+      if(el('home'))el('home').classList.add('active');
+    }
+    return false;
+  }
+  function init(){
+    document.body.classList.add('dd-setup-mode');
+    var state=st();
+    if(state.level){mark('[data-dd-setup-level]','data-dd-setup-level',state.level);if(el('ddSelectedLevel'))el('ddSelectedLevel').textContent='✓ Nivel seleccionado: '+state.level;}
+    if(state.ieType){mark('[data-dd-setup-ie]','data-dd-setup-ie',state.ieType);if(el('ddSelectedIE'))el('ddSelectedIE').textContent='✓ Tipo de IE seleccionado: '+state.ieType;}
+    renderGrades();renderAreas();
+    var btn=el('ddSetupSaveEnter');if(btn)btn.onclick=finish;
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+  return {selectLevel:selectLevel,selectIE:selectIE,finish:finish,renderGrades:renderGrades,renderAreas:renderAreas};
 })();
 </script>
 </body>
