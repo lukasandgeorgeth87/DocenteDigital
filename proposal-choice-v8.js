@@ -48,14 +48,86 @@
     return pieces.join(' ');
   }
   function situationOptions(raw){
-    const m=meaningFor(raw),focus=shortFocus(m,raw),grades=(state.grades||[]).join(', ')||'los grados seleccionados',place=placeFor(m),reto=challengeFor(m,focus),facts=naturalEvidence(m);
-    const intro=`En ${place}, los estudiantes de ${grades} parten de una situación cercana relacionada con ${focus}.`;
-    const evidence=facts||'A partir de esta situación, recuperarán lo que ya saben y formularán preguntas para comprenderla mejor sin asumir causas, consecuencias o respuestas que todavía no hayan sido comprobadas.';
-    const a=`${intro} ${evidence} Durante la experiencia, recuperarán saberes previos, contrastarán información, formularán preguntas y reunirán evidencias para construir explicaciones o respuestas sustentadas.`;
-    const b=`${intro} ${evidence} La experiencia recogerá las observaciones, preguntas y distintas perspectivas de los estudiantes. Con la información y las evidencias que obtengan, construirán y comunicarán una respuesta coherente con lo que realmente encuentren.`;
-    return {meaning:m,focus,reto,situations:[{key:'A',title:'Propuesta 1',text:a},{key:'B',title:'Propuesta 2',text:b}]};
+    const m=meaningFor(raw),focus=shortFocus(m,raw),grades=(state.grades||[]).join(', ')||'los grados/edades seleccionados',place=placeFor(m),reto=challengeFor(m,focus),facts=naturalEvidence(m);
+    const level=state.level||'Primaria';
+    const low=tidy(focus).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const profile=profileSnapshot();
+    const institution=profile.institutionName||'la institución educativa';
+    const locality=profile.community?((profile.localityType||'localidad')+' '+profile.community):place;
+    let a='',b='';
+
+    if(level==='Inicial'){
+      const theme=/animal/.test(low)
+        ? 'animales que conocen, han visto en casa, en el camino, en la comunidad o en imágenes y relatos'
+        : /semill|siembr|planta|biohuerto/.test(low)
+          ? 'semillas, plantas y experiencias de siembra cercanas a su vida cotidiana'
+          : /agua/.test(low)
+            ? 'formas en que usan y observan el agua en casa, en la institución y en su entorno'
+            : focus;
+      a=`En ${institution}, ubicada en ${locality}, las niñas y los niños de ${grades} muestran curiosidad por ${focus}. Para convertir este interés en una experiencia significativa, la docente recuperará lo que saben a partir de conversaciones, dibujos, juego, relatos, objetos e imágenes vinculadas con ${theme}. A partir de sus preguntas, observarán, compararán, clasificarán, representarán y comunicarán lo que descubren, respetando sus distintas formas de expresión. El reto será ${reto.replace(/^¿|\?$/g,'').toLowerCase()} y los hallazgos se irán haciendo visibles mediante producciones, registros y explicaciones propias de su edad.`;
+      b=`En ${institution}, en ${locality}, se propone una experiencia de indagación y expresión alrededor de ${focus}. Las niñas y los niños de ${grades} partirán de situaciones concretas de su entorno, materiales seguros, imágenes, relatos o testimonios familiares para reconocer qué saben y qué desean averiguar. Durante el proyecto formularán preguntas, explorarán características, encontrarán semejanzas y diferencias, comunicarán sus ideas mediante el lenguaje oral, gráfico, corporal o artístico y construirán un producto colectivo que muestre cómo cambió lo que pensaban al inicio.`;
+    }else if(level==='Secundaria'){
+      a=`En ${institution}, ubicada en ${locality}, los estudiantes de ${grades} abordarán ${focus} a partir de una situación vinculada con su realidad y con información verificable. Recuperarán experiencias y saberes previos, formularán preguntas que puedan investigarse, analizarán datos, fuentes o casos, contrastarán distintas explicaciones y construirán una posición o respuesta sustentada. ${facts||'Cuando sea necesario, el docente incorporará datos locales reales antes de presentar afirmaciones como hechos.'} El reto central será: ${reto}`;
+      b=`En ${institution}, en ${locality}, ${focus} se convertirá en un desafío de aprendizaje que exija investigar y tomar decisiones. Los estudiantes de ${grades} identificarán qué información necesitan, seleccionarán fuentes pertinentes, contrastarán evidencias, reconocerán relaciones y posibles explicaciones y elaborarán una respuesta, producto o propuesta dirigida a un destinatario concreto. El trabajo culminará comunicando conclusiones sustentadas y explicando qué evidencias fueron decisivas para construirlas.`;
+    }else{
+      a=`En ${institution}, ubicada en ${locality}, los estudiantes de ${grades} desarrollarán una experiencia de aprendizaje vinculada con ${focus}. Partirán de lo que observan, conocen o viven en su entorno y de preguntas que permitan convertir el tema en un reto auténtico. Según las áreas involucradas, observarán, leerán, dialogarán, resolverán problemas, registrarán datos, compararán información, producirán textos o representaciones y contrastarán sus ideas con evidencias. ${facts||'El docente incorporará ejemplos y datos reales del contexto cuando estén disponibles, evitando presentarlos como hechos si todavía no han sido verificados.'} El reto será: ${reto}`;
+      b=`En ${institution}, en ${locality}, los estudiantes de ${grades} investigarán ${focus} a partir de una situación cercana y comprensible. Primero explicitarán qué saben y qué necesitan averiguar; después trabajarán con materiales, textos, datos, testimonios, problemas o experiencias pertinentes; finalmente organizarán sus hallazgos y comunicarán una respuesta o producto que muestre no solo el resultado, sino también las evidencias y estrategias que utilizaron para aprender.`;
+    }
+
+    return {meaning:m,focus,reto,situations:[
+      {key:'A',title:'Propuesta contextualizada',text:a},
+      {key:'B',title:'Propuesta de indagación y producción',text:b}
+    ]};
   }
-  function productOptions(raw,pack){const m=pack.meaning,focus=pack.focus,hasAction=!!(tidy(m.problem)||tidy(m.goal));return [{key:'1',title:`Portafolio de evidencias sobre ${focus}`.slice(0,90),text:`Reúne preguntas, registros, textos, representaciones, datos, explicaciones y conclusiones construidas durante el trabajo sobre ${focus}.`},{key:'2',title:`Muestra explicativa: comprendemos ${focus}`.slice(0,90),text:`Presentación dirigida a un destinatario definido en la que los estudiantes comuniquen lo comprendido sobre ${focus}, usando evidencias y explicando cómo llegaron a sus conclusiones.`},hasAction?{key:'3',title:`Propuesta sustentada frente a ${focus}`.slice(0,90),text:`Propuesta o acción viable construida a partir de las evidencias obtenidas sobre ${focus}. Debe responder al reto sin añadir problemas, causas o soluciones que no hayan sido comprobados.`}:{key:'3',title:`Guía de preguntas y hallazgos sobre ${focus}`.slice(0,90),text:`Guía o mural colectivo que reúna lo que se sabía al inicio, las preguntas investigadas, los hallazgos, las fuentes consultadas y las nuevas explicaciones construidas sobre ${focus}.`}];}
+  function productOptions(raw,pack){
+    const m=pack.meaning,focus=pack.focus,level=state.level||'Primaria';
+    const low=tidy(focus).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const animal=/animal/.test(low),seed=/semill|siembr|planta|biohuerto/.test(low),water=/agua/.test(low);
+    if(level==='Inicial'){
+      if(animal)return [
+        {key:'1',title:'Museo de huellas, pelos, plumas y descubrimientos',text:'Muestra colectiva con dibujos, clasificaciones, huellas, imágenes y explicaciones orales de los niños sobre las características que descubrieron en distintos animales.'},
+        {key:'2',title:'Álbum gigante “Así son los animales que descubrimos”',text:'Álbum mural construido por el grupo con ilustraciones, nombres dictados a la docente, características visibles, sonidos, movimientos y pequeños hallazgos expresados por los niños.'},
+        {key:'3',title:'Rincón interactivo de exploradores de animales',text:'Espacio de aula con tarjetas, figuras, producciones, preguntas y juegos de clasificación para que los niños expliquen a otros qué observaron y cómo agruparon a los animales.'}
+      ];
+      if(seed)return [
+        {key:'1',title:'Diario visual “De semilla a plantita”',text:'Secuencia de dibujos, fotografías o registros sencillos elaborados por los niños para mostrar los cambios observados en semillas y plantas.'},
+        {key:'2',title:'Estación verde de descubrimientos',text:'Rincón del aula con germinadores, dibujos, preguntas, etiquetas y explicaciones orales de los niños sobre lo que necesita una planta para crecer.'},
+        {key:'3',title:'Mural “Lo que descubrimos al sembrar”',text:'Producción colectiva que reúne observaciones, acuerdos de cuidado, dibujos y expresiones de los niños sobre la experiencia de siembra.'}
+      ];
+      return [
+        {key:'1',title:`Muestra de descubrimientos: ${focus}`.slice(0,95),text:`Galería de dibujos, representaciones, objetos o registros que permita a los niños mostrar y contar qué descubrieron sobre ${focus}.`},
+        {key:'2',title:`Álbum colectivo: así comprendimos ${focus}`.slice(0,95),text:`Álbum mural con producciones infantiles, palabras dictadas, preguntas y hallazgos construidos durante la experiencia sobre ${focus}.`},
+        {key:'3',title:`Rincón interactivo de ${focus}`.slice(0,95),text:`Espacio de juego y comunicación con materiales y producciones que los niños usarán para explicar a otros lo aprendido sobre ${focus}.`}
+      ];
+    }
+    if(level==='Secundaria'){
+      return [
+        {key:'1',title:`Dossier de evidencias y conclusiones sobre ${focus}`.slice(0,100),text:`Documento o portafolio que integra fuentes, datos, análisis, representaciones y conclusiones argumentadas sobre ${focus}.`},
+        {key:'2',title:`Producto de divulgación: comprendemos ${focus}`.slice(0,100),text:`Infografía, podcast, video breve, exposición o artículo de divulgación dirigido a un público definido y sustentado en fuentes y evidencias verificables.`},
+        {key:'3',title:`Propuesta argumentada frente al reto de ${focus}`.slice(0,100),text:`Propuesta, campaña, protocolo, diseño o acción viable que responda al reto trabajado y explique criterios, evidencias, beneficios, límites y posibles mejoras.`}
+      ];
+    }
+    if(animal)return [
+      {key:'1',title:'Guía ilustrada de los animales de nuestro entorno',text:'Guía elaborada por los estudiantes con fichas, dibujos o fotografías, características, formas de desplazamiento, alimentación, hábitat y explicaciones construidas a partir de evidencias.'},
+      {key:'2',title:'Museo escolar “Animales sorprendentes”',text:'Muestra organizada por estaciones con modelos, clasificaciones, textos breves, preguntas y explicaciones orales para compartir lo aprendido con otros estudiantes o familias.'},
+      {key:'3',title:'Mapa de biodiversidad y compromisos de cuidado',text:'Mapa o mural de los animales conocidos en el entorno, sus características y hábitats, acompañado de acuerdos o recomendaciones de cuidado justificadas por los estudiantes.'}
+    ];
+    if(seed)return [
+      {key:'1',title:'Bitácora científica del biohuerto',text:'Registro integrado de preguntas, predicciones, observaciones, medidas, dibujos, datos, conclusiones y decisiones tomadas durante la siembra y el cuidado del biohuerto.'},
+      {key:'2',title:'Feria “De la semilla a la cosecha”',text:'Presentación por estaciones donde los estudiantes explican procesos, muestran evidencias y resuelven preguntas de visitantes sobre siembra, germinación y cuidado de cultivos.'},
+      {key:'3',title:'Guía práctica para sembrar y cuidar nuestro biohuerto',text:'Guía ilustrada con pasos, recomendaciones, registros, problemas resueltos y explicaciones elaboradas desde distintas áreas del aprendizaje.'}
+    ];
+    if(water)return [
+      {key:'1',title:'Guía comunitaria “Cada gota cuenta”',text:'Guía con observaciones, datos, textos, problemas y recomendaciones para el uso responsable del agua en la escuela y el hogar.'},
+      {key:'2',title:'Campaña escolar sustentada para cuidar el agua',text:'Campaña con afiches, mensajes, datos y compromisos elaborados a partir de evidencias recogidas durante la unidad o proyecto.'},
+      {key:'3',title:'Expo “El viaje y el valor del agua”',text:'Muestra donde los estudiantes presentan modelos, explicaciones, textos y situaciones matemáticas relacionadas con el agua y su cuidado.'}
+    ];
+    return [
+      {key:'1',title:`Portafolio de evidencias: investigamos ${focus}`.slice(0,100),text:`Portafolio que reúne preguntas, registros, textos, representaciones, datos, resoluciones y conclusiones producidas durante el trabajo sobre ${focus}.`},
+      {key:'2',title:`Expo interactiva: descubrimos ${focus}`.slice(0,100),text:`Muestra por estaciones en la que los estudiantes presentan productos de las áreas y explican a un público real qué aprendieron, cómo lo aprendieron y qué evidencias lo demuestran.`},
+      {key:'3',title:`Guía práctica para comunicar lo aprendido sobre ${focus}`.slice(0,100),text:`Guía, mural o recurso digital que organiza los principales hallazgos, ejemplos, producciones y recomendaciones construidas por los estudiantes.`}
+    ];
+  }
   function dataFor(brief){let pack=situationOptions((brief||'').trim());pack={...pack,products:productOptions(brief,pack)};if(typeof window.ddApplyExpertReasoningToProposal==='function')pack=window.ddApplyExpertReasoningToProposal(brief,pack)||pack;return pack;}
   function ensureHost(){let host=byId('ddProposalChooser');if(!host){host=document.createElement('div');host.id='ddProposalChooser';host.className='dd-proposal-chooser hidden topgap';byId('unitPanel')?.appendChild(host);}return host;}
   const situationCard=x=>`<label class="dd-choice-card"><input type="radio" name="ddSituation" value="${x.key}"><span class="pill">${E(x.key)}</span><h3>${E(x.title)}</h3><p>${E(x.text)}</p><b class="dd-pick">○ Elegir esta propuesta</b></label>`,productCard=x=>`<label class="dd-choice-card"><input type="radio" name="ddProduct" value="${x.key}"><span class="pill">Producto ${E(x.key)}</span><h3>${E(x.title)}</h3><p>${E(x.text)}</p><b class="dd-pick">○ Elegir este producto</b></label>`;
