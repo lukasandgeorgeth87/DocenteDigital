@@ -64,7 +64,7 @@
     var unit=activeUnit(),panel=$('evaluationPanel');if(!panel)return;
     var grades=(unit&&unit.grades)||state.grades||[],areas=(unit&&unit.areas)||state.areas||[];
     panel.classList.remove('hidden');
-    panel.innerHTML=context(unit)+'<h2>📋 Registro de evaluación</h2><p class="sub">Los criterios se recuperan de la planificación. El docente registra la evidencia observada; DocenteDigital no inventa resultados.</p><div class="form2"><label>Grado / edad<select id="ddEvalGrade">'+grades.map(function(g){return '<option>'+E(g)+'</option>';}).join('')+'</select></label><label>Área<select id="ddEvalArea"><option value="">Todas las áreas</option>'+areas.map(function(a){return '<option>'+E(a)+'</option>';}).join('')+'</select></label></div><div class="actions"><button class="btn alt" id="ddEvalRoster">👥 Editar estudiantes</button><button class="btn" id="ddEvalLoad">Cargar criterios</button></div><div id="ddEvalBody" class="topgap"></div>';
+    panel.innerHTML=context(unit)+'<h2>📋 Registro de evaluación</h2><p class="sub">Los criterios se recuperan de la planificación. El docente registra la evidencia observada; DocenteDigital no inventa resultados. Durante la Beta usa iniciales o códigos y evita datos sensibles.</p><div class="form2"><label>Grado / edad<select id="ddEvalGrade">'+grades.map(function(g){return '<option>'+E(g)+'</option>';}).join('')+'</select></label><label>Área<select id="ddEvalArea"><option value="">Todas las áreas</option>'+areas.map(function(a){return '<option>'+E(a)+'</option>';}).join('')+'</select></label></div><div class="actions"><button class="btn alt" id="ddEvalRoster">👥 Editar estudiantes</button><button class="btn" id="ddEvalLoad">Cargar criterios</button></div><div id="ddEvalBody" class="topgap"></div>';
     $('ddEvalLoad').onclick=renderRegister;
     $('ddEvalRoster').onclick=editRoster;
     renderRegister();
@@ -72,7 +72,7 @@
 
   function editRoster(){
     var grade=$('ddEvalGrade').value,list=roster(grade),box=$('ddEvalBody');
-    box.innerHTML='<h3>Estudiantes · '+E(grade)+'</h3><p class="sub">Escribe un nombre por línea.</p><textarea id="ddRosterText" style="width:100%;min-height:220px">'+E(list.join('\n'))+'</textarea><div class="actions"><button class="btn" id="ddRosterSave">💾 Guardar lista</button><button class="btn ghost" id="ddRosterCancel">Cancelar</button></div>';
+    box.innerHTML='<h3>Estudiantes · '+E(grade)+'</h3><p class="sub">Escribe un código, iniciales o nombre por línea. En la Beta se recomienda usar códigos o iniciales y no registrar datos sensibles.</p><textarea id="ddRosterText" style="width:100%;min-height:220px">'+E(list.join('\n'))+'</textarea><div class="actions"><button class="btn" id="ddRosterSave">💾 Guardar lista</button><button class="btn ghost" id="ddRosterCancel">Cancelar</button></div>';
     $('ddRosterSave').onclick=function(){state.studentRoster[grade]=$('ddRosterText').value.split(/\n+/).map(function(x){return x.trim();}).filter(Boolean);save();renderRegister();};
     $('ddRosterCancel').onclick=renderRegister;
   }
@@ -86,7 +86,7 @@
         var r=record((unit&&unit.id)||'',grade,c.area,c.criterion,student);
         return '<tr><td><input value="'+E(student)+'" readonly></td><td><select class="dd-eval-level" data-ci="'+ci+'" data-si="'+si+'">'+opts(r.level||'')+'</select></td><td><textarea class="dd-eval-note" data-ci="'+ci+'" data-si="'+si+'" placeholder="¿Qué hizo, dijo, resolvió o produjo?">'+E(r.evidenceNote||'')+'</textarea></td><td><textarea class="dd-eval-next" data-ci="'+ci+'" data-si="'+si+'" placeholder="Siguiente paso">'+E(r.nextStep||'')+'</textarea></td></tr>';
       }).join('');
-      html+='<section class="dd-eval-criterion"><h3>'+E(c.area)+'</h3><p><b>Criterio:</b> '+E(c.criterion)+'</p><p class="dd-small"><b>Evidencia esperada:</b> '+E(c.evidence)+' · <b>Instrumento:</b> '+E(c.instrument)+'</p><div class="dd-scroll"><table class="dd-table"><thead><tr><th>Estudiante</th><th>Nivel</th><th>Evidencia observada</th><th>Siguiente paso</th></tr></thead><tbody>'+rows+'</tbody></table></div></section>';
+      html+='<section class="dd-eval-criterion"><h3>'+E(c.area)+'</h3><p><b>Criterio:</b> '+E(c.criterion)+'</p><p class="dd-small"><b>Evidencia esperada:</b> '+E(c.evidence)+' · <b>Instrumento:</b> '+E(c.instrument)+'</p><div class="dd-scroll"><table class="dd-table"><thead><tr><th>Estudiante / código</th><th>Nivel</th><th>Evidencia observada</th><th>Siguiente paso</th></tr></thead><tbody>'+rows+'</tbody></table></div></section>';
     });
     html+='<div class="actions"><button class="btn" id="ddEvalSave">💾 Guardar registro</button><button class="btn alt" id="ddEvalCsv">⬇ Descargar CSV</button><button class="btn ghost" id="ddEvalCon">📝 Conclusiones</button></div>';
     box.innerHTML=html;
