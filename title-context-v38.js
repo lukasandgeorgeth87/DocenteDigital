@@ -16,6 +16,45 @@
   const OBSERVATION_QUANTITY=/^(?:bastantes?|much[oa]s?|varios?|varias|algunos?|algunas|unos|unas)\s+/i;
   const DESCRIPTION_PREFIX=/^(?:(?:los|las)\s+estudiantes\s+|(?:los|las)\s+niñ(?:os|as)\s+)?(?:describen|decriben|describir|describimos|describo)\s+/i;
 
+  function ddPedagogicalTheme(raw,baseTheme){
+    const s=low(raw),theme=tidy(baseTheme||raw);
+    if(/(?:arrojan|botan|tiran|dejan|echan).{0,35}(?:basura|residuos?)|(?:basura|residuos?).{0,35}(?:piso|suelo|patio|aula|calle|espacio)/.test(s)) return 'el manejo de residuos y el cuidado de los espacios comunes';
+    if(/desperdici|malgast/.test(s)&&/agua/.test(s)) return 'el uso responsable y el cuidado del agua';
+    if(/contaminacion|contaminan|contaminado/.test(s)&&/(residu|basura|ambiente|suelo|agua)/.test(s)) return 'la contaminación y el cuidado del ambiente';
+    if(/bullying|acoso|agresion|agresión|maltrato/.test(s)) return 'la convivencia respetuosa y la prevención de situaciones de violencia';
+    if(/mamifer/.test(s)) return 'los mamíferos y sus características';
+    return theme;
+  }
+
+  function ddLevelProblemTitles(raw,type){
+    const s=low(raw),level=(window.state?.level||'Primaria'),project=/proyecto/i.test(type||'');
+    const waste=/(?:arrojan|botan|tiran|dejan|echan).{0,35}(?:basura|residuos?)|(?:basura|residuos?).{0,35}(?:piso|suelo|patio|aula|calle|espacio)/.test(s);
+    if(!waste)return null;
+    if(level==='Inicial')return [
+      'Cada residuo en su lugar: aprendemos a cuidar nuestros espacios',
+      'Pequeños guardianes: clasificamos residuos y cuidamos donde jugamos',
+      '¿Dónde va cada residuo? Exploramos, clasificamos y cuidamos'
+    ];
+    if(level==='Secundaria')return project?[
+      'Residuos y convivencia: investigamos nuestras prácticas y proponemos mejoras',
+      'Del problema a la acción: transformamos el manejo de residuos en nuestra institución',
+      '¿Qué hacemos con nuestros residuos? Analizamos evidencias y diseñamos soluciones'
+    ]:[
+      'Residuos y convivencia: analizamos prácticas y proponemos mejoras',
+      '¿Qué hacemos con nuestros residuos? Analizamos evidencias y tomamos decisiones',
+      'Manejo de residuos bajo análisis: comprendemos el problema y planteamos alternativas'
+    ];
+    return project?[
+      'Cada residuo en su lugar: investigamos y mejoramos nuestros espacios',
+      'Menos residuos en el piso, más cuidado entre todos',
+      'Guardianes de nuestros espacios: observamos, proponemos y actuamos'
+    ]:[
+      'Cada residuo en su lugar: comprendemos y cuidamos nuestros espacios',
+      '¿Qué pasa con nuestros residuos? Observamos, analizamos y proponemos',
+      'Cuidamos nuestros espacios: aprendemos a manejar mejor los residuos'
+    ];
+  }
+
   function cleanTheme(value){
     let s=tidy(value);
     s=s.replace(/^(?:unidad|proyecto|sesión|sesion)\s+(?:sobre|de|acerca de)\s+/i,'');
@@ -222,7 +261,17 @@
     }else if(kind==='valoración/contexto'){
       list=[`Valoramos y comprendemos ${theme}`,`Aprendemos de ${theme} y compartimos sus saberes`,`${cap(theme)}: saberes que fortalecen nuestros aprendizajes`];
     }else{
-      list=[`Descubrimos ${theme} y construimos nuevos aprendizajes`,`Exploramos ${theme} desde nuestra experiencia`,`Comprendemos ${theme} y comunicamos lo aprendido`];
+      if(level==='Inicial'){
+        list=['Exploramos '+theme+' con curiosidad','Jugamos y descubrimos más sobre '+theme,'¿Qué podemos descubrir sobre '+theme+'?'];
+      }else if(level==='Secundaria'){
+        list=project
+          ? [cap(theme)+': investigamos, contrastamos y construimos una propuesta','Del análisis a la acción: trabajamos '+theme,'Preguntas, evidencias y propuestas sobre '+theme]
+          : [cap(theme)+' bajo análisis: comprendemos, contrastamos y explicamos','Comprendemos '+theme+': evidencias para construir explicaciones','Analizamos '+theme+' y sustentamos nuestras conclusiones'];
+      }else{
+        list=project
+          ? ['Investigamos '+theme+' y construimos una respuesta con sentido',cap(theme)+' en acción: observamos, explicamos y proponemos','De nuestras preguntas a una propuesta sobre '+theme]
+          : ['Descubrimos '+theme+' a partir de preguntas y evidencias','Comprendemos '+theme+' y explicamos lo aprendido','Exploramos '+theme+' para usar lo aprendido en nuevas situaciones'];
+      }
     }
     return list;
   }
