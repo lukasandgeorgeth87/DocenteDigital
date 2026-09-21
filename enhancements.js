@@ -203,7 +203,12 @@
   renderUnitOutput=function(unit){
     unit=ddEnrich(unit);save(); const out=byId('unitOutput'); if(!out)return;
     const summary=`<div class="dd-cover"><div><span class="pill">✓ Guardada</span><h1>${E(unit.title)}</h1><p><b>${E(unit.type)}</b> · ${E(unit.duration)}</p><p>${E(unit.level)} · ${E(unit.ieType)} · ${E(unit.grades.join(', '))}</p></div><div class="dd-cover-icon">🌱📚</div></div>
-      <div class="dd-info"><b>I.E.:</b> Datos institucionales configurables &nbsp; | &nbsp; <b>Docente:</b> Datos del perfil &nbsp; | &nbsp; <b>Áreas:</b> ${E(unit.areas.join(', '))}</div>
+      <div class="dd-info"><b>I.E.:</b> ${E(unit.teacherProfile?.institutionName||state.teacherContext?.institutionName||state.schoolName||'Por completar')} &nbsp; | &nbsp; <b>Docente:</b> ${E(unit.teacherProfile?.teacherName||state.teacherContext?.teacherName||state.teacherName||'Por completar')} &nbsp; | &nbsp; <b>Áreas:</b> ${E(unit.areas.join(', '))}<br><b>Ubicación:</b> ${E([
+        unit.teacherProfile?.community?((unit.teacherProfile?.localityType||'Localidad')+' '+unit.teacherProfile.community):'',
+        unit.teacherProfile?.district?('Distrito '+unit.teacherProfile.district):'',
+        unit.teacherProfile?.province?('Provincia '+unit.teacherProfile.province):'',
+        unit.teacherProfile?.region?('Región '+unit.teacherProfile.region):''
+      ].filter(Boolean).join(' · ')||'Por completar')}</div>
       <h3>II. SITUACIÓN SIGNIFICATIVA Y PRODUCTO</h3><p>${E(unitSituation(unit))}</p><div class="dd-reto"><b>RETO</b><br>${E(unit.reto)}</div><h3>PRODUCTO</h3><p>${E(unit.product)}</p>${unit.language==='Bilingüe'?'<div class="notice">🌎 La versión final podrá presentar situación, reto y producto en castellano y en la variedad de quechua configurada.</div>':''}`;
     const src=ddOfficialSource(unit.level);
     const matrix=`<div class="success"><b>Fuente curricular oficial:</b> ${E(src?.title||'MINEDU')} · ${E(src?.modifiedBy||'')}.</div><p>Las competencias y capacidades se toman del núcleo oficial MINEDU. Los criterios, evidencias y actividades son contextualizaciones pedagógicas de DocenteDigital y del docente.</p>${ddPurposesHtml(unit)}`;
@@ -213,7 +218,12 @@
 
   unitWordHtml=function(unit){
     unit=ddEnrich(unit);
-    return `<div class="word-border"><h1 style="text-align:center">UNIDAD DE APRENDIZAJE</h1><h2 style="text-align:center">“${E(unit.title)}”</h2><h2>I. DATOS GENERALES</h2><table><tr><th>Categoría</th><th>Detalle</th></tr><tr><td>Institución educativa</td><td>Datos configurados en el perfil</td></tr><tr><td>Docente</td><td>Datos configurados en el perfil</td></tr><tr><td>Ciclo, grado y sección</td><td>${E(unit.grades.join(', '))} · ${E(unit.ieType)}</td></tr><tr><td>Duración</td><td>${E(unit.duration)}</td></tr></table><h2>II. SITUACIÓN SIGNIFICATIVA Y PRODUCTO</h2><p>${E(unitSituation(unit))}</p><p><b>RETO</b><br>${E(unit.reto)}</p><p><b>PRODUCTO</b><br>${E(unit.product)}</p><h2>III. PROPÓSITOS DE APRENDIZAJE</h2>${ddPurposesHtml(unit)}<h3>Enfoques transversales</h3>${ddEnfoquesHtml(unit)}<h3>Competencias transversales</h3>${ddTransversalHtml(unit)}<h2>IV. MATRIZ DE ARTICULACIÓN Y EVALUACIÓN</h2>${ddPurposesHtml(unit)}<h2>V. SECUENCIA DE SESIONES DE APRENDIZAJE</h2>${ddSequenceHtml(unit)}<h2>VI. INSTRUMENTOS DE EVALUACIÓN</h2>${ddInstrumentHtml(unit)}<h2>VII. REGISTRO AUXILIAR</h2>${ddRegisterHtml(unit)}</div>`;
+    return `<div class="word-border"><h1 style="text-align:center">UNIDAD DE APRENDIZAJE</h1><h2 style="text-align:center">“${E(unit.title)}”</h2><h2>I. DATOS GENERALES</h2><table><tr><td><b>I.E.</b></td><td>${E(unit.teacherProfile?.institutionName||state.teacherContext?.institutionName||state.schoolName||'')}</td><td><b>Docente</b></td><td>${E(unit.teacherProfile?.teacherName||state.teacherContext?.teacherName||state.teacherName||'')}</td></tr><tr><td><b>Ubicación</b></td><td colspan="3">${E([
+    unit.teacherProfile?.community?((unit.teacherProfile?.localityType||'Localidad')+' '+unit.teacherProfile.community):'',
+    unit.teacherProfile?.district?('Distrito '+unit.teacherProfile.district):'',
+    unit.teacherProfile?.province?('Provincia '+unit.teacherProfile.province):'',
+    unit.teacherProfile?.region?('Región '+unit.teacherProfile.region):''
+  ].filter(Boolean).join(' · '))}</td></tr><tr><th>Categoría</th><th>Detalle</th></tr><tr><td>Institución educativa</td><td>Datos configurados en el perfil</td></tr><tr><td>Docente</td><td>Datos configurados en el perfil</td></tr><tr><td>Ciclo, grado y sección</td><td>${E(unit.grades.join(', '))} · ${E(unit.ieType)}</td></tr><tr><td>Duración</td><td>${E(unit.duration)}</td></tr></table><h2>II. SITUACIÓN SIGNIFICATIVA Y PRODUCTO</h2><p>${E(unitSituation(unit))}</p><p><b>RETO</b><br>${E(unit.reto)}</p><p><b>PRODUCTO</b><br>${E(unit.product)}</p><h2>III. PROPÓSITOS DE APRENDIZAJE</h2>${ddPurposesHtml(unit)}<h3>Enfoques transversales</h3>${ddEnfoquesHtml(unit)}<h3>Competencias transversales</h3>${ddTransversalHtml(unit)}<h2>IV. MATRIZ DE ARTICULACIÓN Y EVALUACIÓN</h2>${ddPurposesHtml(unit)}<h2>V. SECUENCIA DE SESIONES DE APRENDIZAJE</h2>${ddSequenceHtml(unit)}<h2>VI. INSTRUMENTOS DE EVALUACIÓN</h2>${ddInstrumentHtml(unit)}<h2>VII. REGISTRO AUXILIAR</h2>${ddRegisterHtml(unit)}</div>`;
   };
 
   function ddSessionCriterion(session,g){return ddCriterion(session.area,g,session.brief);}
