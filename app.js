@@ -221,7 +221,7 @@ function refreshUnitTitleSuggestions(){
   if(box){
     box.innerHTML='<small><b>Propuestas de título:</b> elige una o edita la que prefieras.</small><div class="dd-title-options">'+
       options.map((title,i)=>`<button type="button" class="dd-title-option${i===0?' active':''}" onclick="chooseUnitTitle(${JSON.stringify(title)})">${escapeHtml(title)}</button>`).join('')+
-      '</div>';
+      '</div><div class="actions topgap"><button type="button" class="btn ghost" onclick="window.DocenteDigitalAI?.improveTitleWithChatGPTFree?.()">💬 Mejorar título con ChatGPT Gratis</button></div>';
   }
 }
 
