@@ -431,6 +431,24 @@ function buildSession(){
   state.lastSession=session;save();return session;
 }
 
+function selectedVisualResource(){
+  try{return JSON.parse(localStorage.getItem('docenteDigitalSelectedResource')||'null');}
+  catch{return null;}
+}
+
+function selectedVisualHtml(forWord=false){
+  const r=selectedVisualResource();
+  if(!r)return '';
+  const img=r.previewUrl
+    ? `<p style="text-align:center"><img src="${escapeHtml(r.previewUrl)}" alt="${escapeHtml(r.title||'Recurso visual')}" style="max-width:100%;max-height:${forWord?'360px':'300px'};object-fit:contain"></p>`
+    : '';
+  const author=r.author?` · Autor: ${escapeHtml(r.author)}`:'';
+  const source=r.sourcePage
+    ? `<a href="${escapeHtml(r.sourcePage)}">${escapeHtml(r.source||'Fuente')}</a>`
+    : escapeHtml(r.source||'Biblioteca DocenteDigital');
+  return `<div class="box"><h3>Recurso visual de apoyo</h3>${img}<p><b>${escapeHtml(r.title||'Recurso seleccionado')}</b></p><p><small>Fuente: ${source}${author} · Licencia: ${escapeHtml(r.license||'')}</small></p></div>`;
+}
+
 function sessionHtml(session,forWord=false){
   const multigrade=(session.ieType==='Multigrado'||session.ieType==='Unidocente')&&session.grades.length>1;
   const attention=multigrade?'<p><b>Atención multigrado:</b> se alternan momentos de atención directa con un grado y trabajo autónomo/colaborativo de los demás, cerrando con socialización común.</p>':'<p><b>Organización:</b> trabajo individual, en pares y grupal según el momento de la sesión.</p>';
@@ -444,6 +462,7 @@ function sessionHtml(session,forWord=false){
   <p><b>Evidencia:</b> ${escapeHtml(session.evidence)}</p>
   <p><b>Instrumento:</b> ${escapeHtml(session.instrument)}</p>
   <p><b>Recursos:</b> ${escapeHtml(session.resources)}. Se debe ofrecer alternativa no digital cuando corresponda.</p>
+  ${selectedVisualHtml(forWord)}
   ${attention}
   <h3>Inicio · ${session.times.start} min</h3>
   <p>Acogida, conexión con la experiencia de los estudiantes y recuperación de saberes previos. El docente comunica el propósito y el criterio en lenguaje comprensible, acuerda normas breves de trabajo y presenta el reto.</p>
