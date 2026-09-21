@@ -197,7 +197,16 @@
       <div id="evaluationPanel" class="card hidden topgap"></div>
     </section>
 
-    <section id="director" class="screen"><h1>Espacio del Director</h1><p class="sub">Simple en la superficie y completo cuando se necesita.</p><div class="grid"><div class="card span6"><h2>▶ Continuar pendiente</h2><button class="btn">Continuar</button></div><div class="card span6"><h2>✍️ Crear documento</h2><button class="btn alt">Crear</button></div><div class="card span6"><h2>📘 DG y Planes</h2><button class="btn alt">Abrir</button></div><div class="card span6"><h2>💬 Asistente del Director</h2><button class="btn amber">Preguntar</button></div></div></section>
+    <section id="director" class="screen">
+      <h1>Espacio del Director</h1>
+      <p class="sub">Documentos de gestión reutilizando los datos institucionales ya guardados. No inventa normativa: cualquier base legal debe verificarse antes de incorporarla.</p>
+      <div class="grid">
+        <div class="card span4"><h2>✍️ Crear documento</h2><p>Oficios, informes, memorandos, actas y resoluciones editables.</p><button class="btn alt block" type="button" onclick="window.DDDirector?.openDocument()">Crear documento</button></div>
+        <div class="card span4"><h2>📘 Planes y gestión</h2><p>Construye una estructura editable para planes institucionales y de trabajo.</p><button class="btn alt block" type="button" onclick="window.DDDirector?.openPlan()">Abrir planes</button></div>
+        <div class="card span4"><h2>📂 Documentos recientes</h2><p>Reutiliza documentos creados anteriormente sin volver a empezar.</p><button class="btn block" type="button" onclick="window.DDDirector?.openHistory()">Ver documentos</button></div>
+      </div>
+      <div id="directorPanel" class="card hidden topgap"></div>
+    </section>
 
     <section id="settings" class="screen"><h1>Configuración</h1><p class="sub">Datos institucionales y pedagógicos reutilizables.</p><div class="card"><div id="settingsSummary" class="success"></div><button class="btn" onclick="restartSetup()">Editar Nivel/Tipo/Grados/Áreas</button> <button class="btn ghost" onclick="resetDemo()">Restablecer datos</button></div></section>
   </main>
@@ -227,6 +236,7 @@
 <script src="evaluation-v1.js"></script>
 <script src="sesiones-maestras-core-v1.js"></script>
 <script src="planning-tools-v1.js"></script>
+<script src="director-v1.js"></script>
 <script src="initial-surface-guard-v1.js"></script>
 </body>
 </html>
