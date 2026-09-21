@@ -204,16 +204,56 @@ function proposeUnitTitle(brief,type){
   return proposeUnitTitleOptions(brief,type)[0]||'Proyecto de aprendizaje';
 }
 
+function ddAssistPlanningContext(apply=true){
+  const ta=byId('unitSituation');
+  const existing=ta?.value.trim()||'';
+  if(existing)return existing;
+
+  const title=(byId('unitTitle')?.value||'').trim();
+  const topic=title||((state.areas||[]).length===1
+    ? `aprendizajes vinculados con ${state.areas[0]}`
+    : 'una experiencia cercana y significativa para los estudiantes');
+  const level=state.level||'Primaria';
+  const grades=(state.grades||[]).join(', ');
+  let brief='';
+
+  if(level==='Inicial'){
+    brief=`Se propone partir de una experiencia cercana y lúdica relacionada con ${topic}. Las niñas y los niños de ${grades||'las edades configuradas'} podrán observar, explorar, jugar, conversar, representar y formular preguntas a partir de materiales, imágenes, relatos u objetos pertinentes. La docente recogerá sus ideas e intereses para orientar la actividad de aprendizaje y los talleres, sin asumir como hecho una situación que no haya sido observada previamente.`;
+  }else if(level==='Secundaria'){
+    brief=`Se propone abordar ${topic} mediante una situación retadora y cercana a la vida de los estudiantes de ${grades||'los grados configurados'}. A partir de información, casos, datos, fuentes o experiencias pertinentes, los estudiantes analizarán el tema, formularán preguntas, contrastarán evidencias y construirán una respuesta, explicación o propuesta. El docente podrá precisar después el contexto local, actores, datos o problemática real para aumentar la autenticidad del aprendizaje.`;
+  }else{
+    brief=`Se propone desarrollar ${topic} a partir de una situación cercana a la vida cotidiana de los estudiantes de ${grades||'los grados configurados'}. Mediante observación, preguntas, diálogo, lectura, resolución de problemas, indagación y producción según las áreas seleccionadas, los estudiantes construirán aprendizajes y los aplicarán en una tarea con sentido. El docente podrá completar después datos reales de la comunidad, intereses observados o una necesidad específica para contextualizar mejor la propuesta.`;
+  }
+
+  if(apply&&ta){
+    ta.value=brief;
+    ta.dataset.ddAssistedContext='true';
+    ta.dispatchEvent(new Event('input',{bubbles:true}));
+    let note=document.getElementById('ddAssistedContextNote');
+    if(!note){
+      note=document.createElement('div');
+      note.id='ddAssistedContextNote';
+      note.className='notice topgap';
+      ta.parentElement?.appendChild(note);
+    }
+    note.innerHTML='✨ <b>Contexto propuesto por DocenteDigital.</b> Puedes editarlo libremente antes o después de generar la propuesta.';
+  }
+  return brief;
+}
+
+window.ddAssistPlanningContext=ddAssistPlanningContext;
+
 function refreshUnitTitleSuggestions(){
   const brief=byId('unitSituation')?.value.trim()||'';
   const type=byId('unitType')?.value||'Proyecto de aprendizaje';
   const input=byId('unitTitle');
   const box=byId('unitTitleSuggestions');
-  if(!brief){
-    if(box)box.innerHTML='<small>Describe primero el contexto para proponer un título coherente.</small>';
+  const effectiveBrief=brief||ddAssistPlanningContext(false)||input?.value.trim()||'';
+  if(!effectiveBrief){
+    if(box)box.innerHTML='<small>Puedes escribir una idea o dejar que DocenteDigital proponga un punto de partida.</small>';
     return;
   }
-  const options=proposeUnitTitleOptions(brief,type);
+  const options=proposeUnitTitleOptions(effectiveBrief,type);
   if(input&&(!input.value.trim()||input.dataset.autoTitle==='true')){
     input.value=options[0]||'';
     input.dataset.autoTitle='true';
