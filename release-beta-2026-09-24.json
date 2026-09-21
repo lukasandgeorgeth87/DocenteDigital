@@ -18,16 +18,25 @@
     "json_backup_export_restore",
     "docx_ooxml_export",
     "responsive_navigation",
-    "local_beta_feedback"
+    "local_beta_feedback",
+    "contextual_material_generation_beta",
+    "evaluation_register_beta",
+    "rubric_and_feedback_beta",
+    "descriptive_conclusions_beta",
+    "annual_programming_beta",
+    "director_documents_and_plans_beta",
+    "generic_docx_export",
+    "mobile_more_navigation",
+    "local_backup_and_restore"
   ],
   "notProductionReady": [
     "remote_generative_ai",
     "authentication_backend",
     "multiuser_tenant_isolation",
-    "evaluation_register_e2e",
-    "annual_programming_e2e",
-    "full_contextual_material_generation",
-    "director_module_e2e",
+    "cloud_sync_and_server_backup",
+    "evaluation_register_e2e_real_pilot",
+    "annual_programming_e2e_real_pilot",
+    "director_module_e2e_real_pilot",
     "physical_pdf_print_validation",
     "external_system_integrations"
   ],
@@ -38,5 +47,5 @@
     "network-privacy"
   ],
   "privacyPilotRule": "Do not enter DNI, phone numbers, addresses, diagnoses or sensitive student evidence during the private beta.",
-  "notes": "Private Beta may be tested with limited scope. Public production remains blocked until the strict production gate has real evidence for security, multiuser isolation, restore drills, physical device/export tests and real pilots."
+  "notes": "Private Beta includes functional local-first flows for planning, sessions, materials, evaluation, annual planning and Director documents. Public production remains blocked until authentication, multiuser isolation, cloud persistence, remote AI governance, physical export tests and real pilot evidence are complete."
 }
