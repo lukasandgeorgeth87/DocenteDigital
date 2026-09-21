@@ -309,9 +309,10 @@
       .slice(0, limit);
   }
 
-  function openChatGPTFree(track=true){
+  function openChatGPTFree(track=true,sameTab=false){
     if(track)bumpRoute('freeChatHandoffs');
-    window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
+    if(sameTab)window.location.assign('https://chatgpt.com/');
+    else window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
   }
 
   async function copyGeneralPrompt(){
@@ -353,29 +354,54 @@
     ].join(' ');
   }
 
-  async function improveTitleWithChatGPTFree(){
+  function titlePrompt(){
     const s=appState();
     const brief=(document.getElementById('unitSituation')?.value||'').trim();
     const type=(document.getElementById('unitType')?.value||'Proyecto de aprendizaje').trim();
     const current=(document.getElementById('unitTitle')?.value||'').trim();
     const level=s.level||'nivel educativo';
     const grades=(s.grades||[]).join(', ')||'grados configurados';
-    const prompt=[
+    return [
       'Actúa como especialista en planificación curricular MINEDU Perú.',
       'Propón 5 títulos breves, naturales, pedagógicamente coherentes y atractivos para '+type+'.',
       'Contexto escrito por el docente: '+brief,
       'Nivel: '+level+'. Grados/edades: '+grades+'.',
       current?'Título actual a mejorar: '+current:'No existe título definitivo todavía.',
-      'Reglas: no inventes problemas, actores ni productos que no aparecen en el contexto; evita frases genéricas como "para construir una respuesta con sentido"; evita títulos excesivamente largos; usa lenguaje adecuado al nivel; entrega solo los 5 títulos numerados.'
+      'Reglas: no inventes problemas, actores, productos ni finalidades que no aparecen en el contexto; evita títulos genéricos o excesivamente largos; usa lenguaje adecuado al nivel; conserva términos locales solo cuando realmente correspondan; entrega únicamente 5 títulos numerados.'
     ].join('\n');
-    try{
-      await navigator.clipboard.writeText(prompt);
-      openChatGPTFree(true);
-      setTimeout(()=>alert('Copiamos el contexto y las reglas para mejorar el título. Pégalos en ChatGPT Gratis y luego copia el título elegido en DocenteDigital.'),250);
-    }catch{
-      promptFallback(prompt);
-      openChatGPTFree(true);
-    }
+  }
+
+  async function openTitleAssistant(){
+    const prompt=titlePrompt();
+    try{await navigator.clipboard.writeText(prompt);}catch(_e){promptFallback(prompt);}
+    document.getElementById('ddTitleChatPanel')?.remove();
+    const panel=document.createElement('div');
+    panel.id='ddTitleChatPanel';
+    panel.className='dd-modal-backdrop';
+    panel.innerHTML=`
+      <div class="dd-modal dd-chat-helper" role="dialog" aria-modal="true">
+        <button class="dd-modal-x" type="button" aria-label="Cerrar" onclick="document.getElementById('ddTitleChatPanel')?.remove()">×</button>
+        <span class="pill">Asistente para mejorar título</span>
+        <h2>Tu consulta ya está copiada</h2>
+        <p>DocenteDigital preparó automáticamente el contexto, nivel, grados y reglas del título. No necesitas escribir el prompt.</p>
+        <textarea class="dd-chat-prompt" readonly>${esc(prompt)}</textarea>
+        <div class="dd-inline-actions">
+          <button class="btn" type="button" onclick="window.DocenteDigitalAI.goChatGPTSameTab()">💬 Continuar en ChatGPT Gratis</button>
+          <button class="btn ghost" type="button" onclick="navigator.clipboard?.writeText(window.DocenteDigitalAI.titlePrompt())">📋 Copiar otra vez</button>
+          <button class="btn ghost" type="button" onclick="document.getElementById('ddTitleChatPanel')?.remove()">Seguir aquí</button>
+        </div>
+        <p class="dd-small">ChatGPT no puede incrustarse como una cuenta Gratis dentro de un sitio externo; por eso el texto queda copiado y ChatGPT se abre en esta misma pestaña. Al volver con el navegador, tu proyecto permanece guardado.</p>
+      </div>`;
+    document.body.appendChild(panel);
+  }
+
+  function goChatGPTSameTab(){
+    document.getElementById('ddTitleChatPanel')?.remove();
+    openChatGPTFree(true,true);
+  }
+
+  async function improveTitleWithChatGPTFree(){
+    return openTitleAssistant();
   }
 
   async function tryChatGPTFreeForImage(){
@@ -649,6 +675,8 @@
       .dd-modal h2{margin:8px 0}
       .dd-modal-x{position:absolute;right:12px;top:10px;border:0;background:transparent;font-size:28px;color:var(--muted)}
       .dd-modal-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+      .dd-chat-helper{max-width:720px}
+      .dd-chat-prompt{width:100%;min-height:180px;resize:vertical;border:1px solid var(--line);border-radius:12px;padding:11px;font:13px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;background:#f8fafb}
       .dd-save-route{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
       .dd-save-route div{display:flex;align-items:center;gap:8px;background:#f7fafc;border:1px solid var(--line);border-radius:13px;padding:10px}
       .dd-save-route b{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#eaf7f5;color:var(--p)}
@@ -775,6 +803,9 @@
     openChatGPTFree,
     copyGeneralPrompt,
     improveTitleWithChatGPTFree,
+    openTitleAssistant,
+    goChatGPTSameTab,
+    titlePrompt,
     renderLibrary,
     selectResource,
     selectedResource,
