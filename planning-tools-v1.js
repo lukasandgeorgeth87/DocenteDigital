@@ -207,6 +207,7 @@
   function downloadDiagnosticWord(){
     const m=state.lastDiagnostic;if(!m)return;
     const body=$('ddDiagResult')?.querySelector('.dd-editable-material')?.innerHTML||'';
+    if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml('Evaluación diagnóstica',body,false,'Diagnostico_'+m.area+'_'+m.grade);
     downloadBlob(wordBlob('Evaluación diagnóstica',body),cleanFileName('Diagnostico_'+m.area+'_'+m.grade)+'.doc');
   }
 
@@ -327,6 +328,7 @@
   function downloadAnnualWord(){
     const plan=state.lastAnnualPlan;if(!plan)return;
     const body=$('ddAnnualResult')?.querySelector('.dd-editable-material')?.innerHTML||plan.editedHtml||'';
+    if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml('Programación anual '+plan.year,body,true,'Programacion_anual_'+plan.year);
     downloadBlob(wordBlob('Programación anual '+plan.year,body),cleanFileName('Programacion_anual_'+plan.year)+'.doc');
   }
 
