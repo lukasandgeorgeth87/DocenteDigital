@@ -102,8 +102,15 @@
   function ddBuildPurposes(unit){
     const brief=ddContext(unit);
     return unit.areas.map(area=>{
-      const officialCompetencies=ddOfficialEntries(unit.level,area);
-      if(!officialCompetencies.length)throw new Error(`No existe matriz curricular oficial cargada para ${unit.level} / ${area}`);
+      const allOfficial=ddOfficialEntries(unit.level,area);
+      if(!allOfficial.length)throw new Error(`No existe matriz curricular oficial cargada para ${unit.level} / ${area}`);
+      const activities=(unit.activities||[]).filter(a=>a.area===area);
+      const picked=[];
+      for(const a of activities){
+        const comp=ddPickOfficialCompetence(unit.level,area,a.title);
+        if(comp&&!picked.some(x=>x.name===comp.name))picked.push(comp);
+      }
+      const officialCompetencies=picked.length?picked:[allOfficial[0]];
       const base=competenceMap[area]||{evidence:'Producción o actuación observable vinculada al reto.',instrument:'Instrumento pertinente.'};
       return {
         area,
@@ -118,6 +125,7 @@
     if(!unit)return unit;
     unit.reto=unit.reto||ddReto(ddContext(unit));
     unit.product=unit.product||ddProduct(ddContext(unit),unit.type);
+    unit.activities=unit.activities&&unit.activities.length?unit.activities:buildActivities(ddContext(unit),unit.duration);
     unit.purposes=ddBuildPurposes(unit);
     unit.curriculumCoreVersion=window.DD_OFFICIAL_CURRICULUM?.version||'missing';
     unit.curriculumSourceId=ddOfficialSource(unit.level)?.id||'missing';
@@ -135,7 +143,6 @@
         ? 'Se integra cuando aporta al propósito y existen recursos disponibles; no se fuerza su uso.'
         : 'Se integra mediante metas, organización de acciones, monitoreo y ajustes durante el aprendizaje.'
     }));
-    unit.activities=unit.activities&&unit.activities.length?unit.activities:buildActivities(ddContext(unit),unit.duration);
     return unit;
   }
 
