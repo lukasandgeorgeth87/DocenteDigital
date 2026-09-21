@@ -42,7 +42,7 @@
     const opts=titleOptions(brief,type);
     let box=byId('ddTitleSuggestions');
     if(!box){box=document.createElement('div');box.id='ddTitleSuggestions';box.className='dd-title-suggestions';byId('unitTitle').parentElement.appendChild(box);}
-    box.innerHTML='<small><b>Títulos propuestos por DocenteDigital:</b> breves, coherentes y ajustados al contexto.</small><div class="dd-title-options">'+opts.map((t,i)=>`<button type="button" class="dd-title-option" onclick="chooseUnitTitle(${JSON.stringify(t)})">${esc(t)}</button>`).join('')+'</div><div class="actions topgap"><button type="button" class="btn ghost" onclick="window.DocenteDigitalAI?.openTitleAssistant?.()">💬 Mejorar con ChatGPT Gratis</button></div>';
+    box.innerHTML='<small><b>Títulos propuestos por DocenteDigital:</b> breves, coherentes y ajustados al contexto.</small><div class="dd-title-options">'+opts.map((t,i)=>`<button type="button" class="dd-title-option" onclick="chooseUnitTitle(${JSON.stringify(t)})">${esc(t)}</button>`).join('')+'</div><div class="actions topgap"><button type="button" class="btn ghost" onclick="window.DocenteDigitalAI?.openTitleAssistant?.()">💬 Mejorar con IA</button></div>';
   };
 
   const titleInput=byId('unitTitle');
