@@ -445,7 +445,17 @@ function syncTitle(){
     if([...duration.options].some(o=>o.value===desired||o.textContent===desired))duration.value=desired;
   }
   const heading=document.querySelector('#session h1');
-  if(heading&&state.level==='Inicial')heading.textContent='Crear actividad o taller';
+  const primaryButton=[...document.querySelectorAll('#session button')].find(b=>(b.getAttribute('onclick')||'').includes('generateSession'));
+  const activityLabel=byId('activity')?.closest('label');
+  if(state.level==='Inicial'){
+    if(heading)heading.textContent='Crear actividad o taller';
+    if(primaryButton)primaryButton.textContent='✨ PREPARAR ACTIVIDAD / TALLER';
+    if(activityLabel&&activityLabel.firstChild?.nodeType===Node.TEXT_NODE)activityLabel.firstChild.nodeValue='Actividad / taller programado';
+  }else{
+    if(heading)heading.textContent='Crear mi sesión';
+    if(primaryButton)primaryButton.textContent='✨ PREPARAR MI SESIÓN MAESTRA';
+    if(activityLabel&&activityLabel.firstChild?.nodeType===Node.TEXT_NODE)activityLabel.firstChild.nodeValue='Actividad programada';
+  }
 }
 
 function competenceFor(area,title=''){
