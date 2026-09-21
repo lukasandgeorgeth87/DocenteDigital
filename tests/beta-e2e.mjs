@@ -152,13 +152,18 @@ try {
   const restored = localStorageString(await state());
   assert(restored.length >= backupBeforeReset.length * 0.8, 'La restauración no recuperó el estado sustancial');
 
-  console.log('7/8 Superficies incompletas no se presentan como terminadas');
+  console.log('7/8 Evaluación y Director ya tienen flujos funcionales de Beta');
   await page.evaluate(() => window.go('evaluation'));
   const enabledEvaluationButtons = await page.locator('#evaluation button:not([disabled])').count();
-  assert(enabledEvaluationButtons === 0, 'Evaluación simulada aparece habilitada');
+  assert(enabledEvaluationButtons >= 5, 'Evaluación no expone los flujos activos esperados');
+  assert(await page.evaluate(() => typeof window.DDEvaluation?.openRegister === 'function'), 'Registro de evaluación no está conectado');
+  assert(await page.evaluate(() => typeof window.DDEvaluation?.openRubric === 'function'), 'Rúbrica no está conectada');
+  assert(await page.evaluate(() => typeof window.DDEvaluation?.openFeedback === 'function'), 'Retroalimentación no está conectada');
   await page.evaluate(() => window.go('director'));
   const enabledDirectorButtons = await page.locator('#director button:not([disabled])').count();
-  assert(enabledDirectorButtons === 0, 'Funciones Director simuladas aparecen habilitadas');
+  assert(enabledDirectorButtons >= 3, 'Director no expone sus flujos activos esperados');
+  assert(await page.evaluate(() => typeof window.DDDirector?.openDocument === 'function'), 'Documentos de Director no están conectados');
+  assert(await page.evaluate(() => typeof window.DDDirector?.openPlan === 'function'), 'Planes de Director no están conectados');
 
   console.log('8/8 Vista móvil y navegación Director');
   await page.setViewportSize({ width: 390, height: 844 });
