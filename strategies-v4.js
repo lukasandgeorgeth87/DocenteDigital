@@ -87,13 +87,11 @@
   const baseSessionHtml=window.sessionHtml;
   if(typeof baseSessionHtml==='function'){
     window.sessionHtml=function(session,forWord=false){
-      const strategies=strategySet(session);session.strategies=strategies;
-      const block=`<div class="dd-strategy-section"><h3>ESTRATEGIAS DIVERSIFICADAS PARA EL DESARROLLO</h3><p>Se seleccionan automáticamente según área, competencia, reto, evidencia, nivel, contexto y necesidad de diferenciación.</p><div class="dd-strategy-pack">${stratHtml(strategies)}</div></div>`;
-      let html=baseSessionHtml(session,forWord);
-      if(html.includes('<b>Atención diferenciada y simultánea:</b>')) html=html.replace('<b>Atención diferenciada y simultánea:</b>',block+'<b>Atención diferenciada y simultánea:</b>');
-      else if(html.includes('<h2>7. INSTRUMENTO DE EVALUACIÓN</h2>')) html=html.replace('<h2>7. INSTRUMENTO DE EVALUACIÓN</h2>',block+'<h2>7. INSTRUMENTO DE EVALUACIÓN</h2>');
-      else html+=block;
-      return html;
+      // Las estrategias se seleccionan internamente y luego el motor maestro las
+      // integra dentro de una única secuencia lógica. No se imprime un bloque
+      // separado que duplique o fragmente la sesión.
+      session.strategies=strategySet(session);
+      return baseSessionHtml(session,forWord);
     };
   }
 
