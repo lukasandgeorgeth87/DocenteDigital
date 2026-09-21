@@ -225,6 +225,40 @@
     catch { return {}; }
   }
 
+  function routeStats(){
+    try{
+      return Object.assign({libraryUses:0,freeChatHandoffs:0,premiumRequests:0},JSON.parse(localStorage.getItem('docenteDigitalRouteStats')||'{}'));
+    }catch{return {libraryUses:0,freeChatHandoffs:0,premiumRequests:0};}
+  }
+
+  function bumpRoute(key){
+    const s=routeStats();
+    s[key]=(s[key]||0)+1;
+    localStorage.setItem('docenteDigitalRouteStats',JSON.stringify(s));
+    renderRouteStats();
+  }
+
+  function usageStats(){
+    try{return JSON.parse(localStorage.getItem('docenteDigitalResourceUsage')||'{}');}
+    catch{return {};}
+  }
+
+  function recordResourceUse(id){
+    const s=usageStats();
+    s[id]=(s[id]||0)+1;
+    localStorage.setItem('docenteDigitalResourceUsage',JSON.stringify(s));
+  }
+
+  function renderRouteStats(){
+    const el=document.getElementById('ddRouteStats');
+    if(!el)return;
+    const s=routeStats();
+    el.innerHTML=`
+      <div><strong>${s.libraryUses}</strong><span>reutilizaciones de biblioteca</span></div>
+      <div><strong>${s.freeChatHandoffs}</strong><span>derivaciones a ChatGPT Gratis</span></div>
+      <div><strong>${s.premiumRequests}</strong><span>solicitudes premium</span></div>`;
+  }
+
   function esc(value){
     return String(value ?? '').replace(/[&<>'"]/g, c => ({
       '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'
@@ -267,13 +301,15 @@
 
   function bestResources(limit=6){
     const ctx = currentContextText();
+    const usage=usageStats();
     return CATALOG
-      .map(r => ({...r, score:scoreResource(r, ctx)}))
+      .map(r => ({...r, score:scoreResource(r, ctx)+(Math.min(usage[r.id]||0,10)*0.01)}))
       .sort((a,b) => b.score - a.score)
       .slice(0, limit);
   }
 
-  function openChatGPTFree(){
+  function openChatGPTFree(track=true){
+    if(track)bumpRoute('freeChatHandoffs');
     window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
   }
 
@@ -320,11 +356,11 @@
     const prompt=imagePrompt();
     try{
       await navigator.clipboard.writeText(prompt);
-      openChatGPTFree();
+      openChatGPTFree(true);
       setTimeout(()=>alert('Copiamos una indicación para crear la imagen. Pégala en ChatGPT Gratis. Si el límite gratuito de tu cuenta no está disponible, puedes volver y usar un crédito premium.'),250);
     }catch{
       promptFallback(prompt);
-      openChatGPTFree();
+      openChatGPTFree(true);
     }
   }
 
@@ -359,8 +395,9 @@
   }
 
   function confirmPremiumImage(){
+    bumpRoute('premiumRequests');
     closeCreditGate();
-    alert('Crédito premium confirmado para la siguiente fase. Todavía no se descuenta ni genera la imagen: primero implementaremos el contador de créditos y la API de imágenes.');
+    alert('Solicitud premium registrada. El cobro real y la generación se activarán únicamente cuando el contador de créditos y la API estén conectados.');
   }
 
   function renderResourceCards(items){
@@ -372,6 +409,7 @@
       const sourceLink=r.sourcePage
         ? ` <a class="dd-source-link" href="${esc(r.sourcePage)}" target="_blank" rel="noopener noreferrer">ver fuente</a>`
         : '';
+      const used=usageStats()[r.id]||0;
       const author=r.author ? `<br><b>Autor:</b> ${esc(r.author)}` : '';
       return `
       <article class="dd-resource">
@@ -384,7 +422,7 @@
           </div>
           <h3>${esc(r.title)}</h3>
           <p><b>Área:</b> ${esc(r.area)} · <b>Tipo:</b> ${esc(r.kind)}</p>
-          <p class="dd-small"><b>Origen:</b> ${esc(r.source)}${sourceLink}${author}<br><b>Uso:</b> reutilizable · <b>Licencia:</b> ${esc(r.license)}</p>
+          <p class="dd-small"><b>Origen:</b> ${esc(r.source)}${sourceLink}${author}<br><b>Uso:</b> reutilizable · <b>Licencia:</b> ${esc(r.license)}${used?'<br><b>Reutilizado:</b> '+used+' vez/veces':''}</p>
           <button class="btn alt" type="button" onclick="window.DocenteDigitalAI.selectResource('${esc(r.id)}')">Usar como referencia</button>
         </div>
       </article>`;
@@ -416,10 +454,71 @@
   function selectResource(id){
     const r=CATALOG.find(x=>x.id===id);
     if(!r) return;
-    localStorage.setItem('docenteDigitalSelectedResource', JSON.stringify({
-      id:r.id,title:r.title,fileName:r.fileName,selectedAt:new Date().toISOString()
-    }));
-    alert('Recurso seleccionado como referencia. En la integración siguiente se insertará automáticamente en ficha, PPT o sesión según corresponda.');
+    const selected={...r,selectedAt:new Date().toISOString()};
+    localStorage.setItem('docenteDigitalSelectedResource', JSON.stringify(selected));
+    recordResourceUse(id);
+    bumpRoute('libraryUses');
+    applySelectedResourceToSession(selected);
+  }
+
+  function selectedResource(){
+    try{return JSON.parse(localStorage.getItem('docenteDigitalSelectedResource')||'null');}
+    catch{return null;}
+  }
+
+  function usageMoment(r){
+    const k=normalize((r.kind||'')+' '+(r.title||''));
+    if(k.includes('problematizacion'))return 'Inicio · problematización o conflicto cognitivo';
+    if(k.includes('ficha'))return 'Desarrollo · ficha de trabajo';
+    if(k.includes('secuencia'))return 'Desarrollo · observación y análisis de secuencia';
+    if(k.includes('conceptual')||k.includes('diagrama'))return 'Formalización / construcción del aprendizaje';
+    if(k.includes('infografia'))return 'Desarrollo o transferencia · análisis de información';
+    if(k.includes('cartel'))return 'Ambientación, producto o recurso de aula';
+    return 'Recurso visual de apoyo';
+  }
+
+  function resourceVisualHtml(r){
+    if(!r)return '';
+    const image=r.previewUrl
+      ? `<img src="${esc(r.previewUrl)}" alt="${esc(r.title)}" loading="lazy" style="max-width:100%;max-height:320px;object-fit:contain;border-radius:12px;border:1px solid #dbe7ef">`
+      : `<div class="dd-resource-large-icon">${iconFor(r.kind)}</div>`;
+    const source=r.sourcePage
+      ? `<a href="${esc(r.sourcePage)}" target="_blank" rel="noopener noreferrer">Fuente</a>`
+      : esc(r.source||'Biblioteca DocenteDigital');
+    return `<div class="dd-selected-resource">
+      <div>${image}</div>
+      <div>
+        <span class="pill">Recurso visual seleccionado</span>
+        <h3>${esc(r.title)}</h3>
+        <p><b>Momento sugerido:</b> ${esc(usageMoment(r))}</p>
+        <p class="dd-small"><b>Crédito:</b> ${r.author?esc(r.author)+' · ':''}${source} · ${esc(r.license||'')}</p>
+        <div class="dd-inline-actions">
+          <button class="btn ghost" type="button" onclick="window.DocenteDigitalAI.clearSelectedResource()">Quitar</button>
+          <button class="btn alt" type="button" onclick="go('aihub')">Cambiar recurso</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function applySelectedResourceToSession(resource=selectedResource()){
+    const output=document.getElementById('sessionOutput');
+    if(!output||!resource)return;
+    let slot=document.getElementById('ddSelectedResourcePanel');
+    if(!slot){
+      slot=document.createElement('div');
+      slot.id='ddSelectedResourcePanel';
+      slot.className='dd-panel';
+      const doc=document.getElementById('sessionDocument');
+      if(doc&&doc.parentNode)doc.parentNode.insertBefore(slot,doc.nextSibling);
+      else output.appendChild(slot);
+    }
+    slot.innerHTML=resourceVisualHtml(resource);
+    slot.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+
+  function clearSelectedResource(){
+    localStorage.removeItem('docenteDigitalSelectedResource');
+    document.getElementById('ddSelectedResourcePanel')?.remove();
   }
 
   function showSessionSuggestions(){
@@ -459,6 +558,7 @@
     });
     observer.observe(output,{attributes:true,attributeFilter:['class']});
     block.classList.toggle('hidden',output.classList.contains('hidden'));
+    if(!output.classList.contains('hidden'))applySelectedResourceToSession();
   }
 
   function newPremiumImage(){
@@ -499,6 +599,13 @@
       .dd-cost{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
       .dd-cost strong{display:block;font-size:26px;color:var(--p)}
       .dd-image-actions{margin-top:14px}
+      .dd-selected-resource{display:grid;grid-template-columns:minmax(180px,38%) 1fr;gap:16px;align-items:center}
+      .dd-selected-resource h3{margin:8px 0}
+      .dd-resource-large-icon{min-height:160px;display:grid;place-items:center;font-size:58px;background:linear-gradient(135deg,#eaf7f5,#eef4ff);border-radius:14px}
+      .dd-route-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+      .dd-route-stats div{background:#f7fafc;border:1px solid var(--line);border-radius:14px;padding:12px}
+      .dd-route-stats strong{font-size:26px;color:var(--p);display:block}
+      .dd-route-stats span{font-size:12px;color:var(--muted)}
       .dd-modal-backdrop{position:fixed;inset:0;z-index:999;background:rgba(11,31,48,.55);display:grid;place-items:center;padding:16px}
       .dd-modal{position:relative;width:min(620px,100%);background:#fff;border-radius:20px;border:1px solid var(--line);box-shadow:0 24px 70px rgba(0,0,0,.25);padding:22px}
       .dd-modal h2{margin:8px 0}
@@ -508,7 +615,7 @@
       .dd-save-route div{display:flex;align-items:center;gap:8px;background:#f7fafc;border:1px solid var(--line);border-radius:13px;padding:10px}
       .dd-save-route b{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#eaf7f5;color:var(--p)}
       @media(max-width:850px){
-        .dd-two,.dd-resource-grid,.dd-library-controls,.dd-cost,.dd-save-route{grid-template-columns:1fr}
+        .dd-two,.dd-resource-grid,.dd-library-controls,.dd-cost,.dd-save-route,.dd-route-stats,.dd-selected-resource{grid-template-columns:1fr}
         .dd-resource{grid-template-columns:70px 1fr}
       }`;
     document.head.appendChild(style);
@@ -564,6 +671,13 @@
         <div id="ddLibraryResults" class="dd-resource-grid"></div>
       </div>
 
+      <div class="dd-panel">
+        <div class="dd-panel-head">
+          <div><span class="pill">Medición real del piloto</span><h2>Rutas de ahorro utilizadas</h2></div>
+        </div>
+        <div id="ddRouteStats" class="dd-route-stats"></div>
+      </div>
+
       <div class="dd-two">
         <div class="dd-panel">
           <h2>♻️ Regla de ahorro</h2>
@@ -582,6 +696,7 @@
       </div>`;
     content.appendChild(section);
     renderLibrary();
+    renderRouteStats();
 
     const sidebar=document.querySelector('.sidebar');
     if(sidebar && !sidebar.querySelector('[data-screen="aihub"]')){
@@ -623,6 +738,9 @@
     copyGeneralPrompt,
     renderLibrary,
     selectResource,
+    selectedResource,
+    applySelectedResourceToSession,
+    clearSelectedResource,
     showSessionSuggestions,
     tryChatGPTFreeForImage,
     openCreditGate,
