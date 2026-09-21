@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#7356d8" />
+  <meta name="description" content="Ñawinchay — Cuaderno Auxiliar Lector. Piloto de 1.º grado offline-first." />
+  <meta name="referrer" content="no-referrer" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://frhtvbcuaufeybpokomz.supabase.co; img-src 'self' data: https://frhtvbcuaufeybpokomz.supabase.co; style-src 'self'; script-src 'self'; manifest-src 'self'; worker-src 'self'; media-src 'self' blob: https://frhtvbcuaufeybpokomz.supabase.co; base-uri 'self'; form-action 'self'" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Ñawinchay · Piloto 1.º</title>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">📖</span><div><strong>Ñawinchay</strong><small>Cuaderno Auxiliar Lector</small></div></div>
+    <div class="top-actions">
+      <span id="netBadge" class="badge">● comprobando</span>
+      <button id="installBtn" class="ghost" hidden>Instalar</button>
+      <button id="modeBtn" class="ghost">Modo docente</button>
+    </div>
+  </header>
+
+  <main id="app" class="shell">
+    <section id="studentHome" class="view">
+      <div class="hero">
+        <div><span class="eyebrow">PILOTO · 1.º GRADO</span><h1>Mis primeras 10 lecturas</h1><p>Lee, escucha, piensa y vuelve al texto. Tus avances quedan guardados aunque no haya Internet.</p></div>
+        <div class="mascot">🦙📚</div>
+      </div>
+      <div class="progress-card"><div><strong id="doneCount">0</strong><span>/10 completadas</span></div><div class="bar"><i id="globalBar"></i></div><span id="syncLabel">Guardado en este dispositivo</span></div>
+      <div id="readingGrid" class="reading-grid"></div>
+    </section>
+
+    <section id="readerView" class="view hidden">
+      <button id="backBtn" class="back">← Volver a mis lecturas</button>
+      <div class="reader-head"><div><span id="readingCode" class="eyebrow"></span><h1 id="readingTitle"></h1></div><div id="readingEmoji" class="scene-emoji"></div></div>
+      <div id="stepper" class="stepper"></div>
+      <div id="stage" class="stage"></div>
+      <div class="reader-nav"><button id="prevBtn" class="secondary">Anterior</button><button id="nextBtn" class="primary">Continuar</button></div>
+    </section>
+
+    <section id="teacherView" class="view hidden">
+      <div class="hero compact"><div><span class="eyebrow">MODO DOCENTE · PILOTO LOCAL</span><h1>Registro de progreso</h1><p>Resumen de lo realizado en este dispositivo. El envío al servidor se activa cuando la tableta queda vinculada.</p></div><div class="mascot">📊</div></div>
+      <div class="dashboard">
+        <article><b id="metricCompleted">0</b><span>lecturas completadas</span></article>
+        <article><b id="metricAnswers">0</b><span>respuestas registradas</span></article>
+        <article><b id="metricRereads">0</b><span>relecturas</span></article>
+        <article><b id="metricPending">0</b><span>eventos por sincronizar</span></article>
+      </div>
+      <div class="panel"><h2>Detalle por lectura</h2><div id="teacherRows"></div></div>
+      <div class="panel connection-panel"><h2>Vinculación segura con Supabase</h2><p>La tableta genera un código temporal. El docente lo confirma para el estudiante correspondiente y, después, la app puede descargar asignaciones y enviar el progreso.</p><div class="connect-row"><button id="pairBtn" class="primary">Generar código</button><strong id="pairCodeDisplay" class="case-chip">—</strong><button id="checkPairBtn" class="secondary">Comprobar vinculación</button><button id="syncBtn" class="secondary">Sincronizar</button></div><p id="pairStatus" class="muted"></p></div>
+      <div class="panel teacher-auth-panel"><h2>Confirmación docente del vínculo</h2><p class="muted">La sesión docente es temporal y se mantiene separada de la sesión anónima de esta tableta. La contraseña no se guarda.</p><div class="teacher-auth-grid"><input id="teacherEmail" type="email" inputmode="email" autocomplete="username" placeholder="Correo del docente"><input id="teacherPassword" type="password" autocomplete="current-password" placeholder="Contraseña"><button id="teacherLoginBtn" class="primary">Ingresar como docente</button><button id="teacherLogoutBtn" class="secondary" hidden>Cerrar sesión</button><select id="teacherStudentSelect" disabled><option value="">Inicia sesión docente…</option></select><input id="teacherPairCode" type="text" maxlength="6" autocapitalize="characters" placeholder="Código de 6 caracteres"><button id="confirmPairBtn" class="primary" disabled>Confirmar esta tableta</button></div><p id="teacherAuthStatus" class="muted"></p></div>
+      <div class="panel"><h2>Diagnóstico de la tableta</h2><p class="muted">Comprueba instalación PWA, almacenamiento local, vínculo y asignaciones sin modificar datos.</p><button id="diagBtn" class="secondary">Ejecutar diagnóstico</button><div id="diagOutput" class="diag-output"></div></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" aria-live="polite"></div>
+  <script src="config.js"></script>
+  <script src="js1.js"></script>
+  <script src="js2.js"></script>
+  <script src="js3.js"></script>
+  <script src="js4.js"></script>
+</body>
+</html>

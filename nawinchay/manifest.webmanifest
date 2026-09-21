@@ -1,0 +1,17 @@
+{
+  "name":"Ñawinchay — Cuaderno Auxiliar Lector",
+  "short_name":"Ñawinchay",
+  "start_url":"./index.html",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#f7f5fb",
+  "theme_color":"#7356d8",
+  "lang":"es-PE",
+  "description":"Piloto offline-first de 10 lecturas para 1.º de primaria.",
+  "orientation":"portrait-primary",
+  "categories":["education"],
+  "icons":[
+    {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}

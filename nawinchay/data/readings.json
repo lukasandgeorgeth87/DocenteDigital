@@ -1,0 +1,460 @@
+[
+  {
+    "code": "001",
+    "id": "2a10bff0-ded5-43f0-b7be-00b203842bee",
+    "title": "Esmeralda va a la chacra",
+    "emoji": "🥔",
+    "word_count": 69,
+    "body_text": "Una mañana, Esmeralda acompañó a su mamá a la chacra porque quería ayudarla a revisar las plantas de papa. Mientras caminaban, observaron el cielo claro y la tierra húmeda. Al llegar, su mamá movió el suelo con una pala y, de pronto, apareció una papa grande. Entonces Esmeralda sonrió, la tomó con cuidado y la colocó en una canasta. Finalmente, ambas regresaron contentas a casa porque habían trabajado juntas.",
+    "prediction": "Observa la imagen y el título. ¿De qué crees que tratará la lectura?",
+    "transfer": "En otra casa, un niño ayuda a guardar papas en una canasta. ¿Qué se parece a la lectura?",
+    "collection_name": "Mi comunidad y la chacra",
+    "words": [
+      {
+        "word": "papa",
+        "emoji": "🥔"
+      },
+      {
+        "word": "pala",
+        "emoji": "🛠️"
+      },
+      {
+        "word": "chacra",
+        "emoji": "🌱"
+      }
+    ],
+    "questions": [
+      {
+        "level": "literal",
+        "prompt": "¿Con quién fue Esmeralda a la chacra?",
+        "options": [
+          "Con su mamá",
+          "Con su maestra",
+          "Con una amiga"
+        ],
+        "answer": "Con su mamá"
+      },
+      {
+        "level": "inferential",
+        "prompt": "¿Por qué Esmeralda regresó contenta?",
+        "options": [
+          "Porque encontró una papa y trabajó con su mamá",
+          "Porque compró un juguete",
+          "Porque no fue a la chacra"
+        ],
+        "answer": "Porque encontró una papa y trabajó con su mamá"
+      },
+      {
+        "level": "critical",
+        "prompt": "¿Por qué es bueno ayudar a la familia?",
+        "options": null,
+        "answer": null
+      }
+    ]
+  },
+  {
+    "code": "002",
+    "id": "12889848-18e3-49ef-8031-83e176d84fe7",
+    "title": "Lukas Salvador cuida una planta",
+    "emoji": "🪴",
+    "word_count": 70,
+    "body_text": "Lukas Salvador salió al patio temprano y vio que una planta estaba un poco triste porque la tierra se veía seca. Entonces entró a la cocina, buscó una jarra pequeña y la llenó con agua. Después volvió con cuidado y regó la planta lentamente para no desperdiciar nada. Mientras observaba las hojas, notó que la tierra cambiaba de color. Finalmente, sonrió porque comprendió que las plantas necesitan agua para vivir.",
+    "prediction": "Observa la imagen. ¿Qué crees que hará Lukas con la planta?",
+    "transfer": "Si ves una planta seca en tu casa o escuela, ¿qué podrías hacer?",
+    "collection_name": "Mi casa y naturaleza",
+    "words": [
+      {
+        "word": "planta",
+        "emoji": "🪴"
+      },
+      {
+        "word": "agua",
+        "emoji": "💧"
+      },
+      {
+        "word": "tierra",
+        "emoji": "🟫"
+      }
+    ],
+    "questions": [
+      {
+        "level": "literal",
+        "prompt": "¿Qué buscó Lukas en la cocina?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "inferential",
+        "prompt": "¿Por qué Lukas regó la planta despacio?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "critical",
+        "prompt": "¿Por qué debemos cuidar las plantas?",
+        "options": null,
+        "answer": null
+      }
+    ]
+  },
+  {
+    "code": "003",
+    "id": "da4090d8-7092-4c0e-8c9c-0735ccb8011d",
+    "title": "Esmeralda ayuda a mamá en la cocina",
+    "emoji": "🍲",
+    "word_count": 68,
+    "body_text": "Al mediodía, Esmeralda entró a la cocina porque su mamá estaba preparando el almuerzo. Primero observó la mesa y vio una olla, unas papas y una cuchara grande. Entonces preguntó en qué podía ayudar y su mamá le pidió que lavara las papas con cuidado. Mientras lo hacía, Esmeralda sonrió porque se sentía útil. Después colocó las papas sobre un plato y, al final, ambas continuaron cocinando juntas.",
+    "prediction": "Mira la imagen. ¿De qué tratará la lectura?",
+    "transfer": "En otra cocina, una abuela prepara sopa con su nieto. ¿Qué actividad se parece a la de Esmeralda?",
+    "collection_name": "Mi familia y mi casa",
+    "words": [
+      {
+        "word": "cocina",
+        "emoji": "🍳"
+      },
+      {
+        "word": "olla",
+        "emoji": "🍲"
+      },
+      {
+        "word": "papa",
+        "emoji": "🥔"
+      }
+    ],
+    "questions": [
+      {
+        "level": "literal",
+        "prompt": "¿Qué estaba preparando la mamá de Esmeralda?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "inferential",
+        "prompt": "¿Por qué Esmeralda sonrió?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "critical",
+        "prompt": "¿Cómo puedes ayudar en tu casa?",
+        "options": null,
+        "answer": null
+      }
+    ]
+  },
+  {
+    "code": "004",
+    "id": "ab3dfc13-c00b-4340-99e9-e701145812ab",
+    "title": "Lukas lleva agua",
+    "emoji": "🪣",
+    "word_count": 74,
+    "body_text": "Una tarde, Lukas Salvador vio que su abuela quería regar unas plantas cerca de la casa. Como el balde estaba vacío, él decidió ayudar. Primero fue hasta el lugar donde guardaban el agua y llenó un recipiente pequeño. Después caminó con mucho cuidado para no derramarla. Mientras avanzaba, miró el camino y sostuvo el balde con las dos manos. Finalmente, entregó el agua a su abuela y ella le agradeció con una gran sonrisa.",
+    "prediction": "Observa la escena. ¿Qué crees que hará Lukas?",
+    "transfer": "Si una persona mayor necesita llevar algo, ¿cómo la ayudarías?",
+    "collection_name": "Mi familia y mi casa",
+    "words": [
+      {
+        "word": "agua",
+        "emoji": "💧"
+      },
+      {
+        "word": "balde",
+        "emoji": "🪣"
+      },
+      {
+        "word": "abuela",
+        "emoji": "👵"
+      }
+    ],
+    "questions": [
+      {
+        "level": "literal",
+        "prompt": "¿A quién ayudó Lukas?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "inferential",
+        "prompt": "¿Por qué caminó con cuidado?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "critical",
+        "prompt": "¿Por qué es importante ayudar a los mayores?",
+        "options": null,
+        "answer": null
+      }
+    ]
+  },
+  {
+    "code": "005",
+    "id": "fa69c34b-a044-43bd-97a2-5abdd3f885ba",
+    "title": "Una papa en la canasta",
+    "emoji": "🧺",
+    "word_count": 74,
+    "body_text": "En la casa de Esmeralda había una canasta sobre la mesa. Esa mañana, su mamá llegó de la chacra con algunas papas y las colocó allí con cuidado. Entonces Esmeralda se acercó, observó una papa grande y la tomó con sus manos. Después la miró con atención porque le parecía diferente a las otras. Mientras sonreía, la volvió a dejar en la canasta. Al final, comprendió que las papas también pueden tener distintos tamaños.",
+    "prediction": "Mira la imagen y el título. ¿Qué crees que hay en la canasta?",
+    "transfer": "En otra casa hay frutas en una canasta. ¿Qué se parece y qué cambia?",
+    "collection_name": "Mi familia y mi casa",
+    "words": [
+      {
+        "word": "papa",
+        "emoji": "🥔"
+      },
+      {
+        "word": "canasta",
+        "emoji": "🧺"
+      },
+      {
+        "word": "mesa",
+        "emoji": "🪑"
+      }
+    ],
+    "questions": [
+      {
+        "level": "literal",
+        "prompt": "¿Qué había en la canasta?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "inferential",
+        "prompt": "¿Por qué Esmeralda observó la papa con atención?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "critical",
+        "prompt": "¿Qué productos de tu casa guardan en una canasta o canasto?",
+        "options": null,
+        "answer": null
+      }
+    ]
+  },
+  {
+    "code": "006",
+    "id": "f22577a2-2417-455c-a92b-667346750d90",
+    "title": "Esmeralda y Lukas van a la escuela",
+    "emoji": "🏫",
+    "word_count": 69,
+    "body_text": "Muy temprano, Esmeralda salió de su casa con su mochila porque era hora de ir a la escuela. En el camino se encontró con Lukas Salvador, quien también caminaba alegremente. Entonces siguieron juntos por el sendero mientras conversaban y observaban los cerros. Después pasaron cerca de unas plantas y escucharon cantar a unos pajaritos. Finalmente, al ver la escuela, ambos sonrieron porque les gustaba aprender junto a sus compañeros.",
+    "prediction": "Observa la imagen. ¿A dónde crees que van Esmeralda y Lukas?",
+    "transfer": "Si tú caminas a la escuela con un amigo, ¿qué podrían conversar?",
+    "collection_name": "Mi escuela",
+    "words": [
+      {
+        "word": "escuela",
+        "emoji": "🏫"
+      },
+      {
+        "word": "mochila",
+        "emoji": "🎒"
+      },
+      {
+        "word": "camino",
+        "emoji": "🛤️"
+      }
+    ],
+    "questions": [
+      {
+        "level": "literal",
+        "prompt": "¿Con quién se encontró Esmeralda?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "inferential",
+        "prompt": "¿Por qué sonrieron al ver la escuela?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "critical",
+        "prompt": "¿Qué es lo que más te gusta de venir a la escuela?",
+        "options": null,
+        "answer": null
+      }
+    ]
+  },
+  {
+    "code": "007",
+    "id": "19f59a77-8156-4d55-869c-9e0f1013edb4",
+    "title": "Mi casita",
+    "emoji": "🏠",
+    "word_count": 72,
+    "body_text": "La casita de Lukas Salvador estaba en un lugar tranquilo, cerca de un camino y rodeada de plantas. Cada mañana, al abrir la puerta, él podía ver el cielo, las montañas y algunas flores del patio. Entonces salía con alegría para observar a su perrito y escuchar a los animales cercanos. Después regresaba a desayunar con su familia. Finalmente, miraba su casa con cariño porque allí se sentía seguro, acompañado y feliz.",
+    "prediction": "Mira la imagen. ¿De qué tratará la lectura?",
+    "transfer": "Si quisieras contar cómo es tu casa, ¿qué dirías primero?",
+    "collection_name": "Mi familia y mi casa",
+    "words": [
+      {
+        "word": "casa",
+        "emoji": "🏠"
+      },
+      {
+        "word": "puerta",
+        "emoji": "🚪"
+      },
+      {
+        "word": "patio",
+        "emoji": "🌿"
+      }
+    ],
+    "questions": [
+      {
+        "level": "literal",
+        "prompt": "¿Qué veía Lukas al abrir la puerta?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "inferential",
+        "prompt": "¿Por qué Lukas miraba su casa con cariño?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "critical",
+        "prompt": "¿Qué es lo que más te gusta de tu casa?",
+        "options": null,
+        "answer": null
+      }
+    ]
+  },
+  {
+    "code": "008",
+    "id": "e11a5dbd-1197-4e63-9780-99c941b0a730",
+    "title": "La oveja de la abuela",
+    "emoji": "🐑",
+    "word_count": 70,
+    "body_text": "Una mañana, Esmeralda visitó a su abuela y vio una oveja cerca del corral. Como el animal estaba tranquilo, se acercó despacio para observarlo mejor. Entonces notó su lana suave y sus orejas pequeñas. Su abuela le explicó que la oveja debía ser cuidada con atención y alimentada todos los días. Mientras escuchaba, Esmeralda acarició al animal con suavidad. Al final, comprendió que los animales también necesitan cuidado y respeto.",
+    "prediction": "Observa la imagen. ¿Qué animal crees que aparecerá en la lectura?",
+    "transfer": "Si ves un animal en tu comunidad, ¿cómo lo cuidarías?",
+    "collection_name": "Animales de nuestra comunidad",
+    "words": [
+      {
+        "word": "oveja",
+        "emoji": "🐑"
+      },
+      {
+        "word": "abuela",
+        "emoji": "👵"
+      },
+      {
+        "word": "corral",
+        "emoji": "🏡"
+      }
+    ],
+    "questions": [
+      {
+        "level": "literal",
+        "prompt": "¿A quién visitó Esmeralda?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "inferential",
+        "prompt": "¿Por qué Esmeralda se acercó despacio?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "critical",
+        "prompt": "¿Cómo debemos tratar a los animales?",
+        "options": null,
+        "answer": null
+      }
+    ]
+  },
+  {
+    "code": "009",
+    "id": "aa608ba4-3607-4340-9a54-10c5eb6f0887",
+    "title": "El cuy come maíz",
+    "emoji": "🐹",
+    "word_count": 76,
+    "body_text": "En la tarde, Lukas Salvador fue al patio y vio que un cuy se movía cerca de una pequeña caja. Entonces buscó un poco de maíz y se acercó con calma para alimentarlo. Primero colocó el alimento en el suelo y luego observó cómo el cuy empezaba a comer. Mientras lo miraba, notó que el animal se movía rápido y hacía pequeños sonidos. Finalmente, Lukas sonrió porque le gustaba cuidar a los animales de su casa.",
+    "prediction": "Mira la imagen. ¿Qué crees que hará Lukas con el cuy?",
+    "transfer": "Si tuvieras que alimentar a un animal, ¿qué harías primero?",
+    "collection_name": "Animales de nuestra comunidad",
+    "words": [
+      {
+        "word": "cuy",
+        "emoji": "🐹"
+      },
+      {
+        "word": "maíz",
+        "emoji": "🌽"
+      },
+      {
+        "word": "patio",
+        "emoji": "🌿"
+      }
+    ],
+    "questions": [
+      {
+        "level": "literal",
+        "prompt": "¿Qué le dio Lukas al cuy?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "inferential",
+        "prompt": "¿Por qué Lukas se acercó con calma?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "critical",
+        "prompt": "¿Qué animales cuidan en tu casa o comunidad?",
+        "options": null,
+        "answer": null
+      }
+    ]
+  },
+  {
+    "code": "010",
+    "id": "c0858834-3d6c-4ab8-84d6-c7593bf394f7",
+    "title": "Vamos al mercado de Pisac",
+    "emoji": "🛍️",
+    "word_count": 68,
+    "body_text": "Un día, Esmeralda fue con su mamá al mercado de Pisac porque necesitaban comprar algunos productos para la casa. Mientras caminaban entre los puestos, observaron frutas, verduras, granos y muchas personas vendiendo. Entonces su mamá eligió unas papas y unas verduras frescas. Después Esmeralda miró con atención los colores del mercado y escuchó las voces de los vendedores. Finalmente, regresaron contentas porque habían encontrado todo lo que buscaban.",
+    "prediction": "Observa la imagen y el título. ¿Qué crees que verán en el mercado?",
+    "transfer": "Si tú fueras al mercado con tu familia, ¿qué te gustaría observar o comprar?",
+    "collection_name": "Conocemos Pisac",
+    "words": [
+      {
+        "word": "mercado",
+        "emoji": "🛍️"
+      },
+      {
+        "word": "papa",
+        "emoji": "🥔"
+      },
+      {
+        "word": "puesto",
+        "emoji": "🏪"
+      }
+    ],
+    "questions": [
+      {
+        "level": "literal",
+        "prompt": "¿A dónde fue Esmeralda con su mamá?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "inferential",
+        "prompt": "¿Por qué regresaron contentas?",
+        "options": null,
+        "answer": null
+      },
+      {
+        "level": "critical",
+        "prompt": "¿Qué productos se venden en un mercado?",
+        "options": null,
+        "answer": null
+      }
+    ]
+  }
+]
