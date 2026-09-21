@@ -87,28 +87,54 @@
     if(area==='Personal Social') return n<=2?`Expresa cómo participa en prácticas relacionadas con ${ctx} y respeta las experiencias de otros.`:n<=4?`Explica una práctica o problema de ${ctx} y propone una acción responsable.`:`Argumenta cómo las prácticas y decisiones vinculadas con ${ctx} afectan a la comunidad y propone acciones para el bien común.`;
     return `Elabora y explica una producción pertinente sobre ${ctx}, aplicando los aprendizajes del área.`;
   }
+  function ddOfficialEntries(level,area){
+    const core=window.DD_OFFICIAL_CURRICULUM;
+    return core?.getArea?core.getArea(level,area):[];
+  }
+  function ddOfficialSource(level){
+    const core=window.DD_OFFICIAL_CURRICULUM;
+    return core?.sourceFor?core.sourceFor(level):null;
+  }
+  function ddPickOfficialCompetence(level,area,title=''){
+    const core=window.DD_OFFICIAL_CURRICULUM;
+    return core?.pickCompetence?core.pickCompetence(level,area,title):ddOfficialEntries(level,area)[0]||null;
+  }
   function ddBuildPurposes(unit){
     const brief=ddContext(unit);
     return unit.areas.map(area=>{
-      const base=competenceMap[area]||{competence:`Competencia priorizada del área de ${area}.`,capacities:'Capacidades correspondientes a la competencia priorizada.',evidence:'Producción o desempeño observable.',instrument:'Instrumento pertinente.'};
-      return {area,...base,performances:unit.grades.map(g=>({grade:g,text:ddGradePerformance(area,g,brief)})),criteria:unit.grades.map(g=>({grade:g,text:ddCriterion(area,g,brief)}))};
+      const officialCompetencies=ddOfficialEntries(unit.level,area);
+      if(!officialCompetencies.length)throw new Error(`No existe matriz curricular oficial cargada para ${unit.level} / ${area}`);
+      const base=competenceMap[area]||{evidence:'Producción o actuación observable vinculada al reto.',instrument:'Instrumento pertinente.'};
+      return {
+        area,
+        officialCompetencies,
+        evidence:base.evidence||'Producción o actuación observable vinculada al reto.',
+        instrument:base.instrument||'Instrumento pertinente.',
+        criteria:unit.grades.map(g=>({grade:g,text:ddCriterion(area,g,brief)}))
+      };
     });
   }
   function ddEnrich(unit){
     if(!unit)return unit;
     unit.reto=unit.reto||ddReto(ddContext(unit));
     unit.product=unit.product||ddProduct(ddContext(unit),unit.type);
-    unit.purposes=unit.purposes||ddBuildPurposes(unit);
+    unit.purposes=ddBuildPurposes(unit);
+    unit.curriculumCoreVersion=window.DD_OFFICIAL_CURRICULUM?.version||'missing';
+    unit.curriculumSourceId=ddOfficialSource(unit.level)?.id||'missing';
     unit.enfoques=unit.enfoques||[
       {name:'Orientación al bien común',value:'Responsabilidad',action:'Asumen responsabilidades y toman decisiones considerando el bienestar propio, de sus compañeros, familias y comunidad.'},
       {name:'Inclusivo o Atención a la diversidad',value:'Respeto por las diferencias',action:'Participan con apoyos diferenciados según grado, nivel lector, ritmo y forma de comunicación, manteniendo un reto común.'},
       {name:'Intercultural',value:'Respeto a la identidad cultural',action:'Valoran los saberes, la lengua, las costumbres y las prácticas de la comunidad sin considerar una cultura superior a otra.'},
       {name:'Ambiental',value:'Respeto a toda forma de vida',action:'Relacionan el aprendizaje con acciones concretas de cuidado de la tierra, el agua, los seres vivos y los espacios comunes.'}
     ];
-    unit.transversals=unit.transversals||[
-      {name:'Se desenvuelve en entornos virtuales generados por las TIC',text:'Selecciona y utiliza recursos digitales pertinentes para observar, organizar, comunicar o producir información, según el grado y los recursos disponibles.'},
-      {name:'Gestiona su aprendizaje de manera autónoma',text:'Reconoce la meta, organiza acciones, monitorea su avance y mejora sus productos a partir de los criterios y la retroalimentación.'}
-    ];
+    const officialTransversals=window.DD_OFFICIAL_CURRICULUM?.getTransversals?.(unit.level)||[];
+    unit.transversals=officialTransversals.map(x=>({
+      name:x.name,
+      capacities:[...x.capacities],
+      application:x.name.includes('entornos virtuales')
+        ? 'Se integra cuando aporta al propósito y existen recursos disponibles; no se fuerza su uso.'
+        : 'Se integra mediante metas, organización de acciones, monitoreo y ajustes durante el aprendizaje.'
+    }));
     unit.activities=unit.activities&&unit.activities.length?unit.activities:buildActivities(ddContext(unit),unit.duration);
     return unit;
   }
@@ -122,19 +148,24 @@
   };
 
   function ddTable(rows,heads){return `<div class="dd-scroll"><table class="dd-table"><thead><tr>${heads.map(h=>`<th>${E(h)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`}
+  function ddOfficialCompetenciesHtml(p){
+    return p.officialCompetencies.map(c=>`<div class="dd-official-competency"><b>${E(c.name)}</b><br><small><b>Capacidades:</b> ${c.capacities.map(E).join('; ')}</small></div>`).join('<hr>');
+  }
   function ddPurposesHtml(unit){
-    const rows=unit.purposes.map(p=>`<tr><td><b>${E(p.area)}</b><br>${E(p.competence)}<hr><small>${E(p.capacities)}</small></td><td>${p.performances.map(x=>`<b>${E(x.grade)}:</b> ${E(x.text)}`).join('<br><br>')}</td><td>${p.criteria.map(x=>`<b>${E(x.grade)}:</b> ${E(x.text)}`).join('<br><br>')}</td><td>${E(p.evidence)}</td><td>${E(p.instrument)}</td></tr>`).join('');
-    return ddTable(rows,['Área / Competencia y capacidades','Desempeños precisados por grado','Criterios de evaluación por grado','Evidencia','Instrumento']);
+    const rows=unit.purposes.map(p=>`<tr><td><b>${E(p.area)}</b><br>${ddOfficialCompetenciesHtml(p)}</td><td>${p.criteria.map(x=>`<b>${E(x.grade)}:</b> ${E(x.text)}`).join('<br><br>')}</td><td>${E(p.evidence)}</td><td>${E(p.instrument)}</td></tr>`).join('');
+    return ddTable(rows,['Área / Competencias y capacidades MINEDU','Criterios contextualizados por grado','Evidencia','Instrumento']);
   }
   function ddEnfoquesHtml(unit){return ddTable(unit.enfoques.map(x=>`<tr><td><b>${E(x.name)}</b></td><td>${E(x.value)}</td><td>${E(x.action)}</td></tr>`).join(''),['Enfoque transversal','Valor','Actitudes o acciones observables']);}
-  function ddTransversalHtml(unit){return ddTable(unit.transversals.map(x=>`<tr><td><b>${E(x.name)}</b></td><td>${E(x.text)}</td></tr>`).join(''),['Competencia transversal','Desempeño precisado / aplicación']);}
+  function ddTransversalHtml(unit){return ddTable(unit.transversals.map(x=>`<tr><td><b>${E(x.name)}</b><br><small><b>Capacidades MINEDU:</b> ${(x.capacities||[]).map(E).join('; ')}</small></td><td>${E(x.application||'')}</td></tr>`).join(''),['Competencia transversal y capacidades MINEDU','Aplicación contextualizada en la unidad']);}
   function ddSequenceHtml(unit){
     const days=['Lunes','Martes','Miércoles','Jueves','Viernes'];
     const rows=unit.activities.map((a,i)=>{
-      const p=unit.purposes.find(x=>x.area===a.area)||unit.purposes[0]; const gradeCrit=p?.criteria?.map(x=>`${x.grade}: ${x.text}`).join(' / ')||'';
-      return `<tr><td>Semana ${a.week}<br>${days[(i)%5]}</td><td>${E(a.area)}</td><td><b>${E(a.title)}</b></td><td>${E(p?.performances?.map(x=>`${x.grade}: ${x.text}`).join(' / ')||'')}</td><td>${E(p?.evidence||'')}</td><td>${E(gradeCrit)}</td><td>${E(p?.instrument||'')}</td><td>${E(a.title)}</td></tr>`;
+      const p=unit.purposes.find(x=>x.area===a.area)||unit.purposes[0];
+      const gradeCrit=p?.criteria?.map(x=>`${x.grade}: ${x.text}`).join(' / ')||'';
+      const official=ddPickOfficialCompetence(unit.level,a.area,a.title);
+      return `<tr><td>Semana ${a.week}<br>${days[(i)%5]}</td><td>${E(a.area)}</td><td><b>${E(a.title)}</b></td><td>${E(official?.name||'')}</td><td>${E(p?.evidence||'')}</td><td>${E(gradeCrit)}</td><td>${E(p?.instrument||'')}</td><td>${E(a.title)}</td></tr>`;
     }).join('');
-    return ddTable(rows,['Semana / día','Área','Título de la sesión','Desempeño precisado','Evidencia','Criterio de evaluación','Instrumento','Actividad principal']);
+    return ddTable(rows,['Semana / día','Área','Título de la sesión','Competencia priorizada MINEDU','Evidencia','Criterio contextualizado','Instrumento','Actividad principal']);
   }
   function ddRegisterHtml(unit){
     const names=unit.grades.map((g,i)=>({g,name:['Estudiante 1','Estudiante 2','Estudiante 3','Estudiante 4','Estudiante 5','Estudiante 6'][i]||`Estudiante ${i+1}`}));
@@ -155,7 +186,8 @@
     const summary=`<div class="dd-cover"><div><span class="pill">✓ Guardada</span><h1>${E(unit.title)}</h1><p><b>${E(unit.type)}</b> · ${E(unit.duration)}</p><p>${E(unit.level)} · ${E(unit.ieType)} · ${E(unit.grades.join(', '))}</p></div><div class="dd-cover-icon">🌱📚</div></div>
       <div class="dd-info"><b>I.E.:</b> Datos institucionales configurables &nbsp; | &nbsp; <b>Docente:</b> Datos del perfil &nbsp; | &nbsp; <b>Áreas:</b> ${E(unit.areas.join(', '))}</div>
       <h3>II. SITUACIÓN SIGNIFICATIVA Y PRODUCTO</h3><p>${E(unitSituation(unit))}</p><div class="dd-reto"><b>RETO</b><br>${E(unit.reto)}</div><h3>PRODUCTO</h3><p>${E(unit.product)}</p>${unit.language==='Bilingüe'?'<div class="notice">🌎 La versión final podrá presentar situación, reto y producto en castellano y en la variedad de quechua configurada.</div>':''}`;
-    const matrix=`<p>Esta matriz articula competencia, capacidades, desempeños diferenciados, criterios, evidencia e instrumento. Los criterios se contextualizan al reto y deben ser revisados contra la matriz curricular oficial correspondiente.</p>${ddPurposesHtml(unit)}`;
+    const src=ddOfficialSource(unit.level);
+    const matrix=`<div class="success"><b>Fuente curricular oficial:</b> ${E(src?.title||'MINEDU')} · ${E(src?.modifiedBy||'')}.</div><p>Las competencias y capacidades se toman del núcleo oficial MINEDU. Los criterios, evidencias y actividades son contextualizaciones pedagógicas de DocenteDigital y del docente.</p>${ddPurposesHtml(unit)}`;
     out.innerHTML=`${ddTabs(unit)}${ddSection('dd-resumen','I–II. Datos generales, situación significativa, reto y producto',summary)}${ddSection('dd-propositos','III. Propósitos de aprendizaje',ddPurposesHtml(unit)+ddEnfoquesHtml(unit)+ddTransversalHtml(unit))}${ddSection('dd-matriz','IV. Matriz de articulación y evaluación',matrix)}${ddSection('dd-sesiones','V. Secuencia de sesiones de aprendizaje',`<p class="sub">Distribuida por semanas; en la versión definitiva se cruza con el horario real guardado por el docente.</p>${ddSequenceHtml(unit)}`)}${ddSection('dd-instrumentos','VI. Instrumentos de evaluación',ddInstrumentHtml(unit))}${ddSection('dd-registro','VII. Registro auxiliar',`<p>Registro formativo conectado con los criterios y evidencias de la unidad. Escala: C, B, A y AD.</p>${ddRegisterHtml(unit)}`)}<div class="actions topgap"><button class="btn" onclick="useUnit('${unit.id}')">📝 Crear sesiones</button><button class="btn alt" onclick="downloadUnitWord('${unit.id}')">⬇ Descargar Word completo</button><button class="btn ghost" onclick="shareUnit('${unit.id}')">📤 Compartir</button></div>`;
     out.classList.remove('hidden');ddShowTab('resumen');
   };
@@ -166,7 +198,7 @@
   };
 
   function ddSessionCriterion(session,g){return ddCriterion(session.area,g,session.brief);}
-  function ddSessionPerf(session,g){return ddGradePerformance(session.area,g,session.brief);}
+  function ddSessionCompetence(session){return ddPickOfficialCompetence(session.level,session.area,session.title);}
   function ddSessionProcesses(session){
     if(session.area==='Comunicación')return ['Planificación o comprensión del propósito comunicativo','Textualización / interacción con el texto','Revisión, reflexión y uso social del producto'];
     if(session.area==='Matemática')return ['Comprender el problema','Planificar una estrategia','Ejecutar la estrategia','Verificar, formalizar y socializar'];
@@ -176,14 +208,15 @@
   }
   sessionHtml=function(session,forWord=false){
     const crit=session.grades.map(g=>`<b>${E(g)}:</b> ${E(ddSessionCriterion(session,g))}`).join('<br>');
-    const perf=session.grades.map(g=>`<b>${E(g)}:</b> ${E(ddSessionPerf(session,g))}`).join('<br>');
+    const official=ddSessionCompetence(session);
     const processes=ddSessionProcesses(session);
-    const taskRows=session.grades.map(g=>`<tr><td><b>${E(g)}</b></td><td>${E(ddSessionPerf(session,g))}</td><td>${E(ddSessionCriterion(session,g))}</td></tr>`).join('');
+    const taskRows=session.grades.map(g=>`<tr><td><b>${E(g)}</b></td><td>${E(ddSessionCriterion(session,g))}</td><td>${E(session.evidence)}</td></tr>`).join('');
     const rubricRows=session.grades.map(g=>`<tr><td>${E(g)} – ${E(ddSessionCriterion(session,g))}</td><td>Requiere apoyo para evidenciar el criterio.</td><td>Lo evidencia parcialmente con apoyo.</td><td>Lo evidencia de manera pertinente y autónoma.</td><td>Lo supera, sustenta decisiones y transfiere lo aprendido.</td></tr>`).join('');
-    return `<div class="dd-session-doc"><h1 style="text-align:center">SESIÓN DE APRENDIZAJE MAESTRA</h1><h2 style="text-align:center">“${E(session.title)}”</h2><h2>1. DATOS INFORMATIVOS</h2>${ddTable(`<tr><td><b>Área:</b> ${E(session.area)}</td><td><b>Grados:</b> ${E(session.grades.join(', '))}</td><td><b>Duración:</b> ${E(session.duration)}</td><td><b>Unidad:</b> ${E(session.unitTitle)}</td></tr>`,['','','',''])}<h2>2. PROPÓSITOS DE APRENDIZAJE</h2>${ddTable(`<tr><td>${E(session.competence)}<br><small>${E((competenceMap[session.area]||{}).capacities||'Capacidades pertinentes')}</small></td><td>${perf}</td><td>${crit}</td><td>${E(session.evidence)}</td><td>${E(session.instrument)}</td></tr>`,['Competencias / Capacidades','Desempeños precisados','Criterios desagregados','Evidencia','Instrumento'])}<h3>Propósito para los estudiantes</h3><p>${E(session.purpose)}</p><h2>3. ENFOQUES TRANSVERSALES</h2>${ddEnfoquesHtml(ddEnrich(state.units.find(u=>u.id===session.unitId)||{enfoques:[],transversals:[],areas:[],grades:[]}))}<h2>4. COMPETENCIAS TRANSVERSALES</h2>${ddTransversalHtml(ddEnrich(state.units.find(u=>u.id===session.unitId)||{enfoques:[],transversals:[],areas:[],grades:[]}))}<h2>5. PREPARACIÓN DE LA SESIÓN</h2>${ddTable(`<tr><td>Preparar la situación de problematización, fichas diferenciadas, instrumento de evaluación y materiales por grado. Prever alternancia de atención directa e indirecta cuando corresponda.</td><td>${E(session.resources)}; materiales concretos; papelotes; plumones; fichas A4; recurso visual o proyector si está disponible.</td></tr>`,['¿Qué hacer antes?','Recursos y materiales'])}<h2>6. MOMENTOS DE LA SESIÓN</h2>${ddTable(`<tr><td><b>INICIO</b><br>(Involucramiento, bienestar y desafío)</td><td>• Acogida y motivación socioemocional vinculada al contexto.<br>• Acuerdos de convivencia y señal de autorregulación.<br>• Recuperación de saberes previos mediante preguntas abiertas.<br>• Criterios en lenguaje del estudiante: ${crit}<br>• <b>Conflicto cognitivo / reto:</b> ${E(session.challenge)}<br>• Propósito y utilidad de lo que aprenderán.</td><td>${session.times.start} min</td></tr><tr><td><b>DESARROLLO</b><br>(Pensamiento crítico y mediación)</td><td>${processes.map((p,i)=>`<b>PROCESO ${i+1} – ${E(p).toUpperCase()}</b><br>Se desarrolla el proceso con preguntas de alta demanda cognitiva, uso de evidencias, producción o resolución y retroalimentación por descubrimiento.<br><br>`).join('')}<b>Atención diferenciada y simultánea:</b>${ddTable(taskRows,['Grado','Desempeño / tarea diferenciada','Criterio'])}<br><b>Acompañamiento:</b> el docente monitorea activamente, recoge evidencias y formula repreguntas: <b>¿por qué?, ¿qué evidencia tienes?, ¿cómo lo comprobarías?, ¿qué cambiarías para mejorar?</b></td><td>${session.times.dev} min</td></tr><tr><td><b>CIERRE</b><br>(Metacognición y regulación positiva)</td><td>• Socialización de producciones y evidencias.<br>• Metacognición: ¿qué aprendí?, ¿cómo lo hice?, ¿qué estrategia me ayudó?, ¿para qué me sirve?<br>• Retroalimentación breve vinculada al criterio.<br>• Compromiso o transferencia a una nueva situación del contexto.</td><td>${session.times.close} min</td></tr>`,['MOMENTOS','ESTRATEGIAS / ACTIVIDADES','TIEMPO'])}<h2>7. INSTRUMENTO DE EVALUACIÓN</h2>${ddTable(rubricRows,['Criterio por grado','C – Inicio','B – Proceso','A – Logrado','AD – Destacado'])}<h2>8. FORMALIZACIÓN PARA PIZARRA</h2><div class="dd-reto">Idea clave, procedimiento o conclusión construida con los estudiantes a partir de sus producciones. Debe ser breve, clara y adecuada al área y grado.</div><h2>9. MATERIALES / ANEXOS</h2><p>Fichas diferenciadas por grado, recurso de problematización, banco de palabras o material concreto según el área, y versión imprimible A4.</p>${forWord?'<p><i>Propuesta editable. Revisar y contextualizar antes de aplicar.</i></p>':''}</div>`;
+    const src=ddOfficialSource(session.level);
+    return `<div class="dd-session-doc"><h1 style="text-align:center">SESIÓN DE APRENDIZAJE MAESTRA</h1><h2 style="text-align:center">“${E(session.title)}”</h2><div class="success"><b>Fuente curricular:</b> ${E(src?.title||'MINEDU')} · ${E(src?.modifiedBy||'')}</div><h2>1. DATOS INFORMATIVOS</h2>${ddTable(`<tr><td><b>Área:</b> ${E(session.area)}</td><td><b>Grados:</b> ${E(session.grades.join(', '))}</td><td><b>Duración:</b> ${E(session.duration)}</td><td><b>Unidad:</b> ${E(session.unitTitle)}</td></tr>`,['','','',''])}<h2>2. PROPÓSITOS DE APRENDIZAJE</h2>${ddTable(`<tr><td><b>${E(official?.name||session.competence)}</b><br><small><b>Capacidades MINEDU:</b> ${(official?.capacities||[]).map(E).join('; ')}</small></td><td>${crit}</td><td>${E(session.evidence)}</td><td>${E(session.instrument)}</td></tr>`,['Competencia y capacidades MINEDU','Criterios contextualizados','Evidencia','Instrumento'])}<h3>Propósito para los estudiantes</h3><p>${E(session.purpose)}</p><h2>3. ENFOQUES TRANSVERSALES</h2>${ddEnfoquesHtml(ddEnrich(state.units.find(u=>u.id===session.unitId)||{enfoques:[],transversals:[],areas:[],grades:[]}))}<h2>4. COMPETENCIAS TRANSVERSALES</h2>${ddTransversalHtml(ddEnrich(state.units.find(u=>u.id===session.unitId)||{enfoques:[],transversals:[],areas:[],grades:[]}))}<h2>5. PREPARACIÓN DE LA SESIÓN</h2>${ddTable(`<tr><td>Preparar la situación de problematización, fichas diferenciadas, instrumento de evaluación y materiales por grado. Prever alternancia de atención directa e indirecta cuando corresponda.</td><td>${E(session.resources)}; materiales concretos; papelotes; plumones; fichas A4; recurso visual o proyector si está disponible.</td></tr>`,['¿Qué hacer antes?','Recursos y materiales'])}<h2>6. MOMENTOS DE LA SESIÓN</h2>${ddTable(`<tr><td><b>INICIO</b><br>(Involucramiento, bienestar y desafío)</td><td>• Acogida y motivación socioemocional vinculada al contexto.<br>• Acuerdos de convivencia y señal de autorregulación.<br>• Recuperación de saberes previos mediante preguntas abiertas.<br>• Criterios en lenguaje del estudiante: ${crit}<br>• <b>Conflicto cognitivo / reto:</b> ${E(session.challenge)}<br>• Propósito y utilidad de lo que aprenderán.</td><td>${session.times.start} min</td></tr><tr><td><b>DESARROLLO</b><br>(Pensamiento crítico y mediación)</td><td>${processes.map((p,i)=>`<b>PROCESO ${i+1} – ${E(p).toUpperCase()}</b><br>Se desarrolla el proceso con preguntas de alta demanda cognitiva, uso de evidencias, producción o resolución y retroalimentación por descubrimiento.<br><br>`).join('')}<b>Atención diferenciada y simultánea:</b>${ddTable(taskRows,['Grado','Criterio contextualizado','Evidencia a recoger'])}<br><b>Acompañamiento:</b> el docente monitorea activamente, recoge evidencias y formula repreguntas: <b>¿por qué?, ¿qué evidencia tienes?, ¿cómo lo comprobarías?, ¿qué cambiarías para mejorar?</b></td><td>${session.times.dev} min</td></tr><tr><td><b>CIERRE</b><br>(Metacognición y regulación positiva)</td><td>• Socialización de producciones y evidencias.<br>• Metacognición: ¿qué aprendí?, ¿cómo lo hice?, ¿qué estrategia me ayudó?, ¿para qué me sirve?<br>• Retroalimentación breve vinculada al criterio.<br>• Compromiso o transferencia a una nueva situación del contexto.</td><td>${session.times.close} min</td></tr>`,['MOMENTOS','ESTRATEGIAS / ACTIVIDADES','TIEMPO'])}<h2>7. INSTRUMENTO DE EVALUACIÓN</h2>${ddTable(rubricRows,['Criterio por grado','C – Inicio','B – Proceso','A – Logrado','AD – Destacado'])}<h2>8. FORMALIZACIÓN PARA PIZARRA</h2><div class="dd-reto">Idea clave, procedimiento o conclusión construida con los estudiantes a partir de sus producciones. Debe ser breve, clara y adecuada al área y grado.</div><h2>9. MATERIALES / ANEXOS</h2><p>Fichas diferenciadas por grado, recurso de problematización, banco de palabras o material concreto según el área, y versión imprimible A4.</p>${forWord?'<p><i>Propuesta editable. Revisar y contextualizar antes de aplicar.</i></p>':''}</div>`;
   };
 
-  const css=`.dd-tabs{display:flex;gap:8px;overflow:auto;padding:4px 0 12px;position:sticky;top:68px;background:var(--bg,#f7f8fb);z-index:3}.dd-tabs button{border:1px solid #d7dfdb;background:#fff;border-radius:999px;padding:9px 14px;font-weight:700;white-space:nowrap;cursor:pointer}.dd-tabs button.active{background:#1f6f55;color:#fff}.dd-unit-section{background:#fff;border:1px solid #dde5e1;border-radius:18px;padding:20px;margin:8px 0}.dd-hidden{display:none!important}.dd-cover{display:flex;justify-content:space-between;gap:20px;align-items:center;border:1px dashed #8aa89a;padding:18px;border-radius:16px;background:linear-gradient(135deg,#fbfffc,#eef7f1)}.dd-cover-icon{font-size:48px}.dd-info{padding:12px;background:#eef7f1;border-radius:10px;margin:14px 0}.dd-reto{padding:14px;border-left:5px solid #2e7d5b;background:#f0f8f3;border-radius:8px;margin:12px 0}.dd-scroll{overflow:auto;margin:12px 0}.dd-table{width:100%;border-collapse:collapse;min-width:760px;font-size:14px}.dd-table th{background:#2e7656;color:white;text-align:left;padding:9px;border:1px solid #466c5a}.dd-table td{padding:9px;vertical-align:top;border:1px solid #9aa9a0;background:#fff}.dd-table tr:nth-child(even) td{background:#fafcfb}.dd-center{text-align:center}.dd-session-doc h2,.dd-unit-section h2{color:#265f49}.dd-session-doc h3{color:#3d6b58}@media(max-width:720px){.dd-tabs{top:56px}.dd-unit-section{padding:13px}.dd-cover{align-items:flex-start}.dd-cover-icon{font-size:34px}.dd-table{font-size:12px}.dd-session-doc h1{font-size:20px}.dd-session-doc h2{font-size:17px}}`;
+  const css=`.dd-tabs{display:flex;gap:8px;overflow:auto;padding:4px 0 12px;position:sticky;top:68px;background:var(--bg,#f7f8fb);z-index:3}.dd-tabs button{border:1px solid #d7dfdb;background:#fff;border-radius:999px;padding:9px 14px;font-weight:700;white-space:nowrap;cursor:pointer}.dd-tabs button.active{background:#1f6f55;color:#fff}.dd-unit-section{background:#fff;border:1px solid #dde5e1;border-radius:18px;padding:20px;margin:8px 0}.dd-hidden{display:none!important}.dd-cover{display:flex;justify-content:space-between;gap:20px;align-items:center;border:1px dashed #8aa89a;padding:18px;border-radius:16px;background:linear-gradient(135deg,#fbfffc,#eef7f1)}.dd-cover-icon{font-size:48px}.dd-info{padding:12px;background:#eef7f1;border-radius:10px;margin:14px 0}.dd-reto{padding:14px;border-left:5px solid #2e7d5b;background:#f0f8f3;border-radius:8px;margin:12px 0}.dd-scroll{overflow:auto;margin:12px 0}.dd-table{width:100%;border-collapse:collapse;min-width:760px;font-size:14px}.dd-table th{background:#2e7656;color:white;text-align:left;padding:9px;border:1px solid #466c5a}.dd-table td{padding:9px;vertical-align:top;border:1px solid #9aa9a0;background:#fff}.dd-table tr:nth-child(even) td{background:#fafcfb}.dd-center{text-align:center}.dd-official-competency{margin:3px 0}.dd-session-doc h2,.dd-unit-section h2{color:#265f49}.dd-session-doc h3{color:#3d6b58}@media(max-width:720px){.dd-tabs{top:56px}.dd-unit-section{padding:13px}.dd-cover{align-items:flex-start}.dd-cover-icon{font-size:34px}.dd-table{font-size:12px}.dd-session-doc h1{font-size:20px}.dd-session-doc h2{font-size:17px}}`;
   const st=document.createElement('style');st.textContent=css;document.head.appendChild(st);
   state.units=state.units.map(ddEnrich);save();renderUnits();fillSessionUnits();
 })();
