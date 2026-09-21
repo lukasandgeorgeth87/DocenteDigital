@@ -129,6 +129,7 @@
   function downloadCurrent(){
     saveCurrent();
     const item=state.lastDirectorDoc;if(!item)return;
+    if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml(item.type,item.html,false,item.type+'_'+item.title);
     downloadBlob(wordBlob(item.type,item.html),cleanFileName(item.type+'_'+item.title)+'.doc');
   }
 
@@ -169,7 +170,7 @@
     state.directorDocs.unshift(item);state.directorDocs=state.directorDocs.slice(0,40);state.lastDirectorDoc=item;save();
     const box=$('ddPlanResult');box.innerHTML=`<div class="dd-editable-material" contenteditable="true" spellcheck="true">${html}</div><div class="actions topgap"><button class="btn" id="ddPlanSave">💾 Guardar</button><button class="btn alt" id="ddPlanWord">⬇ Word</button><button class="btn alt" id="ddPlanPrint">🖨 Imprimir / PDF</button></div>`;
     $('ddPlanSave').onclick=()=>{const ed=box.querySelector('.dd-editable-material');item.html=ed.innerHTML;const i=state.directorDocs.findIndex(x=>x.id===item.id);if(i>=0)state.directorDocs[i]=item;save();};
-    $('ddPlanWord').onclick=()=>{const ed=box.querySelector('.dd-editable-material');item.html=ed.innerHTML;downloadBlob(wordBlob(item.title,item.html),cleanFileName(item.title)+'.doc');};
+    $('ddPlanWord').onclick=()=>{const ed=box.querySelector('.dd-editable-material');item.html=ed.innerHTML;if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml(item.title,item.html,false,item.title);downloadBlob(wordBlob(item.title,item.html),cleanFileName(item.title)+'.doc');};
     $('ddPlanPrint').onclick=()=>window.print();
   }
 
