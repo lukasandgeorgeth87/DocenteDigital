@@ -16,7 +16,7 @@
       authority:'Ministerio de Educación del Perú',
       approvedBy:'RM N.° 281-2016-MINEDU',
       modifiedBy:'RM N.° 159-2017-MINEDU',
-      officialUrl:'https://minedu.gob.pe/curriculo/pdf/curriculo-nacional-2017.pdf',
+      officialUrl:'https://www.minedu.gob.pe/curriculo/pdf/curriculo-nacional-de-la-educacion-basica.pdf',
       portalUrl:'https://minedu.gob.pe/curriculo/'
     },
     Inicial:{
