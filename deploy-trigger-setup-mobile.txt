@@ -1,1 +1,2 @@
 Trigger preview deployment for mobile-safe single-page setup.
+Direct handler redeploy.
