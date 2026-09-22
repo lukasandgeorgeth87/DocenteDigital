@@ -29,6 +29,15 @@ body.dd-setup-mode .chatbar{display:none!important}
 .dd-native-group label{display:flex;align-items:center;gap:10px;min-height:46px;padding:7px 8px;border-radius:10px;font-weight:750}
 .dd-native-group input[type="checkbox"]{width:24px;height:24px;accent-color:#0f766e;flex:0 0 auto}
 .dd-native-group.dd-native-hidden{display:none}
+
+.dd-radio-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.dd-radio-cards label{display:block;cursor:pointer}
+.dd-radio-cards input{position:absolute;opacity:0;pointer-events:none}
+.dd-radio-cards span{display:flex;align-items:center;justify-content:center;min-height:56px;padding:10px 12px;border:2px solid #d8e3e8;border-radius:16px;background:#fff;font-weight:900;color:#29465f;text-align:center}
+.dd-radio-cards input:checked+span{border-color:#14846a;background:#daf4e9;color:#0d624e;box-shadow:0 0 0 2px rgba(20,132,106,.08)}
+.dd-native-group label{cursor:pointer}
+.dd-native-group input[type="checkbox"]{pointer-events:auto!important}
+@media(max-width:650px){.dd-radio-cards{grid-template-columns:1fr 1fr}.dd-radio-cards label:last-child:nth-child(odd){grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -51,105 +60,100 @@ body.dd-setup-mode .chatbar{display:none!important}
       <form id="ddSetupNativeForm" class="card" novalidate>
         <div class="steps"><span class="step active">1. Nivel</span><span class="step active">2. Tipo de IE</span><span class="step active">3. Grados/edades</span><span class="step active">4. Áreas</span></div>
 
-        <div class="dd-setup-block">
+        <div class="dd-setup-block" id="ddStepLevel">
           <h1>1. Nivel educativo</h1>
-          <p class="sub">Selecciona el nivel. Este control es nativo del teléfono para evitar bloqueos al tocar.</p>
-          <label class="dd-native-label">Nivel
-            <select id="ddNativeLevel" required>
-              <option value="">Selecciona</option>
-              <option value="Inicial">🧸 Inicial</option>
-              <option value="Primaria">📚 Primaria</option>
-              <option value="Secundaria">🎓 Secundaria</option>
-            </select>
-          </label>
+          <p class="sub">Toca una opción.</p>
+          <div class="dd-radio-cards">
+            <label><input type="radio" name="ddLevel" value="Inicial"><span>🧸 Inicial</span></label>
+            <label><input type="radio" name="ddLevel" value="Primaria"><span>📚 Primaria</span></label>
+            <label><input type="radio" name="ddLevel" value="Secundaria"><span>🎓 Secundaria</span></label>
+          </div>
         </div>
 
-        <div class="dd-setup-block">
+        <div class="dd-setup-block" id="ddStepIE">
           <h1>2. Tipo de IE</h1>
-          <label class="dd-native-label">Tipo de institución
-            <select id="ddNativeIE" required>
-              <option value="">Selecciona</option>
-              <option value="Unidocente">👩‍🏫 Unidocente</option>
-              <option value="Multigrado">👥 Multigrado</option>
-              <option value="Polidocente">🏫 Polidocente</option>
-            </select>
-          </label>
+          <p class="sub">Toca la forma de organización de tu institución.</p>
+          <div class="dd-radio-cards">
+            <label><input type="radio" name="ddIE" value="Unidocente"><span>👩‍🏫 Unidocente</span></label>
+            <label><input type="radio" name="ddIE" value="Multigrado"><span>👥 Multigrado</span></label>
+            <label><input type="radio" name="ddIE" value="Polidocente"><span>🏫 Polidocente</span></label>
+          </div>
         </div>
 
-        <div class="dd-setup-block">
+        <div class="dd-setup-block" id="ddStepGrades">
           <h1>3. Grados o edades</h1>
-          <p class="sub">Marca uno o varios según corresponda. DocenteDigital usará solo el grupo del nivel seleccionado.</p>
+          <p class="sub">Toca uno o varios. Solo se guardarán los que correspondan al nivel elegido.</p>
 
           <fieldset class="dd-native-group" data-dd-grade-group="Inicial">
             <legend>Inicial</legend>
-            <label><input type="checkbox" value="3 años"> 3 años</label>
-            <label><input type="checkbox" value="4 años"> 4 años</label>
-            <label><input type="checkbox" value="5 años"> 5 años</label>
+            <label><input type="checkbox" value="3 años"> <span>3 años</span></label>
+            <label><input type="checkbox" value="4 años"> <span>4 años</span></label>
+            <label><input type="checkbox" value="5 años"> <span>5 años</span></label>
           </fieldset>
 
           <fieldset class="dd-native-group" data-dd-grade-group="Primaria">
             <legend>Primaria</legend>
-            <label><input type="checkbox" value="1.º"> 1.º</label>
-            <label><input type="checkbox" value="2.º"> 2.º</label>
-            <label><input type="checkbox" value="3.º"> 3.º</label>
-            <label><input type="checkbox" value="4.º"> 4.º</label>
-            <label><input type="checkbox" value="5.º"> 5.º</label>
-            <label><input type="checkbox" value="6.º"> 6.º</label>
+            <label><input type="checkbox" value="1.º"> <span>1.º</span></label>
+            <label><input type="checkbox" value="2.º"> <span>2.º</span></label>
+            <label><input type="checkbox" value="3.º"> <span>3.º</span></label>
+            <label><input type="checkbox" value="4.º"> <span>4.º</span></label>
+            <label><input type="checkbox" value="5.º"> <span>5.º</span></label>
+            <label><input type="checkbox" value="6.º"> <span>6.º</span></label>
           </fieldset>
 
           <fieldset class="dd-native-group" data-dd-grade-group="Secundaria">
             <legend>Secundaria</legend>
-            <label><input type="checkbox" value="1.º"> 1.º</label>
-            <label><input type="checkbox" value="2.º"> 2.º</label>
-            <label><input type="checkbox" value="3.º"> 3.º</label>
-            <label><input type="checkbox" value="4.º"> 4.º</label>
-            <label><input type="checkbox" value="5.º"> 5.º</label>
+            <label><input type="checkbox" value="1.º"> <span>1.º</span></label>
+            <label><input type="checkbox" value="2.º"> <span>2.º</span></label>
+            <label><input type="checkbox" value="3.º"> <span>3.º</span></label>
+            <label><input type="checkbox" value="4.º"> <span>4.º</span></label>
+            <label><input type="checkbox" value="5.º"> <span>5.º</span></label>
           </fieldset>
         </div>
 
-        <div class="dd-setup-block">
+        <div class="dd-setup-block" id="ddStepAreas">
           <h1>4. Áreas</h1>
-          <p class="sub">Marca las áreas con las que trabajarás. En Secundaria podrás cambiar después el área principal de cada planificación.</p>
+          <p class="sub">Marca las áreas con las que trabajarás.</p>
 
           <fieldset class="dd-native-group" data-dd-area-group="Inicial">
             <legend>Áreas de Inicial</legend>
-            <label><input type="checkbox" value="Comunicación"> Comunicación</label>
-            <label><input type="checkbox" value="Matemática"> Matemática</label>
-            <label><input type="checkbox" value="Personal Social"> Personal Social</label>
-            <label><input type="checkbox" value="Ciencia y Tecnología"> Ciencia y Tecnología</label>
-            <label><input type="checkbox" value="Psicomotriz"> Psicomotriz</label>
-            <label><input type="checkbox" value="Arte y Cultura"> Arte y Cultura</label>
+            <label><input type="checkbox" value="Comunicación"> <span>Comunicación</span></label>
+            <label><input type="checkbox" value="Matemática"> <span>Matemática</span></label>
+            <label><input type="checkbox" value="Personal Social"> <span>Personal Social</span></label>
+            <label><input type="checkbox" value="Ciencia y Tecnología"> <span>Ciencia y Tecnología</span></label>
+            <label><input type="checkbox" value="Psicomotriz"> <span>Psicomotriz</span></label>
+            <label><input type="checkbox" value="Arte y Cultura"> <span>Arte y Cultura</span></label>
           </fieldset>
 
           <fieldset class="dd-native-group" data-dd-area-group="Primaria">
             <legend>Áreas de Primaria</legend>
-            <label><input type="checkbox" value="Comunicación"> Comunicación</label>
-            <label><input type="checkbox" value="Matemática"> Matemática</label>
-            <label><input type="checkbox" value="Personal Social"> Personal Social</label>
-            <label><input type="checkbox" value="Ciencia y Tecnología"> Ciencia y Tecnología</label>
-            <label><input type="checkbox" value="Arte y Cultura"> Arte y Cultura</label>
-            <label><input type="checkbox" value="Educación Física"> Educación Física</label>
-            <label><input type="checkbox" value="Educación Religiosa"> Educación Religiosa</label>
+            <label><input type="checkbox" value="Comunicación"> <span>Comunicación</span></label>
+            <label><input type="checkbox" value="Matemática"> <span>Matemática</span></label>
+            <label><input type="checkbox" value="Personal Social"> <span>Personal Social</span></label>
+            <label><input type="checkbox" value="Ciencia y Tecnología"> <span>Ciencia y Tecnología</span></label>
+            <label><input type="checkbox" value="Arte y Cultura"> <span>Arte y Cultura</span></label>
+            <label><input type="checkbox" value="Educación Física"> <span>Educación Física</span></label>
+            <label><input type="checkbox" value="Educación Religiosa"> <span>Educación Religiosa</span></label>
           </fieldset>
 
           <fieldset class="dd-native-group" data-dd-area-group="Secundaria">
             <legend>Áreas de Secundaria</legend>
-            <label><input type="checkbox" value="Comunicación"> Comunicación</label>
-            <label><input type="checkbox" value="Matemática"> Matemática</label>
-            <label><input type="checkbox" value="Ciencia y Tecnología"> Ciencia y Tecnología</label>
-            <label><input type="checkbox" value="Ciencias Sociales"> Ciencias Sociales</label>
-            <label><input type="checkbox" value="DPCC"> DPCC</label>
-            <label><input type="checkbox" value="Inglés"> Inglés</label>
-            <label><input type="checkbox" value="Educación Física"> Educación Física</label>
-            <label><input type="checkbox" value="Arte y Cultura"> Arte y Cultura</label>
-            <label><input type="checkbox" value="Educación Religiosa"> Educación Religiosa</label>
-            <label><input type="checkbox" value="EPT"> EPT</label>
+            <label><input type="checkbox" value="Comunicación"> <span>Comunicación</span></label>
+            <label><input type="checkbox" value="Matemática"> <span>Matemática</span></label>
+            <label><input type="checkbox" value="Ciencia y Tecnología"> <span>Ciencia y Tecnología</span></label>
+            <label><input type="checkbox" value="Ciencias Sociales"> <span>Ciencias Sociales</span></label>
+            <label><input type="checkbox" value="DPCC"> <span>DPCC</span></label>
+            <label><input type="checkbox" value="Inglés"> <span>Inglés</span></label>
+            <label><input type="checkbox" value="Educación Física"> <span>Educación Física</span></label>
+            <label><input type="checkbox" value="Arte y Cultura"> <span>Arte y Cultura</span></label>
+            <label><input type="checkbox" value="Educación Religiosa"> <span>Educación Religiosa</span></label>
+            <label><input type="checkbox" value="EPT"> <span>EPT</span></label>
           </fieldset>
 
           <div class="card inner">
-            <h3>🌎 Perfil lingüístico de la IE</h3>
+            <h3>🌎 Perfil lingüístico</h3>
             <div class="form2">
-              <label>Tipo de atención lingüística
+              <label>Atención lingüística
                 <select id="linguisticMode" required>
                   <option value="">Selecciona una opción</option>
                   <option value="EIB">Educación Intercultural Bilingüe (EIB)</option>
@@ -167,13 +171,10 @@ body.dd-setup-mode .chatbar{display:none!important}
                 <select id="quechuaVar"><option value="Ninguna">Ninguna</option></select>
               </label>
             </div>
-            <small>En EIB, la lengua o variedad pertinente debe confirmarse. No se asigna automáticamente por ubicación.</small>
           </div>
 
           <div id="ddNativeSetupMessage" class="notice hidden"></div>
-          <div class="actions topgap">
-            <button class="btn block" type="submit">Guardar configuración y entrar →</button>
-          </div>
+          <div class="actions topgap"><button class="btn block" type="submit">Guardar configuración y entrar →</button></div>
         </div>
       </form>
     </section>
