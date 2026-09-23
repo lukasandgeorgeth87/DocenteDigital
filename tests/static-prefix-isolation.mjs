@@ -30,5 +30,8 @@ async function probe(count,excluding=[]){
  await timed(context.close(),1200);
 }
 try{
- for(const n of [3,5,7,9,12,16,18,22,26,28,31])await probe(n,['schedule-prompt-v6.js','initial-curriculum-guard-v72.js']);
+ for(const n of [26,28,29,30,31])await probe(n,['schedule-prompt-v6.js','initial-curriculum-guard-v72.js']);
+ await probe(31,['schedule-prompt-v6.js','initial-curriculum-guard-v72.js','product-audit-runtime-v1.js']);
+ await probe(31,['schedule-prompt-v6.js','initial-curriculum-guard-v72.js','setup-native-v2.js']);
+ await probe(31,['schedule-prompt-v6.js','initial-curriculum-guard-v72.js','initial-surface-guard-v1.js']);
 }finally{await timed(browser.close(),2000);}
