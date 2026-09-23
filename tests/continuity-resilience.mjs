@@ -121,7 +121,9 @@ try{
 
   console.log('CONTINUITY 4/5 Restablecer estado válido para prueba sin red');
   await page.evaluate(data=>localStorage.setItem('docenteDigitalPrototype',JSON.stringify(data)),seeded);
-  await page.reload({waitUntil:'networkidle'});
+  // La recuperación de una configuración corrupta ahora dirige al asistente
+  // independiente: volver a la raíz después de restaurar un perfil válido.
+  await page.goto(baseUrl,{waitUntil:'networkidle'});
   await waitPlanningRuntime();
   await page.waitForFunction(()=>typeof window.ddDocxSelfTest==='function',null,{timeout:10000});
   const beforePlan=await page.evaluate(()=>({
