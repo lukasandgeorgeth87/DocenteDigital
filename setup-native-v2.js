@@ -15,8 +15,56 @@
 
   function showGroups(){
     const level=checkedValue('ddLevel');
-    document.querySelectorAll('[data-dd-grade-group]').forEach(g=>g.classList.toggle('dd-native-hidden',Boolean(level)&&g.dataset.ddGradeGroup!==level));
-    document.querySelectorAll('[data-dd-area-group]').forEach(g=>g.classList.toggle('dd-native-hidden',Boolean(level)&&g.dataset.ddAreaGroup!==level));
+    document.querySelectorAll('[data-dd-grade-group]').forEach(g=>g.classList.toggle('dd-native-hidden',g.dataset.ddGradeGroup!==level));
+    document.querySelectorAll('[data-dd-area-group]').forEach(g=>g.classList.toggle('dd-native-hidden',g.dataset.ddAreaGroup!==level));
+    updateLanguageOptions();
+    const status=$('ddNativeSelectionStatus');
+    if(status){
+      const ie=checkedValue('ddIE');
+      const grades=selectedItems('grade',level);
+      const areas=selectedItems('area',level);
+      status.textContent=level
+        ? '✓ '+level+(ie?' · '+ie:'')+(grades.length?' · '+grades.join(', '):'')+(areas.length?' · '+areas.join(', '):'')
+        : 'Empieza seleccionando un nivel.';
+    }
+  }
+
+  function selectedItems(type,level){
+    const group=[...document.querySelectorAll('[data-dd-'+type+'-group]')]
+      .find(g=>g.dataset[type==='grade'?'ddGradeGroup':'ddAreaGroup']===level);
+    return group?[...group.querySelectorAll('input[type=checkbox]:checked')].map(x=>x.value):[];
+  }
+
+  function updateLanguageOptions(){
+    const level=checkedValue('ddLevel'),mode=$('linguisticMode')?.value||'';
+    const origin=$('quechuaVar');if(!origin)return;
+    const chosen=origin.value||'Ninguna';
+    if(mode==='EIB'){
+      const opts=window.ddLinguisticLanguages||[
+        'Quechua Cusco-Collao (Cusco)','Quechua Chanka','Quechua Central',
+        'Aimara','Asháninka','Awajún','Shipibo-Konibo','Otra lengua originaria'
+      ];
+      if(origin.options.length<2){
+        origin.replaceChildren(new Option('Selecciona y confirma tu lengua/variedad','Ninguna'),
+          ...opts.map(s=>new Option(s,s)));
+      }
+      origin.disabled=false;
+    }else{
+      origin.replaceChildren(new Option('Ninguna','Ninguna'));
+      origin.disabled=true;
+    }
+    if([...origin.options].some(x=>x.value===chosen))origin.value=chosen;
+    const csl=document.querySelector('[data-dd-initial-csl]');
+    if(csl)csl.hidden=!(level==='Inicial'&&mode==='EIB'&&$('language')?.value==='Lengua originaria'&&selectedItems('grade',level).includes('5 años'));
+  }
+
+  function persistSelections(){
+    const s=state(),level=checkedValue('ddLevel'),ie=checkedValue('ddIE');
+    if(!level)return;
+    s.level=level;s.ieType=ie;
+    s.grades=selectedItems('grade',level);
+    s.areas=selectedItems('area',level);
+    showGroups();saveSafe();
   }
 
   function syncFromState(){
@@ -63,14 +111,19 @@
     if(!level)return message('Selecciona el nivel educativo.');
     if(!ie)return message('Selecciona el tipo de IE.');
 
-    const grades=collect('[data-dd-grade-group="'+CSS.escape(level)+'"]');
-    const areas=collect('[data-dd-area-group="'+CSS.escape(level)+'"]');
+    const grades=selectedItems('grade',level);
+    const areas=selectedItems('area',level);
     if(!grades.length)return message('Selecciona al menos un grado o edad.');
+    if(ie==='Polidocente'&&grades.length>1)return message('En una planificación polidocente selecciona un solo grado o edad.');
     if(!areas.length)return message('Selecciona al menos un área.');
+    if(level==='Secundaria'&&areas.length>1)return message('En Secundaria selecciona un área principal para esta planificación.');
 
     const mode=$('linguisticMode')?.value||'';
     if(!mode)return message('Selecciona el tipo de atención lingüística.');
-
+    const selectedOrigin=$('quechuaVar')?.value||'Ninguna';
+    if(mode==='EIB'&&(!selectedOrigin||selectedOrigin==='Ninguna')){
+      return message('En EIB selecciona y confirma la lengua originaria/variedad antes de entrar.');
+    }
     const s=state();
     s.level=level;
     s.ieType=ie;
@@ -78,7 +131,10 @@
     s.areas=areas;
     s.linguisticMode=mode;
     s.language=$('language')?.value||'Castellano';
-    s.quechuaVar=$('quechuaVar')?.value||'Ninguna';
+    s.quechuaVar=mode==='EIB'?selectedOrigin:'Ninguna';
+    s.indigenousLanguage=s.quechuaVar;
+    s.linguisticSelectionConfirmed=mode==='EIB';
+    if(mode!=='EIB')s.language='Castellano';
     saveSafe();
 
     document.body.classList.remove('dd-setup-mode');
@@ -93,30 +149,50 @@
   function mount(){
     const form=$('ddSetupNativeForm');if(!form)return;
     document.body.classList.add('dd-setup-mode');
+    if(form.dataset.ddNativeMounted==='1')return;
+    form.dataset.ddNativeMounted='1';
     form.addEventListener('submit',submit);
-
     document.querySelectorAll('input[name="ddLevel"]').forEach(r=>r.addEventListener('change',()=>{
       const s=state();s.level=checkedValue('ddLevel');s.grades=[];s.areas=[];
-      document.querySelectorAll('[data-dd-grade-group] input[type="checkbox"],[data-dd-area-group] input[type="checkbox"]').forEach(cb=>cb.checked=false);
-      showGroups();saveSafe();
-      setTimeout(()=>document.getElementById('ddStepIE')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
+      document.querySelectorAll('[data-dd-grade-group] input[type=checkbox],[data-dd-area-group] input[type=checkbox]')
+        .forEach(cb=>cb.checked=false);
+      persistSelections();
+      setTimeout(()=>document.getElementById('ddStepIE')?.scrollIntoView({behavior:'smooth',block:'start'}),100);
     }));
-
     document.querySelectorAll('input[name="ddIE"]').forEach(r=>r.addEventListener('change',()=>{
-      const s=state();s.ieType=checkedValue('ddIE');saveSafe();
-      setTimeout(()=>document.getElementById('ddStepGrades')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
+      const s=state();s.ieType=checkedValue('ddIE');s.grades=[];
+      document.querySelectorAll('[data-dd-grade-group] input[type=checkbox]').forEach(cb=>cb.checked=false);
+      persistSelections();
+      setTimeout(()=>document.getElementById('ddStepGrades')?.scrollIntoView({behavior:'smooth',block:'start'}),100);
     }));
-
-    document.querySelectorAll('[data-dd-grade-group] input[type="checkbox"]').forEach(cb=>cb.addEventListener('change',()=>{
-      saveSafe();
-      const level=checkedValue('ddLevel');
-      if(level){
-        const any=document.querySelector('[data-dd-grade-group="'+CSS.escape(level)+'"] input[type="checkbox"]:checked');
-        if(any)setTimeout(()=>document.getElementById('ddStepAreas')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
+    document.querySelectorAll('[data-dd-grade-group] input[type=checkbox]').forEach(cb=>cb.addEventListener('change',()=>{
+      if(checkedValue('ddIE')==='Polidocente'&&cb.checked){
+        cb.closest('fieldset')?.querySelectorAll('input[type=checkbox]').forEach(other=>{if(other!==cb)other.checked=false;});
       }
+      persistSelections();
     }));
-
-    syncFromState();
+    document.querySelectorAll('[data-dd-area-group] input[type=checkbox]').forEach(cb=>cb.addEventListener('change',()=>{
+      if(checkedValue('ddLevel')==='Secundaria'&&cb.checked){
+        cb.closest('fieldset')?.querySelectorAll('input[type=checkbox]').forEach(other=>{if(other!==cb)other.checked=false;});
+      }
+      persistSelections();
+    }));
+    $('linguisticMode')?.addEventListener('change',()=>{
+      const s=state();s.linguisticMode=$('linguisticMode').value;
+      s.linguisticSelectionConfirmed=false;s.indigenousLanguage='Ninguna';s.quechuaVar='Ninguna';
+      if(s.linguisticMode!=='EIB')s.language='Castellano';
+      updateLanguageOptions();saveSafe();
+    });
+    $('language')?.addEventListener('change',()=>{updateLanguageOptions();saveSafe();});
+    $('quechuaVar')?.addEventListener('change',()=>{
+      const s=state();
+      if($('linguisticMode')?.value==='EIB'){
+        s.indigenousLanguage=$('quechuaVar').value;s.quechuaVar=s.indigenousLanguage;
+        s.linguisticSelectionConfirmed=s.indigenousLanguage!=='Ninguna';
+      }
+      saveSafe();
+    });
+    syncFromState();updateLanguageOptions();
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
