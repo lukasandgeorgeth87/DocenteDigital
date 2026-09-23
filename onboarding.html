@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Configurar DocenteDigital</title>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f1f7fb;color:#172f40;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px}
+header{position:sticky;top:0;z-index:3;background:white;padding:12px 18px;box-shadow:0 2px 12px #214c6220;display:flex;align-items:center;justify-content:space-between}
+.brand{font-size:19px;font-weight:850;color:#175d53}.beta{font-size:11px;font-weight:750;border-radius:20px;padding:6px 9px;background:#fff1cc;color:#795c19}
+#ddBetaBanner{padding:12px 18px;background:#fff9e7;border-bottom:1px solid #edd597;color:#624c1e;font-size:12px;line-height:1.4}
+main{max-width:760px;margin:16px auto 60px;padding:0 12px}
+form{padding:18px;background:white;border:1px solid #d9e9e9;border-radius:20px;box-shadow:0 8px 30px #163d4d0e}
+h1{font-size:26px;line-height:1.18;margin:4px 0 12px}h2{font-size:20px;line-height:1.25;margin:0 0 8px}p{color:#526879;line-height:1.46;margin:4px 0 12px}.part{padding:20px 0;border-bottom:1px solid #dfe8ea;scroll-margin-top:86px}.part:last-of-type{border:0}
+.options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.option{cursor:pointer;display:block}.option input{position:absolute;opacity:0;width:1px;height:1px}.option span{border:2px solid #d5e1e8;display:flex;align-items:center;justify-content:center;text-align:center;min-height:57px;padding:10px;border-radius:14px;font-weight:800;background:#fff}
+.option input:checked+span{border-color:#137861;background:#dcf5e9;color:#135844}.option input:focus-visible+span{outline:3px solid #e7bd54;outline-offset:2px}
+fieldset{padding:8px 12px 12px;border:1px solid #dce8e9;border-radius:14px;margin:10px 0;background:#fafffc}legend{font-weight:850;padding:0 7px;color:#185e4d}.check{display:flex;align-items:center;gap:12px;min-height:48px;padding:5px 7px;font-weight:650}.check input{width:23px;height:23px;accent-color:#167d62}
+select,input[type=text]{width:100%;min-height:52px;border:1.5px solid #b9cdd5;border-radius:12px;background:white;font-size:17px;padding:9px 12px;color:#17354b}
+label.field{display:block;font-weight:750;margin:14px 0}
+.field select,.field input{margin-top:6px}
+label[hidden],fieldset[hidden]{display:none!important}
+.feedback{background:#e9f8ef;color:#146145;border-radius:11px;padding:11px 12px;font-weight:750;margin:12px 0;min-height:20px}
+.error{padding:12px;background:#fff1e8;border:1px solid #e8b08c;color:#903d24;border-radius:12px;margin-top:14px;font-weight:750}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn{font-size:17px;font-weight:850;border:0;border-radius:13px;background:#126b62;color:white;padding:15px 18px;min-height:54px;cursor:pointer;flex:1}.muted{font-size:12px;color:#64737a}
+@media(max-width:420px){.options{grid-template-columns:1fr 1fr}form{padding:16px}h1{font-size:24px}}
+</style>
+</head>
+<body>
+<header><span class="brand">📘 DocenteDigital</span><span class="beta">BETA PRIVADA</span></header>
+<div id="ddBetaBanner">Configura tu perfil para empezar. Durante este piloto, no ingreses información personal o sensible de estudiantes.</div>
+<main>
+<form id="ddSetupNativeForm" novalidate>
+<h1>Configura tu espacio docente</h1>
+<p>Cuatro decisiones. Tus opciones quedarán guardadas en este dispositivo y podrás modificarlas después.</p>
+<div id="ddNativeSelectionStatus" class="feedback" role="status" aria-live="polite">Empieza seleccionando un nivel.</div>
+
+<section class="part" id="ddStepLevel">
+<h2>1. Nivel educativo</h2>
+<div class="options">
+<label class="option"><input name="ddLevel" type="radio" value="Inicial"><span>🧸 Inicial</span></label>
+<label class="option"><input name="ddLevel" type="radio" value="Primaria"><span>📚 Primaria</span></label>
+<label class="option"><input name="ddLevel" type="radio" value="Secundaria"><span>🎓 Secundaria</span></label>
+</div>
+</section>
+
+<section class="part" id="ddStepIE">
+<h2>2. Tipo de institución educativa</h2>
+<p id="ieHelp">Selecciona el nivel para mostrar las opciones.</p>
+<div class="options">
+<label class="option" id="ieUnidocente"><input name="ddIE" type="radio" value="Unidocente"><span>👩‍🏫 Unidocente</span></label>
+<label class="option" id="ieMultigrado"><input name="ddIE" type="radio" value="Multigrado"><span>👥 Multigrado</span></label>
+<label class="option"><input name="ddIE" type="radio" value="Polidocente"><span>🏫 Polidocente</span></label>
+</div>
+</section>
+
+<section class="part" id="ddStepGrades">
+<h2>3. Grados o edades</h2><p>Marca los grupos con los que trabajarás. En multigrado o unidocente puedes escoger varios.</p>
+<fieldset data-dd-grade-group="Inicial" hidden><legend>Inicial</legend>
+<label class="check"><input type="checkbox" value="3 años">3 años</label>
+<label class="check"><input type="checkbox" value="4 años">4 años</label>
+<label class="check"><input type="checkbox" value="5 años">5 años</label></fieldset>
+<fieldset data-dd-grade-group="Primaria" hidden><legend>Primaria</legend>
+<label class="check"><input type="checkbox" value="1.º">1.º</label>
+<label class="check"><input type="checkbox" value="2.º">2.º</label>
+<label class="check"><input type="checkbox" value="3.º">3.º</label>
+<label class="check"><input type="checkbox" value="4.º">4.º</label>
+<label class="check"><input type="checkbox" value="5.º">5.º</label>
+<label class="check"><input type="checkbox" value="6.º">6.º</label></fieldset>
+<fieldset data-dd-grade-group="Secundaria" hidden><legend>Secundaria</legend>
+<label class="check"><input type="checkbox" value="1.º">1.º</label>
+<label class="check"><input type="checkbox" value="2.º">2.º</label>
+<label class="check"><input type="checkbox" value="3.º">3.º</label>
+<label class="check"><input type="checkbox" value="4.º">4.º</label>
+<label class="check"><input type="checkbox" value="5.º">5.º</label></fieldset>
+</section>
+
+<section class="part" id="ddStepAreas">
+<h2>4. Áreas curriculares</h2><p>Selecciona las áreas para organizar tu planificación. En Secundaria comienza con un área principal.</p>
+<fieldset data-dd-area-group="Inicial" hidden><legend>Inicial</legend>
+<label class="check"><input type="checkbox" value="Comunicación">Comunicación</label>
+<label class="check"><input type="checkbox" value="Matemática">Matemática</label>
+<label class="check"><input type="checkbox" value="Personal Social">Personal Social</label>
+<label class="check"><input type="checkbox" value="Ciencia y Tecnología">Ciencia y Tecnología</label>
+<label class="check"><input type="checkbox" value="Psicomotriz">Psicomotriz</label>
+<label class="check" id="cslLabel" hidden><input type="checkbox" value="Castellano como segunda lengua">Castellano como segunda lengua (solo si corresponde EIB)</label>
+</fieldset>
+<fieldset data-dd-area-group="Primaria" hidden><legend>Primaria</legend>
+<label class="check"><input type="checkbox" value="Comunicación">Comunicación</label>
+<label class="check"><input type="checkbox" value="Matemática">Matemática</label>
+<label class="check"><input type="checkbox" value="Personal Social">Personal Social</label>
+<label class="check"><input type="checkbox" value="Ciencia y Tecnología">Ciencia y Tecnología</label>
+<label class="check"><input type="checkbox" value="Arte y Cultura">Arte y Cultura</label>
+<label class="check"><input type="checkbox" value="Educación Física">Educación Física</label>
+<label class="check"><input type="checkbox" value="Educación Religiosa">Educación Religiosa</label>
+</fieldset>
+<fieldset data-dd-area-group="Secundaria" hidden><legend>Secundaria</legend>
+<label class="check"><input type="checkbox" value="Comunicación">Comunicación</label>
+<label class="check"><input type="checkbox" value="Matemática">Matemática</label>
+<label class="check"><input type="checkbox" value="Ciencia y Tecnología">Ciencia y Tecnología</label>
+<label class="check"><input type="checkbox" value="Ciencias Sociales">Ciencias Sociales</label>
+<label class="check"><input type="checkbox" value="DPCC">DPCC</label>
+<label class="check"><input type="checkbox" value="Inglés">Inglés</label>
+<label class="check"><input type="checkbox" value="Educación Física">Educación Física</label>
+<label class="check"><input type="checkbox" value="Arte y Cultura">Arte y Cultura</label>
+<label class="check"><input type="checkbox" value="Educación Religiosa">Educación Religiosa</label>
+<label class="check"><input type="checkbox" value="EPT">EPT</label>
+</fieldset>
+</section>
+
+<section class="part" id="ddStepLanguage">
+<h2>Perfil lingüístico</h2>
+<label class="field">Tipo de atención
+<select id="linguisticMode">
+<option value="">Selecciona</option>
+<option value="Monolingüe castellano">Monolingüe castellano</option>
+<option value="EIB">Educación Intercultural Bilingüe (EIB)</option>
+</select></label>
+<div id="originControls" hidden>
+<label class="field">Lengua de trabajo
+<select id="language"><option value="Bilingüe">Bilingüe</option><option value="Lengua originaria">Lengua originaria</option></select></label>
+<label class="field">Lengua originaria o variedad de tu IE
+<select id="quechuaVar">
+<option value="Ninguna">Selecciona</option>
+<option>Quechua Cusco-Collao (Cusco)</option>
+<option>Quechua Chanka</option>
+<option>Quechua Central</option>
+<option>Quechua Cajamarca</option>
+<option>Quechua Inkawasi-Kañaris</option>
+<option>Quechua amazónico / Kichwa amazónico</option>
+<option>Aimara</option>
+<option>Achuar</option><option>Amahuaca</option><option>Arabela</option>
+<option>Asháninka</option><option>Asheninka</option><option>Awajún</option>
+<option>Bora</option><option>Chamicuro</option><option>Cashinahua</option>
+<option>Ese eja</option><option>Harakbut</option><option>Iñapari</option>
+<option>Ikitu</option><option>Isconahua</option><option>Jaqaru</option>
+<option>Kakataibo</option><option>Kakinte</option><option>Kandozi-Chapra</option>
+<option>Kapanawa</option><option>Kawki</option><option>Kukama Kukamiria</option>
+<option>Madija</option><option>Maijuna</option><option>Matsés</option>
+<option>Matsigenka</option><option>Muniche</option><option>Murui-Muinani</option>
+<option>Nahua (Yora)</option><option>Nanti</option><option>Nomatsigenga</option>
+<option>Ocaina</option><option>Omagua</option><option>Resígaro</option>
+<option>Secoya</option><option>Sharanahua</option><option>Shawi</option>
+<option>Shipibo-Konibo</option><option>Shiwilu</option><option>Taushiro</option>
+<option>Ticuna</option><option>Urarina</option><option>Wampis</option>
+<option>Yagua</option><option>Yaminahua</option><option>Yanesha</option><option>Yine</option>
+<option value="Otra lengua originaria">Otra lengua originaria</option>
+</select></label>
+<label class="field" id="otherLanguageBox" hidden>Especifica la lengua y su variedad
+<input id="otherLanguage" type="text" maxlength="100" placeholder="Escribe la denominación que usa tu IE"></label>
+<p class="muted">La variedad debe confirmarla el docente; DocenteDigital no la asigna por ubicación.</p>
+</div>
+</section>
+
+<div id="ddNativeSetupMessage" class="error" hidden role="alert"></div>
+<div class="actions"><button class="btn" type="submit">Guardar configuración y entrar →</button></div>
+<p class="muted">Si el navegador no permite guardar, te avisaremos antes de continuar.</p>
+</form>
+<noscript><div class="error">Activa JavaScript o abre la página en Chrome para completar la configuración.</div></noscript>
+</main>
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const choose=name=>document.querySelector('input[name="'+name+'"]:checked')?.value||'';
+  const q=selector=>[...document.querySelectorAll(selector)];
+  const group=(kind,level)=>q('[data-dd-'+kind+'-group]').find(el=>el.getAttribute('data-dd-'+kind+'-group')===level);
+  const selected=(kind,level)=>group(kind,level)?q('[data-dd-'+kind+'-group="'+level+'"] input:checked').map(el=>el.value):[];
+  let previous={};
+  try{previous=JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'{}');if(!previous||typeof previous!=='object'||Array.isArray(previous))previous={};}
+  catch(e){previous={};}
+  function scroll(id){setTimeout(()=>$(id)?.scrollIntoView({behavior:'smooth',block:'start'}),90);}
+  function note(){
+    const level=choose('ddLevel'),ie=choose('ddIE'),grades=selected('grade',level),areas=selected('area',level);
+    $('ddNativeSelectionStatus').textContent=level
+      ?'✓ '+level+(ie?' · '+ie:'')+(grades.length?' · '+grades.join(', '):'')+(areas.length?' · '+areas.join(', '):'')
+      :'Empieza seleccionando un nivel.';
+  }
+  function sync(){
+    const level=choose('ddLevel'),ie=choose('ddIE');
+    q('[data-dd-grade-group]').forEach(el=>el.hidden=el.getAttribute('data-dd-grade-group')!==level);
+    q('[data-dd-area-group]').forEach(el=>el.hidden=el.getAttribute('data-dd-area-group')!==level);
+    $('ieUnidocente').hidden=level==='Secundaria';
+    $('ieMultigrado').hidden=level==='Secundaria';
+    $('ieHelp').textContent=level==='Secundaria'
+      ?'La planificación de Secundaria se organiza por área.'
+      :'Elige la organización de tu institución.';
+    if(level==='Secundaria'&&ie&&ie!=='Polidocente')q('input[name=ddIE]').forEach(x=>x.checked=false);
+    const eib=$('linguisticMode').value==='EIB';
+    $('originControls').hidden=!eib;
+    $('otherLanguageBox').hidden=$('quechuaVar').value!=='Otra lengua originaria';
+    const csl=level==='Inicial'&&eib&&$('language').value==='Lengua originaria'&&selected('grade',level).includes('5 años');
+    $('cslLabel').hidden=!csl;
+    if(!csl)$('cslLabel').querySelector('input').checked=false;
+    note();
+  }
+  function err(message){
+    $('ddNativeSetupMessage').textContent=message;
+    $('ddNativeSetupMessage').hidden=false;
+    $('ddNativeSetupMessage').scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  q('input[name=ddLevel]').forEach(input=>input.addEventListener('change',()=>{
+    q('[data-dd-grade-group] input,[data-dd-area-group] input').forEach(x=>x.checked=false);
+    sync();scroll('ddStepIE');
+  }));
+  q('input[name=ddIE]').forEach(input=>input.addEventListener('change',()=>{
+    q('[data-dd-grade-group] input').forEach(x=>x.checked=false);
+    sync();scroll('ddStepGrades');
+  }));
+  q('[data-dd-grade-group] input').forEach(input=>input.addEventListener('change',()=>{
+    if(choose('ddIE')==='Polidocente'&&input.checked)
+      q('[data-dd-grade-group="'+choose('ddLevel')+'"] input').filter(x=>x!==input).forEach(x=>x.checked=false);
+    sync();
+  }));
+  q('[data-dd-area-group] input').forEach(input=>input.addEventListener('change',()=>{
+    if(choose('ddLevel')==='Secundaria'&&input.checked)
+      q('[data-dd-area-group="Secundaria"] input').filter(x=>x!==input).forEach(x=>x.checked=false);
+    sync();
+  }));
+  ['linguisticMode','language','quechuaVar'].forEach(id=>$(id).addEventListener('change',sync));
+  function restore(){
+    if(previous.level)q('input[name=ddLevel]').forEach(x=>x.checked=x.value===previous.level);
+    if(previous.ieType)q('input[name=ddIE]').forEach(x=>x.checked=x.value===previous.ieType);
+    q('[data-dd-grade-group] input').forEach(x=>x.checked=(previous.grades||[]).includes(x.value)&&x.closest('fieldset')?.getAttribute('data-dd-grade-group')===previous.level);
+    q('[data-dd-area-group] input').forEach(x=>x.checked=(previous.areas||[]).includes(x.value)&&x.closest('fieldset')?.getAttribute('data-dd-area-group')===previous.level);
+    if(previous.linguisticMode)$('linguisticMode').value=previous.linguisticMode;
+    if(previous.language&&[...$('language').options].some(x=>x.value===previous.language))$('language').value=previous.language;
+    const origin=previous.indigenousLanguage||previous.quechuaVar;
+    if(origin&&[...$('quechuaVar').options].some(x=>x.value===origin))$('quechuaVar').value=origin;
+    sync();
+  }
+  $('ddSetupNativeForm').addEventListener('submit',event=>{
+    event.preventDefault();
+    $('ddNativeSetupMessage').hidden=true;
+    const level=choose('ddLevel'),ie=choose('ddIE'),grades=selected('grade',level),areas=selected('area',level),mode=$('linguisticMode').value;
+    if(!level)return err('Selecciona un nivel educativo.');
+    if(!ie)return err('Selecciona el tipo de IE.');
+    if(level==='Secundaria'&&ie!=='Polidocente')return err('En esta versión, la planificación de Secundaria se organiza como polidocente.');
+    if(!grades.length)return err('Selecciona al menos un grado o edad.');
+    if(ie==='Polidocente'&&grades.length>1)return err('Selecciona un solo grado o edad para esta planificación polidocente.');
+    if(!areas.length)return err('Selecciona al menos un área.');
+    if(level==='Secundaria'&&areas.length>1)return err('Comienza con un área de Secundaria.');
+    if(!mode)return err('Selecciona el tipo de atención lingüística.');
+    let origin='Ninguna',language='Castellano';
+    if(mode==='EIB'){
+      origin=$('quechuaVar').value;
+      if(!origin||origin==='Ninguna')return err('Selecciona y confirma la lengua originaria de tu IE.');
+      if(origin==='Otra lengua originaria'){origin=$('otherLanguage').value.trim();if(origin.length<3)return err('Escribe la lengua y su variedad.');}
+      language=$('language').value;
+    }
+    const next={...previous,level,ieType:ie,grades,areas,language,quechuaVar:origin,indigenousLanguage:origin,
+      linguisticMode:mode,linguisticSelectionConfirmed:mode==='EIB'};
+    try{
+      localStorage.setItem('docenteDigitalPrototype',JSON.stringify(next));
+      const saved=JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'null');
+      if(saved?.level!==level||saved?.ieType!==ie)return err('No pudimos comprobar el guardado. Abre el enlace en Chrome y vuelve a intentarlo.');
+      const dest=new URL('./',location.href);
+      dest.search=location.search;
+      location.replace(dest.href);
+    }catch(e){err('Este navegador está bloqueando el almacenamiento. Abre el enlace en Chrome o habilita los datos del sitio. No se perderán los datos que aún no guardaste.');}
+  });
+  restore();
+})();
+</script>
+</body>
+</html>
