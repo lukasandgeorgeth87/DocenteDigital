@@ -29,15 +29,16 @@ async function configure(){
   await page.goto(baseUrl,{waitUntil:'networkidle'});
   await page.evaluate(()=>localStorage.clear());
   await page.reload({waitUntil:'networkidle'});
-  await page.locator('#step1 .choice',{hasText:'Primaria'}).click();
-  await page.locator('#step1 .btn',{hasText:'Continuar'}).click();
-  await page.locator('#step2 .choice',{hasText:'Multigrado'}).click();
-  await page.locator('#step2 .btn',{hasText:'Continuar'}).click();
-  for(const g of ['1.º','3.º','5.º']) await page.locator('#gradeChoices .choice',{hasText:g}).click();
-  await page.locator('#step3 .btn',{hasText:'Continuar'}).click();
-  for(const a of ['Comunicación','Matemática','Personal Social','Ciencia y Tecnología']) await page.locator('#areaChoices .choice',{hasText:a}).click();
-  await page.locator('#linguisticMode').selectOption({label:'Monolingüe castellano'});
-  await page.locator('#step4 .btn',{hasText:'Guardar y entrar'}).click();
+  await page.locator('input[name="ddLevel"][value="Primaria"]').locator('..').click();
+  await page.locator('input[name="ddIE"][value="Multigrado"]').locator('..').click();
+  for(const grade of ['1.º','3.º','5.º']) {
+    await page.locator('[data-dd-grade-group="Primaria"] input[type="checkbox"][value="'+grade+'"]').locator('..').click();
+  }
+  for(const area of ["Comunicación","Matemática","Personal Social","Ciencia y Tecnología"]) {
+    await page.locator('[data-dd-area-group="Primaria"] input[type="checkbox"][value="'+area+'"]').locator('..').click();
+  }
+  await page.locator('#linguisticMode').selectOption('Monolingüe castellano');
+  await page.locator('#ddSetupNativeForm button[type="submit"]').click();
   await waitPlanningRuntime();
 }
 
