@@ -4,6 +4,34 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>DocenteDigital</title>
+<script>
+/* First-run gate: keep heavy planning modules out of first-time mobile setup.
+   Do not reset existing work and never bypass the private-beta authorization. */
+(function(){
+  try{
+    if(localStorage.getItem('docenteDigitalPrototype_reset_backup'))return;
+    const raw=localStorage.getItem('docenteDigitalPrototype');
+    const s=raw?JSON.parse(raw):{};
+    const levels={Inicial:['3 años','4 años','5 años'],Primaria:['1.º','2.º','3.º','4.º','5.º','6.º'],Secundaria:['1.º','2.º','3.º','4.º','5.º']};
+    const validLevel=Object.prototype.hasOwnProperty.call(levels,s?.level);
+    const grades=Array.isArray(s?.grades)?s.grades:[];
+    const areas=Array.isArray(s?.areas)?s.areas:[];
+    const validBase=validLevel&&['Unidocente','Multigrado','Polidocente'].includes(s.ieType)&&
+      grades.length>0&&grades.every(g=>levels[s.level].includes(g))&&areas.length>0&&
+      !(s.ieType==='Polidocente'&&grades.length>1)&&
+      !(s.level==='Secundaria'&&(s.ieType!=='Polidocente'||areas.length>1))&&
+      !(s.level==='Inicial'&&areas.includes('Arte y Cultura'));
+    const validLanguage=s?.linguisticMode==='Monolingüe castellano'||
+      (s?.linguisticMode==='EIB'&&s.linguisticSelectionConfirmed===true&&
+       s.indigenousLanguage&&s.indigenousLanguage!=='Ninguna');
+    if(validBase&&validLanguage)return;
+  }catch(_error){}
+  const next=new URL('onboarding.html',location.href);
+  next.search=location.search;
+  location.replace(next.href);
+})();
+</script>
+
 <link rel="stylesheet" href="styles.css">
 <style>
 .dd-setup-block{padding:18px 0;border-bottom:1px solid #e4ece8}
