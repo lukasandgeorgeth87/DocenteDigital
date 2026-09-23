@@ -148,7 +148,7 @@
 
   function mount(){
     const form=$('ddSetupNativeForm');if(!form)return;
-    document.body.classList.add('dd-setup-mode');
+    document.body.classList.toggle('dd-setup-mode',Boolean($('setup')?.classList.contains('active')));
     if(form.dataset.ddNativeMounted==='1')return;
     form.dataset.ddNativeMounted='1';
     form.addEventListener('submit',submit);
@@ -193,6 +193,19 @@
       saveSafe();
     });
     syncFromState();updateLanguageOptions();
+  }
+
+  // Navigation is shared with the heavy planning app: never hide the mobile
+  // menu after a successfully completed profile or when visiting Home.
+  const previousGo=window.go;
+  if(typeof previousGo==='function'){
+    window.go=function(id){
+      const result=previousGo.apply(this,arguments);
+      const setupVisible=Boolean($('setup')?.classList.contains('active'));
+      document.body.classList.toggle('dd-setup-mode',setupVisible);
+      if(setupVisible)mount();
+      return result;
+    };
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
