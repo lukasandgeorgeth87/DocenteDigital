@@ -38,6 +38,10 @@ body.dd-setup-mode .chatbar{display:none!important}
 .dd-native-group label{cursor:pointer}
 .dd-native-group input[type="checkbox"]{pointer-events:auto!important}
 @media(max-width:650px){.dd-radio-cards{grid-template-columns:1fr 1fr}.dd-radio-cards label:last-child:nth-child(odd){grid-column:1/-1}}
+
+#setup [data-dd-initial-csl][hidden]{display:none!important}
+#setup .dd-native-group.dd-native-hidden{display:none!important}
+#setup .dd-setup-selected{background:#e8f7f2;padding:10px;border-radius:10px}
 </style>
 </head>
 <body>
@@ -59,6 +63,7 @@ body.dd-setup-mode .chatbar{display:none!important}
     <section id="setup" class="screen setup">
       <form id="ddSetupNativeForm" class="card" novalidate>
         <div class="steps"><span class="step active">1. Nivel</span><span class="step active">2. Tipo de IE</span><span class="step active">3. Grados/edades</span><span class="step active">4. Áreas</span></div>
+        <p id="ddNativeSelectionStatus" class="dd-setup-selected" role="status" aria-live="polite">Empieza seleccionando un nivel.</p>
 
         <div class="dd-setup-block" id="ddStepLevel">
           <h1>1. Nivel educativo</h1>
@@ -122,7 +127,7 @@ body.dd-setup-mode .chatbar{display:none!important}
             <label><input type="checkbox" value="Personal Social"> <span>Personal Social</span></label>
             <label><input type="checkbox" value="Ciencia y Tecnología"> <span>Ciencia y Tecnología</span></label>
             <label><input type="checkbox" value="Psicomotriz"> <span>Psicomotriz</span></label>
-            <label><input type="checkbox" value="Arte y Cultura"> <span>Arte y Cultura</span></label>
+            <label data-dd-initial-csl hidden><input type="checkbox" value="Castellano como segunda lengua"> <span>Castellano como segunda lengua (solo si corresponde EIB)</span></label>
           </fieldset>
 
           <fieldset class="dd-native-group" data-dd-area-group="Primaria">
