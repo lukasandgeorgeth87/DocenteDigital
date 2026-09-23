@@ -11,7 +11,26 @@
   try{
     if(localStorage.getItem('docenteDigitalPrototype_reset_backup'))return;
     const raw=localStorage.getItem('docenteDigitalPrototype');
-    const s=raw?JSON.parse(raw):{};
+    let s={};
+    if(raw){
+      try{
+        s=JSON.parse(raw);
+      }catch(error){
+        const key='docenteDigitalPrototype_recovery_'+new Date().toISOString().replace(/[:.]/g,'-');
+        let backedUp=false;
+        try{
+          localStorage.setItem(key,raw);
+          backedUp=localStorage.getItem(key)===raw;
+          if(backedUp)localStorage.removeItem('docenteDigitalPrototype');
+        }catch(_saveError){}
+        try{
+          sessionStorage.setItem('ddPreOnboardingRecovery',JSON.stringify({
+            at:new Date().toISOString(),backedUp,error:String(error)
+          }));
+        }catch(_sessionError){}
+        s={};
+      }
+    }
     const levels={Inicial:['3 años','4 años','5 años'],Primaria:['1.º','2.º','3.º','4.º','5.º','6.º'],Secundaria:['1.º','2.º','3.º','4.º','5.º']};
     const validLevel=Object.prototype.hasOwnProperty.call(levels,s?.level);
     const grades=Array.isArray(s?.grades)?s.grades:[];
