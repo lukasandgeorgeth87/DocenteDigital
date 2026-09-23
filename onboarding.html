@@ -167,6 +167,19 @@ label[hidden],fieldset[hidden]{display:none!important}
   let previous={};
   try{previous=JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'{}');if(!previous||typeof previous!=='object'||Array.isArray(previous))previous={};}
   catch(e){previous={};}
+  try{
+    const rawRecovery=sessionStorage.getItem('ddPreOnboardingRecovery');
+    if(rawRecovery){
+      window.__ddStorageRecovered=JSON.parse(rawRecovery);
+      sessionStorage.removeItem('ddPreOnboardingRecovery');
+      const message=document.createElement('div');
+      message.className='error';
+      message.textContent=window.__ddStorageRecovered.backedUp
+        ? 'Detectamos una configuración dañada y guardamos una copia recuperable. Puedes configurar de nuevo sin perder el original.'
+        : 'Detectamos datos dañados y no pudimos crear un respaldo. No continúes con información importante hasta habilitar el almacenamiento.';
+      $('ddNativeSelectionStatus')?.insertAdjacentElement('afterend',message);
+    }
+  }catch(_e){}
   function scroll(id){setTimeout(()=>$(id)?.scrollIntoView({behavior:'smooth',block:'start'}),90);}
   function note(){
     const level=choose('ddLevel'),ie=choose('ddIE'),grades=selected('grade',level),areas=selected('area',level);
