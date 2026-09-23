@@ -14,22 +14,29 @@ async function runCase(level, ie, grade, area) {
     acceptDownloads: true
   });
   const page = await context.newPage();
+  page.setDefaultTimeout(9000);
+  page.setDefaultNavigationTimeout(16000);
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push('console: '+m.text()); });
   try {
-    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    console.log('Móvil comenzando:',level);
+    await page.goto(baseUrl, { waitUntil: 'load' });
+    console.log('Móvil HTML cargado:',level);
     await page.waitForSelector('#ddSetupNativeForm', { timeout: 12000 });
     await page.evaluate(() => localStorage.clear());
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'load' });
+    console.log('Móvil reiniciado:',level);
 
     const levelRadio = page.locator(`input[name="ddLevel"][value="${level}"]`);
+    console.log('Móvil toque de nivel:',level);
     await levelRadio.locator('..').tap();
     if (!await levelRadio.isChecked()) throw new Error('El toque no seleccionó '+level);
     const selected = await page.evaluate(() => window.state?.level);
     if (selected !== level) throw new Error('UI seleccionó '+level+', pero estado='+selected);
 
     const ieRadio = page.locator(`input[name="ddIE"][value="${ie}"]`);
+    console.log('Móvil toque IE:',ie);
     await ieRadio.locator('..').tap();
     if (!await ieRadio.isChecked()) throw new Error('No se pudo seleccionar IE '+ie);
     const ieSelected = await page.evaluate(() => window.state?.ieType);
@@ -44,6 +51,7 @@ async function runCase(level, ie, grade, area) {
     if (!await areaBox.isChecked()) throw new Error('No se pudo seleccionar área '+area);
 
     await page.locator('#linguisticMode').selectOption('Monolingüe castellano');
+    console.log('Móvil enviando formulario:',level);
     await page.getByRole('button', { name: 'Guardar configuración y entrar' }).tap();
 
     await page.waitForFunction(() =>
@@ -55,7 +63,7 @@ async function runCase(level, ie, grade, area) {
     if (s.level !== level || s.ieType !== ie || !s.grades?.includes(grade) || !s.areas?.includes(area))
       throw new Error('Persistencia incorrecta: '+JSON.stringify({level:s.level,ieType:s.ieType,grades:s.grades,areas:s.areas}));
 
-    await page.reload({waitUntil:'networkidle'});
+    await page.reload({waitUntil:'load'});
     if (!await page.locator('#home.active').count())
       throw new Error('Tras recargar la app no recuperó inicio con configuración válida.');
 
