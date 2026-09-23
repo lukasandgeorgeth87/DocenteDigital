@@ -3,6 +3,9 @@ import fs from 'node:fs/promises';
 
 const baseUrl = process.env.BASE_URL || 'http://127.0.0.1:4173';
 const browser = await chromium.launch({ headless: true });
+const deadline = (promise,ms,fallback) => Promise.race([
+  promise.catch(()=>fallback), new Promise(resolve=>setTimeout(()=>resolve(fallback),ms))
+]);
 
 async function runCase(level, ie, grade, area) {
   const context = await browser.newContext({
@@ -70,19 +73,19 @@ async function runCase(level, ie, grade, area) {
     console.log('MÓVIL OK:', level, ie, grade, area);
     if (errors.length) console.log('Errores de consola durante el caso:', errors.slice(0,10));
   } catch (err) {
-    const summary = await page.evaluate(() => ({
+    const summary = await deadline(page.evaluate(() => ({
       screen:[...document.querySelectorAll('.screen.active')].map(x=>x.id),
       state: {level:window.state?.level, ieType:window.state?.ieType, grades:window.state?.grades, areas:window.state?.areas},
       setupPresent:!!document.getElementById('ddSetupNativeForm'),
       scripts: [...document.scripts].filter(x=>x.src).map(x=>x.src.split('/').pop()).slice(-12),
       elementAtFirstRadio:(() => {let x=document.querySelector('input[name="ddLevel"]+span');if(!x)return null;let r=x.getBoundingClientRect();let e=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {tag:e?.tagName,id:e?.id,cls:e?.className,text:e?.textContent?.slice(0,50)}})()
-    })).catch(() => null);
+    })),2500,null);
     console.error('FALLO MÓVIL:', level, err.message, summary, errors);
     await fs.mkdir('/tmp/dd-mobile-artifacts',{recursive:true});
-    await page.screenshot({path:`/tmp/dd-mobile-artifacts/${level}.png`,fullPage:true}).catch(()=>{});
+    await deadline(page.screenshot({path:`/tmp/dd-mobile-artifacts/${level}.png`,fullPage:true,timeout:2500}),3000,null);
     throw err;
   } finally {
-    await context.close();
+    await deadline(context.close(),3000,null);
   }
 }
 try {
