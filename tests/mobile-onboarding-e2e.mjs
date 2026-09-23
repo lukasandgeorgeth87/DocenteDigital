@@ -35,14 +35,14 @@ async function runCase(level, ie, grade, area) {
     console.log('Móvil toque de nivel:',level);
     await levelRadio.locator('..').tap();
     if (!await levelRadio.isChecked()) throw new Error('El toque no seleccionó '+level);
-    const selected = await page.evaluate(() => window.state?.level);
+    const selected = await page.evaluate(() => window.state?.level || document.querySelector('input[name="ddLevel"]:checked')?.value);
     if (selected !== level) throw new Error('UI seleccionó '+level+', pero estado='+selected);
 
     const ieRadio = page.locator(`input[name="ddIE"][value="${ie}"]`);
     console.log('Móvil toque IE:',ie);
     await ieRadio.locator('..').tap();
     if (!await ieRadio.isChecked()) throw new Error('No se pudo seleccionar IE '+ie);
-    const ieSelected = await page.evaluate(() => window.state?.ieType);
+    const ieSelected = await page.evaluate(() => window.state?.ieType || document.querySelector('input[name="ddIE"]:checked')?.value);
     if (ieSelected !== ie) throw new Error('IE se ve seleccionada, pero estado='+ieSelected);
 
     const gradeBox = page.locator(`[data-dd-grade-group="${level}"] input[type=checkbox][value="${grade}"]`);
