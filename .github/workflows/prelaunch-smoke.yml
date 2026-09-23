@@ -134,6 +134,23 @@ jobs:
               if not Path(module).is_file():
                   raise SystemExit('Missing active Beta module: ' + module)
 
+          onboarding = Path('onboarding.html')
+          if not onboarding.is_file():
+              raise SystemExit('Mobile onboarding page missing.')
+          source = onboarding.read_text(encoding='utf-8')
+          for element in ('name="ddLevel"', 'name="ddIE"', 'ddSetupNativeForm', 'data-dd-grade-group="Inicial"', 'data-dd-area-group="Secundaria"'):
+              if element not in source:
+                  raise SystemExit('Mobile onboarding missing: ' + element)
+          if '<script src=' in source:
+              raise SystemExit('Isolated onboarding unexpectedly loads application modules.')
+          if 'First-run gate: keep heavy planning modules' not in html:
+              raise SystemExit('Index must redirect incomplete setup before heavy modules.')
+          if html.index('First-run gate: keep heavy planning modules') > html.index('src="app.js"'):
+              raise SystemExit('Mobile onboarding routing must run before the heavy application.')
+          initial = source.split('data-dd-area-group="Inicial"')[1].split('</fieldset>')[0]
+          if 'Arte y Cultura' in initial:
+              raise SystemExit('Initial offers Arte y Cultura as a separate area.')
+
           print('Beta features wired. Production still blocked by explicit backend/privacy gates.')
           PY
 
