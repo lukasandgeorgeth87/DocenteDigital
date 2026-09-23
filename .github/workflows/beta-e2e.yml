@@ -35,18 +35,6 @@ jobs:
           sleep 2
           curl --fail --silent --show-error http://127.0.0.1:4173/ >/dev/null
 
-      - name: Isolate blocking static startup module
-        timeout-minutes: 2
-        env:
-          BASE_URL: http://127.0.0.1:4173
-        run: node tests/static-prefix-isolation.mjs
-
-      - name: Diagnose heavy runtime after valid onboarding
-        timeout-minutes: 2
-        env:
-          BASE_URL: http://127.0.0.1:4173
-        run: node tests/app-load-isolation.mjs
-
       - name: Test actual Android-style taps across all three levels
         timeout-minutes: 3
         env:
