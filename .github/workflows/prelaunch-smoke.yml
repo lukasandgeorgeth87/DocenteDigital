@@ -99,45 +99,42 @@ jobs:
           test -s curriculum-safety-v27.js
           test -s docx-export-v29.js
 
-      - name: Verify unavailable V5 surfaces fail closed in initial HTML
+      - name: Verify Beta tools are wired but production launch stays blocked
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import json
 
           html = Path('index.html').read_text(encoding='utf-8')
+          manifest = json.loads(Path('release-beta-2026-09-24.json').read_text(encoding='utf-8'))
+          if manifest.get('productionApproved') is not False:
+              raise SystemExit('Safety violation: Beta manifest approved production.')
+          blockers = set(manifest.get('notProductionReady', []))
+          required_blockers = {
+              'authentication_backend', 'multiuser_tenant_isolation',
+              'cloud_sync_and_server_backup', 'remote_generative_ai'
+          }
+          if not required_blockers.issubset(blockers):
+              raise SystemExit('Production blockers disappeared without security evidence.')
 
-          forbidden = [
-              'data-screen="materials" onclick="go(\'materials\')"',
-              'data-screen="evaluation" onclick="go(\'evaluation\')"',
-              'onclick="showDiagnostic()"',
-              'onclick="demoAnnual()"',
-              'onclick="generateMaterial()"',
-              'onclick="showEvaluation(',
-          ]
-          leaked = [item for item in forbidden if item in html]
-          if leaked:
-              raise SystemExit(
-                  'V5 fail-closed regression: unavailable actions are clickable in initial HTML: '
-                  + ', '.join(leaked)
-              )
-
-          required = [
-              'data-screen="materials" disabled aria-disabled="true"',
-              'data-screen="evaluation" disabled aria-disabled="true"',
-              'Crear diagnóstico · Próximamente',
-              'Abrir programación anual · Próximamente',
-              'Crear lectura · Próximamente',
-          ]
-          missing = [item for item in required if item not in html]
+          actions = {
+              'data-screen="materials"': 'materials-v1.js',
+              'data-screen="evaluation"': 'evaluation-v1.js',
+              'window.DDPlanningTools?.openDiagnostic()': 'planning-tools-v1.js',
+              'window.DDPlanningTools?.openAnnual()': 'planning-tools-v1.js'
+          }
+          missing = [f'{control} -> {module}' for control, module in actions.items()
+                     if control not in html or f'src="{module}"' not in html]
           if missing:
-              raise SystemExit(
-                  'V5 fail-closed markers missing from initial HTML: '
-                  + ', '.join(missing)
-              )
+              raise SystemExit('Beta actions missing or not wired: ' + ', '.join(missing))
 
-          print('Unavailable V5 surfaces are fail-closed before runtime guards load.')
+          for module in ['materials-v1.js','evaluation-v1.js','planning-tools-v1.js','director-v1.js','setup-native-v2.js']:
+              if not Path(module).is_file():
+                  raise SystemExit('Missing active Beta module: ' + module)
+
+          print('Beta features wired. Production still blocked by explicit backend/privacy gates.')
           PY
 
       - name: Verify local assets referenced by production HTML
