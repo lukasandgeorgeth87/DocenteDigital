@@ -35,6 +35,12 @@ jobs:
           sleep 2
           curl --fail --silent --show-error http://127.0.0.1:4173/ >/dev/null
 
+      - name: Isolate mobile touch regression
+        timeout-minutes: 2
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/mobile-isolation.mjs
+
       - name: Test actual Android-style taps across all three levels
         timeout-minutes: 3
         env:
