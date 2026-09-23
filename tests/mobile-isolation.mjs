@@ -34,5 +34,8 @@ try{
  await probe('app + native', f=>!['app.js','setup-native-v2.js','storage-recovery-v26.js'].includes(f));
  await probe('full except optional observer guards',f=>['role-surface-guard-v68.js','easy-surface-simplicity-v55.js','home-surface-truth-v73.js'].includes(f));
  await probe('full except initial guard',f=>f==='initial-curriculum-guard-v72.js');
+ await probe('full except schedule loader',f=>f==='schedule-prompt-v6.js');
+ await probe('full except two dynamic loaders',f=>['schedule-prompt-v6.js','initial-curriculum-guard-v72.js'].includes(f));
+ await probe('static core before schedule',f=>!['storage-recovery-v26.js','storage-access-guard-v71.js','app.js','official-curriculum-v1.js','pedagogical-source-base-v1.js','export-fallback-guard-v39.js','director-prototype-guard-v40.js','initial-curriculum-guard-v72.js','enhancements.js','planning-structure-v1.js','format-v2.js','teacher-context-v1.js','proposal-choice-v8.js','schedule-v3.js','strategies-v4.js','master-session-v1.js','resources-v5.js','setup-native-v2.js'].includes(f));
  await probe('full app',null);
 }finally{await timed(browser.close(),2500);}
