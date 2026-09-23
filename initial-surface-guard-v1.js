@@ -17,8 +17,10 @@
     try{
 
     if(typeof state==='object'){
-      state.unitSessionMode='initial-daily';
-      try{typeof save==='function'&&save();}catch(_e){}
+      if(state.unitSessionMode!=='initial-daily'){
+        state.unitSessionMode='initial-daily';
+        try{typeof save==='function'&&save();}catch(_e){}
+      }
     }
 
     const inline=document.getElementById('ddUnitModeInline');
@@ -60,12 +62,29 @@
     }finally{applying=false;}
   }
 
-  const observer=new MutationObserver(()=>enforce());
-  observer.observe(document.documentElement,{childList:true,subtree:true});
-  document.addEventListener('change',e=>{
-    if(e.target?.id==='level'||e.target?.closest?.('#step2'))setTimeout(enforce,0);
+  // A full-document MutationObserver caused repeated relabeling of controls
+  // when other UI modules were bootstrapping. In some mobile browsers this
+  // prevented touch/click events from completing. Enforce only at bounded
+  // lifecycle points and when an Initial session/plan screen is opened.
+  let pending=false;
+  function schedule(){
+    if(pending)return;
+    pending=true;
+    setTimeout(()=>{pending=false;enforce();},0);
+  }
+  const originalGo=window.go;
+  if(typeof originalGo==='function'){
+    window.go=function(id){
+      const result=originalGo.apply(this,arguments);
+      if(['setup','plan','session','home'].includes(id))schedule();
+      return result;
+    };
+  }
+  document.addEventListener('change',event=>{
+    if(event.target?.closest?.('#setup'))schedule();
   },true);
-
-  [0,150,400,900,1800,3500,6000].forEach(ms=>setTimeout(enforce,ms));
-  window.ddInitialSurfaceGuardV1={enforce};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});
+  else schedule();
+  setTimeout(schedule,600);
+  window.ddInitialSurfaceGuardV1={enforce,schedule};
 })();
