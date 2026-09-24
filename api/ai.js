@@ -1,19 +1,19 @@
 const ROUTINE_MODEL = process.env.OPENAI_MODEL_ROUTINE || 'gpt-5.6-luna';
-const COMPLEX_MODEL = process.env.OPENAI_MODEL_COMPLEX || 'gpt-5.6-sol';
+const COMPLEX_MODEL = process.env.OPENAI_MODEL_COMPLEX || 'gpt-5.6-terra';
 const API_URL = 'https://api.openai.com/v1/responses';
 
 const TASKS = {
   title_options: {
     mode: 'routine',
-    instruction: 'Primero identifica el núcleo semántico de lo escrito por el docente y sepáralo de la frase circunstancial. Ejemplo: “en la comunidad encontramos pinturas rupestres” debe entenderse como “pinturas rupestres / patrimonio arqueológico local”, no copiarse completo después de un verbo. Propón títulos potentes, naturales, motivadores y pedagógicamente coherentes, adecuados al nivel y al tipo de planificación. Usa el título ya escrito por el docente como pista adicional de tema y lugar cuando aporte información. Evita fórmulas genéricas como “construimos nuevos aprendizajes”, “desde nuestra experiencia” o “comunicamos lo aprendido”. No inventes problemas, causas ni datos locales.'
+    instruction: 'El título escrito por el docente es el ancla semántica principal cuando ya expresa con claridad el tema, territorio o intención; el contexto complementa y precisa, pero no debe desplazarlo. Primero extrae un núcleo pedagógico breve y natural. Ejemplo: “CONOCIENDO NUESTROS RESTOS ARQUEOLÓGICOS EN PISAC Y CCOTATAQUI” + “en la comunidad encontramos pinturas rupestres” debe integrarse como patrimonio arqueológico local, restos arqueológicos y pinturas rupestres en ese territorio, nunca copiar la frase circunstancial completa. Propón exactamente 3 títulos distintos, potentes, naturales, motivadores y coherentes con el nivel y el tipo de planificación. Evita mayúsculas sostenidas, frases pegadas literalmente del contexto y fórmulas genéricas como “construimos nuevos aprendizajes”, “desde nuestra experiencia” o “comunicamos lo aprendido”. No inventes problemas, causas ni datos locales.'
   },
   significant_situation: {
     mode: 'complex',
-    instruction: 'Redacta una situación significativa concreta, auténtica y pedagógicamente útil. Si el contexto incluye institución, comunidad, distrito, provincia o región, nómbralos de forma natural y no reemplaces esos datos por frases vagas como “entorno de los estudiantes”. Usa únicamente hechos proporcionados por el docente o por el perfil de la app. Puedes convertir una observación real en una oportunidad de indagación, pero no inventes causas, actores, antigüedad, significados, costumbres ni datos. Distingue lo observable de lo que debe investigarse. Debe conectar contexto real, preguntas o reto, acciones de aprendizaje y producto/evidencia.'
+    instruction: 'Redacta una situación significativa concreta, auténtica y pedagógicamente útil. Mantén una sola columna vertebral de coherencia: tema o fenómeno central → contexto real → lo que los estudiantes observan o saben → lo que necesitan averiguar o comprender → reto → acciones de aprendizaje → evidencia o producto. Si el perfil incluye institución, comunidad, distrito, provincia o región, nómbralos de forma natural; no los sustituyas por frases vagas como “entorno de los estudiantes”. Usa únicamente hechos proporcionados por el docente o por el perfil. No mezcles temas de distintas áreas solo para mencionarlos: cada área debe aportar al mismo reto central. No inventes causas, actores, antigüedad, significados, costumbres ni datos. Distingue claramente observación, inferencia e información que requiere fuente. La redacción debe sonar como un docente experimentado, no como una plantilla genérica.'
   },
   products: {
     mode: 'routine',
-    instruction: 'Propón productos o actuaciones finales auténticos, viables y observables, coherentes con el nivel, el reto y las competencias movilizadas. Evita productos decorativos o genéricos.'
+    instruction: 'Propón productos o actuaciones finales auténticos, viables, observables y directamente conectados con el reto central. El producto debe permitir evidenciar qué comprendieron, investigaron, resolvieron o comunicaron los estudiantes; no debe añadir un tema nuevo ni convertirse en una actividad decorativa. Ajusta complejidad por nivel y ofrece alternativas realmente distintas.'
   },
   session_strategy: {
     mode: 'complex',
