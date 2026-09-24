@@ -218,18 +218,25 @@ function proposeUnitTitleOptions(brief,type){
   const options=[];
 
   if(/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueol[oó]gic|sitios?\s+arqueol[oó]gic|patrimonio\s+arqueol[oó]gic/.test(s)){
+    const p=state.teacherContext||{};
+    const territory=[p.community,p.district].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i).join(' y ');
+    const where=territory?(' en '+territory):' de nuestro entorno';
     if(level==='Inicial'){
-      options.push('Huellas del pasado: descubrimos formas y colores en las pinturas rupestres');
-      options.push('Pequeños exploradores de las huellas antiguas');
-      options.push('¿Qué descubrimos en las pinturas de las rocas?');
+      options.push('Pequeños exploradores de las huellas del pasado');
+      options.push('Descubrimos formas, colores y misterios en las rocas');
+      options.push('Las huellas antiguas de nuestra comunidad');
     }else if(level==='Secundaria'){
-      options.push(project?'Huellas del pasado, preguntas del presente: investigamos nuestro patrimonio arqueológico':'Pinturas rupestres y memoria del territorio: analizamos evidencias del pasado');
-      options.push('Patrimonio arqueológico local: interpretamos, contrastamos y explicamos');
-      options.push('Arte rupestre y memoria del territorio: investigamos con evidencias');
+      options.push(project
+        ? `Patrimonio arqueológico${where}: investigamos evidencias e interpretamos nuestro pasado`
+        : `Patrimonio arqueológico${where}: analizamos evidencias del pasado`);
+      options.push('Restos arqueológicos y pinturas rupestres: contrastamos fuentes y construimos explicaciones');
+      options.push('Huellas del territorio: investigamos, interpretamos y valoramos nuestro patrimonio');
     }else{
-      options.push(project?'Huellas del pasado en nuestra comunidad: investigamos las pinturas rupestres':'Huellas del pasado: conocemos las pinturas rupestres de nuestro entorno');
-      options.push('Pinturas rupestres: descubrimos qué nos cuentan sobre nuestro patrimonio');
-      options.push('Guardianes de nuestra memoria: conocemos y valoramos el patrimonio arqueológico local');
+      options.push(project
+        ? `Huellas del pasado${where}: exploramos y valoramos nuestro patrimonio arqueológico`
+        : `Huellas del pasado${where}: conocemos nuestro patrimonio arqueológico`);
+      options.push('Pinturas rupestres y restos arqueológicos: investigamos qué nos cuentan sobre nuestra historia local');
+      options.push('Guardianes de nuestro patrimonio: descubrimos, explicamos y compartimos las huellas del pasado');
     }
   }else if(/siembr|semill|tarpuy|papa|anu|oca|olluco/.test(s)){
     if(level==='Secundaria'){
