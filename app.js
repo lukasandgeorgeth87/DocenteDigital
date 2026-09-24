@@ -391,7 +391,9 @@ function refreshUnitTitleSuggestions(){
   const type=byId('unitType')?.value||'Proyecto de aprendizaje';
   const input=byId('unitTitle');
   const box=byId('unitTitleSuggestions');
-  const effectiveBrief=brief||ddAssistPlanningContext(false)||input?.value.trim()||'';
+  const writtenTitle=input?.value.trim()||'';
+  const assisted=(!brief&&!writtenTitle)?ddAssistPlanningContext(false):'';
+  const effectiveBrief=[writtenTitle,brief||assisted].filter(Boolean).join('. ');
   if(!effectiveBrief){
     if(box)box.innerHTML='<small>Puedes escribir una idea o dejar que DocenteDigital proponga un punto de partida.</small>';
     return;
