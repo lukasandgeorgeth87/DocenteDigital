@@ -101,12 +101,27 @@
     if(!/primavera/i.test(theme))return null;
     return['Descubrimos los cambios que trae la primavera a nuestro entorno','¿Qué cambia en nuestro entorno cuando llega la primavera?','Conocemos y cuidamos la vida que florece durante la primavera'];
   }
+  function titleContextText(raw){
+    const title=tidy(document.getElementById('unitTitle')?.value||'');
+    if(!title)return tidy(raw);
+    const rawClean=tidy(raw);
+    if(low(title)===low(rawClean))return rawClean;
+    return tidy(rawClean+' '+title);
+  }
+
+  function heritagePlace(raw){
+    const combined=titleContextText(raw);
+    const m=combined.match(/\ben\s+([\p{L}][\p{L}'’ -]{2,80}(?:\s+y\s+[\p{L}][\p{L}'’ -]{2,50})?)\s*$/iu);
+    if(!m)return '';
+    return tidy(m[1]).replace(/\s{2,}/g,' ');
+  }
+
   function titleLevel(){
     try{return (typeof state!=='undefined'&&state.level)||'Primaria';}catch(e){return 'Primaria';}
   }
 
   function semanticIssue(raw,theme){
-    const s=low(raw+' '+theme);
+    const s=low(titleContextText(raw)+' '+theme);
     if(/\b(?:basura|residu|recicl|desperdicio)\b/.test(s)&&/\b(?:arrojan?|botan?|tiran?|dejan?|piso|suelo|acumulan?|contamin|manejo|separ|recicl)\b/.test(s)){
       return {key:'waste',theme:'la gestión responsable de los residuos y el cuidado de los espacios comunes'};
     }
@@ -184,40 +199,42 @@
       return ['Usamos la tecnología con responsabilidad','Pantallas con propósito: aprendemos a decidir mejor','Cuidamos nuestro tiempo y seguridad al usar tecnología'];
     }
     if(issue.key==='heritage'){
+      const place=heritagePlace(document.getElementById('unitSituation')?.value||'');
+      const suffix=place?' de '+place:'';
       if(level==='Inicial')return [
         'Huellas del pasado: descubrimos formas y colores en las pinturas rupestres',
-        'Pequeños exploradores de las huellas antiguas',
+        'Pequeños exploradores del patrimonio'+suffix,
         '¿Qué descubrimos en las pinturas de las rocas?'
       ];
       if(level==='Secundaria')return project ? [
-        'Huellas del pasado, preguntas del presente: investigamos nuestro patrimonio arqueológico',
+        'Huellas del pasado, preguntas del presente: investigamos el patrimonio arqueológico'+suffix,
         'Arte rupestre y memoria del territorio: analizamos evidencias y comunicamos hallazgos',
-        'Patrimonio bajo investigación: interpretamos evidencias de las pinturas rupestres'
+        'Patrimonio bajo investigación: interpretamos evidencias de las pinturas rupestres'+suffix
       ] : [
         'Pinturas rupestres y memoria del territorio: analizamos evidencias del pasado',
-        'Patrimonio arqueológico local: interpretamos, contrastamos y explicamos',
-        'Huellas del pasado: estudiamos las pinturas rupestres con evidencias'
+        'Patrimonio arqueológico'+suffix+': interpretamos, contrastamos y explicamos',
+        'Huellas del pasado'+(place?' en '+place:'')+': estudiamos las pinturas rupestres con evidencias'
       ];
       return project ? [
-        'Huellas del pasado en nuestra comunidad: investigamos las pinturas rupestres',
-        'Pinturas rupestres: descubrimos qué nos cuentan sobre nuestro patrimonio',
-        'Guardianes de nuestra memoria: conocemos y valoramos el patrimonio arqueológico local'
+        'Huellas del pasado'+(place?' en '+place:'')+': investigamos nuestro patrimonio arqueológico',
+        'Pinturas rupestres'+suffix+': observamos, preguntamos y buscamos explicaciones',
+        'Guardianes de nuestra memoria: conocemos y valoramos el patrimonio arqueológico'+suffix
       ] : [
-        'Huellas del pasado: conocemos las pinturas rupestres de nuestro entorno',
-        'Pinturas rupestres: observamos, preguntamos y buscamos explicaciones',
-        'Nuestro patrimonio arqueológico: descubrimos, comprendemos y valoramos'
+        'Huellas del pasado'+(place?' en '+place:'')+': conocemos nuestro patrimonio arqueológico',
+        'Pinturas rupestres'+suffix+': observamos, preguntamos y buscamos explicaciones',
+        'Nuestro patrimonio arqueológico'+suffix+': descubrimos, comprendemos y valoramos'
       ];
     }
     return [];
   }
 
   function titlesFromIntent(raw,type){
-    const u=mci(raw,type),baseTheme=tidy(u.theme)||'esta experiencia',kind=u.intentKind||'exploración/comprensión',goal=tidy(u.finality),project=/proyecto/i.test(type||u.document||''),level=titleLevel();
-    const issue=semanticIssue(raw,baseTheme);
+    const enriched=titleContextText(raw),u=mci(enriched,type),baseTheme=tidy(u.theme)||'esta experiencia',kind=u.intentKind||'exploración/comprensión',goal=tidy(u.finality),project=/proyecto/i.test(type||u.document||''),level=titleLevel();
+    const issue=semanticIssue(enriched,baseTheme);
     if(issue)return issueTitles(issue,type,level);
 
     const theme=baseTheme;
-    const school=returnToSchool(raw);if(school)return school;
+    const school=returnToSchool(enriched);if(school)return school;
     const season=seasonal(theme);if(season)return season;
 
     if(clauseLike(theme)){
