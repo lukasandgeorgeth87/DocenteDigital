@@ -1,15 +1,15 @@
-const ROUTINE_MODEL = process.env.OPENAI_MODEL_ROUTINE || 'gpt-6-luna';
-const COMPLEX_MODEL = process.env.OPENAI_MODEL_COMPLEX || 'gpt-6-sol';
+const ROUTINE_MODEL = process.env.OPENAI_MODEL_ROUTINE || 'gpt-5.6-luna';
+const COMPLEX_MODEL = process.env.OPENAI_MODEL_COMPLEX || 'gpt-5.6-sol';
 const API_URL = 'https://api.openai.com/v1/responses';
 
 const TASKS = {
   title_options: {
     mode: 'routine',
-    instruction: 'Propón títulos potentes, motivadores, claros y pedagógicamente coherentes. Deben ser adecuados al nivel educativo y al tipo de planificación. No copies literalmente la descripción del docente, no inventes problemas locales y evita títulos genéricos.'
+    instruction: 'Primero identifica el núcleo semántico de lo escrito por el docente y sepáralo de la frase circunstancial. Ejemplo: “en la comunidad encontramos pinturas rupestres” debe entenderse como “pinturas rupestres / patrimonio arqueológico local”, no copiarse completo después de un verbo. Propón títulos potentes, naturales, motivadores y pedagógicamente coherentes, adecuados al nivel y al tipo de planificación. Usa el título ya escrito por el docente como pista adicional de tema y lugar cuando aporte información. Evita fórmulas genéricas como “construimos nuevos aprendizajes”, “desde nuestra experiencia” o “comunicamos lo aprendido”. No inventes problemas, causas ni datos locales.'
   },
   significant_situation: {
     mode: 'complex',
-    instruction: 'Redacta una situación significativa contextualizada, auténtica y pedagógicamente útil. Usa solo hechos proporcionados en el contexto. Puedes formular oportunidades de indagación, pero no inventes causas, actores, problemas, costumbres ni datos. Debe conectar contexto, reto, propósito y producto.'
+    instruction: 'Redacta una situación significativa concreta, auténtica y pedagógicamente útil. Si el contexto incluye institución, comunidad, distrito, provincia o región, nómbralos de forma natural y no reemplaces esos datos por frases vagas como “entorno de los estudiantes”. Usa únicamente hechos proporcionados por el docente o por el perfil de la app. Puedes convertir una observación real en una oportunidad de indagación, pero no inventes causas, actores, antigüedad, significados, costumbres ni datos. Distingue lo observable de lo que debe investigarse. Debe conectar contexto real, preguntas o reto, acciones de aprendizaje y producto/evidencia.'
   },
   products: {
     mode: 'routine',
