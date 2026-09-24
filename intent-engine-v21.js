@@ -66,7 +66,36 @@
     if(/contaminacion|contaminan|contaminado/.test(s)&&/(residu|basura|ambiente|suelo|agua)/.test(s))return'la contaminación y el cuidado del ambiente';
     if(/bullying|acoso|agresion|maltrato/.test(s))return'la convivencia respetuosa y la prevención de situaciones de violencia';
     if(/mamifer/.test(s))return'los mamíferos y sus características';
+    if(/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueol[oó]gic|sitios?\s+arqueol[oó]gic|patrimonio\s+arqueol[oó]gic/.test(s))return'las pinturas rupestres y el patrimonio arqueológico local';
     return base;
+  }
+
+  function heritageTitles(raw,type){
+    const s=lower(raw),level=state.level||'Primaria',project=/proyecto/i.test(type||'');
+    if(!/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueol[oó]gic|sitios?\s+arqueol[oó]gic|patrimonio\s+arqueol[oó]gic/.test(s))return null;
+    if(level==='Inicial')return [
+      'Huellas del pasado: descubrimos formas y colores en las pinturas rupestres',
+      'Pequeños exploradores de las huellas antiguas',
+      '¿Qué descubrimos en las pinturas de las rocas?'
+    ];
+    if(level==='Secundaria')return project?[
+      'Huellas del pasado, preguntas del presente: investigamos nuestro patrimonio arqueológico',
+      'Arte rupestre y memoria del territorio: analizamos evidencias y comunicamos hallazgos',
+      'Patrimonio bajo investigación: interpretamos evidencias de las pinturas rupestres'
+    ]:[
+      'Pinturas rupestres y memoria del territorio: analizamos evidencias del pasado',
+      'Patrimonio arqueológico local: interpretamos, contrastamos y explicamos',
+      'Huellas del pasado: estudiamos las pinturas rupestres con evidencias'
+    ];
+    return project?[
+      'Huellas del pasado en nuestra comunidad: investigamos las pinturas rupestres',
+      'Pinturas rupestres: descubrimos qué nos cuentan sobre nuestro patrimonio',
+      'Guardianes de nuestra memoria: conocemos y valoramos el patrimonio arqueológico local'
+    ]:[
+      'Huellas del pasado: conocemos las pinturas rupestres de nuestro entorno',
+      'Pinturas rupestres: observamos, preguntamos y buscamos explicaciones',
+      'Nuestro patrimonio arqueológico: descubrimos, comprendemos y valoramos'
+    ];
   }
 
   function levelProblemTitles(raw,type){
@@ -134,6 +163,7 @@
 
   function titleOptions(text,type){
     const i=inferIntent(text,type),f=pedagogicalTheme(text,shortFocus(i)),g=shortGoal(i),project=/proyecto/i.test(String(type||i.mci.document||'')),kind=i.mci.intentKind,place=i.place?` en ${i.place}`:'',level=state.level||'Primaria';
+    const heritage=heritageTitles(text,type);if(heritage)return heritage;
     const specific=levelProblemTitles(text,type);if(specific)return specific;
     let list=[];
     if(/primavera/i.test(f)){
