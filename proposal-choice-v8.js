@@ -4,7 +4,7 @@
   const E=v=>escapeHtml(v), baseCreate=window.createUnitDemo; state.pendingUnitChoice=state.pendingUnitChoice||null;if(typeof save==='function')save();
   const tidy=s=>String(s||'').replace(/\s+/g,' ').trim();
   function meaningFor(raw){try{if(typeof window.ddUnderstandPlanningDescription==='function')return window.ddUnderstandPlanningDescription(raw)}catch(e){}return {raw,focus:raw||'la situación descrita',problem:'',cause:'',consequence:'',goal:'',opportunity:'',actors:[],place:'',confidence:0,status:'lectura preliminar',gaps:['falta precisar el sentido de la situación']};}
-  function shortFocus(m,raw){const f=tidy(m?.focus||'');return f&&f!=='la realidad descrita'?f:tidy(raw).slice(0,140)||'la situación descrita';}
+  function shortFocus(m,raw){const f=tidy(m?.focus||'');const base=f&&f!=='la realidad descrita'?f:tidy(raw).slice(0,140)||'la situación descrita';const s=tidy(raw+' '+base).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueologic|sitios?\s+arqueologic|patrimonio\s+arqueologic/.test(s))return 'las pinturas rupestres y el patrimonio arqueológico local';return base;}
   function placeFor(m){
     if(tidy(m?.place))return tidy(m.place);
     const p=state.teacherContext||{};
@@ -55,6 +55,25 @@
     const institution=profile.institutionName||'la institución educativa';
     const locality=profile.community?((profile.localityType||'localidad')+' '+profile.community):place;
     let a='',b='';
+    const heritage=/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueologic|sitios?\s+arqueologic|patrimonio\s+arqueologic/.test(tidy(raw+' '+focus).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+
+    if(heritage){
+      const retoHeritage='¿Qué podemos descubrir, a partir de la observación y de fuentes confiables, sobre las pinturas rupestres de nuestro entorno y cómo podemos comunicar su valor sin atribuirles significados que no estén comprobados?';
+      if(level==='Inicial'){
+        a=`En ${institution}, ubicada en ${locality}, las niñas y los niños de ${grades} se acercarán a las pinturas rupestres como huellas visuales del pasado presentes en su entorno. A partir de imágenes verificadas, relatos del docente y experiencias de observación, describirán formas, líneas, colores y semejanzas, expresarán lo que imaginan y diferenciarán lo que observan de lo que suponen. Representarán sus descubrimientos mediante dibujos, modelado, conversación y juego, sin atribuir significados históricos que no hayan sido comprobados. El reto será: ${retoHeritage}`;
+        b=`En ${institution}, en ${locality}, las pinturas rupestres se convertirán en una oportunidad para observar, preguntar y representar. Las niñas y los niños de ${grades} explorarán imágenes o registros seguros, compararán detalles, formularán preguntas y comunicarán lo que descubren mediante distintos lenguajes. La experiencia culminará con una pequeña galería de hallazgos explicada con sus propias palabras.`;
+      }else if(level==='Secundaria'){
+        a=`En ${institution}, ubicada en ${locality}, la presencia de pinturas rupestres y otros vestigios arqueológicos del entorno plantea una oportunidad para investigar el patrimonio local con rigor. Los estudiantes de ${grades} distinguirán observación, inferencia e interpretación; contrastarán fuentes; analizarán ubicación, características y posibles explicaciones, y reconocerán qué afirmaciones requieren evidencia adicional. No se asignarán autores, fechas ni significados sin respaldo verificable. El reto central será: ${retoHeritage}`;
+        b=`En ${institution}, en ${locality}, los estudiantes de ${grades} investigarán las pinturas rupestres como parte del patrimonio arqueológico local. Organizarán preguntas, seleccionarán fuentes pertinentes, contrastarán información y elaborarán explicaciones sustentadas, diferenciando hechos comprobables de hipótesis. Comunicarán sus hallazgos mediante un producto de divulgación dirigido a la comunidad educativa.`;
+      }else{
+        a=`En ${institution}, ubicada en ${locality}, los estudiantes de ${grades} parten de una realidad cercana expresada por el docente: en su entorno se encuentran pinturas rupestres. Esta presencia despierta preguntas sobre qué podemos observar directamente, qué información confiable podemos consultar y qué aspectos todavía necesitamos investigar. Según el grado, observarán y registrarán detalles, formularán preguntas, leerán o escucharán fuentes, ubicarán información, compararán evidencias y comunicarán sus hallazgos. No se atribuirán autores, antigüedad ni significados a las pinturas sin una fuente verificable. El reto será: ${retoHeritage}`;
+        b=`En ${institution}, en ${locality}, los estudiantes de ${grades} investigarán las pinturas rupestres y su valor como patrimonio arqueológico local. Primero expresarán lo que saben y qué desean averiguar; luego observarán registros, consultarán fuentes pertinentes, organizarán información y construirán explicaciones acordes con cada grado. Finalmente comunicarán lo aprendido mediante una muestra que diferencie claramente lo observado, lo investigado y lo que aún queda por comprobar.`;
+      }
+      return {meaning:m,focus,reto:retoHeritage,situations:[
+        {key:'A',title:'Patrimonio cercano: observamos e investigamos',text:a},
+        {key:'B',title:'Huellas del pasado: buscamos evidencias y comunicamos',text:b}
+      ]};
+    }
 
     if(level==='Inicial'){
       const theme=/animal/.test(low)
@@ -83,6 +102,24 @@
     const m=pack.meaning,focus=pack.focus,level=state.level||'Primaria';
     const low=tidy(focus).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const animal=/animal/.test(low),seed=/semill|siembr|planta|biohuerto/.test(low),water=/agua/.test(low);
+    const heritage=/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueologic|sitios?\s+arqueologic|patrimonio\s+arqueologic/.test((tidy(raw)+' '+low).normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+    if(heritage){
+      if(level==='Inicial')return [
+        {key:'1',title:'Galería “Huellas del pasado”',text:'Muestra sencilla con dibujos, reproducciones seguras, formas y colores observados por los niños, acompañada de breves explicaciones dictadas a la docente.'},
+        {key:'2',title:'Libro gigante de descubrimientos rupestres',text:'Álbum colectivo con dibujos, preguntas y hallazgos expresados por los niños sobre lo que observaron en las pinturas de las rocas.'},
+        {key:'3',title:'Rincón de pequeños exploradores del pasado',text:'Espacio de aula con imágenes, reproducciones, preguntas y producciones para que los niños expliquen lo que observaron y lo que todavía desean saber.'}
+      ];
+      if(level==='Secundaria')return [
+        {key:'1',title:'Dossier de investigación sobre el patrimonio rupestre local',text:'Documento con preguntas, fuentes, registros, análisis, distinción entre evidencias e interpretaciones y conclusiones sustentadas sobre las pinturas rupestres del entorno.'},
+        {key:'2',title:'Exposición de divulgación “Huellas del pasado”',text:'Muestra pública con paneles, mapas referenciales, fuentes, explicaciones y conclusiones que comuniquen el valor del patrimonio sin presentar hipótesis como hechos.'},
+        {key:'3',title:'Ruta interpretativa escolar del patrimonio arqueológico',text:'Propuesta de recorrido o recurso digital que organiza puntos, preguntas, evidencias y mensajes de valoración del patrimonio arqueológico local.'}
+      ];
+      return [
+        {key:'1',title:'Museo escolar “Huellas de nuestra comunidad”',text:'Muestra por estaciones con dibujos o registros de observación, textos breves, preguntas investigadas y explicaciones sustentadas sobre las pinturas rupestres, diferenciadas según el grado.'},
+        {key:'2',title:'Guía ilustrada de las pinturas rupestres de nuestro entorno',text:'Guía elaborada por los estudiantes con observaciones, vocabulario, preguntas, información comprobada y recomendaciones para valorar el patrimonio local.'},
+        {key:'3',title:'Galería comentada “Lo que descubrimos del pasado”',text:'Exposición con producciones de distintas áreas en la que los estudiantes explican qué observaron, qué investigaron y qué aspectos todavía requieren comprobación.'}
+      ];
+    }
     if(level==='Inicial'){
       if(animal)return [
         {key:'1',title:'Museo de huellas, pelos, plumas y descubrimientos',text:'Muestra colectiva con dibujos, clasificaciones, huellas, imágenes y explicaciones orales de los niños sobre las características que descubrieron en distintos animales.'},
@@ -164,7 +201,7 @@
     panel.innerHTML=`<div class="dd-side-head"><div><span class="pill">Asistente de producto</span><h2>Construye un producto más potente</h2></div><button class="dd-side-close" type="button">×</button></div>
       <p>DocenteDigital usa el nivel, el reto, el contexto y la situación elegida. Selecciona una propuesta y luego edítala si deseas.</p>
       <div class="dd-product-assistant-list">${ideas.map((x,i)=>`<button type="button" class="dd-product-assistant-option" data-index="${i}"><b>${E(x.title)}</b><span>${E(x.text)}</span></button>`).join('')}</div>
-      <div class="notice topgap">Cuando conectemos la API de OpenAI, este mismo panel podrá generar y refinar nuevas variantes conversando sin salir de DocenteDigital.</div>`;
+      <div class="notice topgap">Puedes elegir una propuesta, editarla o pedir nuevas variantes con el asistente IA de DocenteDigital cuando la conexión esté activa.</div>`;
     const shade=document.createElement('div');shade.id='ddProductSideShade';shade.className='dd-title-side-shade';
     document.body.appendChild(shade);document.body.appendChild(panel);
     const close=()=>{panel.remove();shade.remove();};
