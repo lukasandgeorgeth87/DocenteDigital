@@ -63,6 +63,8 @@
     s=s.replace(OBSERVATION_PREFIX,'');
     if(wasObservation)s=s.replace(OBSERVATION_QUANTITY,'');
     s=s.replace(DESCRIPTION_PREFIX,'');
+    s=s.replace(/^(?:en|dentro de)\s+(?:nuestra|la|mi|su)\s+(?:comunidad|localidad|barrio|anexo|centro poblado)\s+(?:encontramos|observamos|vemos|hay|existen|se encuentran|aparecen)\s+/i,'');
+    s=s.replace(/^(?:en|dentro de)\s+(?:la\s+)?comunidad\s+(?:de\s+[\p{L}'’ -]+?\s+)?(?:encontramos|observamos|vemos|hay|existen|se encuentran|aparecen)\s+/iu,'');
     s=s.replace(/^(?:el tema de|tema:)\s*/i,'');
     return tidy(s.replace(/[.!?]+$/,''));
   }
@@ -119,6 +121,9 @@
     }
     if(/\b(?:redes\s+sociales|celular|telefono|internet)\b/.test(s)&&/\b(?:exces|mal\s+uso|riesgo|adic|distrac)\w*/.test(s)){
       return {key:'digital',theme:'el uso responsable y seguro de la tecnología'};
+    }
+    if(/\b(?:pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueol[oó]gic|sitios?\s+arqueol[oó]gic|patrimonio\s+arqueol[oó]gic)\b/.test(s)){
+      return {key:'heritage',theme:'las pinturas rupestres y el patrimonio arqueológico local'};
     }
     return null;
   }
@@ -177,6 +182,31 @@
     if(issue.key==='digital'){
       if(level==='Secundaria')return ['Conectados con criterio: analizamos el uso responsable de la tecnología','Pantallas, decisiones y bienestar: comprendemos riesgos y oportunidades','Tecnología con propósito: construimos hábitos digitales responsables'];
       return ['Usamos la tecnología con responsabilidad','Pantallas con propósito: aprendemos a decidir mejor','Cuidamos nuestro tiempo y seguridad al usar tecnología'];
+    }
+    if(issue.key==='heritage'){
+      if(level==='Inicial')return [
+        'Huellas del pasado: descubrimos formas y colores en las pinturas rupestres',
+        'Pequeños exploradores de las huellas antiguas',
+        '¿Qué descubrimos en las pinturas de las rocas?'
+      ];
+      if(level==='Secundaria')return project ? [
+        'Huellas del pasado, preguntas del presente: investigamos nuestro patrimonio arqueológico',
+        'Arte rupestre y memoria del territorio: analizamos evidencias y comunicamos hallazgos',
+        'Patrimonio bajo investigación: interpretamos evidencias de las pinturas rupestres'
+      ] : [
+        'Pinturas rupestres y memoria del territorio: analizamos evidencias del pasado',
+        'Patrimonio arqueológico local: interpretamos, contrastamos y explicamos',
+        'Huellas del pasado: estudiamos las pinturas rupestres con evidencias'
+      ];
+      return project ? [
+        'Huellas del pasado en nuestra comunidad: investigamos las pinturas rupestres',
+        'Pinturas rupestres: descubrimos qué nos cuentan sobre nuestro patrimonio',
+        'Guardianes de nuestra memoria: conocemos y valoramos el patrimonio arqueológico local'
+      ] : [
+        'Huellas del pasado: conocemos las pinturas rupestres de nuestro entorno',
+        'Pinturas rupestres: observamos, preguntamos y buscamos explicaciones',
+        'Nuestro patrimonio arqueológico: descubrimos, comprendemos y valoramos'
+      ];
     }
     return [];
   }
