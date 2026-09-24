@@ -560,10 +560,14 @@
     document.body.appendChild(wrap);
   }
 
-  function confirmPremiumImage(){
+  async function confirmPremiumImage(){
     bumpRoute('premiumRequests');
     closeCreditGate();
-    alert('Solicitud premium registrada. El cobro real y la generación se activarán únicamente cuando el contador de créditos y la API estén conectados.');
+    if(window.DDOpenAI?.generatePremiumImage){
+      await window.DDOpenAI.generatePremiumImage();
+      return;
+    }
+    alert('La generación premium no está disponible todavía en este despliegue.');
   }
 
   function renderResourceCards(items){
