@@ -22,7 +22,8 @@ const cases = [
   {name:'contaminacion', brief:'Observamos residuos en algunos espacios y queremos registrar lo que encontramos.'},
   {name:'lectura', brief:'Queremos mejorar la comprensión de textos informativos sobre nuestro entorno.'},
   {name:'alimentacion', brief:'Queremos conocer mejor los alimentos que consumimos en nuestra comunidad.'},
-  {name:'tecnologia', brief:'Queremos explorar cómo algunas herramientas tecnológicas ayudan en tareas cotidianas.'}
+  {name:'tecnologia', brief:'Queremos explorar cómo algunas herramientas tecnológicas ayudan en tareas cotidianas.'},
+  {name:'pinturas_rupestres', brief:'En la comunidad encontramos pinturas rupestres.'}
 ];
 
 async function configure(){
@@ -85,6 +86,12 @@ try{
     assert(unit.selectionApproved===true,`${c.name}: no registró elección explícita`);
     assert(situation.length>=40,`${c.name}: situación significativa demasiado vacía`);
     assert(product.length>=20,`${c.name}: producto/evidencia insuficiente`);
+    if(c.name==='pinturas_rupestres'){
+      assert(!/en la comunidad encontramos/i.test(title),'pinturas rupestres: copió la oración contextual dentro del título');
+      assert(/pinturas rupestres|patrimonio|huellas del pasado/i.test(title),'pinturas rupestres: el título no recuperó el núcleo pedagógico');
+      assert(/pinturas rupestres|patrimonio arqueológico/i.test(situation),'pinturas rupestres: la situación no se contextualizó en el patrimonio local');
+      assert(!/autores|antigüedad|significado histórico exacto/i.test(situation)||/no se atribuirán|sin.*verific/i.test(situation),'pinturas rupestres: introdujo afirmaciones no verificadas');
+    }
   }
 
   const antBrief='Observamos hormigas en el aula.';
