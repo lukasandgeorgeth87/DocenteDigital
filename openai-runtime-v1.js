@@ -206,7 +206,7 @@
     const prompt=[
       'Crea una imagen educativa para '+(s.level||'educación')+'.',
       'Tema: '+(last.title||$('materialTopic')?.value||'aprendizaje escolar')+'.',
-      'Área: '+(last.area||$('materialArea')?.value||'').'.',
+      'Área: '+(last.area||$('materialArea')?.value||'')+'.',
       'Debe ser pedagógicamente clara, visualmente limpia y lista para material escolar.',
       s.level==='Inicial'?'Si es una ficha para Inicial, usa referencias solo como inspiración; varía la composición y prioriza una actividad visual concreta.':'Ajusta la complejidad al nivel.',
       'No incluyas nombres ni datos personales de estudiantes.'
@@ -224,6 +224,24 @@
         alert('Imagen guardada para la sesión actual.');
       });
     }catch(e){alert(e.message);}
+  }
+
+  async function testRealConnection(button){
+    const out=$('ddAiConnectionTest');
+    setBusy(button,true,'Probando conexión…');
+    try{
+      const status=await health(true);
+      if(!status?.configured)throw Object.assign(new Error(friendlyError('openai_not_configured')),{code:'openai_not_configured'});
+      const started=Date.now();
+      const r=await request('contextual_help','Responde únicamente con la frase CONEXION_OK.',{quality:'auto',context:{title:'Prueba técnica de conexión'}});
+      const answer=(r.data?.result||'').trim();
+      if(!/CONEXION_OK/i.test(answer))throw new Error('OpenAI respondió, pero la prueba técnica no devolvió el código esperado.');
+      if(out)out.innerHTML='<div class="success"><b>✓ OpenAI conectado realmente</b><br>Servidor → OpenAI → DocenteDigital funcionando. Tiempo: '+((Date.now()-started)/1000).toFixed(1)+' s.</div>';
+      return true;
+    }catch(e){
+      if(out)out.innerHTML='<div class="notice"><b>No se completó la prueba.</b><br>'+esc(e.message)+'</div>';
+      return false;
+    }finally{setBusy(button,false);}
   }
 
   function updateHubUsage(){
@@ -251,11 +269,13 @@
       <label class="full topgap">Consulta usando tu contexto de DocenteDigital
         <textarea id="ddAiChatInput" placeholder="Ej.: mejora el título de mi proyecto o dame una idea para trabajar el tema actual."></textarea>
       </label>
-      <div class="actions"><button class="btn" type="button" id="ddAiChatSend">Preguntar aquí</button><button class="btn ghost" type="button" id="ddAiRetryStatus">Revisar conexión</button></div>
+      <div class="actions"><button class="btn" type="button" id="ddAiChatSend">Preguntar aquí</button><button class="btn ghost" type="button" id="ddAiRetryStatus">Revisar conexión</button><button class="btn alt" type="button" id="ddAiTestReal">Probar OpenAI real</button></div>
+      <div id="ddAiConnectionTest" class="topgap"></div>
       <div id="ddAiChatResult" class="topgap"></div>
       <small id="ddAiUsage"></small>`;
     $('ddAiChatSend').onclick=e=>contextualChat(e.currentTarget);
     $('ddAiRetryStatus').onclick=renderHubStatus;
+    $('ddAiTestReal').onclick=e=>testRealConnection(e.currentTarget);
     renderHubStatus();updateHubUsage();
   }
 
@@ -297,5 +317,5 @@
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 
-  window.DDOpenAI={health,request,safeContext,improveTitles,improveSituation,materialWithAI,contextualChat,directorDraft,generatePremiumImage,readUsage,renderHubStatus};
+  window.DDOpenAI={health,request,safeContext,improveTitles,improveSituation,materialWithAI,contextualChat,directorDraft,generatePremiumImage,testRealConnection,readUsage,renderHubStatus};
 })();
