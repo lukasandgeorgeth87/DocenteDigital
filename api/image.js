@@ -8,7 +8,7 @@ module.exports=async function handler(req,res){
   if(body.confirmedCredit!==true)return send(res,402,{ok:false,error:'premium_credit_confirmation_required'});
   const prompt=clean(body.prompt);
   if(!prompt)return send(res,400,{ok:false,error:'empty_prompt'});
-  const model=process.env.OPENAI_IMAGE_MODEL||'gpt-image-2.5-flare';
+  const model=process.env.OPENAI_IMAGE_MODEL||'gpt-image-2';
   const size=['1024x1024','1024x1536','1536x1024'].includes(body.size)?body.size:'1024x1536';
   const quality=['low','medium','high'].includes(body.quality)?body.quality:'medium';
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),55000);
