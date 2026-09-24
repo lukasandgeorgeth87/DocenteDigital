@@ -4,7 +4,92 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>DocenteDigital</title>
+<script>
+/* First-run gate: keep heavy planning modules out of first-time mobile setup.
+   Do not reset existing work and never bypass the private-beta authorization. */
+(function(){
+  try{
+    if(localStorage.getItem('docenteDigitalPrototype_reset_backup'))return;
+    const raw=localStorage.getItem('docenteDigitalPrototype');
+    let s={};
+    if(raw){
+      try{
+        s=JSON.parse(raw);
+      }catch(error){
+        const key='docenteDigitalPrototype_recovery_'+new Date().toISOString().replace(/[:.]/g,'-');
+        let backedUp=false;
+        try{
+          localStorage.setItem(key,raw);
+          backedUp=localStorage.getItem(key)===raw;
+          if(backedUp)localStorage.removeItem('docenteDigitalPrototype');
+        }catch(_saveError){}
+        try{
+          sessionStorage.setItem('ddPreOnboardingRecovery',JSON.stringify({
+            at:new Date().toISOString(),backedUp,error:String(error)
+          }));
+        }catch(_sessionError){}
+        s={};
+      }
+    }
+    const levels={Inicial:['3 años','4 años','5 años'],Primaria:['1.º','2.º','3.º','4.º','5.º','6.º'],Secundaria:['1.º','2.º','3.º','4.º','5.º']};
+    const validLevel=Object.prototype.hasOwnProperty.call(levels,s?.level);
+    const grades=Array.isArray(s?.grades)?s.grades:[];
+    const areas=Array.isArray(s?.areas)?s.areas:[];
+    const validBase=validLevel&&['Unidocente','Multigrado','Polidocente'].includes(s.ieType)&&
+      grades.length>0&&grades.every(g=>levels[s.level].includes(g))&&areas.length>0&&
+      !(s.ieType==='Polidocente'&&grades.length>1)&&
+      !(s.level==='Secundaria'&&(s.ieType!=='Polidocente'||areas.length>1))&&
+      !(s.level==='Inicial'&&areas.includes('Arte y Cultura'));
+    const validLanguage=s?.linguisticMode==='Monolingüe castellano'||
+      (s?.linguisticMode==='EIB'&&s.linguisticSelectionConfirmed===true&&
+       s.indigenousLanguage&&s.indigenousLanguage!=='Ninguna');
+    if(validBase&&validLanguage)return;
+  }catch(_error){}
+  const next=new URL('onboarding.html',location.href);
+  next.search=location.search;
+  location.replace(next.href);
+})();
+</script>
+
 <link rel="stylesheet" href="styles.css">
+<style>
+.dd-setup-block{padding:18px 0;border-bottom:1px solid #e4ece8}
+.dd-setup-block:last-child{border-bottom:0}
+.dd-setup-block h1{font-size:clamp(22px,5vw,30px);margin-bottom:6px}
+#setup .steps{position:static;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+#setup .step{opacity:.9}
+#setup .choice{min-height:52px;touch-action:manipulation;-webkit-tap-highlight-color:rgba(20,120,90,.12)}
+#setup .choice.active{background:#dff5ec;border:2px solid #208966;color:#145b46;box-shadow:0 0 0 2px rgba(32,137,102,.08)}
+body.dd-setup-mode .mobile-nav{display:none!important}
+body.dd-setup-mode .content{padding-bottom:24px!important}
+.dd-setup-selected{margin-top:8px;font-weight:800;color:#17694f}
+@media(max-width:650px){#setup .card{padding:14px}#setup .dd-setup-block{padding:14px 0}#setup .choices{gap:8px}}
+
+#setup{position:relative;z-index:80;pointer-events:auto}
+#setup *{pointer-events:auto}
+body.dd-setup-mode .mobile-nav{display:none!important}
+body.dd-setup-mode .chatbar{display:none!important}
+.dd-native-label{display:block;font-weight:800;margin-top:8px}
+.dd-native-label select,#ddSetupNativeForm select{margin-top:7px;min-height:54px;font-size:18px;background:#fff}
+.dd-native-group{border:1px solid #dbe7ef;border-radius:16px;padding:12px;margin:12px 0;background:#fbfdfc}
+.dd-native-group legend{font-weight:900;color:#17694f;padding:0 6px}
+.dd-native-group label{display:flex;align-items:center;gap:10px;min-height:46px;padding:7px 8px;border-radius:10px;font-weight:750}
+.dd-native-group input[type="checkbox"]{width:24px;height:24px;accent-color:#0f766e;flex:0 0 auto}
+.dd-native-group.dd-native-hidden{display:none}
+
+.dd-radio-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.dd-radio-cards label{display:block;cursor:pointer}
+.dd-radio-cards input{position:absolute;opacity:0;pointer-events:none}
+.dd-radio-cards span{display:flex;align-items:center;justify-content:center;min-height:56px;padding:10px 12px;border:2px solid #d8e3e8;border-radius:16px;background:#fff;font-weight:900;color:#29465f;text-align:center}
+.dd-radio-cards input:checked+span{border-color:#14846a;background:#daf4e9;color:#0d624e;box-shadow:0 0 0 2px rgba(20,132,106,.08)}
+.dd-native-group label{cursor:pointer}
+.dd-native-group input[type="checkbox"]{pointer-events:auto!important}
+@media(max-width:650px){.dd-radio-cards{grid-template-columns:1fr 1fr}.dd-radio-cards label:last-child:nth-child(odd){grid-column:1/-1}}
+
+#setup [data-dd-initial-csl][hidden]{display:none!important}
+#setup .dd-native-group.dd-native-hidden{display:none!important}
+#setup .dd-setup-selected{background:#e8f7f2;padding:10px;border-radius:10px}
+</style>
 </head>
 <body>
 <header class="topbar">
@@ -16,35 +101,134 @@
     <button class="nav active" data-screen="home" onclick="go('home')">🏠 Inicio</button>
     <button class="nav" data-screen="plan" onclick="go('plan')">📘 Mi planificación</button>
     <button class="nav" data-screen="session" onclick="go('session')">📝 Crear mi sesión</button>
-    <button class="nav" data-screen="materials" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">🧩 Materiales · Próximamente</button>
-    <button class="nav" data-screen="evaluation" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">📊 Evaluación · Próximamente</button>
+    <button class="nav" data-screen="materials" onclick="go('materials')">🧩 Materiales</button>
+    <button class="nav" data-screen="evaluation" onclick="go('evaluation')">📊 Evaluación</button>
     <button class="nav" data-screen="director" onclick="go('director')">🏫 Director</button>
     <button class="nav" data-screen="settings" onclick="go('settings')">⚙️ Configuración</button>
   </aside>
   <main class="content">
     <section id="setup" class="screen setup">
-      <div class="card">
-        <div class="steps"><span id="s1" class="step active">1. Nivel</span><span id="s2" class="step">2. Tipo de IE</span><span id="s3" class="step">3. Grados/edades</span><span id="s4" class="step">4. Áreas</span></div>
-        <div id="step1">
-          <h1>Selecciona el nivel educativo</h1><p class="sub">Este es el primer requisito. Define grados, áreas y forma de planificación.</p>
-          <div class="choices"><button class="choice" onclick="chooseOne('level','Inicial',this)">🧸 Inicial</button><button class="choice" onclick="chooseOne('level','Primaria',this)">📚 Primaria</button><button class="choice" onclick="chooseOne('level','Secundaria',this)">🎓 Secundaria</button></div>
-          <div class="actions"><button class="btn" onclick="nextSetup(2)">Continuar →</button></div>
+      <form id="ddSetupNativeForm" class="card" novalidate>
+        <div class="steps"><span class="step active">1. Nivel</span><span class="step active">2. Tipo de IE</span><span class="step active">3. Grados/edades</span><span class="step active">4. Áreas</span></div>
+        <p id="ddNativeSelectionStatus" class="dd-setup-selected" role="status" aria-live="polite">Empieza seleccionando un nivel.</p>
+
+        <div class="dd-setup-block" id="ddStepLevel">
+          <h1>1. Nivel educativo</h1>
+          <p class="sub">Toca una opción.</p>
+          <div class="dd-radio-cards">
+            <label><input type="radio" name="ddLevel" value="Inicial"><span>🧸 Inicial</span></label>
+            <label><input type="radio" name="ddLevel" value="Primaria"><span>📚 Primaria</span></label>
+            <label><input type="radio" name="ddLevel" value="Secundaria"><span>🎓 Secundaria</span></label>
+          </div>
         </div>
-        <div id="step2" class="hidden">
-          <h1>Selecciona el tipo de IE</h1><p class="sub">Esto define si trabajarás con uno o varios grados en una misma planificación.</p>
-          <div class="choices"><button class="choice" onclick="chooseOne('ieType','Unidocente',this)">👩‍🏫 Unidocente</button><button class="choice" onclick="chooseOne('ieType','Multigrado',this)">👥 Multigrado</button><button class="choice" onclick="chooseOne('ieType','Polidocente',this)">🏫 Polidocente</button></div>
-          <div class="actions"><button class="btn ghost" onclick="nextSetup(1)">← Atrás</button><button class="btn" onclick="nextSetup(3)">Continuar →</button></div>
+
+        <div class="dd-setup-block" id="ddStepIE">
+          <h1>2. Tipo de IE</h1>
+          <p class="sub">Toca la forma de organización de tu institución.</p>
+          <div class="dd-radio-cards">
+            <label><input type="radio" name="ddIE" value="Unidocente"><span>👩‍🏫 Unidocente</span></label>
+            <label><input type="radio" name="ddIE" value="Multigrado"><span>👥 Multigrado</span></label>
+            <label><input type="radio" name="ddIE" value="Polidocente"><span>🏫 Polidocente</span></label>
+          </div>
         </div>
-        <div id="step3" class="hidden">
-          <h1>Selecciona grados o edades</h1><p id="gradeHelp" class="sub"></p><div id="gradeChoices" class="choices"></div>
-          <div class="actions"><button class="btn ghost" onclick="nextSetup(2)">← Atrás</button><button class="btn" onclick="nextSetup(4)">Continuar →</button></div>
+
+        <div class="dd-setup-block" id="ddStepGrades">
+          <h1>3. Grados o edades</h1>
+          <p class="sub">Toca uno o varios. Solo se guardarán los que correspondan al nivel elegido.</p>
+
+          <fieldset class="dd-native-group" data-dd-grade-group="Inicial">
+            <legend>Inicial</legend>
+            <label><input type="checkbox" value="3 años"> <span>3 años</span></label>
+            <label><input type="checkbox" value="4 años"> <span>4 años</span></label>
+            <label><input type="checkbox" value="5 años"> <span>5 años</span></label>
+          </fieldset>
+
+          <fieldset class="dd-native-group" data-dd-grade-group="Primaria">
+            <legend>Primaria</legend>
+            <label><input type="checkbox" value="1.º"> <span>1.º</span></label>
+            <label><input type="checkbox" value="2.º"> <span>2.º</span></label>
+            <label><input type="checkbox" value="3.º"> <span>3.º</span></label>
+            <label><input type="checkbox" value="4.º"> <span>4.º</span></label>
+            <label><input type="checkbox" value="5.º"> <span>5.º</span></label>
+            <label><input type="checkbox" value="6.º"> <span>6.º</span></label>
+          </fieldset>
+
+          <fieldset class="dd-native-group" data-dd-grade-group="Secundaria">
+            <legend>Secundaria</legend>
+            <label><input type="checkbox" value="1.º"> <span>1.º</span></label>
+            <label><input type="checkbox" value="2.º"> <span>2.º</span></label>
+            <label><input type="checkbox" value="3.º"> <span>3.º</span></label>
+            <label><input type="checkbox" value="4.º"> <span>4.º</span></label>
+            <label><input type="checkbox" value="5.º"> <span>5.º</span></label>
+          </fieldset>
         </div>
-        <div id="step4" class="hidden">
-          <h1>Selecciona las áreas</h1><p id="areaHelp" class="sub"></p><div id="areaChoices" class="choices"></div>
-          <div class="card inner"><h3>🌎 Perfil lingüístico de la IE</h3><p class="sub">Indica si la institución brinda atención EIB o trabaja de manera monolingüe en castellano.</p><div class="form2"><label>Tipo de atención lingüística<select id="linguisticMode"><option value="">Selecciona una opción</option><option value="EIB">Educación Intercultural Bilingüe (EIB)</option><option value="Monolingüe castellano">Monolingüe castellano</option></select></label><label>Lengua de trabajo<select id="language"><option value="Castellano">Castellano</option><option value="Lengua originaria">Lengua originaria</option><option value="Bilingüe">Bilingüe</option></select></label><label class="full">Lengua originaria / variedad principal<select id="quechuaVar"><option value="Ninguna">Ninguna</option></select></label></div><small>En EIB, la lengua o variedad pertinente debe confirmarse antes de generar materiales. No se asigna automáticamente por ubicación.</small></div>
-          <div class="actions"><button class="btn ghost" onclick="nextSetup(3)">← Atrás</button><button class="btn" onclick="finishSetup()">Guardar y entrar</button></div>
+
+        <div class="dd-setup-block" id="ddStepAreas">
+          <h1>4. Áreas</h1>
+          <p class="sub">Marca las áreas con las que trabajarás.</p>
+
+          <fieldset class="dd-native-group" data-dd-area-group="Inicial">
+            <legend>Áreas de Inicial</legend>
+            <label><input type="checkbox" value="Comunicación"> <span>Comunicación</span></label>
+            <label><input type="checkbox" value="Matemática"> <span>Matemática</span></label>
+            <label><input type="checkbox" value="Personal Social"> <span>Personal Social</span></label>
+            <label><input type="checkbox" value="Ciencia y Tecnología"> <span>Ciencia y Tecnología</span></label>
+            <label><input type="checkbox" value="Psicomotriz"> <span>Psicomotriz</span></label>
+            <label data-dd-initial-csl hidden><input type="checkbox" value="Castellano como segunda lengua"> <span>Castellano como segunda lengua (solo si corresponde EIB)</span></label>
+          </fieldset>
+
+          <fieldset class="dd-native-group" data-dd-area-group="Primaria">
+            <legend>Áreas de Primaria</legend>
+            <label><input type="checkbox" value="Comunicación"> <span>Comunicación</span></label>
+            <label><input type="checkbox" value="Matemática"> <span>Matemática</span></label>
+            <label><input type="checkbox" value="Personal Social"> <span>Personal Social</span></label>
+            <label><input type="checkbox" value="Ciencia y Tecnología"> <span>Ciencia y Tecnología</span></label>
+            <label><input type="checkbox" value="Arte y Cultura"> <span>Arte y Cultura</span></label>
+            <label><input type="checkbox" value="Educación Física"> <span>Educación Física</span></label>
+            <label><input type="checkbox" value="Educación Religiosa"> <span>Educación Religiosa</span></label>
+          </fieldset>
+
+          <fieldset class="dd-native-group" data-dd-area-group="Secundaria">
+            <legend>Áreas de Secundaria</legend>
+            <label><input type="checkbox" value="Comunicación"> <span>Comunicación</span></label>
+            <label><input type="checkbox" value="Matemática"> <span>Matemática</span></label>
+            <label><input type="checkbox" value="Ciencia y Tecnología"> <span>Ciencia y Tecnología</span></label>
+            <label><input type="checkbox" value="Ciencias Sociales"> <span>Ciencias Sociales</span></label>
+            <label><input type="checkbox" value="DPCC"> <span>DPCC</span></label>
+            <label><input type="checkbox" value="Inglés"> <span>Inglés</span></label>
+            <label><input type="checkbox" value="Educación Física"> <span>Educación Física</span></label>
+            <label><input type="checkbox" value="Arte y Cultura"> <span>Arte y Cultura</span></label>
+            <label><input type="checkbox" value="Educación Religiosa"> <span>Educación Religiosa</span></label>
+            <label><input type="checkbox" value="EPT"> <span>EPT</span></label>
+          </fieldset>
+
+          <div class="card inner">
+            <h3>🌎 Perfil lingüístico</h3>
+            <div class="form2">
+              <label>Atención lingüística
+                <select id="linguisticMode" required>
+                  <option value="">Selecciona una opción</option>
+                  <option value="EIB">Educación Intercultural Bilingüe (EIB)</option>
+                  <option value="Monolingüe castellano">Monolingüe castellano</option>
+                </select>
+              </label>
+              <label>Lengua de trabajo
+                <select id="language">
+                  <option value="Castellano">Castellano</option>
+                  <option value="Lengua originaria">Lengua originaria</option>
+                  <option value="Bilingüe">Bilingüe</option>
+                </select>
+              </label>
+              <label class="full">Lengua originaria / variedad principal
+                <select id="quechuaVar"><option value="Ninguna">Ninguna</option></select>
+              </label>
+            </div>
+          </div>
+
+          <div id="ddNativeSetupMessage" class="notice hidden"></div>
+          <div class="actions topgap"><button class="btn block" type="submit">Guardar configuración y entrar →</button></div>
         </div>
-      </div>
+      </form>
     </section>
 
     <section id="home" class="screen">
@@ -53,16 +237,16 @@
         <button class="card action-card span6" onclick="continueWork()"><span>▶️</span><h2>Continuar mi trabajo</h2><p>Retoma tu última unidad, proyecto o sesión.</p></button>
         <button class="card action-card span6" onclick="go('session')"><span>📝</span><h2>Crear mi sesión</h2><p>Usa la unidad/proyecto actual y completa solo lo que falta.</p></button>
         <button class="card action-card span4" onclick="go('plan')"><span>📘</span><h2>Mi planificación</h2><p>Diagnóstico, programación anual, horario, unidades y proyectos.</p></button>
-        <button class="card action-card span4" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento"><span>🧩</span><h2>Materiales · Próximamente</h2><p>Este flujo todavía está en construcción y no se considera disponible para lanzamiento.</p></button>
-        <button class="card action-card span4" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento"><span>📊</span><h2>Evaluación · Próximamente</h2><p>Este flujo todavía está en construcción y no se considera disponible para lanzamiento.</p></button>
+        <button class="card action-card span4" onclick="go('materials')"><span>🧩</span><h2>Materiales</h2><p>Crea lecturas, fichas, problemas y paquetes a partir de tu planificación.</p></button>
+        <button class="card action-card span4" onclick="go('evaluation')"><span>📊</span><h2>Evaluación</h2><p>Registra evidencias, crea evaluaciones y redacta conclusiones desde lo ya planificado.</p></button>
       </div>
     </section>
 
     <section id="plan" class="screen">
       <h1>Mi planificación</h1><p class="sub">Nivel → Tipo de IE → grados/edades → áreas → horario → planificación.</p>
       <div class="grid">
-        <div class="card span4"><h2>🩺 Evaluación diagnóstica</h2><p>Toma como referencia aprendizajes del grado anterior.</p><button class="btn block" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">Crear diagnóstico · Próximamente</button></div>
-        <div class="card span4"><h2>📅 Programación anual</h2><p>Se reajusta con diagnóstico, contexto y avances.</p><button class="btn alt block" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">Abrir programación anual · Próximamente</button></div>
+        <div class="card span4"><h2>🩺 Evaluación diagnóstica</h2><p>Recoge evidencias iniciales y ayuda a decidir apoyos y prioridades.</p><button class="btn block" onclick="window.DDPlanningTools?.openDiagnostic()">Crear diagnóstico</button></div>
+        <div class="card span4"><h2>📅 Programación anual</h2><p>Organiza periodos, unidades/proyectos, competencias y evidencias de manera editable.</p><button class="btn alt block" onclick="window.DDPlanningTools?.openAnnual()">Abrir programación anual</button></div>
         <div class="card span4"><h2>📚 Unidad / Proyecto</h2><p>Crea y guarda unidades o proyectos para reutilizarlos en las sesiones.</p><button class="btn amber block" onclick="showUnit()">Crear nueva</button></div>
       </div>
 
@@ -77,10 +261,13 @@
       <div id="unitPanel" class="card hidden topgap">
         <h2>📚 Crear unidad/proyecto</h2><div id="unitContext" class="success"></div>
         <div class="form2">
-          <label>Tipo<select id="unitType"><option>Unidad de aprendizaje</option><option>Proyecto de aprendizaje</option></select></label>
+          <label>Tipo<select id="unitType" onchange="refreshUnitTitleSuggestions()"><option>Unidad de aprendizaje</option><option>Proyecto de aprendizaje</option></select></label>
           <label>Duración<select id="unitDuration"><option>1 semana</option><option>2 semanas</option><option>3 semanas</option><option>4 semanas</option><option>5 semanas</option><option>6 semanas</option></select></label>
-          <label class="full">Título de la unidad/proyecto<input id="unitTitle" placeholder="La app propondrá y mejorará el título a partir del contexto"></label>
-          <label class="full">Idea o contexto de partida<textarea id="unitSituation" placeholder="Ejemplo: describe un interés, necesidad, problema u oportunidad real de tus estudiantes y su contexto"></textarea><small>Escribe una idea breve. La app analizará primero lo expresado y redactará una propuesta sin inventar problemas, causas, actores o finalidades no mencionados.</small></label>
+          <label class="full">Título de la unidad/proyecto
+  <input id="unitTitle" placeholder="Escribe un tema/título o deja que DocenteDigital te ayude" oninput="this.dataset.autoTitle='false'">
+  <div id="unitTitleSuggestions" class="dd-title-suggestions"><small>El contexto mejora la precisión, pero no es obligatorio: DocenteDigital puede proponerte un punto de partida.</small></div>
+</label>
+          <label class="full">Idea o contexto de partida <span class="pill">Opcional</span><textarea id="unitSituation" oninput="refreshUnitTitleSuggestions()" placeholder="Puedes describir un interés, necesidad, problema u oportunidad real. Si lo dejas vacío, DocenteDigital propondrá un contexto pedagógico editable."></textarea><small>Lo ideal es que el docente aporte el contexto real. Si no lo hace, DocenteDigital propondrá uno prudente a partir del título, nivel, edades/grados y áreas, sin inventar datos locales como hechos.</small><div class="actions topgap"><button type="button" class="btn ghost" onclick="window.ddAssistPlanningContext?.(true)">✨ Ayúdame a proponer el contexto</button></div></label>
         </div>
         <div class="expert-only notice">Modo Experto: competencias, capacidades, desempeños, criterios, enfoques y fuentes normativas.</div>
         <button class="btn" onclick="createUnitDemo()">✨ Crear propuesta completa</button>
@@ -92,38 +279,165 @@
 
     <section id="session" class="screen">
       <h1>Crear mi sesión</h1><p class="sub">La app reutiliza la unidad/proyecto, diferencia las tareas por grado y permite descargar o compartir la sesión en Word.</p>
-      <div class="card"><div id="sessionContext" class="success"></div><div class="form2"><label>Unidad / Proyecto actual<select id="sessionUnit" onchange="loadUnitForSession()"></select></label><label>Actividad programada<select id="activity" onchange="syncTitle()"></select></label><label class="full">Título de la sesión <span class="pill">Automático</span><input id="sessionTitle" readonly><small>Copiado de la actividad programada.</small></label><label>Duración<select id="sessionDuration"><option>45 minutos</option><option>60 minutos</option><option>90 minutos</option></select></label><label>Recursos de hoy<select id="sessionResources"><option>Materiales básicos</option><option>Con impresora</option><option>TV/proyector</option><option>Tabletas/celulares</option></select></label></div><div class="expert-only notice">Modo Experto: revisión de competencia, desempeño, criterio, evidencia e instrumento.</div><button class="btn block topgap" onclick="generateSession()">✨ PREPARAR MI SESIÓN MAESTRA</button></div>
+      <div class="card"><div id="sessionContext" class="success"></div><div class="form2"><label>Unidad / Proyecto actual<select id="sessionUnit" onchange="loadUnitForSession()"></select></label><label>Actividad programada<select id="activity" onchange="syncTitle()"></select></label><label class="full">Título de la sesión <span class="pill">Automático</span><input id="sessionTitle" readonly><small>Copiado de la actividad programada.</small></label><label>Duración
+    <select id="sessionDuration">
+      <option>40 minutos</option>
+      <option>45 minutos</option>
+      <option>60 minutos</option>
+      <option>90 minutos</option>
+      <option>120 minutos</option>
+      <option>135 minutos</option>
+      <option>150 minutos</option>
+      <option>180 minutos</option>
+    </select>
+    <small>Puede ajustarse según el área, la actividad y la organización de la jornada.</small>
+  </label><label>Recursos de hoy<select id="sessionResources"><option>Materiales básicos</option><option>Con impresora</option><option>TV/proyector</option><option>Tabletas/celulares</option></select></label></div><div class="expert-only notice">Modo Experto: revisión de competencia, desempeño, criterio, evidencia e instrumento.</div><button class="btn block topgap" onclick="generateSession()">✨ PREPARAR MI SESIÓN MAESTRA</button></div>
       <div id="sessionOutput" class="card hidden topgap"><div class="tabs"><span class="tab active">Sesión</span><span class="tab">Ficha</span><span class="tab">Instrumento</span><span class="tab">Formalización</span><span class="tab">PPT</span></div><div class="document" id="sessionDocument"></div><div class="notice topgap">La corrección con IA todavía no está conectada. Esta función no se considera disponible para lanzamiento.</div><div class="chatbar"><input id="chatInput" placeholder="Corrección con IA · Próximamente" disabled aria-disabled="true" title="Función aún no disponible"><button class="btn" disabled aria-disabled="true" title="Función aún no disponible">Enviar · Próximamente</button></div><div id="chatLog"></div></div>
     </section>
 
     <section id="materials" class="screen">
-      <h1>Materiales</h1><p class="sub">Lecturas, fichas y recursos en castellano, lengua originaria o formato bilingüe.</p>
-      <div class="card"><div class="form2"><label>Tipo<select><option>Lectura</option><option>Ficha</option><option>Tarjetas palabra-imagen</option></select></label><label>Idioma<select id="materialLanguage"><option>Castellano</option><option>Lengua originaria</option><option>Bilingüe</option></select></label><label>Lengua originaria / variedad<select id="materialQuechua"><option value="Ninguna">Ninguna</option></select></label><label>Grado<select id="materialGrade"></select></label><label class="full">Tema<input placeholder="Escribe el tema o interés que deseas trabajar"></label></div><div class="notice">Si seleccionas lengua originaria o bilingüe, confirma la lengua/variedad pertinente y revisa el material antes de imprimir.</div><button class="btn" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">✨ Crear lectura · Próximamente</button><div id="materialOutput" class="document hidden topgap"><h2>Lectura generada</h2><p id="materialText"></p></div></div>
+      <h1>Materiales</h1>
+      <p class="sub">Crea lecturas, fichas, tarjetas, problemas y recursos conectados con tu unidad, proyecto o sesión. DocenteDigital reutiliza el contexto, grado, área y perfil de tu institución.</p>
+
+      <div class="card">
+        <div class="form2">
+          <label>Tomar como referencia
+            <select id="materialSource">
+              <option value="session">Última actividad/sesión creada</option>
+              <option value="unit">Unidad/proyecto actual</option>
+              <option value="free">Tema libre</option>
+            </select>
+          </label>
+
+          <label>Tipo de material
+            <select id="materialType">
+              <option>Lectura</option>
+              <option>Ficha de trabajo</option>
+              <option>Tarjetas palabra-imagen</option>
+              <option>Banco de problemas</option>
+              <option>Conceptos para pizarra</option>
+              <option>Organizador de aprendizaje</option>
+            </select>
+          </label>
+
+          <label>Área
+            <select id="materialArea"></select>
+          </label>
+
+          <label>Grado / edad
+            <select id="materialGrade"></select>
+          </label>
+
+          <label>Idioma
+            <select id="materialLanguage">
+              <option>Castellano</option>
+              <option>Lengua originaria</option>
+              <option>Bilingüe</option>
+            </select>
+          </label>
+
+          <label>Lengua originaria / variedad
+            <select id="materialQuechua"><option value="Ninguna">Ninguna</option></select>
+          </label>
+
+          <label class="full">Tema o propósito del material
+            <input id="materialTopic" placeholder="Ej.: animales mamíferos, germinación, igualdades, la siembra...">
+            <small>Si lo dejas vacío, DocenteDigital tomará el tema de tu última sesión o unidad/proyecto.</small>
+          </label>
+
+          <label class="full">Texto o recurso base <span class="pill">Opcional</span>
+            <textarea id="materialSourceText" placeholder="Pega aquí un texto, fragmento de libro, lectura, noticia, consigna o contenido que quieras transformar en ficha, lectura guiada u organizador."></textarea>
+            <small>DocenteDigital reutilizará este contenido en lugar de inventar otro. Ideal para adaptar un material existente a distintos grados.</small>
+          </label>
+
+          <label class="full">Indicación adicional <span class="pill">Opcional</span>
+            <textarea id="materialInstruction" placeholder="Ej.: para 1.° usar frases cortas; incluir 10 ejercicios; preparar para colorear; mayor nivel de análisis para 5.°..."></textarea>
+          </label>
+        </div>
+
+        <div class="notice">En materiales EIB, confirma la lengua y variedad antes de generar. DocenteDigital no debe presentar como validada una traducción que no haya sido revisada.</div>
+
+        <div class="actions topgap">
+          <button class="btn" type="button" onclick="window.DDMaterials?.create()">✨ Crear material</button>
+          <button class="btn amber" type="button" onclick="window.DDMaterials?.createBundle()">📦 Crear paquete de la sesión</button>
+          <button class="btn alt" type="button" onclick="window.DDMaterials?.useCurrent()">↻ Usar mi planificación actual</button>
+          <button class="btn ghost" type="button" onclick="go('aihub')">🖼 Buscar imagen en biblioteca</button>
+        </div>
+
+        <div id="materialOutput" class="document hidden topgap"></div>
+      </div>
+
+      <div class="card topgap">
+        <div class="dd-panel-head">
+          <div><span class="pill">Reutilizar antes de volver a crear</span><h2>Mis materiales recientes</h2></div>
+        </div>
+        <div id="materialHistory" class="dd-material-history"></div>
+      </div>
     </section>
 
     <section id="evaluation" class="screen">
-      <h1>Evaluación</h1><p class="sub">Registro, evaluación de unidad/proyecto y conclusiones descriptivas para SIAGIE.</p>
-      <div class="grid"><div class="card span4"><h2>📋 Registrar evaluación</h2><p>Usa criterios y evidencias ya registrados.</p><button class="btn alt block" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">Abrir · Próximamente</button></div><div class="card span4"><h2>🧪 Evaluación de unidad/proyecto</h2><p>Escrita, oral, de desempeño o mixta.</p><button class="btn amber block" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">Crear · Próximamente</button></div><div class="card span4"><h2>📝 Conclusiones SIAGIE</h2><p>Propone conclusiones desde evidencias.</p><button class="btn block" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento">Generar · Próximamente</button></div></div><div id="evaluationPanel" class="card hidden topgap"></div>
+      <h1>Evaluación</h1>
+      <p class="sub">Registra evidencias y niveles a partir de los criterios ya existentes. DocenteDigital reutiliza unidad, sesiones, criterios e instrumentos sin volver a generar información innecesaria.</p>
+      <div class="grid">
+        <div class="card span4"><h2>📋 Registro de evaluación</h2><p>Usa criterios y evidencias de la planificación.</p><button class="btn alt block" type="button" onclick="window.DDEvaluation?.openRegister()">Abrir registro</button></div>
+        <div class="card span4"><h2>🧪 Evaluación de unidad/proyecto</h2><p>Construye una evaluación alineada con los criterios trabajados.</p><button class="btn amber block" type="button" onclick="window.DDEvaluation?.openAssessment()">Crear evaluación</button></div>
+        <div class="card span4"><h2>📝 Conclusiones descriptivas</h2><p>Genera borradores desde los registros existentes, sin repetir el trabajo docente.</p><button class="btn block" type="button" onclick="window.DDEvaluation?.openConclusions()">Generar borradores</button></div>
+        <div class="card span6"><h2>📏 Rúbrica desde mis criterios</h2><p>Convierte criterios ya aprobados en descriptores observables y editables.</p><button class="btn alt block" type="button" onclick="window.DDEvaluation?.openRubric()">Crear rúbrica</button></div>
+        <div class="card span6"><h2>💬 Retroalimentación y siguiente paso</h2><p>Propone un borrador desde la evidencia registrada; el docente revisa antes de usarlo.</p><button class="btn alt block" type="button" onclick="window.DDEvaluation?.openFeedback()">Preparar retroalimentación</button></div>
+      </div>
+      <div id="evaluationPanel" class="card hidden topgap"></div>
     </section>
 
-    <section id="director" class="screen"><h1>Espacio del Director</h1><p class="sub">Simple en la superficie y completo cuando se necesita.</p><div class="grid"><div class="card span6"><h2>▶ Continuar pendiente</h2><button class="btn">Continuar</button></div><div class="card span6"><h2>✍️ Crear documento</h2><button class="btn alt">Crear</button></div><div class="card span6"><h2>📘 DG y Planes</h2><button class="btn alt">Abrir</button></div><div class="card span6"><h2>💬 Asistente del Director</h2><button class="btn amber">Preguntar</button></div></div></section>
+    <section id="director" class="screen">
+      <h1>Espacio del Director</h1>
+      <p class="sub">Documentos de gestión reutilizando los datos institucionales ya guardados. No inventa normativa: cualquier base legal debe verificarse antes de incorporarla.</p>
+      <div class="grid">
+        <div class="card span4"><h2>✍️ Crear documento</h2><p>Oficios, informes, memorandos, actas y resoluciones editables.</p><button class="btn alt block" type="button" onclick="window.DDDirector?.openDocument()">Crear documento</button></div>
+        <div class="card span4"><h2>📘 Planes y gestión</h2><p>Construye una estructura editable para planes institucionales y de trabajo.</p><button class="btn alt block" type="button" onclick="window.DDDirector?.openPlan()">Abrir planes</button></div>
+        <div class="card span4"><h2>📂 Documentos recientes</h2><p>Reutiliza documentos creados anteriormente sin volver a empezar.</p><button class="btn block" type="button" onclick="window.DDDirector?.openHistory()">Ver documentos</button></div>
+      </div>
+      <div id="directorPanel" class="card hidden topgap"></div>
+    </section>
 
     <section id="settings" class="screen"><h1>Configuración</h1><p class="sub">Datos institucionales y pedagógicos reutilizables.</p><div class="card"><div id="settingsSummary" class="success"></div><button class="btn" onclick="restartSetup()">Editar Nivel/Tipo/Grados/Áreas</button> <button class="btn ghost" onclick="resetDemo()">Restablecer datos</button></div></section>
   </main>
 </div>
-<nav class="mobile-nav"><button class="active" data-screen="home" onclick="go('home')"><b>🏠</b>Inicio</button><button data-screen="plan" onclick="go('plan')"><b>📘</b>Plan</button><button data-screen="session" onclick="go('session')"><b>📝</b>Sesión</button><button data-screen="materials" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento"><b>🧩</b>Materiales</button><button data-screen="evaluation" disabled aria-disabled="true" title="Función aún no disponible para lanzamiento"><b>📊</b>Evaluación</button></nav>
+<nav class="mobile-nav"><button class="active" data-screen="home" onclick="go('home')"><b>🏠</b>Inicio</button><button data-screen="plan" onclick="go('plan')"><b>📘</b>Plan</button><button data-screen="session" onclick="go('session')"><b>📝</b>Sesión</button><button data-screen="materials" onclick="go('materials')"><b>🧩</b>Materiales</button><button data-screen="evaluation" onclick="go('evaluation')"><b>📊</b>Evaluación</button></nav>
 <script src="storage-recovery-v26.js"></script>
 <script src="storage-access-guard-v71.js"></script>
 <script src="app.js"></script>
+<script src="official-curriculum-v1.js"></script>
+<script src="pedagogical-source-base-v1.js"></script>
 <script src="export-fallback-guard-v39.js"></script>
 <script src="director-prototype-guard-v40.js"></script>
 <script src="initial-curriculum-guard-v72.js"></script>
 <script src="enhancements.js"></script>
+<script src="planning-structure-v1.js"></script>
 <script src="format-v2.js"></script>
+<script src="teacher-context-v1.js"></script>
+<script src="context-semantic-v20.js"></script>
+<script src="intent-engine-v21.js"></script>
+<script src="proposal-choice-v8.js"></script>
+<script src="title-context-v38.js"></script>
 <script>window.unitBrief=window.unitBrief||function(u){return (u&&((u.situationBrief||u.situation)||''))||'';};</script>
 <script src="schedule-v3.js"></script>
 <script src="strategies-v4.js"></script>
+<script src="master-session-v1.js"></script>
 <script src="resources-v5.js"></script>
 <script src="schedule-prompt-v6.js"></script>
+<script src="ai-library-router-v1.js"></script>\n<script src="openai-runtime-v1.js"></script>
+<script src="materials-v1.js"></script>
+<script src="evaluation-v1.js"></script>
+<script src="sesiones-maestras-core-v1.js"></script>
+<script src="planning-tools-v1.js"></script>
+<script src="director-v1.js"></script>
+<script src="docx-export-v29.js"></script>
+<script src="persistence-truth-v63.js"></script>
+<script src="mobile-navigation-guard-v60.js"></script>
+<script src="beta-launch-safety-v1.js"></script>
+<script src="initial-surface-guard-v1.js"></script>
+<script src="product-audit-runtime-v1.js"></script>
+<script src="setup-native-v2.js"></script>
+
 </body>
 </html>

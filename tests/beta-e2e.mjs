@@ -28,21 +28,16 @@ try {
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForSelector('#ddBetaBanner', { timeout: 10000 });
 
-  await page.locator('#step1 .choice', { hasText: 'Primaria' }).click();
-  await page.locator('#step1 .btn', { hasText: 'Continuar' }).click();
-  await page.locator('#step2 .choice', { hasText: 'Multigrado' }).click();
-  await page.locator('#step2 .btn', { hasText: 'Continuar' }).click();
-
-  for (const grade of ['1.º', '3.º', '5.º']) {
-    await page.locator('#gradeChoices .choice', { hasText: grade }).click();
+  await page.locator('input[name="ddLevel"][value="Primaria"]').locator('..').click();
+  await page.locator('input[name="ddIE"][value="Multigrado"]').locator('..').click();
+  for(const grade of ['1.º','3.º','5.º']) {
+    await page.locator('[data-dd-grade-group="Primaria"] input[type="checkbox"][value="'+grade+'"]').locator('..').click();
   }
-  await page.locator('#step3 .btn', { hasText: 'Continuar' }).click();
-
-  for (const area of ['Comunicación', 'Matemática', 'Personal Social', 'Ciencia y Tecnología']) {
-    await page.locator('#areaChoices .choice', { hasText: area }).click();
+  for(const area of ["Comunicación","Matemática","Personal Social","Ciencia y Tecnología"]) {
+    await page.locator('[data-dd-area-group="Primaria"] input[type="checkbox"][value="'+area+'"]').locator('..').click();
   }
-  await page.locator('#linguisticMode').selectOption({ label: 'Monolingüe castellano' });
-  await page.locator('#step4 .btn', { hasText: 'Guardar y entrar' }).click();
+  await page.locator('#linguisticMode').selectOption('Monolingüe castellano');
+  await page.locator('#ddSetupNativeForm button[type="submit"]').click();
 
   let s = await state();
   assert(s.level === 'Primaria', 'No se guardó el nivel Primaria');
@@ -152,13 +147,18 @@ try {
   const restored = localStorageString(await state());
   assert(restored.length >= backupBeforeReset.length * 0.8, 'La restauración no recuperó el estado sustancial');
 
-  console.log('7/8 Superficies incompletas no se presentan como terminadas');
+  console.log('7/8 Evaluación y Director ya tienen flujos funcionales de Beta');
   await page.evaluate(() => window.go('evaluation'));
   const enabledEvaluationButtons = await page.locator('#evaluation button:not([disabled])').count();
-  assert(enabledEvaluationButtons === 0, 'Evaluación simulada aparece habilitada');
+  assert(enabledEvaluationButtons >= 5, 'Evaluación no expone los flujos activos esperados');
+  assert(await page.evaluate(() => typeof window.DDEvaluation?.openRegister === 'function'), 'Registro de evaluación no está conectado');
+  assert(await page.evaluate(() => typeof window.DDEvaluation?.openRubric === 'function'), 'Rúbrica no está conectada');
+  assert(await page.evaluate(() => typeof window.DDEvaluation?.openFeedback === 'function'), 'Retroalimentación no está conectada');
   await page.evaluate(() => window.go('director'));
   const enabledDirectorButtons = await page.locator('#director button:not([disabled])').count();
-  assert(enabledDirectorButtons === 0, 'Funciones Director simuladas aparecen habilitadas');
+  assert(enabledDirectorButtons >= 3, 'Director no expone sus flujos activos esperados');
+  assert(await page.evaluate(() => typeof window.DDDirector?.openDocument === 'function'), 'Documentos de Director no están conectados');
+  assert(await page.evaluate(() => typeof window.DDDirector?.openPlan === 'function'), 'Planes de Director no están conectados');
 
   console.log('8/8 Vista móvil y navegación Director');
   await page.setViewportSize({ width: 390, height: 844 });

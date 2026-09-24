@@ -22,22 +22,24 @@ const cases = [
   {name:'contaminacion', brief:'Observamos residuos en algunos espacios y queremos registrar lo que encontramos.'},
   {name:'lectura', brief:'Queremos mejorar la comprensión de textos informativos sobre nuestro entorno.'},
   {name:'alimentacion', brief:'Queremos conocer mejor los alimentos que consumimos en nuestra comunidad.'},
-  {name:'tecnologia', brief:'Queremos explorar cómo algunas herramientas tecnológicas ayudan en tareas cotidianas.'}
+  {name:'tecnologia', brief:'Queremos explorar cómo algunas herramientas tecnológicas ayudan en tareas cotidianas.'},
+  {name:'pinturas_rupestres', brief:'En la comunidad encontramos pinturas rupestres.'}
 ];
 
 async function configure(){
   await page.goto(baseUrl,{waitUntil:'networkidle'});
   await page.evaluate(()=>localStorage.clear());
   await page.reload({waitUntil:'networkidle'});
-  await page.locator('#step1 .choice',{hasText:'Primaria'}).click();
-  await page.locator('#step1 .btn',{hasText:'Continuar'}).click();
-  await page.locator('#step2 .choice',{hasText:'Multigrado'}).click();
-  await page.locator('#step2 .btn',{hasText:'Continuar'}).click();
-  for(const g of ['1.º','3.º','5.º']) await page.locator('#gradeChoices .choice',{hasText:g}).click();
-  await page.locator('#step3 .btn',{hasText:'Continuar'}).click();
-  for(const a of ['Comunicación','Matemática','Personal Social','Ciencia y Tecnología']) await page.locator('#areaChoices .choice',{hasText:a}).click();
-  await page.locator('#linguisticMode').selectOption({label:'Monolingüe castellano'});
-  await page.locator('#step4 .btn',{hasText:'Guardar y entrar'}).click();
+  await page.locator('input[name="ddLevel"][value="Primaria"]').locator('..').click();
+  await page.locator('input[name="ddIE"][value="Multigrado"]').locator('..').click();
+  for(const grade of ['1.º','3.º','5.º']) {
+    await page.locator('[data-dd-grade-group="Primaria"] input[type="checkbox"][value="'+grade+'"]').locator('..').click();
+  }
+  for(const area of ["Comunicación","Matemática","Personal Social","Ciencia y Tecnología"]) {
+    await page.locator('[data-dd-area-group="Primaria"] input[type="checkbox"][value="'+area+'"]').locator('..').click();
+  }
+  await page.locator('#linguisticMode').selectOption('Monolingüe castellano');
+  await page.locator('#ddSetupNativeForm button[type="submit"]').click();
   await waitPlanningRuntime();
 }
 
@@ -84,6 +86,12 @@ try{
     assert(unit.selectionApproved===true,`${c.name}: no registró elección explícita`);
     assert(situation.length>=40,`${c.name}: situación significativa demasiado vacía`);
     assert(product.length>=20,`${c.name}: producto/evidencia insuficiente`);
+    if(c.name==='pinturas_rupestres'){
+      assert(!/en la comunidad encontramos/i.test(title),'pinturas rupestres: copió la oración contextual dentro del título');
+      assert(/pinturas rupestres|patrimonio|huellas del pasado/i.test(title),'pinturas rupestres: el título no recuperó el núcleo pedagógico');
+      assert(/pinturas rupestres|patrimonio arqueológico/i.test(situation),'pinturas rupestres: la situación no se contextualizó en el patrimonio local');
+      assert(!/autores|antigüedad|significado histórico exacto/i.test(situation)||/no se atribuirán|sin.*verific/i.test(situation),'pinturas rupestres: introdujo afirmaciones no verificadas');
+    }
   }
 
   const antBrief='Observamos hormigas en el aula.';

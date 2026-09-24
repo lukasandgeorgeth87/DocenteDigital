@@ -7,54 +7,13 @@
 
   const esc=v=>escapeHtml(v);
   const titleOptions=(brief,type)=>{
-    const s=(brief||'').toLowerCase();
-    const project=type==='Proyecto de aprendizaje';
-    const explicitlyCcotataqui=/ccotataqui|cotataqui/.test(s);
-    const placeName=explicitlyCcotataqui?'Ccotataqui':'nuestro entorno';
-    if(/siembr|tarpuy|papa|añu|oca|olluco/.test(s)) return project?[
-      'Hatun Tarpuy: investigamos, sembramos y compartimos saberes de nuestro entorno',
-      `Sembramos saberes y futuro: aprendemos del Hatun Tarpuy de ${placeName}`,
-      'De la chacra a la escuela: investigamos y valoramos nuestra siembra andina'
-    ]:[
-      `Sembramos saberes y cuidamos nuestra tierra en el Hatun Tarpuy de ${placeName}`,
-      `Aprendemos de nuestra siembra: saberes, ciencia y territorio en ${placeName}`,
-      'Hatun Tarpuy: aprendemos juntos de la siembra y la vida de nuestro entorno'
-    ];
-    if(/pachamama|madre tierra/.test(s)) return project?[
-      'Pachamamanchik: investigamos, valoramos y actuamos para cuidar nuestra Madre Tierra',
-      'Saberes que cuidan la vida: un proyecto para agradecer y proteger la Pachamama',
-      'Nuestra Pachamama, nuestra responsabilidad: aprendemos y actuamos desde nuestro entorno'
-    ]:[
-      'Pachamamanchik kawsayta quwanchik: aprendemos a agradecer y cuidar nuestra Madre Tierra',
-      'Aprendemos de la Pachamama y fortalecemos nuestro compromiso con la vida',
-      'Saberes de nuestra tierra: valoramos, agradecemos y cuidamos la Pachamama'
-    ];
-    if(/agua|yaku/.test(s)) return project?[
-      'Yaku kawsaymi: investigamos y actuamos para cuidar el agua de nuestro entorno',
-      'Cada gota cuenta: un proyecto para conocer y proteger el agua que nos da vida',
-      'Guardianes del yaku: investigamos soluciones para cuidar el agua'
-    ]:[
-      'El agua nos da vida: aprendemos a conocerla, valorarla y cuidarla',
-      'Yaku kawsaymi: comprendemos y cuidamos el agua de nuestro entorno',
-      'Aprendemos del agua para cuidar la vida y nuestro entorno'
-    ];
-    if(/residuo|basura|contamin/.test(s)) return project?[
-      `${placeName} limpio: investigamos y actuamos para reducir nuestros residuos`,
-      'Menos residuos, más vida: transformamos hábitos para cuidar nuestro entorno',
-      'De problema a solución: construimos un entorno que reduce y reutiliza'
-    ]:[
-      'Aprendemos a reducir los residuos y proteger nuestro entorno',
-      'Cuidamos nuestro entorno: comprendemos el problema de los residuos',
-      'Menos contaminación, más vida: aprendemos a cuidar nuestros espacios'
-    ];
-    return project?[
-      'Investigamos nuestra realidad y construimos soluciones para nuestro entorno',
-      'Aprendemos haciendo: un proyecto para comprender y mejorar nuestro entorno',
-      'De nuestras preguntas a la acción: investigamos, creamos y compartimos'
-    ]:[
-      'Aprendemos desde nuestra realidad para comprender y transformar el entorno',
-      'Saberes de nuestro entorno: investigamos, dialogamos y aprendemos juntos',
-      'Nuestro entorno nos enseña: construimos aprendizajes con sentido'
+    if(typeof window.proposeUnitTitleOptions==='function'){
+      return window.proposeUnitTitleOptions(brief,type);
+    }
+    return [
+      type==='Proyecto de aprendizaje'?'Investigamos una situación significativa de nuestro contexto':'Aprendemos a partir de una situación significativa de nuestro contexto',
+      'Aprendemos con sentido desde nuestra realidad',
+      'Observamos, investigamos y proponemos'
     ];
   };
 
@@ -64,24 +23,34 @@
   window.createUnitDemo=function(){
     const brief=byId('unitSituation')?.value.trim()||'';
     const type=byId('unitType')?.value||'Unidad de aprendizaje';
-    if(brief){ byId('unitTitle').value=titleOptions(brief,type)[0]; }
+    const title=byId('unitTitle');
+    if(brief&&title&&!title.value.trim()){
+      title.value=titleOptions(brief,type)[0]||'';
+      title.dataset.autoTitle='true';
+    }
     return oldCreate();
   };
 
   window.ddSuggestTitles=function(){
-    const brief=byId('unitSituation')?.value.trim()||'';
-    if(!brief)return alert('Primero escribe la idea o contexto de partida.');
+    let brief=byId('unitSituation')?.value.trim()||'';
+    if(!brief&&typeof window.ddAssistPlanningContext==='function'){
+      brief=window.ddAssistPlanningContext(true)||'';
+    }
     const type=byId('unitType')?.value||'Unidad de aprendizaje';
+    const titleSeed=byId('unitTitle')?.value.trim()||'';
+    if(!brief)brief=titleSeed||'una experiencia cercana y significativa para los estudiantes';
     const opts=titleOptions(brief,type);
     let box=byId('ddTitleSuggestions');
     if(!box){box=document.createElement('div');box.id='ddTitleSuggestions';box.className='dd-title-suggestions';byId('unitTitle').parentElement.appendChild(box);}
-    box.innerHTML='<small><b>Títulos propuestos por DocenteDigital:</b></small>'+opts.map((t,i)=>`<button type="button" onclick="document.getElementById('unitTitle').value=${JSON.stringify(t)}">${i+1}. ${esc(t)}</button>`).join('');
+    box.innerHTML='<small><b>Títulos propuestos por DocenteDigital:</b> breves, coherentes y ajustados al contexto.</small><div class="dd-title-options">'+opts.map((t,i)=>`<button type="button" class="dd-title-option" onclick="chooseUnitTitle(${JSON.stringify(t)})">${esc(t)}</button>`).join('')+'</div><div class="actions topgap"><button type="button" class="btn ghost" onclick="window.DocenteDigitalAI?.openTitleAssistant?.()">💬 Mejorar con IA</button></div>';
   };
 
   const titleInput=byId('unitTitle');
   if(titleInput){
-    titleInput.placeholder='La app propondrá y mejorará el título a partir del contexto';
-    const b=document.createElement('button'); b.type='button'; b.className='btn ghost dd-title-btn'; b.textContent='✨ Proponer 3 títulos'; b.onclick=ddSuggestTitles; titleInput.parentElement.appendChild(b);
+    titleInput.placeholder='DocenteDigital propondrá un título coherente a partir del contexto';
+    if(!titleInput.parentElement.querySelector('.dd-title-btn')){
+      const b=document.createElement('button'); b.type='button'; b.className='btn ghost dd-title-btn'; b.textContent='✨ Proponer títulos'; b.onclick=ddSuggestTitles; titleInput.parentElement.appendChild(b);
+    }
   }
 
   // Perfil institucional editable para encabezados y pie de página.

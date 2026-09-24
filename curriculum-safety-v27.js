@@ -23,16 +23,24 @@
     conectada y verificada. Hasta incorporar una fuente curricular versionada con
     metadatos verificables, el modo oficial permanece cerrado.
   */
-  const ready=()=>false;
-  const warningHtml='<div class="dd-curriculum-safety"><b>⚠ Currículo por verificar.</b> Aún no se ha conectado la matriz curricular oficial. Revisa las referencias curriculares antes de usar o descargar este documento.</div>';
+  const ready=()=>Boolean(window.DD_OFFICIAL_CURRICULUM&&window.DD_OFFICIAL_CURRICULUM.verified===true);
+  const performanceReady=()=>Boolean(window.DD_OFFICIAL_CURRICULUM&&window.DD_OFFICIAL_CURRICULUM.performanceMatrixReady===true);
+  const warningHtml='<div class="dd-curriculum-safety"><b>⚠ Fuente curricular no disponible.</b> DocenteDigital bloquea referencias curriculares oficiales cuando no puede cargar el núcleo MINEDU.</div>';
 
   function sanitizeHtml(html){
-    if(ready()||typeof html!=='string')return html;
-    return html
-      .replace(/Área \/ Competencia y capacidades/g,'Área / referencia curricular preliminar')
-      .replace(/Desempeños precisados por grado/g,'Orientaciones pedagógicas provisionales por grado — NO desempeño oficial')
-      .replace(/Desempeño precisado \/ aplicación/g,'Aplicación pedagógica orientativa — verificar fuente oficial')
-      .replace(/Modo Experto: competencias, capacidades, desempeños, criterios, enfoques y fuentes normativas\./g,'Modo Experto: referencias pedagógicas provisionales; competencias, capacidades, estándares y desempeños oficiales requieren matriz MINEDU verificada.');
+    if(typeof html!=='string')return html;
+    let out=html;
+    if(!performanceReady()){
+      out=out
+        .replace(/Desempeños precisados por grado/g,'Criterios contextualizados por grado')
+        .replace(/Desempeño precisado \/ aplicación/g,'Aplicación contextualizada');
+    }
+    if(!ready()){
+      out=out
+        .replace(/Área \/ Competencia y capacidades/g,'Área / referencia curricular no disponible')
+        .replace(/Modo Experto: competencias, capacidades, desempeños, criterios, enfoques y fuentes normativas\./g,'Modo Experto: fuente curricular oficial no disponible temporalmente.');
+    }
+    return out;
   }
 
   function markOutput(){
@@ -52,7 +60,7 @@
     if(!ready()){
       const out=document.getElementById('unitOutput');
       if(out)out.innerHTML=sanitizeHtml(out.innerHTML);
-      markOutput();
+      if(!ready())markOutput();
     }
     return r;
   };
@@ -68,8 +76,16 @@
     return html;
   };
 
-  state.curriculumMatrixReady=false;
-  state.curriculumSafety={version:'v30',officialMatrixReady:false,policy:'No presentar contenido generado como currículo oficial sin matriz literal, versionada y verificablemente conectada'};
+  state.curriculumMatrixReady=ready();
+  state.curriculumCoreReady=ready();
+  state.officialPerformanceMatrixReady=performanceReady();
+  state.curriculumSafety={
+    version:'v31',
+    officialMatrixReady:ready(),
+    scope:window.DD_OFFICIAL_CURRICULUM?.scope||'none',
+    performanceMatrixReady:performanceReady(),
+    policy:'Competencias y capacidades se leen del núcleo oficial MINEDU. Criterios, evidencias y actividades se identifican como contextualizaciones pedagógicas.'
+  };
   try{save();}catch(e){console.warn('DocenteDigital: no se pudo guardar el estado de seguridad curricular.',e)}
   markOutput();
   const css=document.createElement('style');css.textContent='.dd-curriculum-safety{margin:8px 0 12px;padding:10px 12px;border:1px solid #dfc36c;border-radius:11px;background:#fff8df;color:#66501a;font-size:13px}.dd-curriculum-global-warning .dd-curriculum-safety{margin:0;border:0;padding:0;background:transparent}';document.head.appendChild(css);

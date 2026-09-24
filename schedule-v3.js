@@ -31,6 +31,83 @@
 
   const clone=o=>JSON.parse(JSON.stringify(o));
   const E=v=>escapeHtml(v);
+
+  const INITIAL_WORKSHOP_TYPES=[
+    'Psicomotricidad',
+    'Gráfico-plástico',
+    'Música y movimiento',
+    'Danza',
+    'Dramatización',
+    'Actividad literaria',
+    'Indagación'
+  ];
+
+  function initialWorkshopPlan(){
+    const hasThree=(state.grades||[]).some(g=>/3\s*años/i.test(g));
+    return hasThree
+      ? {
+          Lunes:'Psicomotricidad',
+          Martes:'Gráfico-plástico',
+          Miércoles:'Psicomotricidad',
+          Jueves:'Música y movimiento',
+          Viernes:'Psicomotricidad'
+        }
+      : {
+          Lunes:'Psicomotricidad',
+          Martes:'Gráfico-plástico',
+          Miércoles:'Música y movimiento',
+          Jueves:'Psicomotricidad',
+          Viernes:'Dramatización'
+        };
+  }
+
+  function workshopArea(type){
+    if(/psicomot/i.test(type))return 'Psicomotriz';
+    if(/indag/i.test(type))return 'Ciencia y Tecnología';
+    return 'Comunicación';
+  }
+
+  function workshopTitle(type,brief){
+    const topic=(brief||'la experiencia del proyecto').replace(/\s+/g,' ').trim();
+    if(/psicomot/i.test(type))return `Taller de psicomotricidad: exploramos movimientos y retos desde ${topic}`;
+    if(/gráfico|plast/i.test(type))return `Taller gráfico-plástico: representamos lo vivido en ${topic}`;
+    if(/música/i.test(type))return `Taller de música y movimiento: expresamos ritmos y emociones desde ${topic}`;
+    if(/danza/i.test(type))return `Taller de danza: expresamos con el cuerpo experiencias de ${topic}`;
+    if(/dramat/i.test(type))return `Taller de dramatización: representamos situaciones de ${topic}`;
+    if(/literaria/i.test(type))return `Taller literario: escuchamos, imaginamos y conversamos sobre ${topic}`;
+    return `Taller de indagación: exploramos y descubrimos a partir de ${topic}`;
+  }
+
+  function initialDailyActivities(brief,weeks){
+    const counters={},activities=[];let order=0;
+    const selected=(state.areas&&state.areas.length?state.areas:areaOptions()).filter(a=>a!=='Psicomotriz');
+    const focusAreas=selected.length?selected:['Comunicación','Matemática','Personal Social','Ciencia y Tecnología'];
+    const workshops=initialWorkshopPlan();
+    let k=0;
+    for(let week=1;week<=weeks;week++){
+      DAYS.forEach(day=>{
+        const area=focusAreas[k++%focusAreas.length];
+        const variants=activityVariants(area,brief);
+        counters[area]=(counters[area]||0)+1;
+        const title=variants[(counters[area]-1)%variants.length];
+        activities.push({
+          kind:'actividad',
+          kindLabel:'Actividad de aprendizaje',
+          area,title,week,day,block:1,time:'60 min',duration:'60 minutos',order:++order
+        });
+        const workshopType=workshops[day]||'Gráfico-plástico';
+        activities.push({
+          kind:'taller',
+          kindLabel:'Taller',
+          workshopType,
+          area:workshopArea(workshopType),
+          title:workshopTitle(workshopType,brief),
+          week,day,block:2,time:'40 min',duration:'40 minutos',order:++order
+        });
+      });
+    }
+    return activities;
+  }
   state.schedule=state.schedule&&state.schedule.Lunes?state.schedule:clone(DEFAULT_SCHEDULE);
   state.scheduleSource=state.scheduleSource||'Horario guardado del docente';
   state.unitSessionMode=state.unitSessionMode||'schedule';
@@ -70,14 +147,17 @@
   }
 
   function effectiveSchedule(){
+    if(state.level==='Inicial')return null;
     if(state.unitSessionMode==='2')return manualSchedule(2);
     if(state.unitSessionMode==='3')return manualSchedule(3);
     return state.schedule||clone(DEFAULT_SCHEDULE);
   }
 
-  // Reemplaza la antigua lógica de una sola sesión diaria.
   buildActivities=function(brief,duration){
     const weeks=Math.max(1,parseInt(duration)||3);
+    if(state.level==='Inicial'){
+      return initialDailyActivities(brief,weeks);
+    }
     const schedule=effectiveSchedule();
     const counters={}; const activities=[]; let order=0;
     for(let week=1;week<=weeks;week++){
@@ -85,12 +165,11 @@
         (schedule[day]||[]).forEach((slot,idx)=>{
           const area=normalizeArea(slot.area);
           if(!area||area==='Tutoría')return;
-          // En una unidad integrada se programan las áreas elegidas por el docente.
           if(state.areas&&state.areas.length&&!state.areas.includes(area))return;
           const variants=activityVariants(area,brief);
           counters[area]=(counters[area]||0)+1;
           const title=variants[(counters[area]-1)%variants.length];
-          activities.push({area,title,week,day,block:slot.block||idx+1,time:slot.time||'',order:++order});
+          activities.push({kind:'sesion',kindLabel:'Sesión de aprendizaje',area,title,week,day,block:slot.block||idx+1,time:slot.time||'',order:++order});
         });
       });
     }
@@ -98,13 +177,18 @@
   };
 
   function scheduleSequenceHtml(unit){
+    const initial=unit.level==='Inicial';
     const rows=(unit.activities||[]).map((a,i)=>{
       const p=(unit.purposes||[]).find(x=>x.area===a.area)||(unit.purposes||[])[0];
       const perf=p?.performances?.map(x=>`${x.grade}: ${x.text}`).join(' / ')||'';
       const crit=p?.criteria?.map(x=>`${x.grade}: ${x.text}`).join(' / ')||'';
-      return `<tr><td>Semana ${E(a.week)}</td><td>${E(a.day||'')}</td><td>${E(a.block||'')}</td><td>${E(a.time||'')}</td><td>${E(a.area)}</td><td><b>${E(a.title)}</b></td><td>${E(perf)}</td><td>${E(p?.evidence||'')}</td><td>${E(crit)}</td><td>${E(p?.instrument||'')}</td><td>${E(a.title)}</td></tr>`;
+      return initial
+        ? `<tr><td>Semana ${E(a.week)}</td><td>${E(a.day||'')}</td><td><b>${E(a.kindLabel||'Actividad')}</b></td><td>${E(a.time||'')}</td><td>${E(a.area)}</td><td><b>${E(a.title)}</b></td><td>${E(p?.evidence||'')}</td><td>${E(crit)}</td><td>${E(p?.instrument||'')}</td></tr>`
+        : `<tr><td>Semana ${E(a.week)}</td><td>${E(a.day||'')}</td><td>${E(a.block||'')}</td><td>${E(a.time||'')}</td><td>${E(a.area)}</td><td><b>${E(a.title)}</b></td><td>${E(perf)}</td><td>${E(p?.evidence||'')}</td><td>${E(crit)}</td><td>${E(p?.instrument||'')}</td><td>${E(a.title)}</td></tr>`;
     }).join('');
-    return `<div class="dd-scroll"><table class="dd-table"><thead><tr><th>Semana</th><th>Día</th><th>Bloque</th><th>Hora</th><th>Área</th><th>Título de la sesión</th><th>Desempeño precisado</th><th>Evidencia</th><th>Criterio</th><th>Instrumento</th><th>Actividad principal</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    return initial
+      ? `<div class="dd-scroll"><table class="dd-table"><thead><tr><th>Semana</th><th>Día</th><th>Momento planificado</th><th>Duración referencial</th><th>Área vinculada</th><th>Actividad / taller</th><th>Evidencia</th><th>Criterio</th><th>Instrumento</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      : `<div class="dd-scroll"><table class="dd-table"><thead><tr><th>Semana</th><th>Día</th><th>Bloque</th><th>Hora</th><th>Área</th><th>Título de la sesión</th><th>Desempeño precisado</th><th>Evidencia</th><th>Criterio</th><th>Instrumento</th><th>Actividad principal</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
 
   const prevRender=window.renderUnitOutput;
@@ -112,28 +196,39 @@
     prevRender(unit);
     const section=byId('dd-sesiones');
     if(section){
-      const weekly=countWeekly(effectiveSchedule());
       const weeks=Math.max(1,parseInt(unit.duration)||3);
-      section.innerHTML=`<h2>V. Secuencia de sesiones de aprendizaje</h2><div class="success"><b>Distribución:</b> ${state.unitSessionMode==='schedule'?'según horario guardado':state.unitSessionMode+' sesiones por día'} · <b>${weekly} sesiones por semana</b> · <b>${unit.activities.length} sesiones programadas en ${weeks} semanas</b>.</div><p class="sub">Cada día puede contener varias sesiones. El horario se guarda una sola vez y se reutiliza en las siguientes unidades/proyectos.</p>${scheduleSequenceHtml(unit)}`;
+      if(unit.level==='Inicial'){
+        const daily=(unit.activities||[]).filter(a=>a.kind==='actividad').length;
+        const workshops=(unit.activities||[]).filter(a=>a.kind==='taller').length;
+        section.innerHTML=`<h2>V. Secuencia de actividades y talleres</h2><div class="success"><b>Organización de Inicial:</b> cada día se programa <b>1 actividad de aprendizaje de la unidad/proyecto + 1 taller</b>. En ${weeks} semana(s): <b>${daily} actividades</b> y <b>${workshops} talleres</b>.</div><p class="sub">No se organiza como Primaria o Secundaria por bloques de varias sesiones. La jornada incluye además juego libre, actividades permanentes, alimentación, recreo y otros momentos propios del nivel.</p>${scheduleSequenceHtml(unit)}`;
+      }else{
+        const weekly=countWeekly(effectiveSchedule());
+        section.innerHTML=`<h2>V. Secuencia de sesiones de aprendizaje</h2><div class="success"><b>Distribución:</b> ${state.unitSessionMode==='schedule'?'según horario guardado':state.unitSessionMode+' sesiones por día'} · <b>${weekly} sesiones por semana</b> · <b>${unit.activities.length} sesiones programadas en ${weeks} semanas</b>.</div><p class="sub">El horario se guarda una sola vez y se reutiliza en las siguientes unidades/proyectos.</p>${scheduleSequenceHtml(unit)}`;
+      }
     }
     const actions=byId('unitOutput')?.querySelector('.actions.topgap');
     if(actions&&!actions.querySelector('.dd-rebuild-schedule')){
-      const b=document.createElement('button');b.className='btn ghost dd-rebuild-schedule';b.textContent='🗓️ Reorganizar según horario';b.onclick=()=>ddRebuildUnitSchedule(unit.id);actions.appendChild(b);
+      const b=document.createElement('button');b.className='btn ghost dd-rebuild-schedule';b.textContent=unit.level==='Inicial'?'🗓️ Reorganizar actividad + taller':'🗓️ Reorganizar según horario';b.onclick=()=>ddRebuildUnitSchedule(unit.id);actions.appendChild(b);
     }
   };
 
   const prevUnitWord=window.unitWordHtml;
   window.unitWordHtml=function(unit){
     let html=prevUnitWord(unit);
-    const seq=`<h2>V. SECUENCIA DE SESIONES DE APRENDIZAJE</h2><p><b>Distribución:</b> ${state.unitSessionMode==='schedule'?'según horario guardado':state.unitSessionMode+' sesiones por día'}.</p>${scheduleSequenceHtml(unit)}`;
+    const seq=unit.level==='Inicial'
+      ? `<h2>V. SECUENCIA DE ACTIVIDADES Y TALLERES</h2><p><b>Organización:</b> una actividad de aprendizaje de la unidad/proyecto y un taller por día, además de los demás momentos de la jornada de Inicial.</p>${scheduleSequenceHtml(unit)}`
+      : `<h2>V. SECUENCIA DE SESIONES DE APRENDIZAJE</h2><p><b>Distribución:</b> ${state.unitSessionMode==='schedule'?'según horario guardado':state.unitSessionMode+' sesiones por día'}.</p>${scheduleSequenceHtml(unit)}`;
     html=html.replace(/<h2>V\. SECUENCIA DE SESIONES DE APRENDIZAJE<\/h2>[\s\S]*?(?=<h2>VI\. INSTRUMENTOS DE EVALUACIÓN<\/h2>)/,seq);
+    html=html.replace(/<h2>V\. SECUENCIA DE ACTIVIDADES Y TALLERES<\/h2>[\s\S]*?(?=<h2>VI\. INSTRUMENTOS DE EVALUACIÓN<\/h2>)/,seq);
     return html;
   };
 
   window.ddRebuildUnitSchedule=function(id){
     const u=state.units.find(x=>x.id===id);if(!u)return;
     u.activities=buildActivities(unitBrief(u),u.duration);save();renderUnits();renderUnitOutput(u);fillSessionUnits();
-    alert(`Unidad reorganizada: ${u.activities.length} sesiones según la distribución elegida.`);
+    alert(u.level==='Inicial'
+      ? `Planificación reorganizada: ${u.activities.filter(a=>a.kind==='actividad').length} actividades y ${u.activities.filter(a=>a.kind==='taller').length} talleres.`
+      : `Unidad reorganizada: ${u.activities.length} sesiones según la distribución elegida.`);
   };
 
   function areaChoicesForEditor(current){
@@ -156,6 +251,20 @@
 
   function renderScheduleCard(){
     const card=byId('ddScheduleCard');if(!card)return;
+
+    if(state.level==='Inicial'){
+      const workshops=initialWorkshopPlan();
+      const rows=DAYS.map(day=>`<tr><td><b>${day}</b></td><td>Actividad de aprendizaje de la unidad/proyecto</td><td>${E(workshops[day])}</td></tr>`).join('');
+      card.innerHTML=`<h2>🗓️ Organización diaria de Inicial</h2>
+        <div class="success"><b>Modelo del nivel:</b> 1 actividad de aprendizaje de la unidad/proyecto + 1 taller por día.</div>
+        <p class="sub">No se usa la opción de 2 o 3 sesiones diarias propia de Primaria/Secundaria. La jornada conserva juego libre, rutinas, alimentación, recreo y otros momentos del nivel.</p>
+        <div class="dd-scroll"><table class="dd-table"><thead><tr><th>Día</th><th>Actividad principal</th><th>Taller</th></tr></thead><tbody>${rows}</tbody></table></div>
+        <div class="notice topgap">La rotación de talleres es referencial y puede ajustarse a los intereses y necesidades del grupo. Para 3 años se prioriza mayor frecuencia de psicomotricidad; para 4 y 5 años se mantiene al menos dos veces por semana en este modelo.</div>`;
+      state.unitSessionMode='initial-daily';
+      save();
+      return;
+    }
+
     const weekly=countWeekly();
     card.innerHTML=`<h2>🗓️ Horario de clases</h2><div class="success"><b>Horario guardado:</b> ${E(state.scheduleSource)} · ${weekly} sesiones/semana. No tendrás que volver a subirlo mientras no cambie.</div><div class="form2 topgap"><label>Distribución para nuevas unidades/proyectos<select id="ddSessionMode"><option value="schedule" ${state.unitSessionMode==='schedule'?'selected':''}>Usar mi horario guardado</option><option value="2" ${state.unitSessionMode==='2'?'selected':''}>2 sesiones por día</option><option value="3" ${state.unitSessionMode==='3'?'selected':''}>3 sesiones por día</option></select></label><label>Subir horario en Word (.docx)<input id="ddScheduleFile" type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></label></div><div class="actions"><button class="btn alt" id="ddToggleSchedule">👁 Ver/editar horario</button><button class="btn ghost" id="ddUseModelSchedule">↺ Usar horario modelo actual</button></div><div id="ddScheduleEditor" class="hidden topgap"></div><div id="ddScheduleImportMsg" class="notice hidden topgap"></div>`;
     byId('ddSessionMode').onchange=e=>{state.unitSessionMode=e.target.value;save();};
@@ -231,15 +340,24 @@
   }
   const settingsCard=byId('settings')?.querySelector('.card');
   if(settingsCard&&!byId('ddScheduleSettingsInfo')){
-    const info=document.createElement('div');info.id='ddScheduleSettingsInfo';info.className='notice topgap';info.innerHTML=`🗓️ <b>Horario:</b> ${countWeekly()} sesiones semanales guardadas. Puedes editarlo desde <b>Mi planificación → Horario de clases</b>.`;settingsCard.appendChild(info);
+    const info=document.createElement('div');info.id='ddScheduleSettingsInfo';info.className='notice topgap';info.innerHTML=state.level==='Inicial'
+      ? '🗓️ <b>Inicial:</b> organización diaria = 1 actividad de aprendizaje + 1 taller.'
+      : `🗓️ <b>Horario:</b> ${countWeekly()} sesiones semanales guardadas. Puedes editarlo desde <b>Mi planificación → Horario de clases</b>.`;settingsCard.appendChild(info);
   }
 
   // Añade el selector también junto a la creación de unidad para que el docente decida sin ir a otra pantalla.
   const duration=byId('unitDuration');
   if(duration&&!byId('ddUnitModeInline')){
-    const label=document.createElement('label');label.id='ddUnitModeInline';label.innerHTML=`Distribución de sesiones<select id="ddInlineSessionMode"><option value="schedule">Según horario guardado</option><option value="2">2 sesiones por día</option><option value="3">3 sesiones por día</option></select><small>El horario guardado se reutiliza automáticamente.</small>`;
+    const label=document.createElement('label');label.id='ddUnitModeInline';
+    if(state.level==='Inicial'){
+      label.innerHTML='Organización diaria<input value="1 actividad de aprendizaje + 1 taller" readonly><small>Modelo específico de Educación Inicial; no se usa 2 o 3 sesiones por día.</small>';
+      state.unitSessionMode='initial-daily';save();
+    }else{
+      label.innerHTML=`Distribución de sesiones<select id="ddInlineSessionMode"><option value="schedule">Según horario guardado</option><option value="2">2 sesiones por día</option><option value="3">3 sesiones por día</option></select><small>El horario guardado se reutiliza automáticamente.</small>`;
+    }
     duration.closest('.form2')?.insertBefore(label,duration.parentElement.nextSibling);
-    const sel=byId('ddInlineSessionMode');sel.value=state.unitSessionMode;sel.onchange=e=>{state.unitSessionMode=e.target.value;save();if(byId('ddSessionMode'))byId('ddSessionMode').value=e.target.value;};
+    const sel=byId('ddInlineSessionMode');
+    if(sel){sel.value=state.unitSessionMode;sel.onchange=e=>{state.unitSessionMode=e.target.value;save();if(byId('ddSessionMode'))byId('ddSessionMode').value=e.target.value;};}
   }
 
   const css=document.createElement('style');css.textContent=`.dd-schedule-table td{min-width:155px}.dd-schedule-table select,.dd-schedule-table input{width:100%;margin:2px 0;padding:6px;border:1px solid #ccd5d0;border-radius:7px}.dd-schedule-table input{font-size:12px}.dd-sch-summary{font-weight:700}`;document.head.appendChild(css);

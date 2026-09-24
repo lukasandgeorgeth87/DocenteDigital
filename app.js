@@ -1,4 +1,14 @@
-const state=JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'{}');
+let __ddPersistedState={};
+try{
+  const raw=localStorage.getItem('docenteDigitalPrototype');
+  __ddPersistedState=raw?JSON.parse(raw):{};
+  if(!__ddPersistedState||typeof __ddPersistedState!=='object'||Array.isArray(__ddPersistedState))__ddPersistedState={};
+}catch(error){
+  console.warn('DocenteDigital: almacenamiento local no disponible; la app continuará en memoria.',error);
+  __ddPersistedState={};
+}
+const state=__ddPersistedState;
+window.state=state;
 state.mode=state.mode||'easy';
 state.level=state.level||'';
 state.ieType=state.ieType||'';
@@ -10,7 +20,19 @@ state.units=Array.isArray(state.units)?state.units:[];
 state.activeUnitId=state.activeUnitId||null;
 state.lastSession=state.lastSession||null;
 
-const save=()=>localStorage.setItem('docenteDigitalPrototype',JSON.stringify(state));
+const save=()=>{
+  try{
+    localStorage.setItem('docenteDigitalPrototype',JSON.stringify(state));
+    window.__ddMemoryOnly=false;
+    return true;
+  }catch(error){
+    window.__ddMemoryOnly=true;
+    window.__ddMemoryState=state;
+    console.warn('DocenteDigital: no se pudo persistir; se mantiene el trabajo en memoria durante esta sesión.',error);
+    return false;
+  }
+};
+window.save=save;
 const byId=id=>document.getElementById(id);
 const escapeHtml=value=>String(value??'').replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]));
 const cleanFileName=value=>String(value||'documento').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9-_ ]/g,'').trim().replace(/\s+/g,'_').slice(0,80)||'documento';
@@ -25,12 +47,21 @@ function setMode(mode){
 
 function go(id){
   if(!state.level&&id!=='setup'){showSetup();return}
+  const target=byId(id);
+  if(!target){
+    console.warn('DocenteDigital: pantalla no encontrada:',id);
+    return;
+  }
   document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
-  byId(id)?.classList.add('active');
+  target.classList.add('active');
   document.querySelectorAll('[data-screen]').forEach(b=>b.classList.toggle('active',b.dataset.screen===id));
-  refresh();
-  window.scrollTo({top:0,behavior:'smooth'});
+  try{refresh();}catch(error){
+    console.error('DocenteDigital: la pantalla abrió, pero falló una actualización secundaria.',error);
+    window.__ddLastNavigationError={screen:id,message:String(error),at:new Date().toISOString()};
+  }
+  try{window.scrollTo({top:0,behavior:'smooth'});}catch(_e){window.scrollTo(0,0);}
 }
+window.go=go;
 
 function showSetup(){
   document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
@@ -39,8 +70,32 @@ function showSetup(){
 
 function chooseOne(key,val,btn){
   state[key]=val;
-  btn.parentElement.querySelectorAll('.choice').forEach(x=>x.classList.remove('active'));
-  btn.classList.add('active');
+  btn?.parentElement?.querySelectorAll('.choice').forEach(x=>x.classList.remove('active'));
+  btn?.classList.add('active');
+  save();
+
+  // En móvil, avanzar automáticamente evita que el flujo dependa de un segundo toque.
+  if(key==='level'){
+    setTimeout(()=>{
+      try{nextSetup(2);}catch(error){
+        byId('step1')?.classList.add('hidden');
+        byId('step2')?.classList.remove('hidden');
+        byId('s2')?.classList.add('active');
+        console.error('DocenteDigital setup level fallback',error);
+      }
+    },80);
+  }
+  if(key==='ieType'){
+    setTimeout(()=>{
+      try{nextSetup(3);}catch(error){
+        byId('step2')?.classList.add('hidden');
+        byId('step3')?.classList.remove('hidden');
+        byId('s3')?.classList.add('active');
+        try{renderGrades();}catch(_e){}
+        console.error('DocenteDigital setup IE fallback',error);
+      }
+    },80);
+  }
 }
 
 function nextSetup(n){
@@ -133,38 +188,277 @@ function showUnit(){
   byId('unitPanel').scrollIntoView({behavior:'smooth'});
 }
 
+function ddListWords(items){
+  const clean=[...new Set(items.filter(Boolean))];
+  if(!clean.length)return '';
+  if(clean.length===1)return clean[0];
+  if(clean.length===2)return clean.join(' y ');
+  return clean.slice(0,-1).join(', ')+' y '+clean[clean.length-1];
+}
+
+function ddTitleContext(brief=''){
+  const raw=String(brief||'').trim();
+  const s=raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const crops=[
+    ['papa','papa'],['anu','añu'],['oca','oca'],['olluco','olluco'],['lisa','lisas'],
+    ['haba','habas'],['tarwi','tarwi'],['arveja','arvejas'],['cebolla','cebolla'],
+    ['culantro','culantro'],['lechuga','lechuga'],['rabano','rábano'],['maiz','maíz']
+  ].filter(([key])=>new RegExp('\\b'+key+'s?\\b').test(s)).map(([,label])=>label);
+  const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const month=months.find(m=>s.includes(m))||'';
+  return {raw,s,crops,month};
+}
+
+function proposeUnitTitleOptions(brief,type){
+  const ctx=ddTitleContext(brief);
+  const s=ctx.s;
+  const crops=ddListWords(ctx.crops);
+  const project=type==='Proyecto de aprendizaje';
+  const level=state.level||'Primaria';
+  const options=[];
+
+  if(/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueol[oó]gic|sitios?\s+arqueol[oó]gic|patrimonio\s+arqueol[oó]gic/.test(s)){
+    const p=state.teacherContext||{};
+    const territory=[p.community,p.district].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i).join(' y ');
+    const where=territory?(' en '+territory):' de nuestro entorno';
+    if(level==='Inicial'){
+      options.push('Pequeños exploradores de las huellas del pasado');
+      options.push('Descubrimos formas, colores y misterios en las rocas');
+      options.push('Las huellas antiguas de nuestra comunidad');
+    }else if(level==='Secundaria'){
+      options.push(project
+        ? `Patrimonio arqueológico${where}: investigamos evidencias e interpretamos nuestro pasado`
+        : `Patrimonio arqueológico${where}: analizamos evidencias del pasado`);
+      options.push('Restos arqueológicos y pinturas rupestres: contrastamos fuentes y construimos explicaciones');
+      options.push('Huellas del territorio: investigamos, interpretamos y valoramos nuestro patrimonio');
+    }else{
+      options.push(project
+        ? `Huellas del pasado${where}: exploramos y valoramos nuestro patrimonio arqueológico`
+        : `Huellas del pasado${where}: conocemos nuestro patrimonio arqueológico`);
+      options.push('Pinturas rupestres y restos arqueológicos: investigamos qué nos cuentan sobre nuestra historia local');
+      options.push('Guardianes de nuestro patrimonio: descubrimos, explicamos y compartimos las huellas del pasado');
+    }
+  }else if(/siembr|semill|tarpuy|papa|anu|oca|olluco/.test(s)){
+    if(level==='Secundaria'){
+      options.push(project?'Semillas, territorio y producción: investigamos prácticas de siembra y sus desafíos':'Siembra y territorio: analizamos saberes, procesos y decisiones productivas');
+      options.push('De la semilla al sistema productivo: comprendemos relaciones entre ambiente, cultura y producción');
+      options.push('Saberes agrícolas y conocimiento científico: contrastamos prácticas para comprender la siembra');
+    }else if(crops){
+      options.push(project
+        ? `Semillas que dan vida: investigamos la siembra de ${crops}`
+        : `Nos preparamos para la siembra: conocemos y valoramos semillas de ${crops}`);
+      options.push(`De la semilla a la chacra: aprendemos con ${crops}`);
+      options.push(`Saberes de nuestra tierra: organizamos la siembra de ${crops}`);
+    }else{
+      options.push(project?'Semillas que dan vida: investigamos la siembra de nuestra comunidad':'Nos preparamos para la siembra y aprendemos de nuestra comunidad');
+      options.push('De la semilla a la chacra: descubrimos cómo empieza una nueva cosecha');
+      options.push('Saberes de nuestra tierra: aprendemos y participamos en la siembra');
+    }
+  }else if(/pachamama|madre tierra/.test(s)){
+    if(level==='Secundaria'){
+      options.push('Pachamama y territorio: analizamos saberes, identidad y cuidado ambiental');
+      options.push('Saberes ancestrales y sostenibilidad: dialogamos sobre nuestra relación con la tierra');
+      options.push('Territorio, cultura y responsabilidad: comprendemos distintas formas de cuidar la tierra');
+    }else{
+      options.push('Saberes que cuidan la tierra: valoramos a la Pachamama');
+      options.push('Pachamama nos enseña: aprendemos a agradecer, valorar y cuidar');
+      options.push('Nuestra tierra, nuestros saberes: cuidamos la Pachamama');
+    }
+  }else if(/agua|yaku/.test(s)){
+    if(level==='Secundaria'){
+      options.push('Agua y sostenibilidad: analizamos usos, riesgos y decisiones responsables');
+      options.push('Cada gota cuenta: investigamos el uso del agua y proponemos mejoras');
+      options.push('Del consumo al cuidado: comprendemos el valor del agua en nuestro entorno');
+    }else{
+      options.push('Guardianes del agua: investigamos cómo cuidarla en nuestra comunidad');
+      options.push('Cada gota cuenta: aprendemos a usar y cuidar el agua');
+      options.push('Yaku para la vida: conocemos, valoramos y protegemos el agua');
+    }
+  }else if(/residuo|basura|contamin|recicla/.test(s)){
+    if(level==='Secundaria'){
+      options.push(project?'Del residuo a la acción: investigamos y transformamos nuestros espacios':'Residuos y convivencia: analizamos cómo nuestras decisiones afectan los espacios comunes');
+      options.push('Basura en el piso: analizamos causas y proponemos soluciones sostenibles');
+      options.push('Espacios limpios, decisiones responsables: investigamos y proponemos mejoras');
+    }else if(level==='Inicial'){
+      options.push('Cada residuo en su lugar: cuidamos nuestros espacios');
+      options.push('¿Dónde va la basura? Descubrimos y aprendemos a cuidar');
+      options.push('Pequeñas acciones para mantener limpio nuestro entorno');
+    }else{
+      options.push('Menos residuos, más vida: cuidamos nuestra comunidad');
+      options.push('Basura en el piso: observamos, pensamos y proponemos soluciones');
+      options.push('Una comunidad más limpia: investigamos, reducimos y reutilizamos residuos');
+    }
+  }else if(/animal|pluma|pelo|naturaleza/.test(s)){
+    if(level==='Secundaria'){
+      options.push('Biodiversidad animal: analizamos características, relaciones y adaptaciones');
+      options.push('Animales y ambiente: interpretamos cómo se relacionan con su entorno');
+      options.push('De la observación a la explicación: comprendemos la diversidad animal');
+    }else if(level==='Inicial'){
+      options.push('Pequeños exploradores del mundo animal');
+      options.push('¿Quién vive, salta, vuela o se arrastra?');
+      options.push('Pelos, plumas y muchas sorpresas');
+    }else{
+      options.push('Detectives de la naturaleza: observamos, comparamos y descubrimos');
+      options.push('Entre plantas y animales: investigamos la vida que nos rodea');
+      options.push('Exploradores de nuestra naturaleza: aprendemos observando el entorno');
+    }
+  }else{
+    const first=ctx.raw.split(/[.!?]/)[0].replace(/^(los|las|el|la)\s+/i,'').trim();
+    const rawClause=/^(?:se\s+)?(?:arrojan?|botan?|tiran?|dejan?|usan?|hacen?|tienen?|quieren?|comen?|juegan?|pelean?|contaminan?|desperdician?|malgastan?)\b/i.test(first);
+    if(rawClause){
+      if(level==='Inicial'){
+        options.push('Descubrimos cómo cuidarnos y convivir mejor');
+        options.push('Pequeñas acciones que hacen bien a todos');
+        options.push('Jugamos, conversamos y encontramos mejores formas de actuar');
+      }else if(level==='Primaria'){
+        options.push(project?'Observamos lo que ocurre, investigamos y proponemos mejoras':'Comprendemos lo que ocurre y buscamos mejores formas de actuar');
+        options.push('De una situación cotidiana a una solución compartida');
+        options.push('Investigamos nuestro entorno para aprender y tomar buenas decisiones');
+      }else{
+        options.push(project?'Del problema a la acción: investigamos una situación de nuestro entorno y proponemos mejoras':'Una situación que nos interpela: analizamos causas, consecuencias y alternativas');
+        options.push('Comprender para decidir: estudiamos una situación de nuestro entorno');
+        options.push('Del análisis a la propuesta: construimos respuestas sustentadas');
+      }
+    }else{
+      const short=first.length>70?first.slice(0,67).replace(/\s+\S*$/,'')+'…':first;
+      if(level==='Inicial'){
+        options.push(short?`Descubrimos más sobre ${short}`:'Exploramos y descubrimos desde nuestra experiencia');
+        options.push('Jugamos, observamos y aprendemos juntos');
+        options.push('Preguntamos, exploramos y contamos lo que descubrimos');
+      }else if(level==='Primaria'){
+        if(short)options.push(project?`Investigamos nuestro contexto: ${short}`:`Aprendemos desde nuestro contexto: ${short}`);
+        options.push(project?'Investigamos y transformamos una situación de nuestra comunidad':'Comprendemos y aprendemos desde una situación de nuestra comunidad');
+        options.push('Aprendemos con sentido: observamos, investigamos y proponemos');
+      }else{
+        if(short)options.push(project?`Investigamos y analizamos: ${short}`:`Analizamos y comprendemos: ${short}`);
+        options.push(project?'Investigamos una situación de nuestro contexto y construimos una propuesta':'Comprendemos una situación de nuestro contexto a partir de evidencias');
+        options.push('Analizamos, contrastamos y sustentamos nuestras conclusiones');
+      }
+    }
+  }
+
+  return [...new Set(options.map(x=>x.replace(/\s+/g,' ').trim()))].slice(0,3);
+}
 function proposeUnitTitle(brief,type){
-  const s=(brief||'').toLowerCase();
-  if(/siembr|papa|tarpuy|añu|oca|olluco/.test(s))return 'Aprendemos y participamos en la siembra de nuestra comunidad';
-  if(/pachamama|madre tierra/.test(s))return 'Cuidamos y valoramos la Pachamama';
-  if(/agua|yaku/.test(s))return 'Cuidamos y usamos responsablemente el agua';
-  if(/residuo|basura|contamin/.test(s))return 'Cuidamos nuestra comunidad reduciendo la contaminación';
-  return type==='Proyecto de aprendizaje'?'Investigamos y aprendemos desde nuestra comunidad':'Aprendemos a partir de situaciones de nuestra comunidad';
+  return proposeUnitTitleOptions(brief,type)[0]||'Proyecto de aprendizaje';
+}
+
+function ddAssistPlanningContext(apply=true){
+  const ta=byId('unitSituation');
+  const existing=ta?.value.trim()||'';
+  if(existing)return existing;
+
+  const title=(byId('unitTitle')?.value||'').trim();
+  const topic=title||((state.areas||[]).length===1
+    ? `aprendizajes vinculados con ${state.areas[0]}`
+    : 'una experiencia cercana y significativa para los estudiantes');
+  const level=state.level||'Primaria';
+  const grades=(state.grades||[]).join(', ');
+  const p=state.teacherContext||{};
+  const institution=p.institutionName||state.schoolName||'';
+  const locality=p.community?((p.localityType||'localidad')+' de '+p.community):'';
+  const place=[
+    institution?('la '+institution):'',
+    locality,
+    p.district?('distrito de '+p.district):'',
+    p.province?('provincia de '+p.province):'',
+    p.region?('región '+p.region):''
+  ].filter(Boolean).join(', ');
+  const where=place||'el entorno cercano de los estudiantes';
+  let brief='';
+
+  if(level==='Inicial'){
+    brief=`En ${where}, se propone partir de una experiencia cercana y lúdica relacionada con ${topic}. Las niñas y los niños de ${grades||'las edades configuradas'} podrán observar, explorar, jugar, conversar, representar y formular preguntas a partir de materiales, imágenes, relatos u objetos pertinentes. La docente recogerá sus ideas e intereses para orientar la actividad de aprendizaje y los talleres, sin asumir como hecho una situación que no haya sido observada previamente.`;
+  }else if(level==='Secundaria'){
+    brief=`En ${where}, se propone abordar ${topic} mediante una situación retadora y cercana a la vida de los estudiantes de ${grades||'los grados configurados'}. A partir de información, casos, datos, fuentes o experiencias pertinentes, los estudiantes analizarán el tema, formularán preguntas, contrastarán evidencias y construirán una respuesta, explicación o propuesta. El docente podrá precisar actores, datos o una problemática real cuando cuente con esa información.`;
+  }else{
+    brief=`En ${where}, se propone desarrollar ${topic} a partir de una situación cercana a la vida cotidiana de los estudiantes de ${grades||'los grados configurados'}. Mediante observación, preguntas, diálogo, lectura, resolución de problemas, indagación y producción según las áreas seleccionadas, los estudiantes construirán aprendizajes y los aplicarán en una tarea con sentido. El docente podrá completar luego intereses observados, prácticas locales o una necesidad específica para enriquecer la contextualización.`;
+  }
+
+  if(apply&&ta){
+    ta.value=brief;
+    ta.dataset.ddAssistedContext='true';
+    ta.dispatchEvent(new Event('input',{bubbles:true}));
+    let note=document.getElementById('ddAssistedContextNote');
+    if(!note){
+      note=document.createElement('div');
+      note.id='ddAssistedContextNote';
+      note.className='notice topgap';
+      ta.parentElement?.appendChild(note);
+    }
+    note.innerHTML='✨ <b>Contexto propuesto por DocenteDigital.</b> Puedes editarlo libremente antes o después de generar la propuesta.';
+  }
+  return brief;
+}
+
+window.ddAssistPlanningContext=ddAssistPlanningContext;
+
+function refreshUnitTitleSuggestions(){
+  const brief=byId('unitSituation')?.value.trim()||'';
+  const type=byId('unitType')?.value||'Proyecto de aprendizaje';
+  const input=byId('unitTitle');
+  const box=byId('unitTitleSuggestions');
+  const writtenTitle=input?.value.trim()||'';
+  const assisted=(!brief&&!writtenTitle)?ddAssistPlanningContext(false):'';
+  const effectiveBrief=[writtenTitle,brief||assisted].filter(Boolean).join('. ');
+  if(!effectiveBrief){
+    if(box)box.innerHTML='<small>Puedes escribir una idea o dejar que DocenteDigital proponga un punto de partida.</small>';
+    return;
+  }
+  const options=proposeUnitTitleOptions(effectiveBrief,type);
+  if(input&&(!input.value.trim()||input.dataset.autoTitle==='true')){
+    input.value=options[0]||'';
+    input.dataset.autoTitle='true';
+  }
+  if(box){
+    box.innerHTML='<small><b>Propuestas de título:</b> elige una o edita la que prefieras.</small><div class="dd-title-options">'+
+      options.map((title,i)=>`<button type="button" class="dd-title-option${i===0?' active':''}" onclick="chooseUnitTitle(${JSON.stringify(title)})">${escapeHtml(title)}</button>`).join('')+
+      '</div><div class="actions topgap"><button type="button" class="btn ghost" onclick="window.DocenteDigitalAI?.improveTitleWithChatGPTFree?.()">💬 Mejorar título con IA</button></div>';
+  }
+}
+
+function chooseUnitTitle(title){
+  const input=byId('unitTitle');
+  if(input){input.value=title;input.dataset.autoTitle='false';input.focus();}
+  document.querySelectorAll('.dd-title-option').forEach(b=>b.classList.toggle('active',b.textContent.trim()===title));
 }
 
 function expandSituation(brief){
   const text=(brief||'').trim();
   const s=text.toLowerCase();
   const grades=state.grades.join(', ');
-  if(/siembr|papa|tarpuy|añu|oca|olluco/.test(s)){
-    const place=/ccotataqui|cotataqui/.test(s)?'Ccotataqui':'la comunidad';
-    return `En ${place}, las familias participan en la época de siembra, una práctica agrícola y cultural que moviliza saberes sobre la preparación del terreno, selección y cuidado de semillas de papa, añu, oca y otros cultivos, uso de abonos, organización familiar y comunal, así como el respeto a la Pachamama. Los estudiantes de ${grades} observan y participan de estas actividades; sin embargo, no siempre reconocen cómo los saberes de sus familias se relacionan con los aprendizajes de Comunicación, Matemática, Personal Social, Ciencia y Tecnología y las demás áreas. Esta situación ofrece la oportunidad de investigar, dialogar con los yachaq y las familias, resolver problemas reales, registrar información y valorar conocimientos locales. Frente a ello se plantea el reto: ¿cómo podemos comprender, explicar y valorar el proceso de siembra de nuestra comunidad?, ¿qué conocimientos necesitamos para tomar decisiones durante la siembra?, ¿cómo podemos comunicar y compartir lo aprendido con nuestras familias y comunidad? Como respuesta al reto, los estudiantes elaborarán producciones y evidencias articuladas que recuperen saberes locales y conocimientos escolares, respetando las posibilidades y nivel de complejidad de cada grado.`;
+  const p=state.teacherContext||{};
+  const institution=p.institutionName||state.schoolName||'la institución educativa';
+  const locality=p.community?((p.localityType||'localidad')+' '+p.community):'su localidad';
+  const location=[locality,p.district&&('distrito de '+p.district),p.province&&('provincia de '+p.province),p.region&&('región '+p.region)].filter(Boolean).join(', ');
+  const where=`${institution}, ubicada en ${location}`;
+
+  if(/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueol[oó]gic|sitios?\s+arqueol[oó]gic|patrimonio\s+arqueol[oó]gic/.test(s)){
+    const enteredTitle=byId('unitTitle')?.value.trim()||'';
+    const explicitPlace=(enteredTitle.match(/\ben\s+([\p{L}][\p{L}'’ -]{2,80}(?:\s+y\s+[\p{L}][\p{L}'’ -]{2,50})?)$/iu)||[])[1]||'';
+    const heritageScope=explicitPlace?(' de '+explicitPlace):' de nuestro entorno';
+    const placeNote=explicitPlace&&!p.community?(' La experiencia se contextualiza en '+explicitPlace+'.'):'';
+    return `En ${where}, los estudiantes de ${grades} parten de una realidad cercana expresada por el docente: en su comunidad se encuentran pinturas rupestres.${placeNote} Estas evidencias del pasado despiertan preguntas sobre qué podemos observar directamente, qué información confiable necesitamos consultar y qué interpretaciones todavía deben comprobarse. A lo largo de la experiencia, los estudiantes observarán y registrarán detalles, formularán preguntas, leerán o escucharán fuentes pertinentes, organizarán información, representarán hallazgos y comunicarán sus conclusiones con un nivel de complejidad acorde a cada grado. No se atribuirán autores, antigüedad, significados ni funciones a las pinturas sin una fuente verificable. El reto será responder: ¿qué podemos descubrir, a partir de evidencias y fuentes confiables, sobre las pinturas rupestres${heritageScope} y cómo podemos comunicar su valor como parte del patrimonio arqueológico local?`;
+  }
+  if(/siembr|papa|tarpuy|añu|oca|olluco|semill|biohuerto/.test(s)){
+    return `En ${where}, los estudiantes de ${grades} desarrollan aprendizajes vinculados con la siembra, las semillas o el biohuerto a partir de experiencias cercanas y de los saberes de sus familias y comunidad. La propuesta no supone de antemano qué prácticas realizan todas las familias: el docente podrá incorporar testimonios, observaciones o datos reales del lugar. A partir de preguntas auténticas, los estudiantes observarán semillas y cultivos, dialogarán con personas de su entorno, registrarán cambios, resolverán situaciones matemáticas, producirán textos y contrastarán saberes locales con información escolar. El reto será comprender mejor el proceso trabajado, explicar qué evidencias sostienen sus conclusiones y comunicar lo aprendido mediante un producto útil para la comunidad educativa.`;
   }
   if(/pachamama|madre tierra/.test(s)){
-    return `En la comunidad, durante las actividades vinculadas con la Pachamama, las familias expresan agradecimiento, respeto y cuidado por la naturaleza mediante prácticas culturales propias. Los estudiantes de ${grades} conocen parte de estas costumbres, pero requieren analizar su significado, reconocer los saberes de sus familias y relacionarlos con acciones concretas de cuidado del ambiente. El reto será responder: ¿qué saberes y prácticas de nuestra comunidad ayudan a cuidar la Pachamama?, ¿qué problemas ambientales observamos y cómo podemos contribuir a solucionarlos?, ¿cómo comunicaremos nuestros compromisos a otras personas? A partir de estas preguntas, los estudiantes movilizarán competencias de las distintas áreas y producirán evidencias que permitan explicar, argumentar, representar y proponer acciones pertinentes a su realidad.`;
+    return `En ${where}, los estudiantes de ${grades} explorarán los significados, saberes y prácticas que las familias relacionan con la Pachamama y el cuidado de la tierra. La experiencia partirá de testimonios, relatos, observaciones o expresiones culturales realmente presentes en su entorno, sin atribuir costumbres que no hayan sido verificadas. Los estudiantes compararán perspectivas, formularán preguntas, producirán textos o representaciones y propondrán acciones de cuidado coherentes con lo que hayan comprendido y sustentado.`;
   }
   if(/agua|yaku/.test(s)){
-    return `En la comunidad, el agua es indispensable para la vida familiar, la agricultura, los animales y las plantas. No obstante, existen situaciones en las que se desperdicia, se contamina o no se aprovecha adecuadamente. Los estudiantes de ${grades} necesitan comprender de dónde proviene el agua que usan, cómo se puede cuidar y qué decisiones pueden tomar desde la escuela y el hogar. Se plantea el reto: ¿cómo podemos conocer mejor el uso del agua en nuestra comunidad?, ¿qué acciones permitirían cuidarla y reutilizarla responsablemente?, ¿cómo podemos sustentar y comunicar nuestras propuestas? Para responder, los estudiantes investigarán, resolverán problemas, producirán textos y elaborarán propuestas o productos que evidencien sus aprendizajes.`;
+    return `En ${where}, los estudiantes de ${grades} investigarán el uso y la importancia del agua en su vida cotidiana. A partir de observaciones, datos, relatos familiares o situaciones verificables del entorno, analizarán cómo se utiliza, qué decisiones favorecen su cuidado y qué preguntas requieren mayor indagación. Resolverán problemas, organizarán información, producirán explicaciones y construirán una propuesta o producto que comunique aprendizajes sustentados sin presentar como hechos problemas locales que todavía no hayan sido comprobados.`;
   }
   if(/residuo|basura|contamin/.test(s)){
-    return `En la comunidad se generan residuos de diferentes tipos y no siempre se separan, reutilizan o disponen adecuadamente. Esta situación puede afectar el suelo, el agua, los animales y los espacios que utilizan las familias. Los estudiantes de ${grades} observan estas prácticas cotidianas y requieren analizar sus causas y consecuencias para proponer alternativas viables. El reto será responder: ¿qué ocurre con los residuos que producimos?, ¿cómo afectan nuestro entorno?, ¿qué acciones podemos realizar y comunicar para reducir la contaminación? A partir de este desafío, los estudiantes movilizarán saberes previos y competencias de distintas áreas para investigar, representar datos, argumentar y desarrollar productos o acciones de mejora.`;
+    return `En ${where}, los estudiantes de ${grades} analizarán los residuos que se generan en espacios de su vida cotidiana a partir de observaciones y registros reales. Identificarán tipos de residuos, formas de manejo, cantidades o situaciones que puedan verificarse; luego contrastarán información y propondrán alternativas viables. La situación evita atribuir causas o consecuencias no observadas y orienta a que los estudiantes construyan conclusiones y decisiones desde evidencias recogidas durante la unidad o proyecto.`;
   }
-  return `En el contexto de ${text || 'una situación cercana de la comunidad'}, los estudiantes de ${grades} conviven con experiencias, saberes, necesidades y oportunidades que pueden convertirse en fuente de aprendizaje. Se requiere que observen la realidad, recuperen sus saberes previos y reconozcan aspectos que necesitan comprender o mejorar. Por ello se plantea el reto: ¿qué sabemos sobre esta situación?, ¿qué necesitamos investigar o aprender para comprenderla mejor?, ¿qué decisiones o propuestas podemos construir y cómo comunicaremos nuestros aprendizajes? La unidad articulará competencias de las áreas seleccionadas y culminará con productos o evidencias vinculadas con el reto planteado.`;
+  return `En ${where}, los estudiantes de ${grades} abordarán ${text||'una experiencia significativa de su entorno'} mediante una situación cercana que permita recuperar lo que ya saben, formular preguntas, buscar información, observar, comparar, resolver, producir y comunicar. El docente podrá incorporar datos reales de la institución o localidad para aumentar la pertinencia. El reto se construirá a partir de lo que los estudiantes necesiten comprender o hacer y culminará en una evidencia o producto que muestre cómo evolucionó su aprendizaje.`;
 }
 
 function proposeProduct(brief,type){
   const s=(brief||'').toLowerCase();
-  if(/siembr|papa|tarpuy|añu|oca|olluco/.test(s))return 'Libro o muestra comunitaria sobre la siembra, con textos, registros de saberes familiares, problemas matemáticos, observaciones científicas, representaciones artísticas y exposición final.';
+  if(/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueol[oó]gic|sitios?\s+arqueol[oó]gic|patrimonio\s+arqueol[oó]gic/.test(s))return 'Museo escolar “Huellas de nuestra comunidad”: muestra organizada con dibujos o registros de observación, textos informativos, ubicación referencial, preguntas investigadas y explicaciones sustentadas sobre las pinturas rupestres, diferenciadas según el grado.';
+    if(/siembr|papa|tarpuy|añu|oca|olluco/.test(s))return 'Libro o muestra comunitaria sobre la siembra, con textos, registros de saberes familiares, problemas matemáticos, observaciones científicas, representaciones artísticas y exposición final.';
   if(/pachamama/.test(s))return 'Libro cartonero, mural o feria de compromisos y producciones para el cuidado de la Pachamama.';
   if(/agua|yaku/.test(s))return 'Campaña o muestra escolar con propuestas, registros, textos y evidencias para el cuidado y uso responsable del agua.';
   if(/residuo|basura|contamin/.test(s))return 'Propuesta de acción ambiental con registros, afiches, datos, explicaciones y compromisos para reducir residuos.';
@@ -215,6 +509,18 @@ function activityVariants(area,brief){
       `Reflexionamos sobre el agradecimiento, la vida y el cuidado de la creación`,
       `Expresamos compromisos de respeto y solidaridad desde nuestra fe y cultura`
     ],
+    'Castellano como Segunda Lengua': state.level==='Inicial' ? [
+      `Conversamos en castellano sobre experiencias cercanas mediante palabras, frases, gestos e imágenes`,
+      `Escuchamos y comprendemos mensajes orales sencillos en castellano`
+    ] : [
+      `Conversamos en castellano sobre experiencias del contexto`,
+      `Leemos textos breves vinculados con el contexto`,
+      `Producimos mensajes escritos en castellano según el propósito comunicativo`
+    ],
+    'Inglés como Lengua Extranjera':[
+      `Comprendemos expresiones sencillas relacionadas con el contexto de la unidad`,
+      `Comunicamos información breve sobre nuestra experiencia`
+    ],
     'Psicomotriz':[
       `Exploramos movimientos, espacios y materiales del contexto`,
       `Representamos corporalmente experiencias de nuestra comunidad`
@@ -223,15 +529,11 @@ function activityVariants(area,brief){
       `Analizamos actores, cambios y relaciones sociales presentes en ${topic}`,
       `Interpretamos fuentes y explicamos procesos del contexto`
     ],
-    'DPCC':[
+    'Desarrollo Personal, Ciudadanía y Cívica':[
       `Deliberamos sobre decisiones y responsabilidades relacionadas con ${topic}`,
       `Construimos propuestas y acuerdos para el bien común`
     ],
-    'Inglés':[
-      `Comprendemos expresiones sencillas relacionadas con el contexto de la unidad`,
-      `Comunicamos información breve sobre nuestra experiencia`
-    ],
-    'EPT':[
+    'Educación para el Trabajo':[
       `Identificamos necesidades y oportunidades vinculadas con ${topic}`,
       `Diseñamos y mejoramos una propuesta o producto`
     ]
@@ -254,8 +556,9 @@ function buildActivities(brief,duration){
 function createUnitDemo(){
   const type=byId('unitType').value;
   const duration=byId('unitDuration').value;
-  const brief=byId('unitSituation').value.trim();
-  if(!brief)return alert('Escribe una idea breve del contexto o situación de tu comunidad.');
+  let brief=byId('unitSituation').value.trim();
+  if(!brief&&typeof window.ddAssistPlanningContext==='function')brief=window.ddAssistPlanningContext(true)||'';
+  if(!brief)brief=byId('unitTitle').value.trim()||'una experiencia cercana y significativa para los estudiantes';
   let title=byId('unitTitle').value.trim();
   if(!title){title=proposeUnitTitle(brief,type);byId('unitTitle').value=title;}
   const situation=expandSituation(brief);
@@ -326,7 +629,7 @@ function loadUnitForSession(){
   const unit=state.units.find(u=>u.id===sel.value);
   if(!unit){activity.innerHTML='<option value="0">Matemática · Medimos espacios para organizar nuestra feria</option><option value="1">Comunicación · Dialogamos sobre saberes de nuestra comunidad</option>';syncTitle();return;}
   state.activeUnitId=unit.id;save();
-  activity.innerHTML=unit.activities.map((a,i)=>`<option value="${i}">${escapeHtml(a.area)} · ${escapeHtml(a.title)}</option>`).join('');
+  activity.innerHTML=unit.activities.map((a,i)=>`<option value="${i}">${escapeHtml(a.kindLabel||a.area)} · ${escapeHtml(a.title)}</option>`).join('');
   syncTitle();
 }
 
@@ -342,28 +645,32 @@ function syncTitle(){
   const {activity}=selectedActivity();
   title.value=activity?.title||activitySelect.options[activitySelect.selectedIndex]?.textContent||'';
   title.readOnly=state.mode==='easy';
+  const duration=byId('sessionDuration');
+  if(duration&&state.level==='Inicial'&&activity){
+    const desired=activity.kind==='taller'?'40 minutos':'60 minutos';
+    if([...duration.options].some(o=>o.value===desired||o.textContent===desired))duration.value=desired;
+  }
+  const heading=document.querySelector('#session h1');
+  const primaryButton=[...document.querySelectorAll('#session button')].find(b=>(b.getAttribute('onclick')||'').includes('generateSession'));
+  const activityLabel=byId('activity')?.closest('label');
+  if(state.level==='Inicial'){
+    if(heading)heading.textContent='Crear actividad o taller';
+    if(primaryButton)primaryButton.textContent='✨ PREPARAR ACTIVIDAD / TALLER';
+    if(activityLabel&&activityLabel.firstChild?.nodeType===Node.TEXT_NODE)activityLabel.firstChild.nodeValue='Actividad / taller programado';
+  }else{
+    if(heading)heading.textContent='Crear mi sesión';
+    if(primaryButton)primaryButton.textContent='✨ PREPARAR MI SESIÓN MAESTRA';
+    if(activityLabel&&activityLabel.firstChild?.nodeType===Node.TEXT_NODE)activityLabel.firstChild.nodeValue='Actividad programada';
+  }
 }
 
 function competenceFor(area,title=''){
-  const t=title.toLowerCase();
-  if(area==='Comunicación'){
-    if(/lee|lectura|texto/.test(t))return 'Lee diversos tipos de textos escritos en su lengua materna.';
-    if(/escrib|produc|revis/.test(t))return 'Escribe diversos tipos de textos en su lengua materna.';
-    return 'Se comunica oralmente en su lengua materna.';
+  const core=window.DD_OFFICIAL_CURRICULUM;
+  const official=core?.pickCompetence?.(state.level,area,title);
+  if(!official){
+    throw new Error(`No se encontró una competencia oficial MINEDU para ${state.level} / ${area}`);
   }
-  if(area==='Matemática'){
-    if(/tabla|gráfico|dato/.test(t))return 'Resuelve problemas de gestión de datos e incertidumbre.';
-    if(/med|forma|ubic|espacio/.test(t))return 'Resuelve problemas de forma, movimiento y localización.';
-    if(/patrón|regular/.test(t))return 'Resuelve problemas de regularidad, equivalencia y cambio.';
-    return 'Resuelve problemas de cantidad.';
-  }
-  if(area==='Personal Social')return 'Convive y participa democráticamente en la búsqueda del bien común.';
-  if(area==='Ciencia y Tecnología')return /indag|observ|pregunta|resultado/.test(t)?'Indaga mediante métodos científicos para construir sus conocimientos.':'Explica el mundo físico basándose en conocimientos sobre los seres vivos, materia y energía, biodiversidad, Tierra y universo.';
-  if(area==='Arte y Cultura')return 'Crea proyectos desde los lenguajes artísticos.';
-  if(area==='Educación Física')return 'Interactúa a través de sus habilidades sociomotrices.';
-  if(area==='Educación Religiosa')return 'Asume la experiencia del encuentro personal y comunitario con Dios en su proyecto de vida.';
-  if(area==='Psicomotriz')return 'Se desenvuelve de manera autónoma a través de su motricidad.';
-  return `Desarrolla la competencia priorizada del área de ${area}, de acuerdo con la unidad y el grado.`;
+  return official.name;
 }
 
 function criterionFor(area,brief){
@@ -406,10 +713,65 @@ function differentiatedTasks(grades,area,brief){
 }
 
 function sessionTimes(durationText){
-  const m=parseInt(durationText)||45;
-  if(m>=90)return {start:15,dev:60,close:15};
-  if(m>=60)return {start:15,dev:35,close:10};
-  return {start:10,dev:25,close:10};
+  const m=Math.max(30,parseInt(durationText)||45);
+  // Distribución flexible: el desarrollo concentra la mayor parte del tiempo.
+  // Evita tratar toda sesión >=90 min como si durara exactamente 90.
+  let start=Math.round(m*0.15);
+  let close=Math.round(m*0.15);
+  start=Math.min(25,Math.max(10,start));
+  close=Math.min(25,Math.max(10,close));
+  let dev=m-start-close;
+  if(dev<20){start=10;close=10;dev=Math.max(10,m-20);}
+  return {start,dev,close,total:m};
+}
+
+function ddSessionTopicSpec(area,title,brief,level){
+  const text=((title||'')+' '+(brief||'')).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const spec={
+    topic:(title||brief||'el tema trabajado'),
+    objects:'materiales concretos vinculados con el tema',
+    observable:'características, cambios, semejanzas, diferencias o relaciones pertinentes',
+    action:'observar, comparar, explicar y representar lo descubierto',
+    purpose:'Comprender el tema mediante una experiencia concreta, recoger evidencias y comunicar lo aprendido.'
+  };
+
+  if(/animal|fauna|pelo|pluma|escama|huella/.test(text)){
+    spec.objects='fotografías o tarjetas de animales del entorno, figuras o modelos, plumas caídas limpias, lana o fibras seguras y tarjetas de huellas';
+    spec.observable='cobertura corporal (pelo, plumas o escamas), número de patas, forma de desplazarse, hábitat y otras características visibles';
+    spec.action='observar y comparar animales, agruparlos por características visibles y explicar qué criterio utilizaron';
+    spec.purpose=level==='Inicial'
+      ? 'Que las niñas y los niños observen y comparen animales del entorno a partir de imágenes, modelos y materiales seguros, reconozcan algunas características visibles —como pelo, plumas, escamas, patas o forma de desplazarse— y comuniquen sus descubrimientos mediante el lenguaje oral, el dibujo, el movimiento o la clasificación.'
+      : 'Que los estudiantes observen, comparen y organicen información sobre animales del entorno, identifiquen características visibles y relaciones básicas, y comuniquen conclusiones usando evidencias de lo observado.';
+  }else if(/semill|germin|siembr|biohuerto|planta/.test(text)){
+    spec.objects='semillas reales de la zona, vasos o recipientes transparentes, algodón o tierra, agua, lupa sencilla y registros de crecimiento';
+    spec.observable='tamaño, forma, color, presencia de raíz o tallo, cambios entre días y condiciones de germinación';
+    spec.action='observar semillas o plantas, comparar cambios, registrar evidencias y explicar qué condiciones favorecen el crecimiento';
+    spec.purpose=level==='Inicial'
+      ? 'Que las niñas y los niños exploren semillas y plantas reales, observen cambios visibles como la aparición de raíz o tallo, comparen tamaños y formas, y comuniquen lo que descubren mediante dibujos, palabras, gestos o registros sencillos.'
+      : 'Que los estudiantes observen y registren cambios en semillas o plantas, comparen evidencias y expliquen qué condiciones favorecen la germinación o el crecimiento.';
+  }else if(/agua|yaku/.test(text)){
+    spec.objects='dos recipientes transparentes con agua, gotero o cucharita, piedras, tierra, hojas y una ficha o dibujo para registrar';
+    spec.observable='cantidad, transparencia, cambios al mezclar materiales, usos y formas de cuidado';
+    spec.action='observar, comparar usos o cambios del agua, registrar hallazgos y proponer acciones de cuidado';
+    spec.purpose='Que los estudiantes observen y comparen situaciones vinculadas con el agua, registren evidencias y expliquen por qué su cuidado es importante en su vida cotidiana y comunidad.';
+  }else if(/residuo|basura|recic|contamin/.test(text)){
+    spec.objects='residuos limpios y seguros previamente seleccionados —papel, cartón, plástico, metal o restos orgánicos representados—, recipientes de clasificación y tarjetas con situaciones cotidianas';
+    spec.observable='tipo de material, posibilidad de reutilización o reciclaje, cantidad y forma adecuada de clasificación';
+    spec.action='clasificar residuos, justificar criterios y proponer acciones de reducción, reutilización o disposición responsable';
+    spec.purpose='Que los estudiantes clasifiquen residuos según características observables, justifiquen sus decisiones y propongan acciones viables para reducir o manejar mejor los residuos de su entorno.';
+  }else if(area==='Matemática'){
+    spec.objects='material concreto, tarjetas con datos, semillas, chapas, bloques, regla, cinta métrica, balanza o representaciones según el problema';
+    spec.observable='cantidades, relaciones, medidas, patrones, datos y procedimientos usados para resolver el reto';
+    spec.action='representar el problema, elegir una estrategia, resolver, comprobar y explicar por qué la respuesta tiene sentido';
+    spec.purpose='Que los estudiantes resuelvan un problema contextualizado usando representaciones y estrategias pertinentes, expliquen su procedimiento y comprueben la razonabilidad de su respuesta.';
+  }else if(area==='Comunicación'){
+    spec.objects='texto breve, imagen, cartel, audio, testimonio o producción modelo vinculada con el propósito comunicativo';
+    spec.observable='información explícita e implícita, organización de ideas, propósito, destinatario, recursos del texto y decisiones de comunicación';
+    spec.action='leer, escuchar, dialogar o producir un texto con un propósito claro y revisar la producción usando criterios';
+    spec.purpose='Que los estudiantes comprendan o produzcan mensajes con un propósito comunicativo claro, organicen sus ideas y revisen sus decisiones a partir de criterios.';
+  }
+
+  return spec;
 }
 
 function buildSession(){
@@ -420,15 +782,41 @@ function buildSession(){
   const area=activity?.area||'Área';
   const title=byId('sessionTitle')?.value||activity?.title||'Sesión de aprendizaje';
   const times=sessionTimes(duration);
+  const topicSpec=ddSessionTopicSpec(area,title,brief,state.level);
   const session={
     id:'s'+Date.now(),unitId:unit?.id||null,unitTitle:unit?.title||'Unidad de ejemplo',title,area,duration,resources,
+    topicSpec,
+    activityKind:activity?.kind||'sesion',activityKindLabel:activity?.kindLabel||(state.level==='Inicial'?'Actividad de aprendizaje':'Sesión de aprendizaje'),workshopType:activity?.workshopType||'',
     level:state.level,ieType:state.ieType,grades:[...state.grades],brief,
     competence:competenceFor(area,title),criterion:criterionFor(area,brief),evidence:evidenceFor(area),instrument:instrumentFor(area),
     challenge:challengeFor(area,brief),times,
-    purpose:`Desarrollar la competencia priorizada del área de ${area} mediante un reto contextualizado en ${brief}, diferenciando las tareas según el grado y promoviendo que los estudiantes expliquen lo que hacen y aprenden.`,
+    purpose:state.level==='Inicial'
+      ? (activity?.kind==='taller'
+          ? `Que las niñas y los niños participen en el taller de ${activity?.workshopType||'expresión'} explorando materiales, movimientos o lenguajes propios del taller, tomando decisiones y comunicando lo que hicieron y sintieron.`
+          : topicSpec.purpose)
+      : topicSpec.purpose,
     createdAt:new Date().toISOString()
   };
   state.lastSession=session;save();return session;
+}
+
+function selectedVisualResource(){
+  try{return JSON.parse(localStorage.getItem('docenteDigitalSelectedResource')||'null');}
+  catch{return null;}
+}
+
+function selectedVisualHtml(session,forWord=false){
+  const r=selectedVisualResource();
+  if(!r)return '';
+  if(r.selectedForSessionId && session?.id && r.selectedForSessionId!==session.id)return '';
+  const img=r.previewUrl
+    ? `<p style="text-align:center"><img src="${escapeHtml(r.previewUrl)}" alt="${escapeHtml(r.title||'Recurso visual')}" style="max-width:100%;max-height:${forWord?'360px':'300px'};object-fit:contain"></p>`
+    : '';
+  const author=r.author?` · Autor: ${escapeHtml(r.author)}`:'';
+  const source=r.sourcePage
+    ? `<a href="${escapeHtml(r.sourcePage)}">${escapeHtml(r.source||'Fuente')}</a>`
+    : escapeHtml(r.source||'Biblioteca DocenteDigital');
+  return `<div class="box"><h3>Recurso visual de apoyo</h3>${img}<p><b>${escapeHtml(r.title||'Recurso seleccionado')}</b></p><p><small>Fuente: ${source}${author} · Licencia: ${escapeHtml(r.license||'')}</small></p></div>`;
 }
 
 function sessionHtml(session,forWord=false){
@@ -444,6 +832,7 @@ function sessionHtml(session,forWord=false){
   <p><b>Evidencia:</b> ${escapeHtml(session.evidence)}</p>
   <p><b>Instrumento:</b> ${escapeHtml(session.instrument)}</p>
   <p><b>Recursos:</b> ${escapeHtml(session.resources)}. Se debe ofrecer alternativa no digital cuando corresponda.</p>
+  ${selectedVisualHtml(session,forWord)}
   ${attention}
   <h3>Inicio · ${session.times.start} min</h3>
   <p>Acogida, conexión con la experiencia de los estudiantes y recuperación de saberes previos. El docente comunica el propósito y el criterio en lenguaje comprensible, acuerda normas breves de trabajo y presenta el reto.</p>
@@ -475,7 +864,7 @@ function renderSessionOutput(session){
     tools=document.createElement('div');tools.id='sessionTools';tools.className='actions topgap';
     const chat=out.querySelector('.chatbar');out.insertBefore(tools,chat||null);
   }
-  tools.innerHTML=`<button class="btn alt" onclick="downloadSessionWord()">⬇ Descargar Word</button><button class="btn ghost" onclick="shareSession()">📤 Compartir</button>`;
+  tools.innerHTML=`<button class="btn alt" onclick="downloadSessionWord()">⬇ Descargar Word</button><button class="btn ghost" onclick="shareSession()">📤 Compartir</button><button class="btn" onclick="go('materials');setTimeout(()=>window.DDMaterials?.useCurrent?.(),60)">🧩 Crear materiales de esta sesión</button>`;
   out.classList.remove('hidden');out.scrollIntoView({behavior:'smooth'});
 }
 
@@ -543,7 +932,7 @@ function showEvaluation(kind){
 }
 
 function restartSetup(){showSetup();nextSetup(1)}
-function resetDemo(){if(confirm('¿Restablecer la configuración y los datos del prototipo?')){localStorage.removeItem('docenteDigitalPrototype');location.reload()}}
+function resetDemo(){if(confirm('¿Restablecer la configuración y los datos del prototipo?')){try{localStorage.removeItem('docenteDigitalPrototype')}catch(_e){}location.reload()}}
 
 setMode(state.mode);
 if(state.level){fillSelects();go('home')}else showSetup();

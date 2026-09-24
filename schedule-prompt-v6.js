@@ -48,7 +48,9 @@
     if(!state.linguisticMode){return;}
     setTimeout(()=>{go('plan');setTimeout(()=>{const input=document.getElementById('ddScheduleFile'),card=document.getElementById('ddScheduleCard');if(card)card.scrollIntoView({behavior:'smooth',block:'start'});if(input)input.click();else alert('Abre “Horario de clases” y selecciona “Subir horario en Word”.');},120);},80);
   };
-  document.getElementById('ddScheduleLater').onclick=()=>{box.classList.add('dd-schedule-later');const p=box.querySelector('p.sub');if(p)p.textContent='Puedes subirlo después desde Mi planificación → Horario de clases. Mientras tanto, podrás elegir 2 o 3 sesiones por día.';};
+  document.getElementById('ddScheduleLater').onclick=()=>{box.classList.add('dd-schedule-later');const p=box.querySelector('p.sub');if(p)p.textContent=state.level==='Inicial'
+    ?'En Inicial DocenteDigital organizará cada día con 1 actividad de aprendizaje de la unidad/proyecto y 1 taller; no se usa la distribución de 2 o 3 sesiones.'
+    :'Puedes subirlo después desde Mi planificación → Horario de clases. Mientras tanto, podrás elegir 2 o 3 sesiones por día.';};
   const style=document.createElement('style');style.textContent=`.dd-schedule-prompt{margin-top:12px;border:1px solid #cad9d1;background:linear-gradient(135deg,#f8fcfa,#eef7f2)}.dd-schedule-prompt h3{margin-top:0}.dd-schedule-prompt .actions{display:flex;gap:8px;flex-wrap:wrap}.dd-schedule-later{opacity:.9}`;document.head.appendChild(style);
 })();
 
