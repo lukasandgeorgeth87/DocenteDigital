@@ -114,7 +114,7 @@
     const title=$('unitTitle')?.value.trim()||'';
     const brief=$('unitSituation')?.value.trim()||'';
     const type=$('unitType')?.value||'Unidad de aprendizaje';
-    return `Necesito mejorar una ${type}. Tema o título escrito: "${title||'sin título'}". Idea/contexto del docente: "${brief||'sin contexto adicional'}". Respeta el nivel, edades/grados, áreas y contexto institucional que recibe la aplicación.`;
+    return `Necesito mejorar una ${type}. TÍTULO/INTENCIÓN PRINCIPAL DEL DOCENTE: "${title||'sin título'}". CONTEXTO O HECHO DE PARTIDA: "${brief||'sin contexto adicional'}". Usa el título como ancla temática cuando sea específico y usa el contexto para precisar la situación; no copies literalmente frases circunstanciales del contexto dentro del título. Mantén una sola línea de coherencia entre título, situación, reto y producto. Respeta el nivel, edades/grados, áreas y contexto institucional que recibe la aplicación.`;
   }
 
   async function improveTitles(button){
@@ -122,9 +122,23 @@
     const box=$('unitTitleSuggestions');
     try{
       const r=await request('title_options',planningPrompt(),{quality:'auto'});
-      const options=(r.data?.options||[]).filter(Boolean).slice(0,3);
-      if(!options.length&&r.data?.result)options.push(r.data.result);
-      if(!options.length)throw new Error('La IA no devolvió títulos.');
+      const titleNow=$('unitTitle')?.value.trim()||'';
+      const briefNow=$('unitSituation')?.value.trim()||'';
+      const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9ñáéíóúü ]/gi,' ').replace(/\s+/g,' ').trim();
+      const rawContext=norm(briefNow);
+      let options=(r.data?.options||[]).filter(Boolean).map(x=>String(x).replace(/\s+/g,' ').trim()).filter(x=>{
+        const nx=norm(x);
+        if(!nx)return false;
+        if(rawContext&&rawContext.length>24&&nx.includes(rawContext))return false;
+        if(/^(descubrimos|exploramos|comprendemos|aprendemos)\s+en la comunidad encontramos\b/i.test(x))return false;
+        return x.split(/\s+/).length<=22;
+      }).slice(0,3);
+      if(!options.length&&r.data?.result)options.push(String(r.data.result).trim());
+      if(options.length<3&&typeof window.proposeUnitTitleOptions==='function'){
+        const local=window.proposeUnitTitleOptions([titleNow,briefNow].filter(Boolean).join('. '),$('unitType')?.value||'Unidad de aprendizaje');
+        for(const x of local){if(options.length>=3)break;if(!options.some(y=>norm(y)===norm(x)))options.push(x);}
+      }
+      if(!options.length)throw new Error('La IA no devolvió títulos coherentes.');
       box.innerHTML='<small>Propuestas de IA: elige una o edítala.</small>'+options.map((x,i)=>`<button type="button" class="dd-title-option" data-dd-ai-title="${encodeURIComponent(x)}"><b>${i+1}.</b> ${esc(x)}</button>`).join('');
       box.querySelectorAll('[data-dd-ai-title]').forEach(b=>b.addEventListener('click',()=>{
         const value=decodeURIComponent(b.dataset.ddAiTitle);$('unitTitle').value=value;$('unitTitle').dataset.autoTitle='false';
