@@ -217,7 +217,21 @@ function proposeUnitTitleOptions(brief,type){
   const level=state.level||'Primaria';
   const options=[];
 
-  if(/siembr|semill|tarpuy|papa|anu|oca|olluco/.test(s)){
+  if(/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueol[oó]gic|sitios?\s+arqueol[oó]gic|patrimonio\s+arqueol[oó]gic/.test(s)){
+    if(level==='Inicial'){
+      options.push('Huellas del pasado: descubrimos formas y colores en las pinturas rupestres');
+      options.push('Pequeños exploradores de las huellas antiguas');
+      options.push('¿Qué descubrimos en las pinturas de las rocas?');
+    }else if(level==='Secundaria'){
+      options.push(project?'Huellas del pasado, preguntas del presente: investigamos nuestro patrimonio arqueológico':'Pinturas rupestres y memoria del territorio: analizamos evidencias del pasado');
+      options.push('Patrimonio arqueológico local: interpretamos, contrastamos y explicamos');
+      options.push('Arte rupestre y memoria del territorio: investigamos con evidencias');
+    }else{
+      options.push(project?'Huellas del pasado en nuestra comunidad: investigamos las pinturas rupestres':'Huellas del pasado: conocemos las pinturas rupestres de nuestro entorno');
+      options.push('Pinturas rupestres: descubrimos qué nos cuentan sobre nuestro patrimonio');
+      options.push('Guardianes de nuestra memoria: conocemos y valoramos el patrimonio arqueológico local');
+    }
+  }else if(/siembr|semill|tarpuy|papa|anu|oca|olluco/.test(s)){
     if(level==='Secundaria'){
       options.push(project?'Semillas, territorio y producción: investigamos prácticas de siembra y sus desafíos':'Siembra y territorio: analizamos saberes, procesos y decisiones productivas');
       options.push('De la semilla al sistema productivo: comprendemos relaciones entre ambiente, cultura y producción');
@@ -410,6 +424,12 @@ function expandSituation(brief){
   const location=[locality,p.district&&('distrito de '+p.district),p.province&&('provincia de '+p.province),p.region&&('región '+p.region)].filter(Boolean).join(', ');
   const where=`${institution}, ubicada en ${location}`;
 
+  if(/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueol[oó]gic|sitios?\s+arqueol[oó]gic|patrimonio\s+arqueol[oó]gic/.test(s)){
+    const enteredTitle=byId('unitTitle')?.value.trim()||'';
+    const explicitPlace=(enteredTitle.match(/\ben\s+([\p{L}'’ -]+(?:\s+y\s+[\p{L}'’ -]+)?)$/iu)||[])[1]||'';
+    const placeNote=explicitPlace&&!p.community?(' El título escrito por el docente ubica la experiencia en '+explicitPlace+'.'):'';
+    return `En ${where}, los estudiantes de ${grades} parten de una realidad cercana expresada por el docente: en su comunidad se encuentran pinturas rupestres.${placeNote} Estas evidencias del pasado despiertan preguntas sobre qué podemos observar directamente, qué información confiable necesitamos consultar y qué interpretaciones todavía deben comprobarse. A lo largo de la experiencia, los estudiantes observarán y registrarán detalles, formularán preguntas, leerán o escucharán fuentes pertinentes, organizarán información, representarán hallazgos y comunicarán sus conclusiones con un nivel de complejidad acorde a cada grado. No se atribuirán autores, antigüedad, significados ni funciones a las pinturas sin una fuente verificable. El reto será responder: ¿qué podemos descubrir, a partir de evidencias y fuentes confiables, sobre las pinturas rupestres de nuestro entorno y cómo podemos comunicar su valor como parte del patrimonio arqueológico local?`;
+  }
   if(/siembr|papa|tarpuy|añu|oca|olluco|semill|biohuerto/.test(s)){
     return `En ${where}, los estudiantes de ${grades} desarrollan aprendizajes vinculados con la siembra, las semillas o el biohuerto a partir de experiencias cercanas y de los saberes de sus familias y comunidad. La propuesta no supone de antemano qué prácticas realizan todas las familias: el docente podrá incorporar testimonios, observaciones o datos reales del lugar. A partir de preguntas auténticas, los estudiantes observarán semillas y cultivos, dialogarán con personas de su entorno, registrarán cambios, resolverán situaciones matemáticas, producirán textos y contrastarán saberes locales con información escolar. El reto será comprender mejor el proceso trabajado, explicar qué evidencias sostienen sus conclusiones y comunicar lo aprendido mediante un producto útil para la comunidad educativa.`;
   }
@@ -427,7 +447,8 @@ function expandSituation(brief){
 
 function proposeProduct(brief,type){
   const s=(brief||'').toLowerCase();
-  if(/siembr|papa|tarpuy|añu|oca|olluco/.test(s))return 'Libro o muestra comunitaria sobre la siembra, con textos, registros de saberes familiares, problemas matemáticos, observaciones científicas, representaciones artísticas y exposición final.';
+  if(/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueol[oó]gic|sitios?\s+arqueol[oó]gic|patrimonio\s+arqueol[oó]gic/.test(s))return 'Museo escolar “Huellas de nuestra comunidad”: muestra organizada con dibujos o registros de observación, textos informativos, ubicación referencial, preguntas investigadas y explicaciones sustentadas sobre las pinturas rupestres, diferenciadas según el grado.';
+    if(/siembr|papa|tarpuy|añu|oca|olluco/.test(s))return 'Libro o muestra comunitaria sobre la siembra, con textos, registros de saberes familiares, problemas matemáticos, observaciones científicas, representaciones artísticas y exposición final.';
   if(/pachamama/.test(s))return 'Libro cartonero, mural o feria de compromisos y producciones para el cuidado de la Pachamama.';
   if(/agua|yaku/.test(s))return 'Campaña o muestra escolar con propuestas, registros, textos y evidencias para el cuidado y uso responsable del agua.';
   if(/residuo|basura|contamin/.test(s))return 'Propuesta de acción ambiental con registros, afiches, datos, explicaciones y compromisos para reducir residuos.';
