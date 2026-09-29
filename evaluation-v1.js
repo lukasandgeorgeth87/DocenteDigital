@@ -136,20 +136,46 @@
     return 'Realiza una actuación o producción que permita demostrar el criterio: “'+criterion+'”. Explica qué hiciste, qué decisiones tomaste y qué evidencia muestra tu aprendizaje. Nivel esperado: '+d+'.';
   }
 
+  function evaluationTechnique(level,modality,area){
+    if(level==='Inicial') return 'Observación de actuaciones, diálogo y producciones del niño o niña';
+    if(modality==='Oral') return 'Exposición individual/grupal, diálogo o sustentación';
+    if(modality==='Desempeño') return 'Observación de desempeño / tarea auténtica';
+    if(modality==='Escrita') return 'Producción escrita / resolución de situaciones';
+    if(area==='Comunicación') return 'Producción y comunicación oral/escrita';
+    return 'Recojo de evidencias mediante actuación, producción y explicación';
+  }
+
+  function recommendedInstrument(level,modality,area,criteriaCount){
+    if(level==='Inicial') return criteriaCount<=3?'Lista de cotejo':'Guía de observación';
+    if(modality==='Oral') return 'Guía de observación';
+    if(modality==='Desempeño') return 'Rúbrica';
+    if(modality==='Escrita'&&criteriaCount<=3) return 'Lista de cotejo';
+    if(area==='Comunicación'||area==='Ciencia y Tecnología'||area==='Ciencias Sociales'||area==='DPCC') return 'Rúbrica';
+    return criteriaCount>=4?'Rúbrica':'Lista de cotejo';
+  }
+
+  function instrumentOptions(selected){
+    var items=['Automático según evidencia','Lista de cotejo','Rúbrica','Guía de observación','Registro anecdótico','Escala de estimación','Rejilla de evaluación','Ficha de autoevaluación','Ficha de coevaluación'];
+    return items.map(function(x){return '<option '+(selected===x?'selected':'')+'>'+E(x)+'</option>';}).join('');
+  }
+
   function openAssessment(){
     var unit=activeUnit(),panel=$('evaluationPanel');if(!panel)return;
     var grades=(unit&&unit.grades)||state.grades||[],areas=(unit&&unit.areas)||state.areas||[];
     panel.classList.remove('hidden');
-    panel.innerHTML=context(unit)+'<h2>🧪 Evaluación de unidad/proyecto</h2><div class="form2"><label>Grado / edad<select id="ddAssGrade">'+grades.map(function(g){return '<option>'+E(g)+'</option>';}).join('')+'</select></label><label>Área<select id="ddAssArea">'+areas.map(function(a){return '<option>'+E(a)+'</option>';}).join('')+'</select></label><label>Modalidad<select id="ddAssType"><option>Mixta</option><option>Escrita</option><option>Oral</option><option>Desempeño</option></select></label><label>Número de tareas<select id="ddAssCount"><option>4</option><option selected>6</option><option>8</option><option>10</option></select></label></div><div class="actions"><button class="btn" id="ddAssCreate">✨ Construir evaluación</button></div><div id="ddAssBody" class="topgap"></div>';
+    panel.innerHTML=context(unit)+'<h2>🧪 Evaluación de unidad/proyecto</h2><p class="sub">La evaluación se construye desde criterios y evidencias. DocenteDigital sugiere una técnica e instrumento pertinente, pero el docente puede cambiarlo.</p><div class="form2"><label>Grado / edad<select id="ddAssGrade">'+grades.map(function(g){return '<option>'+E(g)+'</option>';}).join('')+'</select></label><label>Área<select id="ddAssArea">'+areas.map(function(a){return '<option>'+E(a)+'</option>';}).join('')+'</select></label><label>Modalidad<select id="ddAssType"><option>Mixta</option><option>Escrita</option><option>Oral</option><option>Desempeño</option></select></label><label>Instrumento<select id="ddAssInstrument">'+instrumentOptions('Automático según evidencia')+'</select></label><label>Número de tareas<select id="ddAssCount"><option>4</option><option selected>6</option><option>8</option><option>10</option></select></label></div><div class="actions"><button class="btn" id="ddAssCreate">✨ Construir evaluación</button></div><div id="ddAssBody" class="topgap"></div>';
     $('ddAssCreate').onclick=buildAssessment;
   }
 
   function buildAssessment(){
     var unit=activeUnit(),grade=$('ddAssGrade').value,area=$('ddAssArea').value,type=$('ddAssType').value,count=parseInt($('ddAssCount').value)||6,cs=criteriaFor(unit,grade,area),box=$('ddAssBody');
     if(!cs.length){box.innerHTML='<div class="notice">No hay criterios disponibles para esta área/grado.</div>';return;}
+    var chosenInstrument=$('ddAssInstrument')?.value||'Automático según evidencia';
+    var instrument=chosenInstrument==='Automático según evidencia'?recommendedInstrument(state.level,type,area,cs.length):chosenInstrument;
+    var technique=evaluationTechnique(state.level,type,area);
     var items=[];for(var i=0;i<count;i++){var c=cs[i%cs.length];items.push(assessmentTask(area,c.criterion,grade));}
-    var body='<article class="dd-assessment-sheet"><div class="dd-material-kicker">Evaluación · '+E(area)+' · '+E(grade)+'</div><h1>'+E((unit&&unit.title)||'Evaluación de aprendizaje')+'</h1><p><b>Modalidad:</b> '+E(type)+'</p><ol>'+items.map(function(x){return '<li><p>'+E(x)+'</p><div class="dd-answer-lines tall"></div></li>';}).join('')+'</ol><h2>Criterios que se observarán</h2><ul>'+cs.map(function(x){return '<li>'+E(x.criterion)+'</li>';}).join('')+'</ul></article>';
-    state.lastAssessment={id:'a'+Date.now(),unitId:(unit&&unit.id)||'',unitTitle:(unit&&unit.title)||'',grade:grade,area:area,type:type,criteria:cs,html:body,createdAt:new Date().toISOString()};
+    var body='<article class="dd-assessment-sheet"><div class="dd-material-kicker">Evaluación · '+E(area)+' · '+E(grade)+'</div><h1>'+E((unit&&unit.title)||'Evaluación de aprendizaje')+'</h1><p><b>Modalidad:</b> '+E(type)+'<br><b>Técnica de recojo de evidencia:</b> '+E(technique)+'<br><b>Instrumento:</b> '+E(instrument)+'</p><ol>'+items.map(function(x){return '<li><p>'+E(x)+'</p><div class="dd-answer-lines tall"></div></li>';}).join('')+'</ol><h2>Criterios que se observarán</h2><ul>'+cs.map(function(x){return '<li>'+E(x.criterion)+'</li>';}).join('')+'</ul><p class="dd-small"><b>Uso formativo:</b> registra la evidencia observada, contrástala con los criterios y utiliza la información para retroalimentar y decidir el siguiente paso de aprendizaje.</p></article>';
+    state.lastAssessment={id:'a'+Date.now(),unitId:(unit&&unit.id)||'',unitTitle:(unit&&unit.title)||'',grade:grade,area:area,type:type,technique:technique,instrument:instrument,criteria:cs,html:body,createdAt:new Date().toISOString()};
     state.generatedAssessments.unshift(state.lastAssessment);state.generatedAssessments=state.generatedAssessments.slice(0,20);save();
     box.innerHTML='<div class="dd-editable-material" contenteditable="true" spellcheck="true">'+body+'</div><div class="actions topgap"><button class="btn" id="ddAssWord">⬇ Word</button><button class="btn alt" id="ddAssPrint">🖨 Imprimir / PDF</button></div>';
     $('ddAssWord').onclick=downloadAssessmentWord;$('ddAssPrint').onclick=function(){window.print();};
