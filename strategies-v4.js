@@ -2,7 +2,7 @@
 (function(){
   const E=v=>escapeHtml(v);
   state.strategyProfile=state.strategyProfile||'variado';
-  state.showStrategyReferences=state.showStrategyReferences!==false;
+  state.showStrategyReferences=false;
   save();
 
   const GENERAL=[
@@ -82,19 +82,16 @@
     const list=[...required,...rotatePick(specific,Math.min(4,specific.length),seed+5),...rotatePick(emphasized,2,seed+9),...rotatePick(GENERAL,5,seed),...rotatePick(eib,2,seed+13)];
     return list.filter((x,i,a)=>x&&a.findIndex(y=>y.name===x.name)===i).slice(0,10);
   }
-  function stratHtml(list){return list.map((s,i)=>`<div class="dd-strategy"><b>${i+1}. ${E(s.name)}</b><span>${E(s.desc)}</span><small>Referencia pedagógica: ${E(s.author)}</small></div>`).join('');}
+  function stratHtml(list){return list.map((s,i)=>`<div class="dd-strategy"><b>${i+1}. ${E(s.name)}</b><span>${E(s.desc)}</span></div>`).join('');}
 
   const baseSessionHtml=window.sessionHtml;
   if(typeof baseSessionHtml==='function'){
     window.sessionHtml=function(session,forWord=false){
-      const strategies=strategySet(session);session.strategies=strategies;
-      const authors=[...new Set(strategies.map(s=>s.author))];
-      const block=`<div class="dd-strategy-section"><h3>ESTRATEGIAS DIVERSIFICADAS PARA EL DESARROLLO</h3><p>La app selecciona y combina estrategias según área, reto, evidencia, nivel, contexto y necesidad de diferenciación. No se aplican como receta fija.</p><div class="dd-strategy-pack">${stratHtml(strategies)}</div>${state.showStrategyReferences?`<div class="dd-ped-note"><b>Referentes utilizados:</b> ${E(authors.join(' · '))}.</div>`:''}</div>`;
-      let html=baseSessionHtml(session,forWord);
-      if(html.includes('<b>Atención diferenciada y simultánea:</b>')) html=html.replace('<b>Atención diferenciada y simultánea:</b>',block+'<b>Atención diferenciada y simultánea:</b>');
-      else if(html.includes('<h2>7. INSTRUMENTO DE EVALUACIÓN</h2>')) html=html.replace('<h2>7. INSTRUMENTO DE EVALUACIÓN</h2>',block+'<h2>7. INSTRUMENTO DE EVALUACIÓN</h2>');
-      else html+=block;
-      return html;
+      // Las estrategias se seleccionan internamente y luego el motor maestro las
+      // integra dentro de una única secuencia lógica. No se imprime un bloque
+      // separado que duplique o fragmente la sesión.
+      session.strategies=strategySet(session);
+      return baseSessionHtml(session,forWord);
     };
   }
 
@@ -104,13 +101,6 @@
     const label=document.createElement('label');
     label.innerHTML=`Estrategias de desarrollo<select id="ddStrategyProfile"><option value="variado">Variadas y pertinentes (recomendado)</option><option value="indagacion">Mayor énfasis en indagación y evidencia</option><option value="colaboracion">Mayor énfasis en colaboración y diálogo</option><option value="diferenciacion">Mayor énfasis en diferenciación</option><option value="pensamiento">Mayor énfasis en razonamiento y argumentación</option></select><small>La app combina varias estrategias; no usa una receta única.</small>`;
     form?.appendChild(label);byId('ddStrategyProfile').value=state.strategyProfile;byId('ddStrategyProfile').onchange=e=>{state.strategyProfile=e.target.value;save();};
-  }
-
-  const settingsCard=byId('settings')?.querySelector('.card');
-  if(settingsCard&&!byId('ddStrategyInfo')){
-    const div=document.createElement('div');div.id='ddStrategyInfo';div.className='dd-strategy-info topgap';
-    div.innerHTML=`<h2>🧠 Banco pedagógico de estrategias</h2><p>DocenteDigital combina participación y comprensión, evaluación formativa, aprendizaje situado, lectura y escritura, resolución de problemas, situaciones didácticas, indagación científica y diferenciación.</p><p><b>Referentes considerados:</b> Doug Lemov · Rebeca Anijovich · Francisco Mora · Frida Díaz Barriga · Delia Lerner · Daniel Cassany · George Pólya · Guy Brousseau · Melina Furman · Carol Ann Tomlinson · orientaciones MINEDU/EIB.</p>`;
-    settingsCard.appendChild(div);
   }
 
   const css=document.createElement('style');css.textContent=`.dd-strategy-section{margin:12px 0;padding:10px;border:1px dashed #83988d;background:#fbfdfc}.dd-strategy-pack{display:grid;gap:7px;margin:10px 0}.dd-strategy{border-left:3px solid #6b8f7c;background:#f7faf8;padding:8px 10px;border-radius:5px}.dd-strategy b{display:block}.dd-strategy span{display:block;margin-top:2px}.dd-strategy small{display:block;margin-top:4px;color:#667;font-style:italic}.dd-ped-note{margin-top:10px;padding:8px;border-top:1px dotted #888;font-size:.92em}.dd-strategy-info{border-top:1px solid #ddd;padding-top:14px}`;document.head.appendChild(css);

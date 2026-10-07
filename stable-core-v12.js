@@ -2,20 +2,61 @@
 (function(){
   if(window.__ddStableCoreV12)return; window.__ddStableCoreV12=true;
   const E=v=>escapeHtml(v);
-  state.teacherContext=state.teacherContext||{community:'',district:'',province:'',region:'',calendar:'',notes:''};
+  state.teacherContext=Object.assign({
+    teacherName:'',
+    institutionName:'',
+    localityType:'Comunidad',
+    community:'',
+    district:'',
+    province:'',
+    region:'',
+    ugel:'',
+    calendar:'',
+    notes:''
+  },state.teacherContext||{});
   state.masterLibrary=state.masterLibrary||{version:'2026-08-30',normativeStatus:'PENDIENTE DE VERIFICACIÓN',lastVerification:null};
   save();
 
   function isPrimaryMulti(){return state.level==='Primaria'&&(state.ieType==='Multigrado'||state.ieType==='Unidocente');}
   function isPrimaryEibMulti(){return isPrimaryMulti()&&state.linguisticMode==='EIB';}
-  function ctxSummary(){const c=state.teacherContext||{};return [c.community,c.district,c.province,c.region,c.calendar,c.notes].filter(Boolean).join(' · ')||'Completa tu contexto en Configuración para contextualizar mejor la planificación.';}
+  function ctxSummary(){
+    const c=state.teacherContext||{};
+    const place=c.community?((c.localityType||'Localidad')+' '+c.community):'';
+    return [c.institutionName,place,c.district&&('Distrito '+c.district),c.province&&('Provincia '+c.province),c.region&&('Región '+c.region),c.calendar].filter(Boolean).join(' · ')||'Completa una sola vez tu institución y lugar de trabajo para contextualizar automáticamente la planificación.';
+  }
 
   function mountContext(){
     const settings=byId('settings'); if(settings&&!byId('ddTeacherContextSettings')){
       const c=state.teacherContext||{}; const card=document.createElement('div'); card.id='ddTeacherContextSettings';card.className='card topgap';
-      card.innerHTML=`<h2>📍 Contexto donde trabajo</h2><p class="sub">Se guarda una sola vez y se reutiliza en unidades, proyectos y sesiones.</p><div class="form2"><label>Comunidad/localidad<input id="ddCtxCommunity" value="${E(c.community||'')}"></label><label>Distrito<input id="ddCtxDistrict" value="${E(c.district||'')}"></label><label>Provincia<input id="ddCtxProvince" value="${E(c.province||'')}"></label><label>Región<input id="ddCtxRegion" value="${E(c.region||'')}"></label><label class="full">Calendario comunal / actividad del momento<input id="ddCtxCalendar" value="${E(c.calendar||'')}"></label><label class="full">Otros rasgos importantes<textarea id="ddCtxNotes">${E(c.notes||'')}</textarea></label></div><button class="btn" id="ddSaveTeacherContext">💾 Guardar contexto</button>`;
+      card.innerHTML=`<h2>🏫 Mi perfil docente e institución</h2><p class="sub">Se registra una sola vez. DocenteDigital reutiliza automáticamente estos datos en unidades, proyectos, actividades, talleres y sesiones.</p><div class="form2">
+        <label>Nombre del docente<input id="ddCtxTeacher" value="${E(c.teacherName||'')}" placeholder="Ej.: Jorge Luis Palma Rodríguez"></label>
+        <label>Institución educativa<input id="ddCtxInstitution" value="${E(c.institutionName||'')}" placeholder="Ej.: I.E. Ccotataqui"></label>
+        <label>Tipo de localidad<select id="ddCtxLocalityType"><option>Comunidad</option><option>Centro poblado</option><option>Anexo</option><option>Caserío</option><option>Barrio</option><option>Ciudad</option><option>Localidad</option></select></label>
+        <label>Nombre de la localidad<input id="ddCtxCommunity" value="${E(c.community||'')}" placeholder="Ej.: Ccotataqui"></label>
+        <label>Distrito<input id="ddCtxDistrict" value="${E(c.district||'')}"></label>
+        <label>Provincia<input id="ddCtxProvince" value="${E(c.province||'')}"></label>
+        <label>Región<input id="ddCtxRegion" value="${E(c.region||'')}"></label>
+        <label>UGEL<input id="ddCtxUgel" value="${E(c.ugel||'')}" placeholder="Opcional"></label>
+        <label class="full">Calendario comunal / actividad del momento<input id="ddCtxCalendar" value="${E(c.calendar||'')}"></label>
+        <label class="full">Otros rasgos importantes<textarea id="ddCtxNotes">${E(c.notes||'')}</textarea></label>
+      </div><button class="btn" id="ddSaveTeacherContext">💾 Guardar perfil</button>`;
       settings.appendChild(card);
-      byId('ddSaveTeacherContext').onclick=()=>{state.teacherContext={community:byId('ddCtxCommunity').value.trim(),district:byId('ddCtxDistrict').value.trim(),province:byId('ddCtxProvince').value.trim(),region:byId('ddCtxRegion').value.trim(),calendar:byId('ddCtxCalendar').value.trim(),notes:byId('ddCtxNotes').value.trim()};save();mountQuickContext(true);alert('Contexto guardado.');};
+      const localitySelect=byId('ddCtxLocalityType'); if(localitySelect)localitySelect.value=c.localityType||'Comunidad';
+      byId('ddSaveTeacherContext').onclick=()=>{
+        state.teacherContext={
+          teacherName:byId('ddCtxTeacher').value.trim(),
+          institutionName:byId('ddCtxInstitution').value.trim(),
+          localityType:byId('ddCtxLocalityType').value,
+          community:byId('ddCtxCommunity').value.trim(),
+          district:byId('ddCtxDistrict').value.trim(),
+          province:byId('ddCtxProvince').value.trim(),
+          region:byId('ddCtxRegion').value.trim(),
+          ugel:byId('ddCtxUgel').value.trim(),
+          calendar:byId('ddCtxCalendar').value.trim(),
+          notes:byId('ddCtxNotes').value.trim()
+        };
+        save();mountQuickContext(true);alert('Perfil docente e institucional guardado.');
+      };
     }
   }
 
@@ -33,17 +74,26 @@
     if(box.dataset.html!==html){box.dataset.html=html;box.innerHTML=html;}
   }
 
-  const AUTHORS_UNIT=['Wiggins y McTighe','Zabala y Arnau','Frida Díaz Barriga'];
-  const AUTHORS_SESSION=['Dylan Wiliam','Susan Brookhart','Hattie y Timperley','Rosenshine','Tomlinson'];
-  function sourceHtml(kind){const a=kind==='session'?AUTHORS_SESSION:AUTHORS_UNIT;return `<div class="dd-source-strip"><div><b>📚 Biblioteca Maestra activa</b><span>MINEDU primero → currículo → EIB/multigrado → autores.</span></div><div class="dd-source-pills"><span class="warn">🛡 ${E(state.masterLibrary.normativeStatus)}</span>${a.map(x=>`<span>${E(x)}</span>`).join('')}</div></div>`;}
   function mountSources(){
-    [['plan','ddPlanSources','unit'],['session','ddSessionSources','session']].forEach(([id,sid,kind])=>{const p=byId(id);if(!p)return;let box=byId(sid);if(!box){box=document.createElement('div');box.id=sid;const h=p.querySelector('h1');if(h)h.insertAdjacentElement('afterend',box);else p.prepend(box);}const html=sourceHtml(kind);if(box.dataset.html!==html){box.dataset.html=html;box.innerHTML=html;}});
+    document.getElementById('ddPlanSources')?.remove();
+    document.getElementById('ddSessionSources')?.remove();
   }
+
   function mountLibrary(){
     const settings=byId('settings');if(!settings||byId('ddMasterLibraryCard'))return;const card=document.createElement('div');card.id='ddMasterLibraryCard';card.className='card topgap';card.innerHTML=`<h2>📚 Biblioteca Maestra Pedagógica</h2><p><b>Jerarquía:</b> Norma MINEDU vigente → CNEB → Programa Curricular → orientaciones oficiales → EIB/multigrado/inclusión → guías por área → autores.</p><div class="notice"><b>🛡 Vigilancia normativa:</b> ${E(state.masterLibrary.normativeStatus)}. La app no afirmará vigencia sin verificación oficial.</div><p class="sub">Los autores enriquecen las estrategias, pero no sustituyen la normativa ni el currículo.</p>`;settings.appendChild(card);
   }
 
-  function showToast(id,title,checks,foot){let box=byId(id);if(!box){box=document.createElement('div');box.id=id;document.body.appendChild(box);}const ok=checks.filter(x=>x[1]).length;box.className='dd-stable-audit show';box.innerHTML=`<div class="dd-sa-head"><b>${title}</b><strong>${ok}/${checks.length}</strong></div><div class="dd-sa-grid">${checks.map(([n,v])=>`<span class="${v?'ok':'warn'}">${v?'✓':'⚠'} ${E(n)}</span>`).join('')}</div><small>${E(foot||'')}</small>`;return box;}
+  function showToast(id,title,checks,foot){
+    const payload={title,checks,foot,at:new Date().toISOString()};
+    try{
+      const all=JSON.parse(localStorage.getItem('ddInternalAuditLog')||'[]');
+      all.push(payload);
+      localStorage.setItem('ddInternalAuditLog',JSON.stringify(all.slice(-80)));
+    }catch(_e){}
+    let box=byId(id);if(!box){box=document.createElement('div');box.id=id;box.style.display='none';document.body.appendChild(box);}
+    return box;
+  }
+
   function hideToast(id){byId(id)?.classList.remove('show');}
 
   let unitBypass=false,sessionBypass=false;

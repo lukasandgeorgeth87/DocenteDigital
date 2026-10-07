@@ -131,6 +131,20 @@
     const s=state.lastSession;if(!s)return alert('Primero crea una sesión.');
     const blob=docxBlob(s.title,sessionHtml(s,true),false);shareDocx(blob,fileName(s.title),s.title);
   };
+  window.DDWordExport={
+    downloadHtml:function(title,html,landscape=false,customName=''){
+      const blob=docxBlob(title,html,landscape);
+      const name=customName?cleanFileName(customName)+'.docx':fileName(title);
+      return downloadDocx(blob,name);
+    },
+    shareHtml:function(title,html,landscape=false,customName=''){
+      const blob=docxBlob(title,html,landscape);
+      const name=customName?cleanFileName(customName)+'.docx':fileName(title);
+      return shareDocx(blob,name,title);
+    },
+    createBlob:docxBlob
+  };
+
   window.ddDocxSelfTest=function(){
     try{const b=docxBlob('Prueba','<h1>Prueba DOCX</h1><p>Compatibilidad OOXML.</p><table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table>',false);return b.type==='application/vnd.openxmlformats-officedocument.wordprocessingml.document'&&b.size>500}catch(e){console.error(e);return false}
   };

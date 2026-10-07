@@ -26,7 +26,9 @@
   const card=document.getElementById('ddScheduleCard');
   if(card){
     const summary=card.querySelector('.success');
-    if(summary)summary.innerHTML='<b>Horario:</b> aún no confirmado. Puedes subir tu Word, configurarlo manualmente o usar una distribución provisional de 2 o 3 sesiones por día.';
+    if(summary)summary.innerHTML=state.level==='Inicial'
+      ?'<b>Organización de Inicial:</b> 1 actividad de aprendizaje de la unidad/proyecto + 1 taller por día. La jornada conserva además sus momentos propios.'
+      :'<b>Horario:</b> aún no confirmado. Puedes subir tu Word, configurarlo manualmente o usar una distribución provisional de 2 o 3 sesiones por día.';
     const select=document.getElementById('ddSessionMode');if(select)select.value=state.unitSessionMode;
   }
   const inline=document.getElementById('ddInlineSessionMode');if(inline)inline.value=state.unitSessionMode;

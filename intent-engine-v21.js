@@ -59,6 +59,52 @@
     return theme||'la situación descrita';
   }
 
+  function pedagogicalTheme(raw,theme){
+    const s=lower(raw),base=trim(theme||raw);
+    if(/(?:arrojan|botan|tiran|dejan|echan).{0,35}(?:basura|residuos?)|(?:basura|residuos?).{0,35}(?:piso|suelo|patio|aula|calle|espacio)/.test(s))return'el manejo de residuos y el cuidado de los espacios comunes';
+    if(/desperdici|malgast/.test(s)&&/agua/.test(s))return'el uso responsable y el cuidado del agua';
+    if(/contaminacion|contaminan|contaminado/.test(s)&&/(residu|basura|ambiente|suelo|agua)/.test(s))return'la contaminación y el cuidado del ambiente';
+    if(/bullying|acoso|agresion|maltrato/.test(s))return'la convivencia respetuosa y la prevención de situaciones de violencia';
+    if(/mamifer/.test(s))return'los mamíferos y sus características';
+    if(/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueol[oó]gic|sitios?\s+arqueol[oó]gic|patrimonio\s+arqueol[oó]gic/.test(s))return'las pinturas rupestres y el patrimonio arqueológico local';
+    return base;
+  }
+
+  function heritageTitles(raw,type){
+    const s=lower(raw),level=state.level||'Primaria',project=/proyecto/i.test(type||'');
+    if(!/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueol[oó]gic|sitios?\s+arqueol[oó]gic|patrimonio\s+arqueol[oó]gic/.test(s))return null;
+    if(level==='Inicial')return [
+      'Huellas del pasado: descubrimos formas y colores en las pinturas rupestres',
+      'Pequeños exploradores de las huellas antiguas',
+      '¿Qué descubrimos en las pinturas de las rocas?'
+    ];
+    if(level==='Secundaria')return project?[
+      'Huellas del pasado, preguntas del presente: investigamos nuestro patrimonio arqueológico',
+      'Arte rupestre y memoria del territorio: analizamos evidencias y comunicamos hallazgos',
+      'Patrimonio bajo investigación: interpretamos evidencias de las pinturas rupestres'
+    ]:[
+      'Pinturas rupestres y memoria del territorio: analizamos evidencias del pasado',
+      'Patrimonio arqueológico local: interpretamos, contrastamos y explicamos',
+      'Huellas del pasado: estudiamos las pinturas rupestres con evidencias'
+    ];
+    return project?[
+      'Huellas del pasado en nuestra comunidad: investigamos las pinturas rupestres',
+      'Pinturas rupestres: descubrimos qué nos cuentan sobre nuestro patrimonio',
+      'Guardianes de nuestra memoria: conocemos y valoramos el patrimonio arqueológico local'
+    ]:[
+      'Huellas del pasado: conocemos las pinturas rupestres de nuestro entorno',
+      'Pinturas rupestres: observamos, preguntamos y buscamos explicaciones',
+      'Nuestro patrimonio arqueológico: descubrimos, comprendemos y valoramos'
+    ];
+  }
+
+  function levelProblemTitles(raw,type){
+    const s=lower(raw),level=state.level||'Primaria',project=/proyecto/i.test(type||'');
+    if(!/(?:arrojan|botan|tiran|dejan|echan).{0,35}(?:basura|residuos?)|(?:basura|residuos?).{0,35}(?:piso|suelo|patio|aula|calle|espacio)/.test(s))return null;
+    if(level==='Inicial')return ['Cada residuo en su lugar: aprendemos a cuidar nuestros espacios','Pequeños guardianes: clasificamos residuos y cuidamos donde jugamos','¿Dónde va cada residuo? Exploramos, clasificamos y cuidamos'];
+    if(level==='Secundaria')return project?['Residuos y convivencia: investigamos nuestras prácticas y proponemos mejoras','Del problema a la acción: transformamos el manejo de residuos en nuestra institución','¿Qué hacemos con nuestros residuos? Analizamos evidencias y diseñamos soluciones']:['Residuos y convivencia: analizamos prácticas y proponemos mejoras','¿Qué hacemos con nuestros residuos? Analizamos evidencias y tomamos decisiones','Manejo de residuos bajo análisis: comprendemos el problema y planteamos alternativas'];
+    return project?['Cada residuo en su lugar: investigamos y mejoramos nuestros espacios','Menos residuos en el piso, más cuidado entre todos','Guardianes de nuestros espacios: observamos, proponemos y actuamos']:['Cada residuo en su lugar: comprendemos y cuidamos nuestros espacios','¿Qué pasa con nuestros residuos? Observamos, analizamos y proponemos','Cuidamos nuestros espacios: aprendemos a manejar mejor los residuos'];
+  }
   function intentKind(raw){
     const s=lower(raw);
     if(/investig|indag|averigu|pregunt|quieren saber|curios/.test(s))return'indagación/curiosidad';
@@ -116,7 +162,9 @@
   function chooseFresh(key,list,n=5){state.intentTitleHistory=state.intentTitleHistory||{};const used=Array.isArray(state.intentTitleHistory[key])?state.intentTitleHistory[key]:[];let available=list.filter(x=>!used.includes(signature(x)));if(available.length<n)available=[...list];const out=[];while(available.length&&out.length<n){const i=Math.floor(Math.random()*available.length);out.push(available.splice(i,1)[0]);}state.intentTitleHistory[key]=[...used,...out.map(signature)].slice(-40);try{save();}catch(e){}return out;}
 
   function titleOptions(text,type){
-    const i=inferIntent(text,type),f=shortFocus(i),g=shortGoal(i),project=/proyecto/i.test(String(type||i.mci.document||'')),kind=i.mci.intentKind,place=i.place?` en ${i.place}`:'';
+    const i=inferIntent(text,type),f=pedagogicalTheme(text,shortFocus(i)),g=shortGoal(i),project=/proyecto/i.test(String(type||i.mci.document||'')),kind=i.mci.intentKind,place=i.place?` en ${i.place}`:'',level=state.level||'Primaria';
+    const heritage=heritageTitles(text,type);if(heritage)return heritage;
+    const specific=levelProblemTitles(text,type);if(specific)return specific;
     let list=[];
     if(/primavera/i.test(f)){
       list=[
@@ -133,7 +181,13 @@
     }else if(kind==='valoración/contexto'){
       list=[`Valoramos y comprendemos ${f}`,`Aprendemos de ${f} y compartimos sus saberes`,`${cap(f)}: saberes que fortalecen nuestros aprendizajes`];
     }else{
-      list=[`Descubrimos ${f} y construimos nuevos aprendizajes`,`Exploramos ${f} desde nuestra experiencia`,`Comprendemos ${f} y comunicamos lo aprendido`];
+      if(level==='Inicial'){
+        list=['Exploramos '+f+' con curiosidad','Jugamos y descubrimos más sobre '+f,'¿Qué podemos descubrir sobre '+f+'?'];
+      }else if(level==='Secundaria'){
+        list=project?[cap(f)+': investigamos, contrastamos y construimos una propuesta','Del análisis a la acción: trabajamos '+f,'Preguntas, evidencias y propuestas sobre '+f]:[cap(f)+' bajo análisis: comprendemos, contrastamos y explicamos','Comprendemos '+f+': evidencias para construir explicaciones','Analizamos '+f+' y sustentamos nuestras conclusiones'];
+      }else{
+        list=project?['Investigamos '+f+' y construimos una respuesta con sentido',cap(f)+' en acción: observamos, explicamos y proponemos','De nuestras preguntas a una propuesta sobre '+f]:['Descubrimos '+f+' a partir de preguntas y evidencias','Comprendemos '+f+' y explicamos lo aprendido','Exploramos '+f+' para usar lo aprendido en nuevas situaciones'];
+      }
     }
     const bad=/\b(?:unidad|proyecto|sesión|sesion)\s+(?:sobre|de|acerca de)\b|\bquiero enseñar\b|\bquiero trabajar\b/i;
     list=list.map(trim).filter(t=>t&&!bad.test(t));

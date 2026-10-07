@@ -35,6 +35,20 @@ jobs:
           sleep 2
           curl --fail --silent --show-error http://127.0.0.1:4173/ >/dev/null
 
+      - name: Test actual Android-style taps across all three levels
+        timeout-minutes: 3
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/mobile-onboarding-e2e.mjs
+
+      - name: Upload mobile failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-onboarding-failure
+          path: /tmp/dd-mobile-artifacts/*.png
+          if-no-files-found: ignore
+
       - name: Run beta E2E browser gate
         env:
           BASE_URL: http://127.0.0.1:4173
