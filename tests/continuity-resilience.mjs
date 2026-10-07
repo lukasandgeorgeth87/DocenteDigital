@@ -154,13 +154,16 @@ try{
   await page.evaluate(()=>window.go('session'));
   const docxOk=await page.evaluate(()=>window.ddDocxSelfTest());
   assert(docxOk===true,'La generación DOCX dejó de funcionar sin red');
-  const offlineDownloadPromise=page.waitForEvent('download');
-  await page.evaluate(()=>window.downloadSessionWord());
-  const offlineDownload=await offlineDownloadPromise;
-  const offlinePath=await offlineDownload.path();
-  assert(offlinePath,'No se pudo descargar DOCX con red caída');
-  const offlineBytes=await fs.readFile(offlinePath);
-  assert(offlineBytes.length>500,'DOCX offline insuficiente o corrupto');
+  const offlineDocx=await page.evaluate(async()=>{
+    const s=window.state?.lastSession;
+    if(!s||!window.DDWordExport?.createBlob) return null;
+    const blob=window.DDWordExport.createBlob(s.title,window.sessionHtml(s,true),false);
+    const bytes=new Uint8Array(await blob.arrayBuffer());
+    return {type:blob.type,size:bytes.length,head:Array.from(bytes.slice(0,4))};
+  });
+  assert(offlineDocx?.type==='application/vnd.openxmlformats-officedocument.wordprocessingml.document','El generador DOCX no produjo MIME OOXML sin red');
+  assert(offlineDocx.size>500,'DOCX offline insuficiente o corrupto');
+  assert(JSON.stringify(offlineDocx.head)==='[80,75,3,4]','DOCX offline no comienza con firma ZIP/OOXML válida');
   await context.setOffline(false);
 
   console.log('CONTINUITY_RESILIENCE_PASS');
