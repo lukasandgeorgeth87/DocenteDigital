@@ -2,7 +2,7 @@ name: Beta E2E Browser Gate
 
 on:
   push:
-    branches: [main]
+    branches: [main, audit/v5-continuity-offline-diagnostic]
   pull_request:
     branches: [main]
   workflow_dispatch:
