@@ -121,8 +121,31 @@
       };
     });
   }
+  function ddResolveUnitLevel(unit){
+    const normalize=value=>{
+      const raw=String(value??'').trim().toLocaleLowerCase('es-PE');
+      return ['Inicial','Primaria','Secundaria'].find(level=>level.toLocaleLowerCase('es-PE')===raw)||'';
+    };
+    const unitRaw=String(unit?.level??'').trim();
+    const session=state?.lastSession?.unitId===unit?.id?state.lastSession:null;
+    const sessionRaw=String(session?.level??'').trim();
+    const profileRaw=String(state?.level??'').trim();
+    const unitLevel=normalize(unitRaw);
+    const sessionLevel=normalize(sessionRaw);
+    const profileLevel=normalize(profileRaw);
+    if(unitRaw&&!unitLevel)throw new Error('El nivel educativo de la unidad no es válido; revisa su configuración.');
+    if(sessionRaw&&!sessionLevel)throw new Error('El nivel educativo de la sesión vinculada no es válido; revisa su configuración.');
+    if(unitLevel&&sessionLevel&&unitLevel!==sessionLevel)throw new Error('El nivel educativo de la unidad y de su sesión vinculada no coincide; revisa ambos datos.');
+    if(!unitLevel&&sessionLevel&&profileLevel&&sessionLevel!==profileLevel)throw new Error('El nivel educativo de la sesión vinculada no coincide con el perfil docente; revisa ambos datos.');
+    if(!unitLevel&&!sessionLevel&&profileRaw&&!profileLevel)throw new Error('El nivel educativo del perfil docente no es válido; revisa su configuración.');
+    const level=unitLevel||sessionLevel||profileLevel;
+    if(!level)throw new Error('No se puede determinar el nivel educativo de la unidad. Revisa la unidad, la sesión vinculada y el perfil docente.');
+    return level;
+  }
+
   function ddEnrich(unit){
     if(!unit)return unit;
+    unit.level=ddResolveUnitLevel(unit);
     unit.reto=unit.reto||ddReto(ddContext(unit));
     unit.product=unit.product||ddProduct(ddContext(unit),unit.type);
     unit.activities=unit.activities&&unit.activities.length?unit.activities:buildActivities(ddContext(unit),unit.duration);

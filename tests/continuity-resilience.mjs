@@ -166,6 +166,30 @@ try{
   assert(JSON.stringify(offlineDocx.head)==='[80,75,3,4]','DOCX offline no comienza con firma ZIP/OOXML válida');
   await context.setOffline(false);
 
+  console.log('CONTINUITY 6/7 Rechazo de niveles contradictorios');
+  const conflict=await page.evaluate(()=>{
+    const s=window.state;
+    const unit=s.units.find(u=>u.id==='u-continuity');
+    delete unit.level;
+    s.level='Primaria';
+    s.lastSession.level='Secundaria';
+    try{window.sessionHtml(s.lastSession,true);return '';}
+    catch(error){return String(error?.message||error);}
+  });
+  assert(conflict.includes('no coincide'),'No se rechazaron niveles contradictorios: '+conflict);
+
+  console.log('CONTINUITY 7/7 Rechazo si no hay nivel válido');
+  const missing=await page.evaluate(()=>{
+    const s=window.state;
+    const unit=s.units.find(u=>u.id==='u-continuity');
+    delete unit.level;
+    s.lastSession.level='';
+    s.level='';
+    try{window.sessionHtml(s.lastSession,true);return '';}
+    catch(error){return String(error?.message||error);}
+  });
+  assert(missing.includes('No se puede determinar'),'No se detuvo la generación sin nivel válido: '+missing);
+
   console.log('CONTINUITY_RESILIENCE_PASS');
 }finally{
   await context.setOffline(false).catch(()=>{});
