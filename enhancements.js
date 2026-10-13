@@ -259,7 +259,9 @@
     return ['Exploración del reto','Desarrollo de la actividad','Análisis y mejora de la producción'];
   }
   sessionHtml=function(session,forWord=false){
-    const crit=session.grades.map(g=>`<b>${E(g)}:</b> ${E(ddSessionCriterion(session,g))}`).join('<br>');
+    const gradeCrit=session.grades.map(g=>`<b>${E(g)}:</b> ${E(ddSessionCriterion(session,g))}`).join('<br>');
+    const baseCrit=String(session.criterion||'').trim();
+    const crit=[baseCrit?`<b>Criterio de la sesión:</b> ${E(baseCrit)}`:'',gradeCrit].filter(Boolean).join('<br>');
     const official=ddSessionCompetence(session);
     const processes=ddSessionProcesses(session);
     const taskRows=session.grades.map(g=>`<tr><td><b>${E(g)}</b></td><td>${E(ddSessionCriterion(session,g))}</td><td>${E(session.evidence)}</td></tr>`).join('');
