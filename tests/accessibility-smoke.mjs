@@ -3,6 +3,27 @@ import { chromium } from 'playwright';
 const baseUrl=process.env.BASE_URL||'http://127.0.0.1:4173';
 const browser=await chromium.launch({headless:true});
 const context=await browser.newContext({viewport:{width:1280,height:720}});
+await context.addInitScript(({origin,profile})=>{
+  if(location.origin!==origin)return;
+  localStorage.setItem('docenteDigitalPrototype',JSON.stringify(profile));
+},{
+  origin:new URL(baseUrl).origin,
+  profile:{
+    mode:'easy',
+    level:'Primaria',
+    ieType:'Multigrado',
+    grades:['3.º'],
+    areas:['Matemática'],
+    language:'Castellano',
+    linguisticMode:'Monolingüe castellano',
+    quechuaVar:'Ninguna',
+    indigenousLanguage:'Ninguna',
+    linguisticSelectionConfirmed:false,
+    units:[],
+    activeUnitId:null,
+    lastSession:null
+  }
+});
 const page=await context.newPage();
 
 function assert(condition,message){if(!condition)throw new Error(message);}
@@ -26,8 +47,8 @@ try{
       const aria=(el.getAttribute('aria-label')||'').trim();
       if(aria)return aria;
       const labelledby=(el.getAttribute('aria-labelledby')||'').trim();
-      if(labelledby){const text=labelledby.split(/\s+/).map(id=>document.getElementById(id)?.textContent||'').join(' ').trim();if(text)return text;}
-      const text=(el.textContent||'').replace(/\s+/g,' ').trim();
+      if(labelledby){const text=labelledby.split(/\\s+/).map(id=>document.getElementById(id)?.textContent||'').join(' ').trim();if(text)return text;}
+      const text=(el.textContent||'').replace(/\\s+/g,' ').trim();
       if(text)return text;
       const title=(el.getAttribute('title')||'').trim();
       if(title)return title;
@@ -57,8 +78,20 @@ try{
   await page.keyboard.press('Enter');
   const menu=page.locator('#ddMobileMoreMenu');
   assert(await menu.isVisible(),'El menú Más no se abre con teclado');
+  assert(await more.getAttribute('aria-expanded')==='true','aria-expanded no cambia a true al abrir el menú');
   const director=menu.locator('[data-dd-go="director"]');
   assert(await director.count()===1,'Director no está disponible en menú móvil');
+
+  await page.keyboard.press('Escape');
+  assert(!(await menu.isVisible()),'Escape no cierra el menú Más');
+  assert(await more.getAttribute('aria-expanded')==='false','aria-expanded no vuelve a false al cerrar con Escape');
+
+  await more.focus();
+  await page.keyboard.press('Enter');
+  assert(await menu.isVisible(),'El menú Más no vuelve a abrirse con teclado');
+  await menu.locator('[data-dd-go="director"]').click();
+  assert(await page.locator('#director').evaluate(el=>el.classList.contains('active')),'La opción Director no abre la pantalla correspondiente');
+  assert(!(await menu.isVisible()),'El menú Más permanece abierto después de navegar a Director');
 
   console.log('ACCESSIBILITY_SMOKE_PASS');
 }finally{
