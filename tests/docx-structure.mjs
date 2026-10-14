@@ -47,7 +47,7 @@ try{
   }
   assert(raw.includes('application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml'),'Falta ContentType principal de Word');
   assert(raw.includes('Leemos un texto informativo'),'El documento no contiene el título esperado de la sesión');
-  assert(raw.includes('Identifica información explícita')||raw.includes('Identifica informaci'),'El documento no contiene el criterio esperado');
+  assert(raw.includes('Identifica e interpreta información relevante del texto'),'El documento no contiene el criterio efectivo generado por el Núcleo de Sesión');
   assert(download.suggestedFilename().toLowerCase().endsWith('.docx'),'Nombre de archivo sin extensión .docx');
   console.log('DOCX_STRUCTURE_PASS');
 }finally{
