@@ -103,21 +103,26 @@ try{
   assert(accepted,'La importación no pidió confirmación');
 
   console.log('CONTINUITY 3/5 Recuperación de almacenamiento corrupto');
-  await page.evaluate(()=>localStorage.setItem('docenteDigitalPrototype','{"estado":'));
+  const corruptRaw='{"estado":';
+  await page.evaluate(raw=>localStorage.setItem('docenteDigitalPrototype',raw),corruptRaw);
+  // El gate previo al arranque respalda el estado corrupto y redirige al asistente
+  // independiente antes de cargar storage-recovery-v26.js. Esperamos esa navegación
+  // y verificamos el respaldo real, en lugar de esperar una variable del runtime no cargado.
+  const onboardingNavigation=page.waitForURL(url=>url.pathname.endsWith('/onboarding.html'),{timeout:10000});
   await page.reload({waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>!!window.__ddStorageRecovered,null,{timeout:10000});
-  const corruption=await page.evaluate(()=>{
+  await onboardingNavigation;
+  const corruption=await page.evaluate(expectedRaw=>{
     const primary=localStorage.getItem('docenteDigitalPrototype');
-    let primaryValid=primary===null;
-    if(primary!==null){
-      try{const parsed=JSON.parse(primary);primaryValid=!!parsed&&typeof parsed==='object'&&!Array.isArray(parsed);}catch{primaryValid=false;}
-    }
-    return {primary,primaryValid,recoveryKeys:Object.keys(localStorage).filter(k=>k.startsWith('docenteDigitalPrototype_recovery_')),recovered:window.__ddStorageRecovered};
-  });
-  assert(corruption.primaryValid===true,'El estado corrupto siguió activo o fue reemplazado por otro valor inválido');
-  assert(corruption.primary!=='{"estado":','El valor corrupto original siguió activo');
-  assert(corruption.recoveryKeys.length>0,'No se creó copia del estado corrupto');
-  assert(corruption.recovered?.backedUp===true,'La recuperación no confirmó respaldo del estado inválido');
+    const recoveryKeys=Object.keys(localStorage).filter(k=>k.startsWith('docenteDigitalPrototype_recovery_'));
+    const backedUp=recoveryKeys.some(key=>localStorage.getItem(key)===expectedRaw);
+    let recoveryMeta=null;
+    try{recoveryMeta=JSON.parse(sessionStorage.getItem('ddPreOnboardingRecovery')||'null');}catch{}
+    return {primary,recoveryKeys,backedUp,recoveryMeta};
+  },corruptRaw);
+  assert(corruption.primary===null,'El estado corrupto siguió activo después de la recuperación previa al arranque');
+  assert(corruption.recoveryKeys.length>0,'No se creó una copia local del estado corrupto');
+  assert(corruption.backedUp===true,'La copia local no conserva exactamente el estado corrupto original');
+  assert(corruption.recoveryMeta?.backedUp===true,'El asistente no recibió confirmación de respaldo del estado inválido');
 
   console.log('CONTINUITY 4/5 Restablecer estado válido para prueba sin red');
   await page.evaluate(data=>localStorage.setItem('docenteDigitalPrototype',JSON.stringify(data)),seeded);
