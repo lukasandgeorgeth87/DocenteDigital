@@ -131,7 +131,7 @@
   const homeGrid=byId('home')?.querySelector('.grid');
   if(homeGrid&&!byId('ddQuickBox')){
     const q=document.createElement('div');q.id='ddQuickBox';q.className='card dd-quickbox';
-    q.innerHTML='<h2>💬 ¿Qué quieres preparar hoy?</h2><p class="sub">Escribe en lenguaje natural y DocenteDigital te lleva al flujo correcto.</p><div class="chatbar"><input id="ddQuickInput" placeholder="Ej.: Quiero una unidad sobre la siembra de mi localidad"><button class="btn" id="ddQuickGo">Continuar</button></div><small>Acceso rápido del prototipo: organiza la solicitud y reutiliza tu configuración; no reemplaza tu criterio docente.</small>';
+    q.innerHTML='<h2>💬 ¿Qué quieres preparar hoy?</h2><p class="sub">Escribe en lenguaje natural y DocenteDigital te lleva al flujo correcto.</p><div class="chatbar"><input id="ddQuickInput" aria-label="¿Qué quieres preparar hoy?" placeholder="Ej.: Quiero una unidad sobre la siembra de mi localidad"><button class="btn" id="ddQuickGo">Continuar</button></div><small>Acceso rápido del prototipo: organiza la solicitud y reutiliza tu configuración; no reemplaza tu criterio docente.</small>';
     homeGrid.prepend(q);
     byId('ddQuickGo').onclick=()=>{
       const t=(byId('ddQuickInput').value||'').trim();
