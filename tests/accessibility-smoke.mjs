@@ -47,8 +47,8 @@ try{
       const aria=(el.getAttribute('aria-label')||'').trim();
       if(aria)return aria;
       const labelledby=(el.getAttribute('aria-labelledby')||'').trim();
-      if(labelledby){const text=labelledby.split(/\\s+/).map(id=>document.getElementById(id)?.textContent||'').join(' ').trim();if(text)return text;}
-      const text=(el.textContent||'').replace(/\\s+/g,' ').trim();
+      if(labelledby){const text=labelledby.split(/\s+/).map(id=>document.getElementById(id)?.textContent||'').join(' ').trim();if(text)return text;}
+      const text=(el.textContent||'').replace(/\s+/g,' ').trim();
       if(text)return text;
       const title=(el.getAttribute('title')||'').trim();
       if(title)return title;
