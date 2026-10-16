@@ -111,12 +111,14 @@ try{
   const onboardingNavigation=page.waitForURL(url=>url.pathname.endsWith('/onboarding.html'),{timeout:10000});
   await page.reload({waitUntil:'domcontentloaded'});
   await onboardingNavigation;
+  // onboarding.html consume y elimina ddPreOnboardingRecovery de sessionStorage.
+  // Esperamos la confirmación ya hidratada en window antes de verificarla.
+  await page.waitForFunction(()=>window.__ddStorageRecovered?.backedUp===true,null,{timeout:10000});
   const corruption=await page.evaluate(expectedRaw=>{
     const primary=localStorage.getItem('docenteDigitalPrototype');
     const recoveryKeys=Object.keys(localStorage).filter(k=>k.startsWith('docenteDigitalPrototype_recovery_'));
     const backedUp=recoveryKeys.some(key=>localStorage.getItem(key)===expectedRaw);
-    let recoveryMeta=null;
-    try{recoveryMeta=JSON.parse(sessionStorage.getItem('ddPreOnboardingRecovery')||'null');}catch{}
+    const recoveryMeta=window.__ddStorageRecovered||null;
     return {primary,recoveryKeys,backedUp,recoveryMeta};
   },corruptRaw);
   assert(corruption.primary===null,'El estado corrupto siguió activo después de la recuperación previa al arranque');
