@@ -97,6 +97,11 @@ try{
         'biohuerto: el material perdió propósito o producto de la unidad');
       assert(linked.includes(String(unit.product).trim()),
         'biohuerto: el material no conserva el producto seleccionado');
+      await page.evaluate(() => window.DDMaterials.saveEdits());
+      const saved = await state();
+      assert(saved.lastMaterial?.html?.includes('dd-planning-reference') &&
+        saved.lastMaterial.html.includes(String(unit.product).trim()),
+        'biohuerto: guardar la ficha elimina la referencia pedagógica o el producto');
     }
     if(c.name==='pinturas_rupestres'){
       assert(!/en la comunidad encontramos/i.test(title),'pinturas rupestres: copió la oración contextual dentro del título');
