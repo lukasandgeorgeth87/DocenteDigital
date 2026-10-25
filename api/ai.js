@@ -1,5 +1,5 @@
-const ROUTINE_MODEL = process.env.OPENAI_MODEL_ROUTINE || 'gpt-5.6-luna';
-const COMPLEX_MODEL = process.env.OPENAI_MODEL_COMPLEX || 'gpt-5.6-terra';
+const ROUTINE_MODEL = process.env.OPENAI_MODEL_ROUTINE || 'gpt-6-luna';
+const COMPLEX_MODEL = process.env.OPENAI_MODEL_COMPLEX || 'gpt-6.1-sol';
 const API_URL = 'https://api.openai.com/v1/responses';
 
 const TASKS = {
