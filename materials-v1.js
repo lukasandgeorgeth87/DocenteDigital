@@ -577,6 +577,8 @@
 
   const css=document.createElement('style');
   css.textContent=`
+    /* Keep generated Word/Save actions below the sticky topbar after scrollIntoView. */
+    #materialOutput,#materialOutput .dd-material-actions{scroll-margin-top:110px}
     .dd-material-sheet{max-width:820px;margin:auto;padding:18px;background:#fff}
     .dd-material-sheet h1{font-size:26px;margin:8px 0 14px;color:#183f32}
     .dd-material-kicker{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#3e705e}
