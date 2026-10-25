@@ -8,11 +8,13 @@ module.exports = function handler(req,res){
   res.setHeader('Content-Type','application/json; charset=utf-8');
   res.setHeader('Cache-Control','no-store');
   const configured=Boolean(process.env.OPENAI_API_KEY);
+  const enabled=process.env.DD_AI_BETA_ENABLED==='true';
   res.end(JSON.stringify({
     ok:true,
     configured,
-    text:configured,
-    image:configured,
+    enabled,
+    text:configured&&enabled,
+    image:configured&&enabled,
     verified:false,
     server_side:true
   }));
