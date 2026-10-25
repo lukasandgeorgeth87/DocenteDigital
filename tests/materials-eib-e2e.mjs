@@ -132,7 +132,7 @@ try {
     const el=document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)');
     const r=el.getBoundingClientRect();
     const at=document.elementFromPoint(Math.min(innerWidth-1,Math.max(0,r.x+r.width/2)),Math.min(innerHeight-1,Math.max(0,r.y+r.height/2)));
-    return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},scrollY,innerHeight,hit:at?.outerHTML?.slice(0,180),visibility:getComputedStyle(el).visibility};
+    return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},scrollY,innerHeight,hit:at?.outerHTML?.slice(0,180),visibility:getComputedStyle(el).visibility,activeScreens:[...document.querySelectorAll('.screen.active')].map(x=>x.id),materialScreenClass:document.querySelector('#materials')?.className,outputClass:document.querySelector('#materialOutput')?.className,ancestors:(()=>{let n=el;const a=[];while(n&&a.length<9){const st=getComputedStyle(n);a.push({tag:n.tagName,id:n.id,className:String(n.className).slice(0,110),display:st.display,visibility:st.visibility,rect:n.getBoundingClientRect().width});n=n.parentElement}return a})()};
   })));
   try { await wordButton.click({trial:true,timeout:5000}); }
   catch (error) { console.log('EIB_WORD_TRIAL_FAIL:',String(error)); throw error; }
