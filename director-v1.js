@@ -169,8 +169,24 @@
     const item={id:'dir'+Date.now(),type:'Plan',title:type,createdAt:new Date().toISOString(),html};
     state.directorDocs.unshift(item);state.directorDocs=state.directorDocs.slice(0,40);state.lastDirectorDoc=item;save();
     const box=$('ddPlanResult');box.innerHTML=`<div class="dd-editable-material" contenteditable="true" spellcheck="true">${html}</div><div class="actions topgap"><button data-dd-real-action="true" class="btn" id="ddPlanSave">💾 Guardar</button><button data-dd-real-action="true" class="btn alt" id="ddPlanWord">⬇ Word</button><button data-dd-real-action="true" class="btn alt" id="ddPlanPrint">🖨 Imprimir / PDF</button></div>`;
-    $('ddPlanSave').onclick=()=>{const ed=box.querySelector('.dd-editable-material');item.html=ed.innerHTML;const i=state.directorDocs.findIndex(x=>x.id===item.id);if(i>=0)state.directorDocs[i]=item;save();};
-    $('ddPlanWord').onclick=()=>{const ed=box.querySelector('.dd-editable-material');item.html=ed.innerHTML;if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml(item.title,item.html,false,item.title);downloadBlob(wordBlob(item.title,item.html),cleanFileName(item.title)+'.doc');};
+    // Exporting a plan must persist the exact edited version being downloaded.
+    // Otherwise the DOCX contains edits that disappear after a reload.
+    function savePlanCurrent(){
+      const ed=box.querySelector('.dd-editable-material');
+      if(!ed)return;
+      item.html=ed.innerHTML;
+      item.updatedAt=new Date().toISOString();
+      const i=state.directorDocs.findIndex(x=>x.id===item.id);
+      if(i>=0)state.directorDocs[i]=item;
+      state.lastDirectorDoc=item;
+      save();
+    }
+    $('ddPlanSave').onclick=savePlanCurrent;
+    $('ddPlanWord').onclick=()=>{
+      savePlanCurrent();
+      if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml(item.title,item.html,false,item.title);
+      downloadBlob(wordBlob(item.title,item.html),cleanFileName(item.title)+'.doc');
+    };
     $('ddPlanPrint').onclick=()=>window.print();
   }
 
