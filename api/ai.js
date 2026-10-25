@@ -1,3 +1,4 @@
+const {checkBetaAccess}=require('./_beta-access');
 const ROUTINE_MODEL = process.env.OPENAI_MODEL_ROUTINE || 'gpt-6-luna';
 const COMPLEX_MODEL = process.env.OPENAI_MODEL_COMPLEX || 'gpt-6.1-sol';
 const API_URL = 'https://api.openai.com/v1/responses';
@@ -102,6 +103,8 @@ module.exports = async function handler(req,res){
   // Fail closed: setting a paid provider key alone must never activate a public endpoint.
   // This is a billing kill switch, NOT authentication or a substitute for quotas.
   if(process.env.DD_AI_BETA_ENABLED!=='true') return json(res,503,{ok:false,error:'ai_beta_disabled'});
+  const denied=checkBetaAccess(req);
+  if(denied)return json(res,denied.status,{ok:false,error:denied.error});
 
   const body = req.body && typeof req.body === 'object' ? req.body : {};
   const task = cleanString(body.task,80);
