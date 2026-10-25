@@ -130,6 +130,7 @@ try {
     await page.locator('#materialGrade').selectOption(grade);
     await page.locator('#materials button[onclick="window.DDMaterials?.create()"]').click();
     const content = await page.locator('#materialOutput .dd-editable-material').innerText();
+    console.log('DIVISION_GRADE_DIAGNOSTIC:', grade, JSON.stringify(content.slice(0,700)));
     for (const phrase of expected) {
       assert(content.includes(phrase),
         'Banco de división de ' + grade + ' no contiene ' + phrase);
