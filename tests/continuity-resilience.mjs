@@ -104,7 +104,13 @@ try{
 
   console.log('CONTINUITY 3/5 Recuperación de almacenamiento corrupto');
   const corruptRaw='{"estado":';
-  await page.evaluate(raw=>localStorage.setItem('docenteDigitalPrototype',raw),corruptRaw);
+  // Inject the corrupt fixture before app scripts run to avoid a navigation race.
+  // sessionStorage prevents re-injection if onboarding redirects back to the app.
+  await page.addInitScript(raw=>{
+    if(sessionStorage.getItem('ddContinuityCorruptInjected')==='1')return;
+    sessionStorage.setItem('ddContinuityCorruptInjected','1');
+    localStorage.setItem('docenteDigitalPrototype',raw);
+  },corruptRaw);
   // El gate previo al arranque respalda el estado corrupto y redirige al asistente
   // independiente antes de cargar storage-recovery-v26.js. Esperamos esa navegación
   // y verificamos el respaldo real, en lugar de esperar una variable del runtime no cargado.
