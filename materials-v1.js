@@ -323,7 +323,7 @@
 
   function languageNote(lang,variety){
     if(lang==='Castellano')return '';
-    return `<div class="notice"><b>Revisión lingüística requerida:</b> material solicitado en ${E(lang)} ${variety&&variety!=='Ninguna'?'· '+E(variety):'(variedad aún no seleccionada)'}. Este borrador se ha generado únicamente en castellano; DocenteDigital no ha realizado ni validado una traducción a lengua originaria. Para obtener una versión bilingüe o en lengua originaria, hace falta traducirla y revisarla con un hablante competente o docente EIB de la variedad elegida antes de imprimirla.</div>`;
+    return `<div class="notice"><p><b>Revisión lingüística requerida:</b> material solicitado en ${E(lang)} ${variety&&variety!=='Ninguna'?'· '+E(variety):'(variedad aún no seleccionada)'}. Este borrador se ha generado únicamente en castellano; DocenteDigital no ha realizado ni validado una traducción a lengua originaria. Para obtener una versión bilingüe o en lengua originaria, hace falta traducirla y revisarla con un hablante competente o docente EIB de la variedad elegida antes de imprimirla.</p></div>`;
   }
 
   function renderByType(type,topic,level,grade,area,sourceText=''){
