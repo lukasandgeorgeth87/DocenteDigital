@@ -79,3 +79,11 @@
 4. Configurar credencial de OpenAI en entorno privado, comprobar conexión real con la herramienta de la app, probar generación de títulos/situaciones/materiales y respaldo local ante fallo.
 5. Completar recorrido real docente y director, Word/PDF y restauración de datos. Documentar PASS/FAIL con entradas y salidas.
 6. Mantener actualizada esta bitácora **solo cuando haya cambios materiales nuevos** y registrar los SHAs y URLs de evidencia.
+
+## Avance 25/10/2026, 01:17 (Perú)
+
+- Código: 5a23af8b corrige la respuesta exitosa de imagen sin imagen; 51cf710d agrega pruebas para respuestas vacías; 7af66319 aclara comentario.
+- GitHub Actions 40168324471: paso de contrato GPT simulado PASS, flujo completo aún en progreso al consultar. No es prueba de generación real.
+- Preview de 7af66319: READY; GET raíz HTTP 200 y GET /api/ai-status HTTP 200; configured=false, verified=false.
+- Pendientes: confirmar CI completo, autenticación y límites de consumo, generación GPT real y recorrido integral de usuario.
+- Métricas sin cambio: cierre V5 21/100; desarrollo funcional histórico estimado 75 %.
