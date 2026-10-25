@@ -99,6 +99,9 @@ function extractOutputText(data){
 module.exports = async function handler(req,res){
   if(req.method !== 'POST') return json(res,405,{ok:false,error:'method_not_allowed'});
   if(!process.env.OPENAI_API_KEY) return json(res,503,{ok:false,error:'openai_not_configured'});
+  // Fail closed: setting a paid provider key alone must never activate a public endpoint.
+  // This is a billing kill switch, NOT authentication or a substitute for quotas.
+  if(process.env.DD_AI_BETA_ENABLED!=='true') return json(res,503,{ok:false,error:'ai_beta_disabled'});
 
   const body = req.body && typeof req.body === 'object' ? req.body : {};
   const task = cleanString(body.task,80);
