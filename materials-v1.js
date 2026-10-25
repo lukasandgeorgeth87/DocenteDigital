@@ -48,6 +48,17 @@
   function sourceContext(){
     const source=$('materialSource')?.value||'session';
     const unit=activeUnit();
+    // Normalize the approved product before material generation. The planning
+    // screen also normalizes it on a delayed timer, which caused the same
+    // unit to expose two different product labels in rapid user workflows.
+    const canonical=String(unit?.productTitle||'').trim();
+    if(unit?.selectionApproved && canonical &&
+       canonical!=='Producto final' && canonical!=='Producto propuesto por el docente' &&
+       unit.product!==canonical){
+      if(!unit.productDescription)unit.productDescription=unit.product||'';
+      unit.product=canonical;
+      save();
+    }
     // A previously generated session may belong to a different unit. Never
     // propagate its topic, area, purpose or evidence into the active unit.
     const session=state.lastSession && (!unit?.id || state.lastSession.unitId===unit.id)
