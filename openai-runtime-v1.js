@@ -236,7 +236,7 @@
 
   async function generatePremiumImage(){
     const status=await health();
-    if(!status?.configured){alert(friendlyError('openai_not_configured'));return;}
+    if(!status?.image){alert(friendlyError(status?.configured?'ai_beta_disabled':'openai_not_configured'));return;}
     const s=appState(),last=s.lastSession||{};
     const prompt=[
       'Crea una imagen educativa para '+(s.level||'educación')+'.',
@@ -266,7 +266,7 @@
     setBusy(button,true,'Probando conexión…');
     try{
       const status=await health(true);
-      if(!status?.configured)throw Object.assign(new Error(friendlyError('openai_not_configured')),{code:'openai_not_configured'});
+      if(!status?.text)throw Object.assign(new Error(friendlyError(status?.configured?'ai_beta_disabled':'openai_not_configured')),{code:status?.configured?'ai_beta_disabled':'openai_not_configured'});
       const started=Date.now();
       const r=await request('contextual_help','Responde únicamente con la frase CONEXION_OK.',{quality:'auto',context:{title:'Prueba técnica de conexión'}});
       const answer=(r.data?.result||'').trim();
@@ -289,9 +289,11 @@
   async function renderHubStatus(){
     const card=$('ddAiConnectedCard');if(!card)return;
     const s=await health(true);
-    card.innerHTML=s.configured
-      ? '<div class="notice"><b>IA configurada, conexión aún no verificada.</b><br>Usa «Probar OpenAI real» para confirmar que el proveedor responde. La clave permanece en el servidor.</div>'
-      : '<div class="notice"><b>Conexión preparada.</b><br>Falta activar OPENAI_API_KEY en el servidor de DocenteDigital.</div>';
+    card.innerHTML=s.text
+      ? '<div class="notice"><b>IA habilitada, conexión aún no verificada.</b><br>Usa «Probar OpenAI real» para confirmar que el proveedor responde. La clave permanece en el servidor.</div>'
+      : s.configured
+        ? '<div class="notice"><b>IA desactivada por seguridad.</b><br>Falta habilitar la beta protegida en el servidor. La clave no activa por sí sola el servicio de pago.</div>'
+        : '<div class="notice"><b>Conexión preparada.</b><br>Falta activar OPENAI_API_KEY en el servidor de DocenteDigital.</div>';
   }
 
   function installHub(){
