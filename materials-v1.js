@@ -76,6 +76,15 @@
     return {source:'free',title:'',topic:'',brief:'',area:'',grades:state.grades||[],purpose:'',evidence:''};
   }
 
+  // Keep the teacher-approved purpose and evidence visible across the planning chain.
+  // This is reference context, never an invented curricular performance standard.
+  function planningReference(ctx){
+    if(!ctx||ctx.source==='free')return '';
+    const fields=[['Origen',ctx.source==='session'?'Sesión':'Unidad / proyecto'],['Propósito o reto',ctx.purpose],['Evidencia o producto',ctx.evidence]]
+      .filter(([,value])=>String(value||'').trim());
+    return '<section class="dd-planning-reference"><h3>Vinculación con la planificación</h3>'+fields.map(([label,value])=>'<p><b>'+E(label)+':</b> '+E(value)+'</p>').join('')+'</section>';
+  }
+
   function topicInfo(topic){
     const t=N(topic);
     if(/mamifer|animal|fauna|pelo|pluma|escama/.test(t))return {
@@ -371,7 +380,7 @@
     const p=profile();
     const meta=`<div class="dd-material-meta"><b>${E(p.institutionName||'')}</b>${placeText()?'<span>'+E(placeText())+'</span>':''}<span>${E(level)} · ${E(grade)} · ${E(area)}</span></div>`;
     const extra=instruction?`<div class="dd-material-instruction"><b>Indicación del docente:</b> ${E(instruction)}</div>`:'';
-    const html=meta+languageNote(lang,variety)+extra+
+    const html=meta+languageNote(lang,variety)+planningReference(ctx)+extra+
       `<div class="dd-editable-material" contenteditable="true" spellcheck="true">${body}</div>`+
       `<div class="actions topgap dd-material-actions">
         <button class="btn" type="button" onclick="window.DDMaterials.saveEdits()">💾 Guardar cambios</button>
@@ -451,7 +460,7 @@
       </section>`;
     }).join('');
 
-    const bundleHtml=`<article class="dd-material-bundle"><div class="dd-material-kicker">Paquete de materiales · ${E(area)}</div><h1>Paquete: ${E(topic)}</h1>${languageNote(lang,variety)}<p><b>Diferenciación:</b> cada grado/edad recibe su propio bloque; no se mezclan fichas de distintos grados en una sola lámina.</p>${gradeBlocks}</article>`;
+    const bundleHtml=`<article class="dd-material-bundle"><div class="dd-material-kicker">Paquete de materiales · ${E(area)}</div><h1>Paquete: ${E(topic)}</h1>${languageNote(lang,variety)}${planningReference(ctx)}<p><b>Diferenciación:</b> cada grado/edad recibe su propio bloque; no se mezclan fichas de distintos grados en una sola lámina.</p>${gradeBlocks}</article>`;
     const item={id:'m'+Date.now(),createdAt:new Date().toISOString(),type:'Paquete de materiales',level,grade:grades.join(', '),area,lang,variety,topic,instruction:'',source:ctx.source,sourceTitle:ctx.title||'',html:`<div class="dd-editable-material" contenteditable="true" spellcheck="true">${bundleHtml}</div><div class="actions topgap dd-material-actions"><button class="btn" type="button" onclick="window.DDMaterials.saveEdits()">💾 Guardar cambios</button><button class="btn alt" type="button" onclick="window.DDMaterials.downloadWord()">⬇ Word</button><button class="btn alt" type="button" onclick="window.print()">🖨 Imprimir / PDF</button></div>`};
     state.materials.unshift(item);state.materials=state.materials.slice(0,40);state.lastMaterial=item;save();renderItem(item);renderHistory();
   }
