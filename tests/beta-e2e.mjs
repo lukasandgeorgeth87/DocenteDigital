@@ -174,6 +174,7 @@ try {
   assert(savedAssessment?.unitId === s.activeUnitId, 'La evaluación perdió su vínculo con la unidad');
 
   await page.evaluate(() => window.go('director'));
+  assert(await page.locator('#director').isVisible(), 'Director no quedó visible tras navegar desde Evaluación');
   const enabledDirectorButtons = await page.locator('#director button:not([disabled])').count();
   assert(enabledDirectorButtons >= 3, 'Director no expone sus flujos activos esperados');
   assert(await page.evaluate(() => typeof window.DDDirector?.openDocument === 'function'), 'Documentos de Director no están conectados');
@@ -184,6 +185,15 @@ try {
   await page.locator('#ddDirSubject').fill('Informe ficticio de continuidad beta');
   await page.locator('#ddDirContext').fill('Datos sintéticos para verificar persistencia.');
   await page.locator('#ddDirMain').fill('Se verificó la generación de un documento editable.');
+  const directorVisibility = await page.evaluate(() => {
+    const panel=document.querySelector('#directorPanel'),button=document.querySelector('#ddDirBuild');
+    return {screen:document.querySelector('#director')?.className,panel:panel?.className,
+      screenDisplay:getComputedStyle(document.querySelector('#director')).display,
+      panelDisplay:panel?getComputedStyle(panel).display:null,
+      buttonDisplay:button?getComputedStyle(button).display:null,
+      buttonDisabled:button?.disabled};
+  });
+  assert(await page.locator('#ddDirBuild').isVisible(), 'Director: formulario oculto '+JSON.stringify(directorVisibility));
   await page.locator('#ddDirBuild').click();
   assert(await page.locator('#ddDirResult .dd-editable-material').count() === 1, 'Director no generó un documento editable');
   s = await state();
