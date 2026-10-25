@@ -10,6 +10,9 @@
   const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const STATUS_TTL=30000;
   let statusCache=null,statusAt=0;
+  // Access token is held in memory only: never save it to localStorage or the project state.
+  let betaAccessToken='';
+  function betaHeaders(){return betaAccessToken?{'x-dd-beta-token':betaAccessToken}:{};}
 
   function appState(){return window.state&&typeof window.state==='object'?window.state:{};}
 
@@ -70,6 +73,8 @@
   function friendlyError(error){
     if(error==='openai_not_configured')return 'La conexión está preparada, pero falta activar la clave segura de OpenAI en el servidor.';
     if(error==='ai_beta_disabled')return 'La generación con IA está desactivada por seguridad hasta habilitar la beta protegida.';
+    if(error==='beta_access_not_configured')return 'El servidor aún no tiene configurada la protección de acceso de la beta.';
+    if(error==='beta_access_denied')return 'Acceso denegado. Introduce el código temporal de la beta privada en el panel del asistente.';
     if(error==='openai_timeout')return 'OpenAI tardó demasiado. Puedes volver a intentarlo.';
     if(error==='openai_request_failed')return 'OpenAI no pudo responder en este momento. Intenta nuevamente.';
     if(error==='premium_credit_confirmation_required')return 'Debes confirmar el uso del crédito premium.';
@@ -84,7 +89,7 @@
     try{
       const r=await fetch('/api/ai',{
         method:'POST',
-        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        headers:{'Content-Type':'application/json','Accept':'application/json',...betaHeaders()},
         body:JSON.stringify({
           task,
           prompt:String(prompt||'').slice(0,12000),
@@ -247,7 +252,7 @@
       'No incluyas nombres ni datos personales de estudiantes.'
     ].join(' ');
     try{
-      const r=await fetch('/api/image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,confirmedCredit:true,size:'1024x1536',quality:'medium'})});
+      const r=await fetch('/api/image',{method:'POST',headers:{'Content-Type':'application/json',...betaHeaders()},body:JSON.stringify({prompt,confirmedCredit:true,size:'1024x1536',quality:'medium'})});
       const data=await r.json();
       if(!r.ok||!data.ok)throw new Error(friendlyError(data.error));
       const src=data.image_base64?'data:image/png;base64,'+data.image_base64:data.image_url;
@@ -290,7 +295,9 @@
     const card=$('ddAiConnectedCard');if(!card)return;
     const s=await health(true);
     card.innerHTML=s.text
-      ? '<div class="notice"><b>IA habilitada, conexión aún no verificada.</b><br>Usa «Probar OpenAI real» para confirmar que el proveedor responde. La clave permanece en el servidor.</div>'
+      ? '<div class="notice"><b>IA habilitada, conexión aún no verificada.</b><br>Para usarla, introduce el código temporal de acceso a la beta privada. Luego usa «Probar OpenAI real». La clave de OpenAI permanece en el servidor.</div>'
+      : s.configured&&s.enabled&&!s.access_configured
+        ? '<div class="notice"><b>Beta aún no protegida.</b><br>Falta configurar el código de acceso privado en el servidor. No se permite consumir la API.</div>'
       : s.configured
         ? '<div class="notice"><b>IA desactivada por seguridad.</b><br>Falta habilitar la beta protegida en el servidor. La clave no activa por sí sola el servicio de pago.</div>'
         : '<div class="notice"><b>Conexión preparada.</b><br>Falta activar OPENAI_API_KEY en el servidor de DocenteDigital.</div>';
@@ -303,6 +310,10 @@
     card.innerHTML=`
       <h2>🤖 Asistente DocenteDigital</h2>
       <div id="ddAiConnectedCard"></div>
+      <label class="full topgap">Código temporal de acceso a la beta privada (no es la clave de OpenAI)
+        <input type="password" id="ddAiBetaToken" autocomplete="off" spellcheck="false" placeholder="Código proporcionado por el administrador">
+      </label>
+      <div class="actions"><button class="btn alt" type="button" id="ddAiBetaSave">Usar código en esta pestaña</button><small id="ddAiBetaMessage">El código no se guarda en el navegador. Debes volver a introducirlo al recargar.</small></div>
       <label class="full topgap">Consulta usando tu contexto de DocenteDigital
         <textarea id="ddAiChatInput" placeholder="Ej.: mejora el título de mi proyecto o dame una idea para trabajar el tema actual."></textarea>
       </label>
@@ -310,6 +321,11 @@
       <div id="ddAiConnectionTest" class="topgap"></div>
       <div id="ddAiChatResult" class="topgap"></div>
       <small id="ddAiUsage"></small>`;
+    $('ddAiBetaSave').onclick=()=>{
+      betaAccessToken=String($('ddAiBetaToken')?.value||'').trim();
+      if($('ddAiBetaToken'))$('ddAiBetaToken').value='';
+      if($('ddAiBetaMessage'))$('ddAiBetaMessage').textContent=betaAccessToken?'Código cargado solo en memoria de esta pestaña.':'Código borrado de esta pestaña.';
+    };
     $('ddAiChatSend').onclick=e=>contextualChat(e.currentTarget);
     $('ddAiRetryStatus').onclick=renderHubStatus;
     $('ddAiTestReal').onclick=e=>testRealConnection(e.currentTarget);
