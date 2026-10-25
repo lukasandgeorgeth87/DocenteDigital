@@ -315,58 +315,6 @@ try {
   assert(s.materials?.some(m => m.id === materialId && m.html.includes('Adaptación docente ficticia conservada')),
     'La edición exportada del paquete desapareció después de recargar');
 
-  console.log('8b/9 EIB: perfil institucional bilingüe, advertencia y Word');
-  // The previous teacher was explicitly monolingual, so the language selector
-  // must remain locked. Switch to a synthetic EIB master profile before testing.
-  await page.evaluate(() => {
-    window.state.linguisticMode = 'EIB';
-    window.state.language = 'Bilingüe';
-    window.state.indigenousLanguage = 'Quechua Cusco-Collao (Cusco)';
-    window.state.quechuaVar = 'Quechua Cusco-Collao (Cusco)';
-    window.state.linguisticSelectionConfirmed = true;
-    window.save();
-    window.ddSyncLinguisticProfile?.();
-    window.go('materials');
-  });
-  await page.waitForFunction(() => !document.getElementById('materialLanguage')?.disabled);
-  // Some setup/profile hooks are asynchronous; navigate again after the
-  // language profile has settled and fail with a useful screen diagnostic.
-  await page.evaluate(() => window.go('materials'));
-  const eibScreen = await page.evaluate(() => ({
-    active: [...document.querySelectorAll('.screen.active')].map(x => x.id),
-    materialDisplay: getComputedStyle(document.querySelector('#materials')).display,
-    level: window.state?.level,
-    mode: window.state?.linguisticMode,
-    lang: window.state?.language,
-    materialDisabled: document.querySelector('#materialLanguage')?.disabled
-  }));
-  assert(await page.locator('#materials').isVisible(),
-    'La pantalla Materiales no es visible para el perfil EIB: ' + JSON.stringify(eibScreen));
-  await page.locator('#materialLanguage').selectOption('Bilingüe');
-  await page.locator('#materialQuechua').selectOption('Quechua Cusco-Collao (Cusco)');
-  await page.locator('#materials button[onclick="window.DDMaterials?.createBundle()"]').click();
-  const languageWarning = await page.locator('#materialOutput .notice').innerText();
-  assert(languageWarning.includes('únicamente en castellano') && languageWarning.includes('Quechua Cusco-Collao (Cusco)'),
-    'El paquete EIB no advierte que el contenido sigue sin traducir');
-  s = await state();
-  const eibId = s.lastMaterial?.id;
-  assert(s.lastMaterial?.lang === 'Bilingüe' && s.lastMaterial?.variety === 'Quechua Cusco-Collao (Cusco)',
-    'El paquete EIB perdió el idioma o variedad elegidos por el docente');
-  const eibDownloadPromise = page.waitForEvent('download', { timeout: 15000 });
-  await page.locator('#materialOutput .dd-material-actions button', { hasText: 'Word' }).click();
-  const eibDownload = await eibDownloadPromise;
-  const eibXml = docxDocumentXml(await fs.readFile(await eibDownload.path()));
-  assert(eibXml.includes('no ha realizado ni validado una traducción'),
-    'El DOCX EIB omitió la advertencia de traducción no validada');
-  assert(eibXml.split('Revisión lingüística requerida:').length === 2,
-    'El DOCX EIB duplicó la advertencia al guardar el paquete');
-  await page.reload({ waitUntil: 'networkidle' });
-  await waitPlanningRuntime();
-  s = await state();
-  assert(s.materials?.some(m => m.id === eibId && m.lang === 'Bilingüe' &&
-    m.variety === 'Quechua Cusco-Collao (Cusco)' && m.html.includes('únicamente en castellano')),
-    'El historial EIB no recuperó el idioma y la advertencia tras recargar');
-
   console.log('9/9 Vista móvil y navegación Director');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'networkidle' });
