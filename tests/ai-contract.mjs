@@ -13,6 +13,7 @@ const previousQuotaUrl=process.env.UPSTASH_REDIS_REST_URL;
 const previousQuotaToken=process.env.UPSTASH_REDIS_REST_TOKEN;
 const previousQuotaMax=process.env.DD_AI_DAILY_MAX_UNITS;
 let quotaCount=0;
+let quotaUnavailable=false;
 
 function response(){
   return {
@@ -30,6 +31,7 @@ async function call(handler,method,body,headers){
   const providerFetch=globalThis.fetch;
   globalThis.fetch=async(url,options)=>{
     if(url==='https://quota.example.test'){
+      if(quotaUnavailable)return {ok:false,status:503,json:async()=>({error:'temporary_unavailable'})};
       const [cmd,script,nkeys,key,cost,max]=JSON.parse(options.body);
       assert.equal(cmd,'EVAL');
       assert.equal(nkeys,'1');
@@ -217,6 +219,20 @@ try{
   assert.equal(res.body.error,'ai_daily_quota_exceeded');
   res=await call(image,'POST',{prompt:'Imagen',confirmedCredit:true});
   assert.equal(res.statusCode,429,'Image unit cost must be checked before paid provider');
+  // Redis outages must fail closed, without a fallback in-memory allowance.
+  quotaCount=0;
+  process.env.DD_AI_DAILY_MAX_UNITS='1000';
+  quotaUnavailable=true;
+  let providerCalls=0;
+  globalThis.fetch=async()=>{providerCalls++;throw Error('Provider must not be called on quota outage');};
+  res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
+  assert.equal(res.statusCode,503);
+  assert.equal(res.body.error,'ai_quota_unavailable');
+  res=await call(image,'POST',{prompt:'Imagen',confirmedCredit:true});
+  assert.equal(res.statusCode,503);
+  assert.equal(res.body.error,'ai_quota_unavailable');
+  assert.equal(providerCalls,0);
+  quotaUnavailable=false;
   delete process.env.UPSTASH_REDIS_REST_TOKEN;
   res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
   assert.equal(res.statusCode,503);
