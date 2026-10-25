@@ -87,3 +87,12 @@
 - Preview de 7af66319: READY; GET raíz HTTP 200 y GET /api/ai-status HTTP 200; configured=false, verified=false.
 - Pendientes: autenticación y límites de consumo, generación GPT real y recorrido integral de usuario con datos de prueba.
 - Métricas sin cambio: cierre V5 21/100; desarrollo funcional histórico estimado 75 %.
+
+## Avance 25/10/2026, madrugada — respaldo local de títulos (rama de pruebas)
+
+- **Código:** commit `63a4fd3a25db78fbbef8e9349849eb4cb762d739`, archivo `openai-runtime-v1.js`. Cuando la API GPT no está configurada o falla, el botón «3 títulos con IA» ahora ofrece hasta tres títulos mediante el motor local ya existente, **etiquetados claramente «Opciones locales sin IA (respaldo)»**, seleccionables y editables. Si tampoco existe el motor local, conserva el aviso de error. El panel GPT deja de llamar «conectada» a una clave configurada sin prueba real y ahora indica «conexión aún no verificada».
+- **Regresión nueva:** commit `ba21b8787b312cdcfae6de8601f341f98082de51`, `tests/ai-local-fallback.mjs`, prueba sin red de propuestas locales, selección de una propuesta y etiqueta veraz de conexión.
+- **CI:** commit `728065994936f4eda86a2f971f814f9e6b1c74c4` incorpora `node tests/ai-local-fallback.mjs` al flujo `.github/workflows/beta-e2e.yml`. Run https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40171926193: paso **«Validate offline title fallback and truthful GPT connection status» PASS**; ejecución integral aún en curso al registrar este avance. El contrato GPT simulado también pasó en este run.
+- **Vercel:** preview del commit `72806599` **READY** según listado de despliegues: https://docente-digital-ixobuh87h-jorgeluispalma87-7403.vercel.app . GET `/` **HTTP 200**, GET `/api/ai-status` **HTTP 200**; respuesta `configured:false,verified:false`. No se hizo ninguna generación real ni se activó una clave.
+- **Estado:** fallback local de títulos probado automáticamente; GPT real, seguridad de acceso/cuota, materiales, evaluación, Director, respaldo remoto y piloto permanecen pendientes. **V5 21/100 sin cambios; desarrollo histórico estimado 75 %**. No se modificó producción.
+- **Siguiente paso:** comprobar el resultado final del run 40171926193; después proteger el endpoint de IA de pago y ejecutar generación real únicamente en un entorno privado con control de acceso y consumo.
