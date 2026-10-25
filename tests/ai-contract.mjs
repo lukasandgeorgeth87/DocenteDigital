@@ -126,6 +126,16 @@ try{
   const imagePayload=JSON.parse(captured.options.body);
   assert.equal(imagePayload.model,'gpt-image-2');
   assert.equal(imagePayload.n,1);
+  // Provider HTTP 200 without an image must not be shown as a completed generation.
+  globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{}]})});
+  res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
+  assert.equal(res.statusCode,502);
+  assert.equal(res.body.error,'invalid_image_output');
+  assert.equal(res.body.ok,false);
+  globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[]})});
+  res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
+  assert.equal(res.statusCode,502);
+  assert.equal(res.body.error,'invalid_image_output');
   globalThis.fetch=async()=>({ok:false,status:429,json:async()=>({error:{type:'rate_limit_error'}})});
   res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
   assert.equal(res.statusCode,429);
