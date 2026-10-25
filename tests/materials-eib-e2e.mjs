@@ -118,6 +118,8 @@ try {
     m.html.includes('únicamente en castellano')),
     'El historial EIB perdió la variedad o la advertencia');
   console.log('EIB 5/5 Banco de división diferenciado por grado');
+  await page.evaluate(() => window.go('materials'));
+  await page.waitForSelector('#materials.active');
   await page.locator('#materialType').selectOption('Banco de problemas');
   await page.locator('#materialTopic').fill('División: repartimos gastos familiares');
   for (const [grade, expected] of [
