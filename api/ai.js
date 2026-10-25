@@ -75,6 +75,16 @@ function schema(){
   };
 }
 
+function validStructuredResult(value){
+  if(!value || typeof value!=='object' || Array.isArray(value)) return false;
+  const keys=Object.keys(value);
+  if(keys.length!==4 || !['result','options','warnings','teacher_note'].every(k=>keys.includes(k))) return false;
+  if(typeof value.result!=='string' || typeof value.teacher_note!=='string') return false;
+  if(!Array.isArray(value.options) || !value.options.every(x=>typeof x==='string')) return false;
+  if(!Array.isArray(value.warnings) || !value.warnings.every(x=>typeof x==='string')) return false;
+  return true;
+}
+
 function extractOutputText(data){
   if(typeof data?.output_text === 'string') return data.output_text;
   const chunks=[];
@@ -147,11 +157,13 @@ module.exports = async function handler(req,res){
       console.error('DocenteDigital OpenAI error',response.status,data?.error?.type||'unknown');
       return json(res,response.status===429?429:502,{ok:false,error:'openai_request_failed',retryable:response.status===429||response.status>=500});
     }
+    if(data?.status && data.status!=='completed') return json(res,502,{ok:false,error:'incomplete_ai_response',retryable:true});
     const raw=extractOutputText(data);
     let parsed;
     try{parsed=JSON.parse(raw);}catch(_e){
       return json(res,502,{ok:false,error:'invalid_structured_output'});
     }
+    if(!validStructuredResult(parsed)) return json(res,502,{ok:false,error:'invalid_structured_output'});
     return json(res,200,{
       ok:true,
       task,
