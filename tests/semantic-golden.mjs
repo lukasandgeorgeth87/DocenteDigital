@@ -107,7 +107,7 @@ try{
       await page.evaluate(() => window.DDMaterials.saveEdits());
       const saved = await state();
       assert(saved.lastMaterial?.html?.includes('dd-planning-reference') &&
-        saved.lastMaterial.html.includes(String(unit.product).trim()),
+        normalizeText(saved.lastMaterial.html).includes(normalizeText(expectedProduct)),
         'biohuerto: guardar la ficha elimina la referencia pedagógica o el producto');
     }
     if(c.name==='pinturas_rupestres'){
