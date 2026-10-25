@@ -154,11 +154,55 @@ try {
   assert(await page.evaluate(() => typeof window.DDEvaluation?.openRegister === 'function'), 'Registro de evaluación no está conectado');
   assert(await page.evaluate(() => typeof window.DDEvaluation?.openRubric === 'function'), 'Rúbrica no está conectada');
   assert(await page.evaluate(() => typeof window.DDEvaluation?.openFeedback === 'function'), 'Retroalimentación no está conectada');
+
+  // A visible button is not proof of a usable assessment: save a synthetic
+  // student's evidence, reload later and verify it survives persistence.
+  await page.evaluate(() => window.DDEvaluation.openRegister());
+  await page.locator('#ddEvalGrade').waitFor({state:'visible'});
+  const assessedGrade = await page.locator('#ddEvalGrade').inputValue();
+  await page.locator('#ddEvalRoster').click();
+  await page.locator('#ddRosterText').fill('EST-TEST-01');
+  await page.locator('#ddRosterSave').click();
+  assert(await page.locator('.dd-eval-level').count() > 0, 'El registro no muestra criterios editables');
+  await page.locator('.dd-eval-level').first().selectOption('A');
+  await page.locator('.dd-eval-note').first().fill('Resolvió la actividad con una evidencia observable de prueba.');
+  await page.locator('.dd-eval-next').first().fill('Explicar oralmente el procedimiento.');
+  await page.locator('#ddEvalSave').click();
+  s = await state();
+  const savedAssessment = s.evaluationRecords?.find(r => r.student === 'EST-TEST-01' && r.grade === assessedGrade && r.level === 'A');
+  assert(savedAssessment?.evidenceNote?.includes('evidencia observable'), 'La evaluación real no guardó la evidencia ficticia');
+  assert(savedAssessment?.unitId === s.activeUnitId, 'La evaluación perdió su vínculo con la unidad');
+
   await page.evaluate(() => window.go('director'));
   const enabledDirectorButtons = await page.locator('#director button:not([disabled])').count();
   assert(enabledDirectorButtons >= 3, 'Director no expone sus flujos activos esperados');
   assert(await page.evaluate(() => typeof window.DDDirector?.openDocument === 'function'), 'Documentos de Director no están conectados');
   assert(await page.evaluate(() => typeof window.DDDirector?.openPlan === 'function'), 'Planes de Director no están conectados');
+  await page.evaluate(() => window.DDDirector.openDocument());
+  await page.locator('#ddDirType').selectOption('Informe');
+  await page.locator('#ddDirRecipient').fill('Equipo de prueba');
+  await page.locator('#ddDirSubject').fill('Informe ficticio de continuidad beta');
+  await page.locator('#ddDirContext').fill('Datos sintéticos para verificar persistencia.');
+  await page.locator('#ddDirMain').fill('Se verificó la generación de un documento editable.');
+  await page.locator('#ddDirBuild').click();
+  assert(await page.locator('#ddDirResult .dd-editable-material').count() === 1, 'Director no generó un documento editable');
+  s = await state();
+  assert(s.lastDirectorDoc?.html?.includes('Datos sintéticos'), 'El documento de Director no se guardó');
+  assert(s.directorDocs?.some(d => d.id === s.lastDirectorDoc.id), 'El documento no aparece en el historial');
+  await page.locator('#ddDirResult .dd-editable-material').evaluate(el => el.insertAdjacentHTML('beforeend', '<p>Revisión ficticia guardada.</p>'));
+  await page.locator('#ddDirSave').click();
+  const directorDownloadPromise = page.waitForEvent('download', {timeout:15000});
+  await page.locator('#ddDirWord').click();
+  const directorDownload = await directorDownloadPromise;
+  const directorBytes = await fs.readFile(await directorDownload.path());
+  assert(directorBytes.length > 500 && directorBytes[0] === 0x50 && directorBytes[1] === 0x4b, 'La exportación Word de Director no generó un DOCX ZIP');
+  assert(directorDownload.suggestedFilename().toLowerCase().endsWith('.docx'), 'Director exportó una extensión distinta de DOCX');
+
+  await page.reload({waitUntil:'networkidle'});
+  await waitPlanningRuntime();
+  s = await state();
+  assert(s.evaluationRecords?.some(r => r.student === 'EST-TEST-01' && r.level === 'A'), 'La evaluación desapareció tras recargar');
+  assert(s.lastDirectorDoc?.html?.includes('Revisión ficticia guardada.'), 'Los cambios del documento de Director desaparecieron tras recargar');
 
   console.log('8/8 Vista móvil y navegación Director');
   await page.setViewportSize({ width: 390, height: 844 });
