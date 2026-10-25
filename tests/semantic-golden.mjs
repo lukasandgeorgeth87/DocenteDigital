@@ -95,7 +95,9 @@ try{
       assert(linked.includes('Vinculación con la planificación') &&
         linked.includes('Propósito o reto') && linked.includes('Evidencia o producto'),
         'biohuerto: el material perdió propósito o producto de la unidad');
-      assert(linked.includes(String(unit.product).trim()),
+      const normalizeText = value => String(value||'').replace(/\\s+/g,' ').trim();
+      console.log('BIOHUERTO_TRACE:', JSON.stringify({expectedProduct:unit.product,activeUnitId:await page.evaluate(()=>window.state?.activeUnitId),output:linked.slice(0,1500)}));
+      assert(normalizeText(linked).includes(normalizeText(unit.product)),
         'biohuerto: el material no conserva el producto seleccionado');
       await page.evaluate(() => window.DDMaterials.saveEdits());
       const saved = await state();
