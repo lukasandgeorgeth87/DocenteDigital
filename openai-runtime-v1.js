@@ -144,7 +144,27 @@
         const value=decodeURIComponent(b.dataset.ddAiTitle);$('unitTitle').value=value;$('unitTitle').dataset.autoTitle='false';
       }));
     }catch(e){
-      box.innerHTML=`<div class="notice">${esc(e.message)}</div>`;
+      // When the paid API is unavailable, keep the teacher moving with the
+      // existing local title engine. Never label local suggestions as AI.
+      let local=[];
+      try{
+        if(typeof window.proposeUnitTitleOptions==='function'){
+          const seed=[$('unitTitle')?.value,$('unitSituation')?.value].filter(Boolean).join('. ');
+          const proposed=window.proposeUnitTitleOptions(seed,$('unitType')?.value||'Unidad de aprendizaje');
+          if(Array.isArray(proposed))local=proposed.filter(x=>typeof x==='string'&&x.trim()).slice(0,3);
+        }
+      }catch(_fallbackError){}
+      if(local.length){
+        box.innerHTML='<small>Opciones locales sin IA (respaldo). Puedes editarlas.</small>'+
+          local.map((x,i)=>`<button type="button" class="dd-title-option" data-dd-ai-title="${encodeURIComponent(x)}"><b>${i+1}.</b> ${esc(x)}</button>`).join('');
+        box.querySelectorAll('[data-dd-ai-title]').forEach(b=>b.addEventListener('click',()=>{
+          const field=$('unitTitle');if(!field)return;
+          field.value=decodeURIComponent(b.dataset.ddAiTitle);
+          field.dataset.autoTitle='false';
+        }));
+      }else{
+        box.innerHTML=`<div class="notice">${esc(e.message)}</div>`;
+      }
     }finally{setBusy(button,false);}
   }
 
@@ -269,7 +289,7 @@
     const card=$('ddAiConnectedCard');if(!card)return;
     const s=await health(true);
     card.innerHTML=s.configured
-      ? '<div class="success"><b>IA DocenteDigital conectada</b><br>Las solicitudes se procesan en servidor; la clave de OpenAI no se expone en el navegador.</div>'
+      ? '<div class="notice"><b>IA configurada, conexión aún no verificada.</b><br>Usa «Probar OpenAI real» para confirmar que el proveedor responde. La clave permanece en el servidor.</div>'
       : '<div class="notice"><b>Conexión preparada.</b><br>Falta activar OPENAI_API_KEY en el servidor de DocenteDigital.</div>';
   }
 
