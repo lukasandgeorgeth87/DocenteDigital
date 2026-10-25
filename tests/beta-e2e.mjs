@@ -10,6 +10,27 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+// Read the actual Word document part, not just the ZIP signature.
+function docxDocumentXml(bytes) {
+  let offset = 0;
+  while (offset + 30 <= bytes.length && bytes.readUInt32LE(offset) === 0x04034b50) {
+    const method = bytes.readUInt16LE(offset + 8);
+    const size = bytes.readUInt32LE(offset + 18);
+    const nameLength = bytes.readUInt16LE(offset + 26);
+    const extraLength = bytes.readUInt16LE(offset + 28);
+    const name = bytes.subarray(offset + 30, offset + 30 + nameLength).toString('utf8');
+    const start = offset + 30 + nameLength + extraLength;
+    const end = start + size;
+    assert(end <= bytes.length, `DOCX ZIP truncado en ${name}`);
+    if (name === 'word/document.xml') {
+      assert(method === 0, 'DOCX usa compresión no soportada por esta prueba');
+      return bytes.subarray(start, end).toString('utf8');
+    }
+    offset = end;
+  }
+  throw new Error('DOCX sin word/document.xml');
+}
+
 async function state() {
   return page.evaluate(() => JSON.parse(localStorage.getItem('docenteDigitalPrototype') || '{}'));
 }
@@ -114,6 +135,8 @@ try {
   assert(bytes.length > 500, `DOCX demasiado pequeño: ${bytes.length} bytes`);
   assert(bytes[0] === 0x50 && bytes[1] === 0x4b, 'El archivo descargado no es un contenedor ZIP/OOXML válido');
   assert(download.suggestedFilename().toLowerCase().endsWith('.docx'), 'La exportación no usa extensión .docx');
+  assert(docxDocumentXml(bytes).includes('wordprocessingml'), 'La sesión descargada no contiene XML Word válido');
+  assert(docxDocumentXml(bytes).includes('Leemos') || docxDocumentXml(bytes).includes('Sesión'), 'El DOCX de sesión no contiene contenido pedagógico reconocible');
 
   await page.evaluate(() => window.go('settings'));
   await page.waitForSelector('#ddBetaBackupCard', { timeout: 10000 });
@@ -207,6 +230,7 @@ try {
   const directorBytes = await fs.readFile(await directorDownload.path());
   assert(directorBytes.length > 500 && directorBytes[0] === 0x50 && directorBytes[1] === 0x4b, 'La exportación Word de Director no generó un DOCX ZIP');
   assert(directorDownload.suggestedFilename().toLowerCase().endsWith('.docx'), 'Director exportó una extensión distinta de DOCX');
+  assert(docxDocumentXml(directorBytes).includes('Revisión ficticia guardada.'), 'El DOCX de Director omitió la edición guardada');
 
   // Regression: Word export of an edited institutional plan must also save
   // those changes to the local history, even without clicking Guardar.
@@ -227,6 +251,8 @@ try {
     'Plan institucional no exportó un DOCX ZIP');
   assert(planDownload.suggestedFilename().toLowerCase().endsWith('.docx'),
     'Plan institucional exportó una extensión distinta de DOCX');
+  assert(docxDocumentXml(planBytes).includes('Acuerdo de prueba conservado al exportar.'),
+    'El DOCX del plan omitió la edición del usuario');
   s = await state();
   assert(s.lastDirectorDoc?.type === 'Plan' && s.lastDirectorDoc?.html?.includes('Acuerdo de prueba conservado'),
     'Exportar el plan no conservó la edición en el estado persistido');
