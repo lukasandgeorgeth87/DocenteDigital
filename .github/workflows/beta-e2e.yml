@@ -38,6 +38,9 @@ jobs:
       - name: Validate GPT serverless API contract without real credentials
         run: node tests/ai-contract.mjs
 
+      - name: Validate offline title fallback and truthful GPT connection status
+        run: node tests/ai-local-fallback.mjs
+
       - name: Test actual Android-style taps across all three levels
         timeout-minutes: 3
         env:
