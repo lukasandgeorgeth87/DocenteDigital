@@ -203,16 +203,25 @@ try{
   assert.equal(res.statusCode,402,'Image credits require explicit confirmation');
   globalThis.fetch=async(url,options)=>{
     captured={url,options};
-    return {ok:true,status:200,json:async()=>({data:[{b64_json:'ZmFrZS1wbmc='}]})};
+    return {ok:true,status:200,json:async()=>({data:[{b64_json:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9f4NvK0AAAAASUVORK5CYII='}]})};
   };
   res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true,size:'1024x1536',quality:'medium'});
   assert.equal(res.statusCode,200);
-  assert.equal(res.body.image_base64,'ZmFrZS1wbmc=');
+  assert.equal(res.body.image_base64,'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9f4NvK0AAAAASUVORK5CYII=');
   assert.equal(res.headers['cache-control'],'no-store');
   assert.equal(captured.url,'https://api.openai.com/v1/images/generations');
   const imagePayload=JSON.parse(captured.options.body);
   assert.equal(imagePayload.model,'gpt-image-2');
   assert.equal(imagePayload.n,1);
+  // Provider HTTP 200 with a nonempty base64 string that is not PNG must fail.
+  globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:'ZmFrZS1wbmc='}]})});
+  res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
+  assert.equal(res.statusCode,502,'Fake base64 must not be shown as a PNG image');
+  assert.equal(res.body.error,'invalid_image_output');
+  // A truncated PNG header must also be rejected.
+  globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:'iVBORw0KGgo='}]})});
+  res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
+  assert.equal(res.statusCode,502,'Truncated PNG must not be accepted');
   // Provider HTTP 200 without an image must not be shown as a completed generation.
   globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{}]})});
   res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
