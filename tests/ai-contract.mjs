@@ -7,6 +7,7 @@ const status=require('../api/ai-status.js');
 const image=require('../api/image.js');
 const previousKey=process.env.OPENAI_API_KEY;
 const previousFlag=process.env.DD_AI_BETA_ENABLED;
+const previousToken=process.env.DD_AI_BETA_TOKEN;
 const previousFetch=globalThis.fetch;
 
 function response(){
@@ -18,14 +19,16 @@ function response(){
     end(raw){this.body=JSON.parse(raw);}
   };
 }
-async function call(handler,method,body){
+async function call(handler,method,body,headers){
   const res=response();
-  await handler({method,body},res);
+  const actualHeaders=headers===undefined?(process.env.DD_AI_BETA_TOKEN?{'x-dd-beta-token':process.env.DD_AI_BETA_TOKEN}:{}):headers;
+  await handler({method,body,headers:actualHeaders},res);
   return res;
 }
 try{
   delete process.env.OPENAI_API_KEY;
   delete process.env.DD_AI_BETA_ENABLED;
+  delete process.env.DD_AI_BETA_TOKEN;
   let res=await call(status,'GET');
   assert.equal(res.statusCode,200);
   assert.equal(res.body.configured,false);
@@ -51,6 +54,19 @@ try{
   assert.equal(res.statusCode,503);
   assert.equal(res.body.error,'ai_beta_disabled');
   process.env.DD_AI_BETA_ENABLED='true';
+  res=await call(status,'GET');
+  assert.equal(res.body.text,false,'No access secret must fail closed even with beta enabled');
+  res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
+  assert.equal(res.statusCode,503);
+  assert.equal(res.body.error,'beta_access_not_configured');
+  process.env.DD_AI_BETA_TOKEN='local-test-token-32-chars-minimum-0123456789';
+  res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'},{});
+  assert.equal(res.statusCode,401,'Missing beta access token must be rejected');
+  assert.equal(res.body.error,'beta_access_denied');
+  res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'},{'x-dd-beta-token':'wrong-token'});
+  assert.equal(res.statusCode,401,'Wrong beta access token must be rejected');
+  res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true},{});
+  assert.equal(res.statusCode,401,'Image endpoint must require access token');
   res=await call(status,'GET');
   assert.equal(res.body.enabled,true);
   assert.equal(res.body.configured,true);
@@ -160,6 +176,8 @@ try{
   console.log('AI_CONTRACT_PASS: text and image status, validation, mocked GPT requests, privacy, credit confirmation and errors');
 }finally{
   globalThis.fetch=previousFetch;
+  if(previousToken===undefined)delete process.env.DD_AI_BETA_TOKEN;
+  else process.env.DD_AI_BETA_TOKEN=previousToken;
   if(previousFlag===undefined)delete process.env.DD_AI_BETA_ENABLED;
   else process.env.DD_AI_BETA_ENABLED=previousFlag;
   if(previousKey===undefined)delete process.env.OPENAI_API_KEY;
