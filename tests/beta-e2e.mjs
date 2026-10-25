@@ -333,6 +333,8 @@ try {
   const eibXml = docxDocumentXml(await fs.readFile(await eibDownload.path()));
   assert(eibXml.includes('no ha realizado ni validado una traducción'),
     'El DOCX EIB omitió la advertencia de traducción no validada');
+  assert(eibXml.split('Revisión lingüística requerida:').length === 2,
+    'El DOCX EIB duplicó la advertencia al guardar el paquete');
   await page.reload({ waitUntil: 'networkidle' });
   await waitPlanningRuntime();
   s = await state();
