@@ -1,22 +1,24 @@
 # DocenteDigital — estado canónico para continuidad entre conversaciones
 
-**Actualización:** 2026-10-25, 09:24 (America/Lima); ver última entrada acumulada.  
+**Actualización:** 2026-10-25, 10:22 (America/Lima); ver última entrada acumulada.  
 **Repositorio:** https://github.com/lukasandgeorgeth87/DocenteDigital  
 **Rama de desarrollo/beta:** `audit/v5-continuity-offline-diagnostic`  
-**Último commit de código/prueba con CI integral PASS:** `2c6cd5017ab97889e55b3824fa26dd3bc9829f6e`.  
+**Último commit de código/prueba con CI integral PASS:** `ea77aeef4fb291afb62d00257f2ea4e00b088e4e` (run `40206282202`, intento 2).  
 **Versión exacta más reciente:** consultar el HEAD de esta rama; el propio commit que actualiza esta bitácora es posterior al SHA citado.
 
 > Este documento es la fuente de continuidad para recuperar DocenteDigital desde otro chat. Verificar siempre GitHub, CI y Vercel en tiempo real antes de afirmar que una función está terminada. No confundir el HEAD de la rama con el despliegue público.
 
-## Resumen vigente para recuperar la beta (25/10/2026, 09:24 Perú)
+## Resumen vigente para recuperar la beta (25/10/2026, 10:22 Perú)
 
-- **SHA funcional verificado:** `2c6cd5017ab97889e55b3824fa26dd3bc9829f6e`. **Último commit documental anterior a esta corrección:** `1e64efa8e41ec6b4b759456decd61a0998824602`. Consultar HEAD de la rama para el SHA documental vigente.
-- **CI del SHA funcional:** [40201822622](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40201822622) **SUCCESS**. Incluye prueba real en Chromium con datos ficticios de unidad → sesión → DOCX → respaldo/restauración → evaluación registrada y persistida → informe Director editable, persistido y exportado a DOCX. No se probó un docente humano ni un proveedor GPT real.
-- **Preview exacta verificada:** https://docente-digital-r380yngzt-jorgeluispalma87-7403.vercel.app (**READY**; `/` y `/api/ai-status` **HTTP 200**). GPT `configured:false`, `enabled:false`; Redis real no configurado. La producción no se tocó.
-- **Funcional solo en alcance probado:** onboarding móvil, unidad/sesión, continuidad local y DOCX, registro de evaluación sintético, informe de Director y exportación DOCX, títulos locales de respaldo. **Parcial:** materiales, evaluación completa, todos los documentos/planes Director, PDF, backup remoto, piloto. **No disponible:** GPT real en preview, Redis real, autenticación individual y app PC.
-- **Bloqueantes:** S0 ninguno nuevo comprobado; S1 GPT/Redis reales, control monetario y acceso individual; S2 materiales, PDF, evaluación/director restantes y piloto; S3 UX/etiquetas; S4 app PC futura.
-- **Decisiones:** GPT motor principal solo después de habilitación segura y prueba real; plantillas locales son respaldo identificado; PC/Windows es fase futura. **Desarrollo histórico 75 % estimado; cierre V5 21/100**, sin incrementar sin cierre verificable. Matriz: runtime 10, UX 10, IA 15, flujo docente 15, materiales 10, evaluación 10, director 10, persistencia/exportación 8, CI/CD 7, seguridad/piloto 5.
-- **Próximo paso:** E2E de plan Director y evaluación por grados, validar contenido interno de Word Director, revisar materiales; luego configurar entorno privado de IA y Redis para pruebas reales seguras.
+- **Rama exclusiva:** `audit/v5-continuity-offline-diagnostic`. **Último SHA funcional/de pruebas verificado:** `ea77aeef4fb291afb62d00257f2ea4e00b088e4e`. Consultar el HEAD de la rama: esta bitácora crea un commit posterior, solo documental. No modificar `main` ni datos reales.
+- **Nueva corrección funcional:** `48783bde4ea74bc9706b4f35c33304e39ba28749` (`director-v1.js`): exportar a Word un **plan institucional editado** ahora guarda la versión exacta en el historial local, con `updatedAt`, incluso si el docente no pulsó «Guardar». Antes el Word podía incluir cambios que se perdían al recargar.
+- **Prueba E2E nueva:** `ea77aeef4fb291afb62d00257f2ea4e00b088e4e` (`tests/beta-e2e.mjs`): plan lector ficticio 2027 → edición → exportación DOCX → comprobación de persistencia e historial → recarga. El E2E anterior de unidad, sesión, evaluación e informe Director se conserva.
+- **Evidencia CI:** [run 40206267803](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40206267803) **SUCCESS** para la corrección funcional. [run 40206282202](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40206282202) **FAIL en intento 1** (espera de restauración local en paso 6/8 agotada a 10 s, antes de llegar al nuevo caso de plan); **SUCCESS integral en intento 2** para el mismo SHA `ea77aeef`. Se debe investigar la intermitencia de la prueba de restauración, sin ocultar el FAIL anterior. El PASS incluye contrato GPT **simulado**, fallback, acceso beta, móvil, unidad/sesión, Word, backup/restauración, evaluación, informe Director, nuevo plan, regresiones, privacidad y accesibilidad. No equivale a GPT real, Redis real ni piloto humano.
+- **Preview exacta del SHA probado:** https://docente-digital-7qo319gsz-jorgeluispalma87-7403.vercel.app — **READY**, GET `/` **HTTP 200**, GET `/api/ai-status` **HTTP 200**; respuesta `configured:false,enabled:false,access_configured:false,quota_configured:false,text:false,image:false,verified:false`. Sin GPT real ni Redis real configurados. Producción pública no alterada.
+- **Funcionales solo en el alcance probado:** onboarding/móvil, unidad → sesión → DOCX, persistencia/backup local, registro sintético de evaluación, informe Director editable y exportable, **plan institucional editable y exportable con persistencia**, títulos locales de respaldo. **Parciales:** materiales, todas las rúbricas/evaluaciones, documentos Director restantes, exportación PDF real, backup remoto y piloto. **No disponibles/comprobados:** GPT real, Redis real, autenticación individual, app Windows/PC.
+- **Errores pendientes:** **S0:** ninguno nuevo confirmado; **S1:** GPT y Redis reales, control monetario y autenticación individual; **S2:** intermitencia de restauración E2E (intento 1 FAIL), materiales/PDF/evaluación integral, piloto y persistencia remota; **S3:** mensajes y pulido UX; **S4:** futura app PC. No confundir `READY` con beta privada lista para docentes.
+- **Decisiones:** GPT motor principal solo tras acceso privado y límites de gasto verificados; plantillas locales respaldo claramente identificado; app PC/Windows fase futura. **Desarrollo funcional histórico 75 % estimado; cierre V5 21/100**, sin subir por pruebas aisladas ni por un nuevo commit. Matriz: runtime 10, UX 10, IA 15, flujo docente 15, materiales 10, evaluación 10, director 10, persistencia/exportación 8, CI/CD 7, seguridad/piloto 5.
+- **Próximo paso verificable:** investigar/estabilizar la restauración intermitente; validar el contenido interno de DOCX de Director, materiales por grado y evaluación; configurar entorno aislado con Redis/GPT reales y controles de gasto sin tocar producción ni revelar secretos.
 
 Las secciones siguientes conservan la bitácora histórica y pueden contener estados **pendientes** ya resueltos por entradas posteriores. Para el estado vigente prevalece este resumen y la última entrada cronológica.
 
@@ -214,3 +216,16 @@ Las secciones siguientes conservan la bitácora histórica y pueden contener est
 - **Decisiones vigentes:** GPT motor principal únicamente después de configuración privada, control de gasto y prueba real; plantillas locales como respaldo identificado, nunca presentadas como IA; app PC/Windows después de estabilizar beta web.
 - **Siguiente paso verificable:** extender E2E a plan institucional Director y evaluación por distintos grados, comprobar contenido del DOCX exportado (no solo ZIP), y validar materiales sin datos inventados. Preparar entorno aislado con Redis real, límites monetarios y credenciales privadas para GPT; nunca exponer secretos ni modificar producción.
 - **Métricas separadas:** desarrollo funcional histórico **75 % estimado**, cierre V5 **21/100** sin incremento hasta cierre formal de criterios. Matriz V5: runtime 10, UX 10, IA 15, flujo docente 15, materiales 10, evaluación 10, director 10, persistencia/exportación 8, CI/CD 7, seguridad/piloto 5.
+
+
+## Avance 25/10/2026, 10:17–10:22 (Perú) — persistencia del plan institucional al exportar Word
+
+- **Inicio verificado:** HEAD `f5637310377fc9dbf8ac45610521ae303c18c145`, CI [40202088835](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40202088835) **SUCCESS**; Vercel READY. Continuidad posterior a `e1a0de32b12518005b09837f2992a6c065f72f21` preservada.
+- **Commit funcional:** `48783bde4ea74bc9706b4f35c33304e39ba28749`, archivo `director-v1.js`: `savePlanCurrent()` se invoca tanto desde «Guardar» como antes de exportar Word; persiste HTML editado, fecha de actualización e historial. Se corrige divergencia entre DOCX exportado y plan recuperado tras recarga.
+- **Commit de prueba:** `ea77aeef4fb291afb62d00257f2ea4e00b088e4e`, archivo `tests/beta-e2e.mjs`: flujo de plan lector sintético, edición, descarga DOCX, historial y persistencia después de recarga.
+- **Pruebas realmente ejecutadas:** CI [40206267803](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40206267803) **PASS** para código; CI [40206282202](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40206282202) intento 1 **FAIL** por timeout de restauración local en línea 143, **antes** del nuevo escenario; intento 2 **PASS integral** para el SHA de código/prueba `ea77aeef`. El fallo intermitente sigue registrado S2. No se ejecutó llamada GPT real ni Redis real.
+- **Despliegue:** preview del SHA `ea77aeef` https://docente-digital-7qo319gsz-jorgeluispalma87-7403.vercel.app **READY**; GET `/` y GET `/api/ai-status` **HTTP 200**. GPT `configured:false`, `enabled:false`; acceso y cuota no configurados en preview.
+- **Alcance funcional:** plan Director + Word + persistencia probados con datos ficticios en Chromium. Módulos restantes y clasificación S0–S4 descritos en el resumen vigente. Ninguna modificación a producción ni datos reales.
+- **Métricas y decisiones:** 75 % histórico estimado / 21 de 100 cierre V5; GPT principal con plantillas de respaldo, futura app PC, sin variación de puntaje.
+- **Siguiente tarea:** robustecer la prueba intermitente de restauración y verificar contenidos OOXML exportados, además de materiales y evaluación por grado.
+
