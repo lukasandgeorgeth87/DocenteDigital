@@ -78,7 +78,22 @@ try {
     'El paquete EIB perdió idioma o variedad en el estado');
 
   console.log('EIB 3/4 DOCX conserva advertencia una sola vez');
-  const downloadPromise = page.waitForEvent('download', { timeout: 15000 });
+  page.on('dialog', async dialog => {
+    console.log('EIB_EXPORT_DIALOG:', dialog.message());
+    await dialog.dismiss();
+  });
+  page.on('pageerror', error => console.log('EIB_EXPORT_PAGEERROR:', error.message));
+  const exportDiagnostic = await page.evaluate(() => ({
+    hasExporter: typeof window.DDWordExport?.downloadHtml === 'function',
+    docxSelfTest: window.ddDocxSelfTest?.(),
+    materialType: window.state?.lastMaterial?.type,
+    hasOutput: !!document.querySelector('#materialOutput .dd-editable-material'),
+    hasWordButton: !!document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)')
+  }));
+  console.log('EIB_EXPORT_DIAGNOSTIC:', JSON.stringify(exportDiagnostic));
+  assert(exportDiagnostic.hasExporter && exportDiagnostic.docxSelfTest && exportDiagnostic.hasOutput,
+    'Exportador de material EIB no está listo: ' + JSON.stringify(exportDiagnostic));
+  const downloadPromise = page.waitForEvent('download', { timeout: 8000 });
   await page.locator('#materialOutput .dd-material-actions button', { hasText: 'Word' }).click();
   const download = await downloadPromise;
   assert(download.suggestedFilename().toLowerCase().endsWith('.docx'),
