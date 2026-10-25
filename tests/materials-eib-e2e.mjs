@@ -138,10 +138,8 @@ try {
   // Chromium geometry and hit-testing prove the real button is on-screen.
   // Exercise the actual pointer path at its verified hit-test coordinates,
   // never a programmatic DOM .click() or direct exporter invocation.
-  await page.evaluate(() => {
-    const b=document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)');
-    b.scrollIntoView({behavior:'instant',block:'center'});
-  });
+  // The geometry check above already proves the button is in the viewport.
+  // Avoid a second scrollIntoView: it races the app's pending smooth scroll.
   await page.waitForFunction(() => {
     const b=document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)');
     if(!b||b.disabled)return false;
