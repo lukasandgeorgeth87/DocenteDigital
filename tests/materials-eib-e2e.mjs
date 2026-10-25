@@ -127,9 +127,11 @@ try {
     ['5.º', ['S/ ', 'residuo', 'decimales']]
   ]) {
     await page.locator('#materialGrade').selectOption(grade);
+    await page.waitForTimeout(550); // Distinct teacher actions, not a synthetic double tap.
     await page.locator('#materials button[onclick="window.DDMaterials?.create()"]').click();
     const content = await page.locator('#materialOutput .dd-editable-material').innerText();
-    console.log('DIVISION_GRADE_DIAGNOSTIC:', grade, JSON.stringify(content.slice(0,700)));
+    const gradeState = await page.evaluate(() => ({ selected: document.querySelector('#materialGrade')?.value, saved: window.state?.lastMaterial?.grade }));
+    console.log('DIVISION_GRADE_DIAGNOSTIC:', grade, JSON.stringify(gradeState), JSON.stringify(content.slice(0,700)));
     for (const phrase of expected) {
       assert(content.includes(phrase),
         'Banco de división de ' + grade + ' no contiene ' + phrase);
