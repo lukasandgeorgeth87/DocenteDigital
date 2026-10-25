@@ -19,7 +19,9 @@
   function safeContext(extra={},task=''){
     const s=appState(),t=s.teacherContext||{},u=(s.units||[]).find(x=>x.id===s.activeUnitId)||{};
     const linked=task==='material'||task==='session_strategy';
-    const session=linked?s.lastSession||{}:{};
+    // Never borrow a session from a different unit when building materials.
+    const session=linked && s.lastSession && (!u.id || s.lastSession.unitId===u.id)
+      ? s.lastSession : {};
     const ctx={
       level:s.level||'',
       ieType:s.ieType||'',
