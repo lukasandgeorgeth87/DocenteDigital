@@ -1,3 +1,4 @@
+const {checkBetaAccess}=require('./_beta-access');
 const IMAGE_URL='https://api.openai.com/v1/images/generations';
 function send(res,status,data){res.statusCode=status;res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(data));}
 function clean(v,max=5000){return String(v??'').replace(/\u0000/g,'').trim().slice(0,max);}
@@ -6,6 +7,8 @@ module.exports=async function handler(req,res){
   if(!process.env.OPENAI_API_KEY)return send(res,503,{ok:false,error:'openai_not_configured'});
   // Fail-closed billing switch; still requires independent access control and quotas.
   if(process.env.DD_AI_BETA_ENABLED!=='true')return send(res,503,{ok:false,error:'ai_beta_disabled'});
+  const denied=checkBetaAccess(req);
+  if(denied)return send(res,denied.status,{ok:false,error:denied.error});
   const body=req.body&&typeof req.body==='object'?req.body:{};
   if(body.confirmedCredit!==true)return send(res,402,{ok:false,error:'premium_credit_confirmation_required'});
   const prompt=clean(body.prompt);
