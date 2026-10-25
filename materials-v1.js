@@ -405,6 +405,12 @@
   function renderItem(item){
     const out=$('materialOutput');if(!out)return;
     out.innerHTML=item.html;
+    // Put export actions before potentially very long differentiated worksheets.
+    // A toolbar after a multi-grade bundle required a large unstable scroll and
+    // could leave the physical Word click unreachable in Chromium/mobile.
+    const actions=out.querySelector(':scope > .dd-material-actions');
+    const editable=out.querySelector(':scope > .dd-editable-material');
+    if(actions&&editable)out.insertBefore(actions,editable);
     out.classList.remove('hidden');
     // Instant scroll avoids losing rapid follow-up taps while the previous
     // smooth-scroll animation is still moving the action buttons.
