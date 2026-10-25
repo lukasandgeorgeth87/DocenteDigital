@@ -106,6 +106,12 @@ try {
   const wordButton = page.locator('#materialOutput .dd-material-actions button', { hasText: 'Word' });
   await wordButton.waitFor({ state: 'visible', timeout: 12000 });
   assert(await wordButton.isEnabled(), 'El botón Word EIB está deshabilitado');
+  assert(await page.evaluate(() => {
+    const b=document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)');
+    const r=b.getBoundingClientRect();
+    const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+    return r.top>=0 && r.bottom<=innerHeight && (hit===b || b.contains(hit));
+  }), 'El botón Word EIB quedó oculto por la barra superior fija');
   await page.evaluate(() => {
     window.__ddWordClickTrace = { captured: 0, bubbled: 0, handler: 0, exporter: 0, exporterResult: null };
     const trace = window.__ddWordClickTrace;
