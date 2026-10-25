@@ -134,15 +134,31 @@ try {
     const at=document.elementFromPoint(Math.min(innerWidth-1,Math.max(0,r.x+r.width/2)),Math.min(innerHeight-1,Math.max(0,r.y+r.height/2)));
     return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},scrollY,innerHeight,hit:at?.outerHTML?.slice(0,180),visibility:getComputedStyle(el).visibility,activeScreens:[...document.querySelectorAll('.screen.active')].map(x=>x.id),materialScreenClass:document.querySelector('#materials')?.className,outputClass:document.querySelector('#materialOutput')?.className,ancestors:(()=>{let n=el;const a=[];while(n&&a.length<9){const st=getComputedStyle(n);a.push({tag:n.tagName,id:n.id,className:String(n.className).slice(0,110),display:st.display,visibility:st.visibility,rect:n.getBoundingClientRect().width});n=n.parentElement}return a})()};
   })));
-  try { await wordButton.click({trial:true,timeout:5000}); }
-  catch (error) { console.log('EIB_WORD_TRIAL_FAIL:',String(error)); throw error; }
-  // Start click and download wait together so a slow physical click cannot cause
-  // an unhandled rejection from the download waiter before click() resolves.
+  // Playwright locator.click() intermittently reports "not visible" even when
+  // Chromium geometry and hit-testing prove the real button is on-screen.
+  // Exercise the actual pointer path at its verified hit-test coordinates,
+  // never a programmatic DOM .click() or direct exporter invocation.
+  await page.evaluate(() => {
+    const b=document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)');
+    b.scrollIntoView({behavior:'instant',block:'center'});
+  });
+  await page.waitForFunction(() => {
+    const b=document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)');
+    if(!b||b.disabled)return false;
+    const r=b.getBoundingClientRect();
+    if(!r.width||!r.height||r.top<0||r.bottom>innerHeight)return false;
+    const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
+    return hit===b||b.contains(hit);
+  }, null, {timeout:10000});
+  const pointer=await page.evaluate(() => {
+    const r=document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)').getBoundingClientRect();
+    return {x:r.x+r.width/2,y:r.y+r.height/2};
+  });
   let download;
   try {
     [download] = await Promise.all([
       page.waitForEvent('download', { timeout: 20000 }),
-      wordButton.click({ timeout: 20000 })
+      page.mouse.click(pointer.x,pointer.y)
     ]);
   } catch (error) {
     console.log('EIB_WORD_CLICK_FAILURE_TRACE:', JSON.stringify(await page.evaluate(() => window.__ddWordClickTrace).catch(() => ({pageUnavailable:true}))));
