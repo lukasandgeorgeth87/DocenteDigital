@@ -95,10 +95,13 @@ try {
   console.log('EIB_EXPORT_DIAGNOSTIC:', JSON.stringify(exportDiagnostic));
   assert(exportDiagnostic.hasExporter && exportDiagnostic.docxSelfTest && exportDiagnostic.hasOutput,
     'Exportador de material EIB no está listo: ' + JSON.stringify(exportDiagnostic));
-  // Direct exporter assertion is deterministic; physical-click gate is tracked
-  // separately as a known intermittent browser issue, not marked PASS here.
+  // Exercise the real user-facing button rather than bypassing event dispatch.
+  // A failed click must remain visible in CI instead of being reported as PASS.
+  const wordButton = page.locator('#materialOutput .dd-material-actions button', { hasText: 'Word' });
+  await wordButton.waitFor({ state: 'visible', timeout: 12000 });
+  assert(await wordButton.isEnabled(), 'El botón Word EIB está deshabilitado');
   const downloadPromise = page.waitForEvent('download', { timeout: 12000 });
-  await page.evaluate(() => window.DDMaterials.downloadWord());
+  await wordButton.click({ timeout: 12000 });
   const download = await downloadPromise;
   assert(download.suggestedFilename().toLowerCase().endsWith('.docx'),
     'El paquete EIB no se exportó como DOCX');
