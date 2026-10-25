@@ -86,6 +86,28 @@ try{
   res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
   assert.equal(res.statusCode,502);
   assert.equal(res.body.error,'invalid_structured_output');
+  // A provider returning HTTP 200 is not proof that the expected structured
+  // result is complete and safe to display as a generated teaching document.
+  globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({
+    status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify({
+      result:'partial',options:'not-an-array',warnings:[],teacher_note:''
+    })}]}]
+  })});
+  res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
+  assert.equal(res.statusCode,502,'Invalid provider schema must fail closed');
+  assert.equal(res.body.error,'invalid_structured_output');
+
+  globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({
+    status:'incomplete',incomplete_details:{reason:'max_output_tokens'},
+    output:[{content:[{type:'output_text',text:JSON.stringify({
+      result:'partial',options:[],warnings:[],teacher_note:''
+    })}]}]
+  })});
+  res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
+  assert.equal(res.statusCode,502,'Incomplete provider response must fail closed');
+  assert.equal(res.body.error,'incomplete_ai_response');
+  assert.equal(res.body.retryable,true);
+
   delete process.env.OPENAI_API_KEY;
   res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
   assert.equal(res.statusCode,503);
