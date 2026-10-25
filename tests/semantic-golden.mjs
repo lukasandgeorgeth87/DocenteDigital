@@ -109,6 +109,31 @@ try{
       assert(saved.lastMaterial?.html?.includes('dd-planning-reference') &&
         normalizeText(saved.lastMaterial.html).includes(normalizeText(expectedProduct)),
         'biohuerto: guardar la ficha elimina la referencia pedagógica o el producto');
+      // A prior session from another unit must not contaminate the current
+      // unit's material when the default source is "Última sesión".
+      await page.locator('#materialSource').selectOption('session');
+      const isolation = await page.evaluate(() => {
+        const old = window.state.lastSession;
+        try {
+          window.state.lastSession = {
+            unitId: 'foreign-unit', title: 'Sesión ajena sobre volcanes',
+            area: 'Ciencia y Tecnología', purpose: 'Investigar volcanes',
+            evidence: 'Maqueta de un volcán', grades: ['5.º']
+          };
+          window.DDMaterials.useCurrent();
+          window.DDMaterials.create();
+          return {
+            source: window.state.lastMaterial?.source,
+            topic: window.state.lastMaterial?.topic,
+            output: document.querySelector('#materialOutput')?.innerText || ''
+          };
+        } finally { window.state.lastSession = old; }
+      });
+      assert(isolation.source === 'unit' &&
+        !/volcanes|volcán/i.test(isolation.topic+' '+isolation.output) &&
+        isolation.output.includes('Evidencia o producto'),
+        'biohuerto: material contaminado por sesión de otra unidad: '+JSON.stringify(isolation));
+
     }
     if(c.name==='pinturas_rupestres'){
       assert(!/en la comunidad encontramos/i.test(title),'pinturas rupestres: copió la oración contextual dentro del título');
