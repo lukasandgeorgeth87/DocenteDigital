@@ -323,7 +323,7 @@
 
   function languageNote(lang,variety){
     if(lang==='Castellano')return '';
-    return `<div class="notice"><b>Revisión lingüística requerida:</b> el material fue solicitado en ${E(lang)} ${variety&&variety!=='Ninguna'?'· '+E(variety):''}. Antes de imprimir una versión en lengua originaria, debe ser revisada por un hablante competente o docente EIB de la variedad seleccionada.</div>`;
+    return `<div class="notice"><b>Revisión lingüística requerida:</b> material solicitado en ${E(lang)} ${variety&&variety!=='Ninguna'?'· '+E(variety):'(variedad aún no seleccionada)'}. Este borrador se ha generado únicamente en castellano; DocenteDigital no ha realizado ni validado una traducción a lengua originaria. Para obtener una versión bilingüe o en lengua originaria, hace falta traducirla y revisarla con un hablante competente o docente EIB de la variedad elegida antes de imprimirla.</div>`;
   }
 
   function renderByType(type,topic,level,grade,area,sourceText=''){
@@ -403,6 +403,8 @@
     const area=$('materialArea')?.value||ctx.area||state.areas?.[0]||'Comunicación';
     const sourceText=($('materialSourceText')?.value||'').trim();
     const level=state.level||'Primaria';
+    const lang=$('materialLanguage')?.value||'Castellano';
+    const variety=$('materialQuechua')?.value||state.quechuaVar||'Ninguna';
     const grades=(ctx.grades&&ctx.grades.length?ctx.grades:(state.grades||[])).length
       ? (ctx.grades&&ctx.grades.length?ctx.grades:(state.grades||[]))
       : [$('materialGrade')?.value||'1.º'];
@@ -425,8 +427,8 @@
       </section>`;
     }).join('');
 
-    const bundleHtml=`<article class="dd-material-bundle"><div class="dd-material-kicker">Paquete de materiales · ${E(area)}</div><h1>Paquete: ${E(topic)}</h1><p><b>Diferenciación:</b> cada grado/edad recibe su propio bloque; no se mezclan fichas de distintos grados en una sola lámina.</p>${gradeBlocks}</article>`;
-    const item={id:'m'+Date.now(),createdAt:new Date().toISOString(),type:'Paquete de materiales',level,grade:grades.join(', '),area,lang:'Castellano',variety:'Ninguna',topic,instruction:'',source:ctx.source,sourceTitle:ctx.title||'',html:`<div class="dd-editable-material" contenteditable="true" spellcheck="true">${bundleHtml}</div><div class="actions topgap dd-material-actions"><button class="btn" type="button" onclick="window.DDMaterials.saveEdits()">💾 Guardar cambios</button><button class="btn alt" type="button" onclick="window.DDMaterials.downloadWord()">⬇ Word</button><button class="btn alt" type="button" onclick="window.print()">🖨 Imprimir / PDF</button></div>`};
+    const bundleHtml=`<article class="dd-material-bundle"><div class="dd-material-kicker">Paquete de materiales · ${E(area)}</div><h1>Paquete: ${E(topic)}</h1>${languageNote(lang,variety)}<p><b>Diferenciación:</b> cada grado/edad recibe su propio bloque; no se mezclan fichas de distintos grados en una sola lámina.</p>${gradeBlocks}</article>`;
+    const item={id:'m'+Date.now(),createdAt:new Date().toISOString(),type:'Paquete de materiales',level,grade:grades.join(', '),area,lang,variety,topic,instruction:'',source:ctx.source,sourceTitle:ctx.title||'',html:`<div class="dd-editable-material" contenteditable="true" spellcheck="true">${bundleHtml}</div><div class="actions topgap dd-material-actions"><button class="btn" type="button" onclick="window.DDMaterials.saveEdits()">💾 Guardar cambios</button><button class="btn alt" type="button" onclick="window.DDMaterials.downloadWord()">⬇ Word</button><button class="btn alt" type="button" onclick="window.print()">🖨 Imprimir / PDF</button></div>`};
     state.materials.unshift(item);state.materials=state.materials.slice(0,40);state.lastMaterial=item;save();renderItem(item);renderHistory();
   }
 
