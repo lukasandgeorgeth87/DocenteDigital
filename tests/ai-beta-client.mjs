@@ -53,7 +53,7 @@ assert.equal([...storage.values()].some(v=>v.includes('temporary-preview-token')
 window.state={
   activeUnitId:'u1',
   units:[{id:'u1',type:'Proyecto de aprendizaje',title:'Biohuerto',reto:'¿Cómo sembrar hortalizas?',product:'Biohuerto escolar'}],
-  lastSession:{title:'Medimos nuestro biohuerto',area:'Matemática',purpose:'Medir el terreno',criterion:'Explica cómo midió',evidence:'Croquis con medidas'}
+  lastSession:{unitId:'u1',title:'Medimos nuestro biohuerto',area:'Matemática',purpose:'Medir el terreno',criterion:'Explica cómo midió',evidence:'Croquis con medidas'}
 };
 await window.DDOpenAI.request('material','Genera una ficha');
 const linked=JSON.parse(captured.body).context;
@@ -61,6 +61,15 @@ assert.equal(linked.purpose,'Medir el terreno');
 assert.equal(linked.product,'Biohuerto escolar');
 assert.equal(linked.criterion,'Explica cómo midió');
 assert.equal(linked.evidence,'Croquis con medidas');
+window.state.lastSession.unitId='other-unit';
+await window.DDOpenAI.request('material','Genera ficha para unidad actual');
+const isolated=JSON.parse(captured.body).context;
+assert.equal(isolated.purpose,'¿Cómo sembrar hortalizas?');
+assert.equal(isolated.product,'Biohuerto escolar');
+assert.equal(isolated.criterion,'');
+assert.equal(isolated.evidence,'');
+assert.equal(isolated.topic,'','Do not inherit the title of a session from another unit');
+window.state.lastSession.unitId='u1';
 await window.DDOpenAI.request('title_options','Propón títulos');
 const fresh=JSON.parse(captured.body).context;
 for(const key of ['purpose','product','criterion','evidence'])assert.equal(fresh[key],'',key+' must not leak from prior unit into a new title proposal');
