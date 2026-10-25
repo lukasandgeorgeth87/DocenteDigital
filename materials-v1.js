@@ -397,7 +397,9 @@
     const out=$('materialOutput');if(!out)return;
     out.innerHTML=item.html;
     out.classList.remove('hidden');
-    out.scrollIntoView({behavior:'smooth',block:'start'});
+    // Instant scroll avoids losing rapid follow-up taps while the previous
+    // smooth-scroll animation is still moving the action buttons.
+    out.scrollIntoView({behavior:'auto',block:'start'});
   }
 
   function saveEdits(){
