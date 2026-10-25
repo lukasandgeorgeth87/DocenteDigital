@@ -9,12 +9,15 @@ module.exports = function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   const configured=Boolean(process.env.OPENAI_API_KEY);
   const enabled=process.env.DD_AI_BETA_ENABLED==='true';
+  const accessConfigured=typeof process.env.DD_AI_BETA_TOKEN==='string'&&process.env.DD_AI_BETA_TOKEN.length>=32;
   res.end(JSON.stringify({
     ok:true,
     configured,
     enabled,
-    text:configured&&enabled,
-    image:configured&&enabled,
+    access_required:true,
+    access_configured:accessConfigured,
+    text:configured&&enabled&&accessConfigured,
+    image:configured&&enabled&&accessConfigured,
     verified:false,
     server_side:true
   }));
