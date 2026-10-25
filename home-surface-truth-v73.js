@@ -43,14 +43,16 @@
     const director=document.getElementById('director');
     if(!director)return;
     director.querySelectorAll('.card button').forEach(button=>{
-      if(button.getAttribute('onclick'))return;
+      // Director v1 binds real handlers with element.onclick after rendering.
+      // Preserve only explicitly wired Beta actions; keep placeholders disabled.
+      if(button.getAttribute('onclick') || button.dataset.ddRealAction==='true')return;
       button.disabled=true;
       button.setAttribute('aria-disabled','true');
       button.setAttribute('title','Función aún no disponible para lanzamiento');
       if(!/Próximamente/i.test(button.textContent||''))button.textContent=`${button.textContent.trim()} · Próximamente`;
     });
     const sub=director.querySelector('.sub');
-    if(sub)sub.textContent='Las funciones directivas principales siguen en construcción y no se consideran disponibles para lanzamiento.';
+    if(sub)sub.textContent='Documentos y planes editables disponibles en Beta para revisión docente. Las opciones sin flujo validado permanecen deshabilitadas; verifica los datos y normas antes de usarlos.';
   }
 
   function clarifyPlanningHomeCard(){
