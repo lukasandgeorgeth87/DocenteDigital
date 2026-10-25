@@ -3,7 +3,7 @@
 **Actualización:** 2026-10-24, 23:16 (America/Lima; 2026-10-25 UTC).  
 **Repositorio:** https://github.com/lukasandgeorgeth87/DocenteDigital  
 **Rama de desarrollo/beta:** `audit/v5-continuity-offline-diagnostic`  
-**Último commit de código/CI previo a esta bitácora:** `0db40f0a7518b2d88034241087559f1eb6384edc`.  
+**Último commit de código/CI previo a esta bitácora:** `d75e57008ab4328c2dd57076a3d0d817d4ef956f`.  
 **Versión exacta más reciente:** consultar el HEAD de esta rama; el propio commit que actualiza esta bitácora es posterior al SHA citado.
 
 > Este documento es la fuente de continuidad para recuperar DocenteDigital desde otro chat. Verificar siempre GitHub, CI y Vercel en tiempo real antes de afirmar que una función está terminada. No confundir el HEAD de la rama con el despliegue público.
@@ -18,8 +18,8 @@
 ## Evidencia de CI y Vercel
 
 - **CI confirmado PASS:** GitHub Actions `Beta E2E Browser Gate` para commit `e1a0de32b12518005b09837f2992a6c065f72f21`, run https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40158344057. Pasaron las etapas de onboarding móvil en tres niveles, E2E beta, regresiones semánticas, privacidad de red, continuidad/recuperación/offline, estructura DOCX y accesibilidad. Es **prueba automatizada con navegador y servidor local en CI**, no piloto docente real.
-- **CI nuevo pendiente al redactar:** https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40161251453, commit `0db40f0a7518b2d88034241087559f1eb6384edc`; agrega la puerta de contrato de API GPT simulada. No atribuirle PASS antes de concluir.
-- **Preview Vercel verificada READY:** commit `e1a0de32...`, https://docente-digital-7xdp3zo1w-jorgeluispalma87-7403.vercel.app ; HTTP 200 en `/` y `/api/ai-status` comprobados. En esa preview, `configured:false`: falta `OPENAI_API_KEY` en ese entorno; no hubo generación real de IA.
+- **CI PASS con nuevo contrato GPT simulado:** https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40161251453, commit `0db40f0a7518b2d88034241087559f1eb6384edc`. Incluye prueba de contrato GPT, móvil, beta E2E, golden semántico, privacidad, continuidad, DOCX y accesibilidad. **Nueva ejecución pendiente:** https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40161330019, commit `d75e5700`, amplía el contrato a generación de imagen simulada.
+- **Preview Vercel verificada READY:** commit `d75e5700...`, https://docente-digital-ctxmiq30k-jorgeluispalma87-7403.vercel.app ; HTTP 200 en `/` y `/api/ai-status` comprobados. Estado: `configured:false`, `text:false`, `image:false`, `verified:false`; no hubo generación real de IA. Variables Vercel consultadas sin descifrar: `OPENAI_API_KEY` existe solo para target `production`, no para `preview`. No copiar ni publicar la clave en una preview sin control de acceso y cuota.
 - **Producción pública (rama main):** https://docente-digital.vercel.app ; `/` HTTP 200, pero `/api/ai-status` HTTP 404 en verificación anterior. No confundir producción con preview de beta.
 - **Rama frente a main:** antes de nuevos cambios, 207 commits por delante, 0 por detrás; no fusionar a ciegas.
 
@@ -31,7 +31,8 @@
 | `a88b4630` | `api/ai.js` | Corrige IDs predeterminados de modelos a `gpt-6-luna` (rutina) y `gpt-6.1-sol` (complejo), configurables por entorno. No se ha probado aún acceso real a esos modelos con credenciales. |
 | `b3598d93` | `api/ai-status.js` | `text` e `image` no anuncian disponibilidad sin clave; `verified:false` distingue configuración de prueba real. |
 | `5218f5a6` | `tests/ai-contract.mjs` | Pruebas deterministas del contrato de endpoints sin claves reales ni consumo de tokens: estado, validación, privacidad del contexto, selección de modelo y errores. |
-| `0db40f0a` | `.github/workflows/beta-e2e.yml` | Ejecuta la nueva prueba de contrato GPT en CI. **Resultado pendiente** en el momento de escritura. |
+| `0db40f0a` | `.github/workflows/beta-e2e.yml` | Ejecuta la nueva prueba de contrato GPT en CI. **CI PASS**, run 40161251453. |
+| `d75e5700` | `tests/ai-contract.mjs` | Amplía el contrato a confirmación de crédito y generación de imagen simulada, sin consumo real. CI para este SHA pendiente al redactar. |
 
 ## Estado funcional: no exagerar
 
@@ -62,8 +63,8 @@
 
 ## Próximos pasos, orden de ejecución
 
-1. Consultar run 40161251453; corregir fallos de la nueva prueba si los hay.
-2. Verificar nuevo preview Vercel READY, `/` HTTP 200 y `/api/ai-status` HTTP 200; el estado debe reflejar `configured:false` y `text:false` sin clave.
+1. Consultar run 40161330019 para confirmar prueba de imagen simulada; corregir fallos si los hay.
+2. Preview del SHA d75e5700 ya verificada READY y HTTP 200 en `/` y `/api/ai-status`; repetir verificación tras nuevos commits.
 3. Añadir control de acceso/cuota real al endpoint antes de activar API pagada; validar seguridad.
 4. Configurar credencial de OpenAI en entorno privado, comprobar conexión real con la herramienta de la app, probar generación de títulos/situaciones/materiales y respaldo local ante fallo.
 5. Completar recorrido real docente y director, Word/PDF y restauración de datos. Documentar PASS/FAIL con entradas y salidas.
