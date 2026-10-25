@@ -11,10 +11,10 @@ const localStorage={
 const tokenInput={value:'temporary-preview-token-12345678901234567890'};
 const message={textContent:''};
 const card={innerHTML:''};
-const hubCard={innerHTML:''};
+const hubCard={set innerHTML(value){this._html=value;nodes.ddAiConnectedCard=card;},get innerHTML(){return this._html||'';}};
 const hub={querySelectorAll:()=>[{},hubCard]};
 const nodes={
-  aihub:hub,ddAiConnectedCard:card,ddAiBetaToken:tokenInput,
+  aihub:hub,ddAiBetaToken:tokenInput,
   ddAiBetaSave:{onclick:null},ddAiBetaMessage:message,
   ddAiChatSend:{},ddAiRetryStatus:{},ddAiTestReal:{},
   ddAiUsage:{textContent:''}
