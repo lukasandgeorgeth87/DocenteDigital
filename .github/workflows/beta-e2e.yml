@@ -35,6 +35,9 @@ jobs:
           sleep 2
           curl --fail --silent --show-error http://127.0.0.1:4173/ >/dev/null
 
+      - name: Validate GPT serverless API contract without real credentials
+        run: node tests/ai-contract.mjs
+
       - name: Test actual Android-style taps across all three levels
         timeout-minutes: 3
         env:
