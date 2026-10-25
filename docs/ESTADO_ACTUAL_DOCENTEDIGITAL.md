@@ -151,3 +151,10 @@
 - **Bloqueantes que permanecen:** S1 autenticación individual, presupuesto monetario/consumo real y prueba GPT real; S2 recorridos completos de docente/director, materiales, evaluación, PDF, backup remoto y pilotos. No declarar beta lista para público.
 - **Métricas sin incremento artificial:** desarrollo funcional histórico **75 % estimado**, cierre V5 **21/100**. No confundir una barrera global con cierre integral de seguridad.
 - **Próximo paso:** confirmar resultado final de CI para `bf8870c7` y Vercel READY, corregir regresiones si aparecen, verificar contador Redis real en beta cerrada y probar generación OpenAI con presupuesto estricto; continuar recorrido docente.
+
+
+### Cierre de verificación de la ejecución 06:xx (25/10/2026, Perú)
+
+- **CI final PASS:** run [40188248040](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40188248040) completado con **SUCCESS** para el commit de código/prueba `bf8870c7075365bcdb173fdcf76982a5f51f4b23`. Aprobó contrato de IA con Redis simulado y fallos de cuota, respaldo local y mensajes, token privado en memoria, navegación móvil, beta E2E, golden semántico, privacidad de red, continuidad/recuperación, estructura DOCX y accesibilidad. **No** implica validación con Redis real ni OpenAI real.
+- **Preview del commit de código `bf8870c7`: READY** según Vercel: https://docente-digital-c67yhmyct-jorgeluispalma87-7403.vercel.app . **Preview del commit documental `dd795c30`: READY**: https://docente-digital-8p987bxgq-jorgeluispalma87-7403.vercel.app . En esta ejecución no fue posible verificar HTTP 200 desde el cliente externo, por lo que se consigna únicamente READY.
+- **Producción no alterada.** Continúan S1: servicio GPT real sin probar, Redis real sin configurar/probar, falta autenticación individual y presupuesto monetario independiente. **V5 21/100; desarrollo histórico 75 % estimado**, sin cambio.
