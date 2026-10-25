@@ -16,8 +16,10 @@
 
   function appState(){return window.state&&typeof window.state==='object'?window.state:{};}
 
-  function safeContext(extra={}){
+  function safeContext(extra={},task=''){
     const s=appState(),t=s.teacherContext||{},u=(s.units||[]).find(x=>x.id===s.activeUnitId)||{};
+    const linked=task==='material'||task==='session_strategy';
+    const session=linked?s.lastSession||{}:{};
     const ctx={
       level:s.level||'',
       ieType:s.ieType||'',
@@ -37,6 +39,12 @@
       duration:document.getElementById('unitDuration')?.value||u.duration||'',
       title:document.getElementById('unitTitle')?.value||u.title||'',
       brief:document.getElementById('unitSituation')?.value||u.situationBrief||'',
+      // Only carry approved prior-unit fields into downstream work. A new unit's
+      // title/situation proposals must not inherit an unrelated active unit.
+      purpose:linked?(session.purpose||u.reto||u.purpose||''):'',
+      product:linked?(u.product||''):'',
+      criterion:linked?(session.criterion||''):'',
+      evidence:linked?(session.evidence||''):'',
       area:document.getElementById('materialArea')?.value||s.lastSession?.area||'',
       grade:document.getElementById('materialGrade')?.value||'',
       topic:document.getElementById('materialTopic')?.value||s.lastSession?.title||'',
@@ -104,7 +112,7 @@
         body:JSON.stringify({
           task,
           prompt:String(prompt||'').slice(0,12000),
-          context:safeContext(options.context),
+          context:safeContext(options.context,task),
           quality:options.quality||'auto'
         }),
         signal:controller.signal
