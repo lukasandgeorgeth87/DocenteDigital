@@ -329,6 +329,19 @@ try {
     window.go('materials');
   });
   await page.waitForFunction(() => !document.getElementById('materialLanguage')?.disabled);
+  // Some setup/profile hooks are asynchronous; navigate again after the
+  // language profile has settled and fail with a useful screen diagnostic.
+  await page.evaluate(() => window.go('materials'));
+  const eibScreen = await page.evaluate(() => ({
+    active: [...document.querySelectorAll('.screen.active')].map(x => x.id),
+    materialDisplay: getComputedStyle(document.querySelector('#materials')).display,
+    level: window.state?.level,
+    mode: window.state?.linguisticMode,
+    lang: window.state?.language,
+    materialDisabled: document.querySelector('#materialLanguage')?.disabled
+  }));
+  assert(await page.locator('#materials').isVisible(),
+    'La pantalla Materiales no es visible para el perfil EIB: ' + JSON.stringify(eibScreen));
   await page.locator('#materialLanguage').selectOption('Bilingüe');
   await page.locator('#materialQuechua').selectOption('Quechua Cusco-Collao (Cusco)');
   await page.locator('#materials button[onclick="window.DDMaterials?.createBundle()"]').click();
