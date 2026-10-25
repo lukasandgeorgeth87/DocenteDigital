@@ -59,7 +59,7 @@
         <label class="full">Decisión, solicitud o información principal<textarea id="ddDirMain" placeholder="Escribe la idea principal que debe quedar clara."></textarea></label>
         <label class="full">Base normativa verificada <span class="pill">Opcional</span><textarea id="ddDirLegal" placeholder="Solo incorpora normas verificadas. Si no tienes una base legal confirmada, déjalo vacío."></textarea></label>
       </div>
-      <div class="actions"><button class="btn" id="ddDirBuild">✨ Construir documento</button><button class="btn ghost" id="ddDirClose">Cerrar</button></div>
+      <div class="actions"><button data-dd-real-action="true" class="btn" id="ddDirBuild">✨ Construir documento</button><button data-dd-real-action="true" class="btn ghost" id="ddDirClose">Cerrar</button></div>
       <div id="ddDirResult" class="topgap"></div>`;
     $('ddDirBuild').onclick=buildDocument;
     $('ddDirClose').onclick=()=>p.classList.add('hidden');
@@ -113,7 +113,7 @@
   function renderDocument(item){
     const box=$('ddDirResult');if(!box)return;
     box.innerHTML=`<div class="dd-editable-material" contenteditable="true" spellcheck="true">${item.html}</div>
-      <div class="actions topgap"><button class="btn" id="ddDirSave">💾 Guardar cambios</button><button class="btn alt" id="ddDirWord">⬇ Word</button><button class="btn alt" id="ddDirPrint">🖨 Imprimir / PDF</button></div>`;
+      <div class="actions topgap"><button data-dd-real-action="true" class="btn" id="ddDirSave">💾 Guardar cambios</button><button data-dd-real-action="true" class="btn alt" id="ddDirWord">⬇ Word</button><button data-dd-real-action="true" class="btn alt" id="ddDirPrint">🖨 Imprimir / PDF</button></div>`;
     $('ddDirSave').onclick=saveCurrent;
     $('ddDirWord').onclick=downloadCurrent;
     $('ddDirPrint').onclick=()=>window.print();
@@ -143,7 +143,7 @@
         <label class="full">Problema, necesidad u objetivo institucional<textarea id="ddPlanNeed" placeholder="Describe qué se busca atender o mejorar."></textarea></label>
         <label class="full">Datos o evidencias disponibles<textarea id="ddPlanEvidence" placeholder="Incluye solo datos reales o verificables de la institución."></textarea></label>
       </div>
-      <div class="actions"><button class="btn" id="ddPlanBuild">✨ Construir plan</button><button class="btn ghost" id="ddPlanClose">Cerrar</button></div>
+      <div class="actions"><button data-dd-real-action="true" class="btn" id="ddPlanBuild">✨ Construir plan</button><button data-dd-real-action="true" class="btn ghost" id="ddPlanClose">Cerrar</button></div>
       <div id="ddPlanResult" class="topgap"></div>`;
     $('ddPlanBuild').onclick=buildPlan;
     $('ddPlanClose').onclick=()=>p.classList.add('hidden');
@@ -168,7 +168,7 @@
     </article>`;
     const item={id:'dir'+Date.now(),type:'Plan',title:type,createdAt:new Date().toISOString(),html};
     state.directorDocs.unshift(item);state.directorDocs=state.directorDocs.slice(0,40);state.lastDirectorDoc=item;save();
-    const box=$('ddPlanResult');box.innerHTML=`<div class="dd-editable-material" contenteditable="true" spellcheck="true">${html}</div><div class="actions topgap"><button class="btn" id="ddPlanSave">💾 Guardar</button><button class="btn alt" id="ddPlanWord">⬇ Word</button><button class="btn alt" id="ddPlanPrint">🖨 Imprimir / PDF</button></div>`;
+    const box=$('ddPlanResult');box.innerHTML=`<div class="dd-editable-material" contenteditable="true" spellcheck="true">${html}</div><div class="actions topgap"><button data-dd-real-action="true" class="btn" id="ddPlanSave">💾 Guardar</button><button data-dd-real-action="true" class="btn alt" id="ddPlanWord">⬇ Word</button><button data-dd-real-action="true" class="btn alt" id="ddPlanPrint">🖨 Imprimir / PDF</button></div>`;
     $('ddPlanSave').onclick=()=>{const ed=box.querySelector('.dd-editable-material');item.html=ed.innerHTML;const i=state.directorDocs.findIndex(x=>x.id===item.id);if(i>=0)state.directorDocs[i]=item;save();};
     $('ddPlanWord').onclick=()=>{const ed=box.querySelector('.dd-editable-material');item.html=ed.innerHTML;if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml(item.title,item.html,false,item.title);downloadBlob(wordBlob(item.title,item.html),cleanFileName(item.title)+'.doc');};
     $('ddPlanPrint').onclick=()=>window.print();
@@ -179,7 +179,7 @@
     const items=state.directorDocs||[];
     p.classList.remove('hidden');
     p.innerHTML=`<div class="dd-plan-tool-head"><span class="pill">Historial</span><h2>Documentos recientes</h2></div>
-      <div class="dd-director-history">${items.length?items.map(x=>`<article><div><span class="pill">${E(x.type)}</span><h3>${E(x.title)}</h3><small>${E(new Date(x.createdAt).toLocaleDateString('es-PE'))}</small></div><button class="btn alt" type="button" data-id="${E(x.id)}">Abrir</button></article>`).join(''):'<div class="dd-empty">Aún no has creado documentos de dirección.</div>'}</div>`;
+      <div class="dd-director-history">${items.length?items.map(x=>`<article><div><span class="pill">${E(x.type)}</span><h3>${E(x.title)}</h3><small>${E(new Date(x.createdAt).toLocaleDateString('es-PE'))}</small></div><button data-dd-real-action="true" class="btn alt" type="button" data-id="${E(x.id)}">Abrir</button></article>`).join(''):'<div class="dd-empty">Aún no has creado documentos de dirección.</div>'}</div>`;
     p.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>{
       const item=items.find(x=>x.id===b.dataset.id);if(!item)return;
       p.innerHTML=`<div id="ddDirResult"></div>`;state.lastDirectorDoc=item;renderDocument(item);
