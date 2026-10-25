@@ -315,6 +315,31 @@ try {
   assert(s.materials?.some(m => m.id === materialId && m.html.includes('Adaptación docente ficticia conservada')),
     'La edición exportada del paquete desapareció después de recargar');
 
+  console.log('8b/9 EIB: elección bilingüe preservada y traducción no validada advertida en Word');
+  await page.evaluate(() => window.go('materials'));
+  await page.locator('#materialLanguage').selectOption('Bilingüe');
+  await page.locator('#materialQuechua').selectOption('Quechua Collao');
+  await page.locator('#materials button[onclick="window.DDMaterials?.createBundle()"]').click();
+  const languageWarning = await page.locator('#materialOutput .notice').innerText();
+  assert(languageWarning.includes('únicamente en castellano') && languageWarning.includes('Quechua Collao'),
+    'El paquete EIB no advierte que el contenido sigue sin traducir');
+  s = await state();
+  const eibId = s.lastMaterial?.id;
+  assert(s.lastMaterial?.lang === 'Bilingüe' && s.lastMaterial?.variety === 'Quechua Collao',
+    'El paquete EIB perdió el idioma o variedad elegidos por el docente');
+  const eibDownloadPromise = page.waitForEvent('download', { timeout: 15000 });
+  await page.locator('#materialOutput .dd-material-actions button', { hasText: 'Word' }).click();
+  const eibDownload = await eibDownloadPromise;
+  const eibXml = docxDocumentXml(await fs.readFile(await eibDownload.path()));
+  assert(eibXml.includes('no ha realizado ni validado una traducción'),
+    'El DOCX EIB omitió la advertencia de traducción no validada');
+  await page.reload({ waitUntil: 'networkidle' });
+  await waitPlanningRuntime();
+  s = await state();
+  assert(s.materials?.some(m => m.id === eibId && m.lang === 'Bilingüe' &&
+    m.variety === 'Quechua Collao' && m.html.includes('únicamente en castellano')),
+    'El historial EIB no recuperó el idioma y la advertencia tras recargar');
+
   console.log('9/9 Vista móvil y navegación Director');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'networkidle' });
