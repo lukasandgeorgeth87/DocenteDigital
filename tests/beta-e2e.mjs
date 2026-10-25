@@ -136,7 +136,7 @@ try {
   assert(bytes[0] === 0x50 && bytes[1] === 0x4b, 'El archivo descargado no es un contenedor ZIP/OOXML válido');
   assert(download.suggestedFilename().toLowerCase().endsWith('.docx'), 'La exportación no usa extensión .docx');
   assert(docxDocumentXml(bytes).includes('wordprocessingml'), 'La sesión descargada no contiene XML Word válido');
-  assert(docxDocumentXml(bytes).includes('Leemos') || docxDocumentXml(bytes).includes('Sesión'), 'El DOCX de sesión no contiene contenido pedagógico reconocible');
+  assert(docxDocumentXml(bytes).includes(s.lastSession.title), 'El DOCX de sesión omitió el título generado');
 
   await page.evaluate(() => window.go('settings'));
   await page.waitForSelector('#ddBetaBackupCard', { timeout: 10000 });
