@@ -161,8 +161,14 @@ try {
   await page.waitForLoadState('domcontentloaded').catch(() => {});
   assert(acceptedReset, 'No apareció confirmación de restablecimiento recuperable');
   await page.waitForSelector('#ddResetRestore', { timeout: 10000 });
-  await page.locator('#ddResetRestore [data-action="restore"]').click();
-  await page.waitForLoadState('domcontentloaded').catch(() => {});
+  // The restore handler calls location.reload(). Waiting only for load state
+  // can resolve on the OLD document before navigation starts, yielding a false
+  // negative while the restored localStorage is still loading.
+  await Promise.all([
+    page.waitForEvent('framenavigated', { timeout: 15000 }),
+    page.locator('#ddResetRestore [data-action="restore"]').click()
+  ]);
+  await page.waitForLoadState('domcontentloaded');
   await page.waitForFunction(() => {
     const st = JSON.parse(localStorage.getItem('docenteDigitalPrototype') || '{}');
     return Array.isArray(st.units) && st.units.length > 0 && !!st.lastSession;
