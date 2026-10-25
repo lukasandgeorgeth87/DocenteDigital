@@ -122,6 +122,14 @@ try {
       return result;
     };
   });
+  console.log('EIB_WORD_GEOMETRY:', JSON.stringify(await page.evaluate(() => {
+    const el=document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)');
+    const r=el.getBoundingClientRect();
+    const at=document.elementFromPoint(Math.min(innerWidth-1,Math.max(0,r.x+r.width/2)),Math.min(innerHeight-1,Math.max(0,r.y+r.height/2)));
+    return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},scrollY,innerHeight,hit:at?.outerHTML?.slice(0,180),visibility:getComputedStyle(el).visibility};
+  })));
+  try { await wordButton.click({trial:true,timeout:5000}); }
+  catch (error) { console.log('EIB_WORD_TRIAL_FAIL:',String(error)); throw error; }
   // Start click and download wait together so a slow physical click cannot cause
   // an unhandled rejection from the download waiter before click() resolves.
   let download;
