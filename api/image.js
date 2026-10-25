@@ -25,7 +25,7 @@ module.exports=async function handler(req,res){
     const imageBase64=typeof first.b64_json==='string'&&first.b64_json.trim()?first.b64_json:null;
     const imageUrl=typeof first.url==='string'&&/^https:\/\//i.test(first.url)?first.url:null;
     // HTTP 200 from the provider does not mean an image was generated.
-    // Never consume a credit or present a successful result without image bytes/URL.
+    // Report failure when the provider omits the requested image.
     if(!imageBase64&&!imageUrl)return send(res,502,{ok:false,error:'invalid_image_output',retryable:true});
     return send(res,200,{ok:true,image_base64:imageBase64,image_url:imageUrl,revised_prompt:first.revised_prompt||null});
   }catch(e){
