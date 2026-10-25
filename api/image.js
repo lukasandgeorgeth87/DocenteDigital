@@ -1,3 +1,4 @@
+const {reserveQuota}=require('./_ai-quota');
 const {checkBetaAccess}=require('./_beta-access');
 const IMAGE_URL='https://api.openai.com/v1/images/generations';
 function send(res,status,data){res.statusCode=status;res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(data));}
@@ -16,6 +17,8 @@ module.exports=async function handler(req,res){
   const model=process.env.OPENAI_IMAGE_MODEL||'gpt-image-2';
   const size=['1024x1024','1024x1536','1536x1024'].includes(body.size)?body.size:'1024x1536';
   const quality=['low','medium','high'].includes(body.quality)?body.quality:'medium';
+  const quotaDenied=await reserveQuota('image');
+  if(quotaDenied)return send(res,quotaDenied.status,{ok:false,error:quotaDenied.error});
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),55000);
   try{
     const r=await fetch(IMAGE_URL,{
