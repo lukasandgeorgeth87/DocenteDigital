@@ -83,7 +83,7 @@
 ## Avance 25/10/2026, 01:17 (Perú)
 
 - Código: 5a23af8b corrige la respuesta exitosa de imagen sin imagen; 51cf710d agrega pruebas para respuestas vacías; 7af66319 aclara comentario.
-- GitHub Actions 40168324471: paso de contrato GPT simulado PASS, flujo completo aún en progreso al consultar. No es prueba de generación real.
+- GitHub Actions 40168324471: CI completo PASS en commit 7af66319; contrato GPT simulado, onboarding móvil, beta E2E, golden semántico, privacidad de red, continuidad/recuperación, DOCX y accesibilidad aprobados. No es prueba de generación real. Evidencia: https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40168324471
 - Preview de 7af66319: READY; GET raíz HTTP 200 y GET /api/ai-status HTTP 200; configured=false, verified=false.
-- Pendientes: confirmar CI completo, autenticación y límites de consumo, generación GPT real y recorrido integral de usuario.
+- Pendientes: autenticación y límites de consumo, generación GPT real y recorrido integral de usuario con datos de prueba.
 - Métricas sin cambio: cierre V5 21/100; desarrollo funcional histórico estimado 75 %.
