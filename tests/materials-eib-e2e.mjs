@@ -95,9 +95,8 @@ try {
   console.log('EIB_EXPORT_DIAGNOSTIC:', JSON.stringify(exportDiagnostic));
   assert(exportDiagnostic.hasExporter && exportDiagnostic.docxSelfTest && exportDiagnostic.hasOutput,
     'Exportador de material EIB no está listo: ' + JSON.stringify(exportDiagnostic));
-  const downloadPromise = page.waitForEvent('download', { timeout: 8000 });
-  const exportResult = await page.evaluate(() => window.DDMaterials.downloadWord());
-  console.log('EIB_EXPORT_RESULT:', exportResult);
+  const downloadPromise = page.waitForEvent('download', { timeout: 12000 });
+  await page.locator('#materialOutput .dd-material-actions button', { hasText: 'Word' }).click();
   const download = await downloadPromise;
   assert(download.suggestedFilename().toLowerCase().endsWith('.docx'),
     'El paquete EIB no se exportó como DOCX');
