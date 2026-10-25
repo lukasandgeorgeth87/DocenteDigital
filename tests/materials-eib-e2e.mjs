@@ -140,14 +140,24 @@ try {
   // never a programmatic DOM .click() or direct exporter invocation.
   // The geometry check above already proves the button is in the viewport.
   // Avoid a second scrollIntoView: it races the app's pending smooth scroll.
-  await page.waitForFunction(() => {
+  try { await page.waitForFunction(() => {
     const b=document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)');
     if(!b||b.disabled)return false;
     const r=b.getBoundingClientRect();
     if(!r.width||!r.height||r.top<0||r.bottom>innerHeight)return false;
     const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
     return hit===b||b.contains(hit);
-  }, null, {timeout:10000});
+  }, null, {timeout:10000}); } catch(error) {
+    const snapshot=await page.evaluate(() => {
+      const b=document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)');
+      const r=b?.getBoundingClientRect();
+      const x=r?r.x+r.width/2:0,y=r?r.y+r.height/2:0;
+      const hit=document.elementFromPoint(x,y);
+      return {active:[...document.querySelectorAll('.screen.active')].map(e=>e.id),screen:document.querySelector('#materials')?.className,output:document.querySelector('#materialOutput')?.className,rect:r&&{x:r.x,y:r.y,w:r.width,h:r.height},hit:hit?.outerHTML?.slice(0,250),scrollY,visibility:b&&getComputedStyle(b).visibility,display:b&&getComputedStyle(b).display,documentState:document.readyState,location:location.href};
+    }).catch(e=>({diagnosticError:String(e)}));
+    console.log('EIB_WORD_POST_GEOMETRY_FAILURE:',JSON.stringify(snapshot));
+    throw error;
+  }
   const pointer=await page.evaluate(() => {
     const r=document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)').getBoundingClientRect();
     return {x:r.x+r.width/2,y:r.y+r.height/2};
