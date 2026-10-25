@@ -173,6 +173,28 @@ try{
   assert.equal(res.body.error,'incomplete_ai_response');
   assert.equal(res.body.retryable,true);
 
+  // Provider HTTP 200 with valid JSON but no usable content must be rejected.
+  const mockedText=(data)=>async()=>({ok:true,status:200,json:async()=>({
+    status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify(data)}]}]
+  })});
+  globalThis.fetch=mockedText({result:'  ',options:[],warnings:[],teacher_note:''});
+  res=await call(ai,'POST',{task:'contextual_help',prompt:'Explica el tema'});
+  assert.equal(res.statusCode,502,'Empty pedagogical output must not be announced as success');
+  assert.equal(res.body.error,'invalid_structured_output');
+
+  globalThis.fetch=mockedText({result:'Títulos',options:['Opción A','Opción B'],warnings:[],teacher_note:''});
+  res=await call(ai,'POST',{task:'title_options',prompt:'Tres títulos'});
+  assert.equal(res.statusCode,502,'Title picker requires exactly three alternatives');
+
+  globalThis.fetch=mockedText({result:'Títulos',options:['Opción A',' opción a ','Opción C'],warnings:[],teacher_note:''});
+  res=await call(ai,'POST',{task:'title_options',prompt:'Tres títulos'});
+  assert.equal(res.statusCode,502,'Duplicate title proposals must be rejected');
+
+  globalThis.fetch=mockedText({result:'Títulos',options:['Opción A','Opción B','Opción C'],warnings:[],teacher_note:''});
+  res=await call(ai,'POST',{task:'title_options',prompt:'Tres títulos'});
+  assert.equal(res.statusCode,200,'Three distinct title proposals remain accepted');
+  assert.equal(res.body.data.options.length,3);
+
   delete process.env.OPENAI_API_KEY;
   res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
   assert.equal(res.statusCode,503);
