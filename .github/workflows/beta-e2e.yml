@@ -63,6 +63,11 @@ jobs:
           BASE_URL: http://127.0.0.1:4173
         run: node tests/beta-e2e.mjs
 
+      - name: Verify EIB multigrade materials, truthful language warning and DOCX
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/materials-eib-e2e.mjs
+
       - name: Run semantic golden regressions
         env:
           BASE_URL: http://127.0.0.1:4173
