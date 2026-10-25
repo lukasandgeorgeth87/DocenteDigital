@@ -421,8 +421,11 @@
     // note separately, otherwise saving/exporting duplicates the EIB warning.
     const note=out.querySelector(':scope > .notice')?.outerHTML||'';
     const instruction=out.querySelector('.dd-material-instruction')?.outerHTML||'';
+    // Single-sheet planning reference sits outside the editable region.
+    // Preserve it when saving or exporting instead of silently dropping the traceability.
+    const planningReference=out.querySelector(':scope > .dd-planning-reference')?.outerHTML||'';
     const actions=out.querySelector('.dd-material-actions')?.outerHTML||'';
-    item.html=meta+note+instruction+`<div class="dd-editable-material" contenteditable="true" spellcheck="true">${editable.innerHTML}</div>`+actions;
+    item.html=meta+note+planningReference+instruction+`<div class="dd-editable-material" contenteditable="true" spellcheck="true">${editable.innerHTML}</div>`+actions;
     const idx=(state.materials||[]).findIndex(x=>x.id===item.id);
     if(idx>=0)state.materials[idx]=item;
     save();
