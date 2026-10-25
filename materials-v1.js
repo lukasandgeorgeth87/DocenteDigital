@@ -386,7 +386,9 @@
     if(!item||!editable)return;
     const out=$('materialOutput');
     const meta=out.querySelector('.dd-material-meta')?.outerHTML||'';
-    const note=out.querySelector('.notice')?.outerHTML||'';
+    // Bundle notices live inside the editable body; only preserve an external
+    // note separately, otherwise saving/exporting duplicates the EIB warning.
+    const note=out.querySelector(':scope > .notice')?.outerHTML||'';
     const instruction=out.querySelector('.dd-material-instruction')?.outerHTML||'';
     const actions=out.querySelector('.dd-material-actions')?.outerHTML||'';
     item.html=meta+note+instruction+`<div class="dd-editable-material" contenteditable="true" spellcheck="true">${editable.innerHTML}</div>`+actions;
