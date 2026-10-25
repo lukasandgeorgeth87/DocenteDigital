@@ -77,13 +77,22 @@ function schema(){
   };
 }
 
-function validStructuredResult(value){
+function validStructuredResult(value,task){
   if(!value || typeof value!=='object' || Array.isArray(value)) return false;
   const keys=Object.keys(value);
   if(keys.length!==4 || !['result','options','warnings','teacher_note'].every(k=>keys.includes(k))) return false;
   if(typeof value.result!=='string' || typeof value.teacher_note!=='string') return false;
   if(!Array.isArray(value.options) || !value.options.every(x=>typeof x==='string')) return false;
   if(!Array.isArray(value.warnings) || !value.warnings.every(x=>typeof x==='string')) return false;
+  // A structurally valid JSON object can still contain no usable teaching content.
+  const options=value.options.map(x=>x.trim());
+  if(options.some(x=>!x)) return false;
+  if(!value.result.trim() && options.length===0) return false;
+  // The title picker expects exactly three distinct, usable proposals.
+  if(task==='title_options'){
+    if(options.length!==3) return false;
+    if(new Set(options.map(x=>x.toLocaleLowerCase('es'))).size!==3) return false;
+  }
   return true;
 }
 
@@ -174,7 +183,7 @@ module.exports = async function handler(req,res){
     try{parsed=JSON.parse(raw);}catch(_e){
       return json(res,502,{ok:false,error:'invalid_structured_output'});
     }
-    if(!validStructuredResult(parsed)) return json(res,502,{ok:false,error:'invalid_structured_output'});
+    if(!validStructuredResult(parsed,task)) return json(res,502,{ok:false,error:'invalid_structured_output'});
     return json(res,200,{
       ok:true,
       task,
