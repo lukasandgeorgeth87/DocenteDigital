@@ -36,7 +36,12 @@
     }
 
     const output=document.getElementById('materialOutput');
-    if(output)output.classList.add('hidden');
+    // This guard only hides the obsolete demo output. The modern Materials
+    // module renders an editable worksheet/bundle in the same container.
+    // The delayed apply() used to race with createBundle() and hide a valid
+    // Word toolbar just after generation (CI 40244127491, rect 0x0).
+    const modernMaterial=Boolean(output?.querySelector('.dd-editable-material'));
+    if(output&&!modernMaterial)output.classList.add('hidden');
     const heading=output?.querySelector('h2');
     if(heading&&/Lectura generada|Estado del material/i.test(heading.textContent||''))heading.textContent='Estado del material';
   }
