@@ -1,3 +1,4 @@
+const {reserveQuota}=require('./_ai-quota');
 const {checkBetaAccess}=require('./_beta-access');
 const ROUTINE_MODEL = process.env.OPENAI_MODEL_ROUTINE || 'gpt-6-luna';
 const COMPLEX_MODEL = process.env.OPENAI_MODEL_COMPLEX || 'gpt-6.1-sol';
@@ -126,6 +127,10 @@ module.exports = async function handler(req,res){
     cfg.instruction,
     'Devuelve JSON estructurado. En options incluye alternativas cuando sean útiles; de lo contrario devuelve un arreglo vacío.'
   ].join(' ');
+
+  // Reserve a durable global daily unit before any paid provider request.
+  const quotaDenied=await reserveQuota('text');
+  if(quotaDenied)return json(res,quotaDenied.status,{ok:false,error:quotaDenied.error});
 
   const controller = new AbortController();
   const timer = setTimeout(()=>controller.abort(),28000);
