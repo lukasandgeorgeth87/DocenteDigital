@@ -67,6 +67,12 @@ try {
   await page.locator('#materials button[onclick="window.DDMaterials?.createBundle()"]').click();
   assert(await page.locator('#materialOutput .dd-grade-pack').count() === 3,
     'El paquete EIB no diferencia tres grados');
+  assert(await page.evaluate(() => {
+    const output=document.querySelector('#materialOutput');
+    const actions=output?.querySelector(':scope > .dd-material-actions');
+    const editable=output?.querySelector(':scope > .dd-editable-material');
+    return Boolean(actions&&editable&&(actions.compareDocumentPosition(editable)&Node.DOCUMENT_POSITION_FOLLOWING));
+  }), 'Las acciones Word/Guardar no están accesibles antes del paquete multigrado');
   const warning = await page.locator('#materialOutput .notice').innerText();
   assert(warning.includes('únicamente en castellano') &&
     warning.includes('Quechua Cusco-Collao (Cusco)'),
