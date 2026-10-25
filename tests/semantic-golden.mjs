@@ -96,9 +96,14 @@ try{
         linked.includes('Propósito o reto') && linked.includes('Evidencia o producto'),
         'biohuerto: el material perdió propósito o producto de la unidad');
       const normalizeText = value => String(value||'').replace(/\\s+/g,' ').trim();
-      console.log('BIOHUERTO_TRACE:', JSON.stringify({expectedProduct:unit.product,activeUnitId:await page.evaluate(()=>window.state?.activeUnitId),output:linked.slice(0,1500)}));
-      assert(normalizeText(linked).includes(normalizeText(unit.product)),
-        'biohuerto: el material no conserva el producto seleccionado');
+      // The approved product can be normalized asynchronously from description
+      // to its concrete title after unit creation; compare with current saved state.
+      const current = await state();
+      const currentUnit = current.units?.find(u => u.id === current.activeUnitId) || current.units?.find(u => u.id === unit.id);
+      const expectedProduct = currentUnit?.product || unit.product;
+      console.log('BIOHUERTO_TRACE:', JSON.stringify({originalProduct:unit.product,currentProduct:expectedProduct,activeUnitId:current.activeUnitId,output:linked.slice(0,1500)}));
+      assert(normalizeText(linked).includes(normalizeText(expectedProduct)),
+        'biohuerto: el material no conserva el producto seleccionado de la unidad activa');
       await page.evaluate(() => window.DDMaterials.saveEdits());
       const saved = await state();
       assert(saved.lastMaterial?.html?.includes('dd-planning-reference') &&
