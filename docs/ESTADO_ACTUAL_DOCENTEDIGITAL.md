@@ -1,14 +1,23 @@
 # DocenteDigital — estado canónico para continuidad entre conversaciones
 
-**Actualización:** 25/10/2026, 12:37 (America/Lima); el resumen vigente y la última entrada cronológica prevalecen sobre estados históricos.
+**Actualización:** 25/10/2026, 18:23 (America/Lima); consultar primero el resumen vigente y la última entrada cronológica.
 **Repositorio:** https://github.com/lukasandgeorgeth87/DocenteDigital  
 **Rama de desarrollo/beta:** `audit/v5-continuity-offline-diagnostic`  
-**Último commit de código/prueba con CI integral PASS:** `93d7bd7bec82ca0ec812a5f2acd438f3ee871566` (run `40216930067`, SUCCESS).
+**Último commit de código/prueba con CI integral PASS:** `7699bef5f6d615493d252c45c6dba7a056c44342` (run `40244286236`, SUCCESS).
 **Versión exacta más reciente:** consultar el HEAD de esta rama; el propio commit que actualiza esta bitácora es posterior al SHA citado.
 
 > Este documento es la fuente de continuidad para recuperar DocenteDigital desde otro chat. Verificar siempre GitHub, CI y Vercel en tiempo real antes de afirmar que una función está terminada. No confundir el HEAD de la rama con el despliegue público.
 
-## Resumen vigente para recuperar la beta (25/10/2026, 12:37, Perú)
+## Resumen vigente para recuperar la beta (25/10/2026, 18:23, Perú)
+
+- **Código probado:** `7699bef5f6d615493d252c45c6dba7a056c44342`, rama `audit/v5-continuity-offline-diagnostic`; **CI PASS** `40244286236` (prueba real de clic Word EIB, aviso lingüístico, DOCX, continuidad, semántica, privacidad, accesibilidad y contratos IA simulados). Otros runs de la corrección `40244264274` y `40244276817` también SUCCESS. Ver https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40244286236 .
+- **Causa raíz Word EIB:** `material-surface-truth-v70.js` ocultaba con un temporizador la salida moderna de Materiales; corregido para respetar `.dd-editable-material`, y prueba determinista agregada en `tests/materials-eib-e2e.mjs`. FAIL históricos `40239607170` y `40244127491` registrados, no ocultados.
+- **Preview del SHA probado:** `https://docente-digital-j5uxwo6mk-jorgeluispalma87-7403.vercel.app` READY y HTTP 200 en portada y `/api/ai-status`; GPT/Redis reales desactivados. Producción y datos reales sin modificar.
+- **Funcionales parcialmente y con pruebas:** unidad/proyecto, sesión, materiales EIB diferenciados, evaluación ficticia, Director, DOCX, persistencia/restauración local, CI/CD. **Pendiente:** calidad curricular completa, validación humana, PDF, sincronización remota y piloto. **No disponibles:** GPT real, Redis real, autenticación individual y app PC.
+- **Riesgos:** S0 ninguno demostrado; S1 seguridad/consumo de IA pagada; S2 coherencia curricular completa, estabilidad repetida, PDF y piloto; S3 UX móvil; S4 app PC. **Siguiente:** pruebas de contexto→unidad/proyecto→sesión→material→evaluación con casos diversos, luego beta privada segura. GPT principal solo tras controles, plantillas respaldo identificado, app PC posterior.
+- **Métricas sin inflación:** desarrollo funcional histórico **75 % estimado**, cierre V5 **21/100**. Matriz: runtime 10, UX 10, IA 15, flujo docente 15, materiales 10, evaluación 10, director 10, persistencia/exportación 8, CI/CD 7, seguridad/piloto 5.
+
+## Resumen histórico (25/10/2026, 12:37, Perú; reemplazado por el vigente)
 
 - **Repositorio/rama exclusiva:** `lukasandgeorgeth87/DocenteDigital`, `audit/v5-continuity-offline-diagnostic`. **Último commit de código/prueba con CI integral PASS:** `93d7bd7bec82ca0ec812a5f2acd438f3ee871566`. La actualización de esta bitácora genera un HEAD posterior: consultar GitHub. No modificar `main`, producción ni datos reales sin autorización y pruebas.
 - **Avance REAL — materiales 1.º/3.º/5.º:** `78b233b6` (`materials-v1.js`) hace que exportar Word guarde primero las ediciones no guardadas del docente; `ab225cce` (`tests/beta-e2e.mjs`) comprueba paquete desde sesión, tres bloques de grado, cuatro recursos por grado, códigos FIC-1/3/5, DOCX OOXML con la edición y recuperación tras recarga. **PASS integral** [run 40215624365](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40215624365).
