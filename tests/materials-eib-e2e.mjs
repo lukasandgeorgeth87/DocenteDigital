@@ -116,15 +116,19 @@ try {
       return result;
     };
   });
-  const downloadPromise = page.waitForEvent('download', { timeout: 12000 });
-  await wordButton.click({ timeout: 12000 });
-  console.log('EIB_WORD_CLICK_TRACE:', JSON.stringify(await page.evaluate(() => window.__ddWordClickTrace)));
+  // Start click and download wait together so a slow physical click cannot cause
+  // an unhandled rejection from the download waiter before click() resolves.
   let download;
-  try { download = await downloadPromise; }
-  catch (error) {
-    console.log('EIB_WORD_CLICK_TIMEOUT_TRACE:', JSON.stringify(await page.evaluate(() => window.__ddWordClickTrace)));
+  try {
+    [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 20000 }),
+      wordButton.click({ timeout: 20000 })
+    ]);
+  } catch (error) {
+    console.log('EIB_WORD_CLICK_FAILURE_TRACE:', JSON.stringify(await page.evaluate(() => window.__ddWordClickTrace).catch(() => ({pageUnavailable:true}))));
     throw error;
   }
+  console.log('EIB_WORD_CLICK_TRACE:', JSON.stringify(await page.evaluate(() => window.__ddWordClickTrace)));
   assert(download.suggestedFilename().toLowerCase().endsWith('.docx'),
     'El paquete EIB no se exportó como DOCX');
   const xml = docxDocumentXml(await fs.readFile(await download.path()));
