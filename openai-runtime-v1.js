@@ -75,15 +75,26 @@
     if(error==='ai_beta_disabled')return 'La generación con IA está desactivada por seguridad hasta habilitar la beta protegida.';
     if(error==='beta_access_not_configured')return 'El servidor aún no tiene configurada la protección de acceso de la beta.';
     if(error==='beta_access_denied')return 'Acceso denegado. Introduce el código temporal de la beta privada en el panel del asistente.';
+    if(error==='ai_quota_not_configured')return 'La beta aún no tiene configurado el límite diario de consumo de IA.';
+    if(error==='ai_quota_unavailable')return 'No se pudo verificar el límite diario de IA. Por seguridad, no se realizará la solicitud de pago.';
+    if(error==='ai_daily_quota_exceeded')return 'Se alcanzó el límite diario de generación de IA. Usa las opciones locales o vuelve mañana.';
     if(error==='openai_timeout')return 'OpenAI tardó demasiado. Puedes volver a intentarlo.';
     if(error==='openai_request_failed')return 'OpenAI no pudo responder en este momento. Intenta nuevamente.';
     if(error==='premium_credit_confirmation_required')return 'Debes confirmar el uso del crédito premium.';
     return 'No se pudo completar la generación con IA.';
   }
 
+  function statusError(status){
+    if(!status?.configured)return 'openai_not_configured';
+    if(!status?.enabled)return 'ai_beta_disabled';
+    if(status.access_configured===false)return 'beta_access_not_configured';
+    if(status.quota_configured===false)return 'ai_quota_not_configured';
+    return 'ai_beta_disabled';
+  }
+
   async function request(task,prompt,options={}){
     const status=await health();
-    if(!status?.text)throw Object.assign(new Error(friendlyError(status?.configured?'ai_beta_disabled':'openai_not_configured')),{code:status?.configured?'ai_beta_disabled':'openai_not_configured'});
+    if(!status?.text)throw Object.assign(new Error(friendlyError(statusError(status))),{code:statusError(status)});
     const controller=new AbortController();
     const timeout=setTimeout(()=>controller.abort(),32000);
     try{
@@ -241,7 +252,7 @@
 
   async function generatePremiumImage(){
     const status=await health();
-    if(!status?.image){alert(friendlyError(status?.configured?'ai_beta_disabled':'openai_not_configured'));return;}
+    if(!status?.image){alert(friendlyError(statusError(status)));return;}
     const s=appState(),last=s.lastSession||{};
     const prompt=[
       'Crea una imagen educativa para '+(s.level||'educación')+'.',
@@ -271,7 +282,7 @@
     setBusy(button,true,'Probando conexión…');
     try{
       const status=await health(true);
-      if(!status?.text)throw Object.assign(new Error(friendlyError(status?.configured?'ai_beta_disabled':'openai_not_configured')),{code:status?.configured?'ai_beta_disabled':'openai_not_configured'});
+      if(!status?.text)throw Object.assign(new Error(friendlyError(statusError(status))),{code:statusError(status)});
       const started=Date.now();
       const r=await request('contextual_help','Responde únicamente con la frase CONEXION_OK.',{quality:'auto',context:{title:'Prueba técnica de conexión'}});
       const answer=(r.data?.result||'').trim();
@@ -298,6 +309,8 @@
       ? '<div class="notice"><b>IA habilitada, conexión aún no verificada.</b><br>Para usarla, introduce el código temporal de acceso a la beta privada. Luego usa «Probar OpenAI real». La clave de OpenAI permanece en el servidor.</div>'
       : s.configured&&s.enabled&&!s.access_configured
         ? '<div class="notice"><b>Beta aún no protegida.</b><br>Falta configurar el código de acceso privado en el servidor. No se permite consumir la API.</div>'
+      : s.configured&&s.enabled&&s.access_configured&&s.quota_configured===false
+        ? '<div class="notice"><b>Falta límite de consumo.</b><br>La beta no tiene un contador diario persistente configurado. Por seguridad, GPT permanece desactivado.</div>'
       : s.configured
         ? '<div class="notice"><b>IA desactivada por seguridad.</b><br>Falta habilitar la beta protegida en el servidor. La clave no activa por sí sola el servicio de pago.</div>'
         : '<div class="notice"><b>Conexión preparada.</b><br>Falta activar OPENAI_API_KEY en el servidor de DocenteDigital.</div>';
