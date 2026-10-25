@@ -47,9 +47,9 @@
       product:linked?(u.product||''):'',
       criterion:linked?(session.criterion||''):'',
       evidence:linked?(session.evidence||''):'',
-      area:document.getElementById('materialArea')?.value||s.lastSession?.area||'',
+      area:document.getElementById('materialArea')?.value||session.area||'',
       grade:document.getElementById('materialGrade')?.value||'',
-      topic:document.getElementById('materialTopic')?.value||s.lastSession?.title||'',
+      topic:document.getElementById('materialTopic')?.value||session.title||'',
       teacherInstruction:document.getElementById('materialInstruction')?.value||'',
       sourceText:document.getElementById('materialSourceText')?.value||''
     };
