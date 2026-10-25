@@ -1,12 +1,24 @@
 # DocenteDigital — estado canónico para continuidad entre conversaciones
 
-**Actualización:** 2026-10-25, 08:22 (America/Lima); ver última entrada acumulada.  
+**Actualización:** 2026-10-25, 09:24 (America/Lima); ver última entrada acumulada.  
 **Repositorio:** https://github.com/lukasandgeorgeth87/DocenteDigital  
 **Rama de desarrollo/beta:** `audit/v5-continuity-offline-diagnostic`  
-**Último commit de código/prueba previo a esta bitácora:** `599270489e3f79596d80a1f1f6b8036d6c385386`.  
+**Último commit de código/prueba con CI integral PASS:** `2c6cd5017ab97889e55b3824fa26dd3bc9829f6e`.  
 **Versión exacta más reciente:** consultar el HEAD de esta rama; el propio commit que actualiza esta bitácora es posterior al SHA citado.
 
 > Este documento es la fuente de continuidad para recuperar DocenteDigital desde otro chat. Verificar siempre GitHub, CI y Vercel en tiempo real antes de afirmar que una función está terminada. No confundir el HEAD de la rama con el despliegue público.
+
+## Resumen vigente para recuperar la beta (25/10/2026, 09:24 Perú)
+
+- **SHA funcional verificado:** `2c6cd5017ab97889e55b3824fa26dd3bc9829f6e`. **Último commit documental anterior a esta corrección:** `1e64efa8e41ec6b4b759456decd61a0998824602`. Consultar HEAD de la rama para el SHA documental vigente.
+- **CI del SHA funcional:** [40201822622](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40201822622) **SUCCESS**. Incluye prueba real en Chromium con datos ficticios de unidad → sesión → DOCX → respaldo/restauración → evaluación registrada y persistida → informe Director editable, persistido y exportado a DOCX. No se probó un docente humano ni un proveedor GPT real.
+- **Preview exacta verificada:** https://docente-digital-r380yngzt-jorgeluispalma87-7403.vercel.app (**READY**; `/` y `/api/ai-status` **HTTP 200**). GPT `configured:false`, `enabled:false`; Redis real no configurado. La producción no se tocó.
+- **Funcional solo en alcance probado:** onboarding móvil, unidad/sesión, continuidad local y DOCX, registro de evaluación sintético, informe de Director y exportación DOCX, títulos locales de respaldo. **Parcial:** materiales, evaluación completa, todos los documentos/planes Director, PDF, backup remoto, piloto. **No disponible:** GPT real en preview, Redis real, autenticación individual y app PC.
+- **Bloqueantes:** S0 ninguno nuevo comprobado; S1 GPT/Redis reales, control monetario y acceso individual; S2 materiales, PDF, evaluación/director restantes y piloto; S3 UX/etiquetas; S4 app PC futura.
+- **Decisiones:** GPT motor principal solo después de habilitación segura y prueba real; plantillas locales son respaldo identificado; PC/Windows es fase futura. **Desarrollo histórico 75 % estimado; cierre V5 21/100**, sin incrementar sin cierre verificable. Matriz: runtime 10, UX 10, IA 15, flujo docente 15, materiales 10, evaluación 10, director 10, persistencia/exportación 8, CI/CD 7, seguridad/piloto 5.
+- **Próximo paso:** E2E de plan Director y evaluación por grados, validar contenido interno de Word Director, revisar materiales; luego configurar entorno privado de IA y Redis para pruebas reales seguras.
+
+Las secciones siguientes conservan la bitácora histórica y pueden contener estados **pendientes** ya resueltos por entradas posteriores. Para el estado vigente prevalece este resumen y la última entrada cronológica.
 
 ## Decisiones de producto (vigentes)
 
