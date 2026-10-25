@@ -5,6 +5,7 @@ import {runInNewContext} from 'node:vm';
 const source=readFileSync(new URL('../openai-runtime-v1.js',import.meta.url),'utf8');
 let configured=false;
 let enabled=false;
+let quotaConfigured=true;
 const title={value:'Patrimonio de nuestra comunidad',dataset:{}};
 const situation={value:'Investigamos pinturas rupestres',dataset:{}};
 const kind={value:'Unidad de aprendizaje'};
@@ -30,7 +31,7 @@ const window={
   state:{},
   proposeUnitTitleOptions(){return ['Exploramos nuestro patrimonio','Conocemos las pinturas rupestres'];}
 };
-const fetch=async()=>({ok:true,json:async()=>({ok:true,configured,enabled,text:configured&&enabled,image:configured&&enabled,verified:false})});
+const fetch=async()=>({ok:true,json:async()=>({ok:true,configured,enabled,access_configured:true,quota_configured:quotaConfigured,text:configured&&enabled&&quotaConfigured,image:configured&&enabled&&quotaConfigured,verified:false})});
 runInNewContext(source,{window,document,fetch,setTimeout,clearTimeout,AbortController,console});
 
 const button={textContent:'Tres títulos con IA',dataset:{},disabled:false};
@@ -54,4 +55,8 @@ await window.DDOpenAI.renderHubStatus();
 assert.match(card.innerHTML,/conexión aún no verificada/,'An enabled beta without a real provider test must not be advertised as verified');
 assert.doesNotMatch(card.innerHTML,/IA DocenteDigital conectada/);
 
+quotaConfigured=false;
+await window.DDOpenAI.renderHubStatus();
+assert.match(card.innerHTML,/Falta límite de consumo/,'A missing durable quota must be visible instead of claiming beta is ready');
+assert.doesNotMatch(card.innerHTML,/conexión aún no verificada/);
 console.log('AI_LOCAL_FALLBACK_PASS: offline titles, selection and truthful connection status');
