@@ -22,7 +22,12 @@ module.exports=async function handler(req,res){
     const data=await r.json().catch(()=>({}));
     if(!r.ok){console.error('DocenteDigital image error',r.status,data?.error?.type||'unknown');return send(res,r.status===429?429:502,{ok:false,error:'image_request_failed',retryable:r.status===429||r.status>=500});}
     const first=data?.data?.[0]||{};
-    return send(res,200,{ok:true,image_base64:first.b64_json||null,image_url:first.url||null,revised_prompt:first.revised_prompt||null});
+    const imageBase64=typeof first.b64_json==='string'&&first.b64_json.trim()?first.b64_json:null;
+    const imageUrl=typeof first.url==='string'&&/^https:\/\//i.test(first.url)?first.url:null;
+    // HTTP 200 from the provider does not mean an image was generated.
+    // Never consume a credit or present a successful result without image bytes/URL.
+    if(!imageBase64&&!imageUrl)return send(res,502,{ok:false,error:'invalid_image_output',retryable:true});
+    return send(res,200,{ok:true,image_base64:imageBase64,image_url:imageUrl,revised_prompt:first.revised_prompt||null});
   }catch(e){
     if(e?.name==='AbortError')return send(res,504,{ok:false,error:'image_timeout',retryable:true});
     return send(res,500,{ok:false,error:'image_runtime_error'});
