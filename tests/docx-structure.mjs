@@ -29,11 +29,23 @@ try{
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.__ddPlanningRuntimeReady===true,null,{timeout:20000});
   await page.waitForFunction(()=>typeof window.ddDocxSelfTest==='function'&&typeof window.downloadSessionWord==='function',null,{timeout:10000});
+  // A ready module is not sufficient if hydration has not restored the saved session.
+  await page.waitForFunction(()=>window.state?.lastSession?.unitId==='u-docx',null,{timeout:15000});
+  const exportReady=await page.evaluate(()=>({
+    unitId:window.state?.lastSession?.unitId||'',
+    exporter:typeof window.DDWordExport?.createBlob==='function',
+    selfTest:window.ddDocxSelfTest()
+  }));
+  assert(exportReady.exporter&&exportReady.selfTest,`DOCX exporter not ready: ${JSON.stringify(exportReady)}`);
 
   console.log('DOCX 2/3 Descargar OOXML');
-  const downloadPromise=page.waitForEvent('download');
+  let unexpectedDialog='';
+  page.once('dialog',async dialog=>{unexpectedDialog=dialog.message();await dialog.dismiss();});
+  const downloadPromise=page.waitForEvent('download',{timeout:15000});
   await page.evaluate(()=>window.downloadSessionWord());
-  const download=await downloadPromise;
+  const download=await downloadPromise.catch(error=>{
+    throw new Error(`No DOCX download. Browser dialog: ${unexpectedDialog||'none'}; ${error.message}`);
+  });
   const path=await download.path();
   assert(path,'No se obtuvo el DOCX');
   const bytes=await fs.readFile(path);
