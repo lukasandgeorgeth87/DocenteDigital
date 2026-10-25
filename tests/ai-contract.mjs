@@ -33,7 +33,7 @@ async function call(handler,method,body,headers){
       const [cmd,script,nkeys,key,cost,max]=JSON.parse(options.body);
       assert.equal(cmd,'EVAL');
       assert.equal(nkeys,'1');
-      assert.match(key,/^dd:beta:ai-quota:\\d{4}-\\d{2}-\\d{2}$/);
+      assert.equal(key,'dd:beta:ai-quota:'+new Date().toISOString().slice(0,10));
       assert.match(script,/INCRBY/);
       assert.equal(options.headers.Authorization,'Bearer quota-test-token');
       const n=Number(cost), limit=Number(max);
