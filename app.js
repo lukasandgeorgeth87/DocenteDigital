@@ -59,7 +59,9 @@ function go(id){
     console.error('DocenteDigital: la pantalla abrió, pero falló una actualización secundaria.',error);
     window.__ddLastNavigationError={screen:id,message:String(error),at:new Date().toISOString()};
   }
-  try{window.scrollTo({top:0,behavior:'smooth'});}catch(_e){window.scrollTo(0,0);}
+  // Navigation must settle immediately: a pending smooth scroll can move
+  // export and material controls during the teacher's next click.
+  try{window.scrollTo({top:0,behavior:'auto'});}catch(_e){window.scrollTo(0,0);}
 }
 window.go=go;
 
