@@ -6,6 +6,7 @@ const ai=require('../api/ai.js');
 const status=require('../api/ai-status.js');
 const image=require('../api/image.js');
 const previousKey=process.env.OPENAI_API_KEY;
+const previousFlag=process.env.DD_AI_BETA_ENABLED;
 const previousFetch=globalThis.fetch;
 
 function response(){
@@ -24,6 +25,7 @@ async function call(handler,method,body){
 }
 try{
   delete process.env.OPENAI_API_KEY;
+  delete process.env.DD_AI_BETA_ENABLED;
   let res=await call(status,'GET');
   assert.equal(res.statusCode,200);
   assert.equal(res.body.configured,false);
@@ -36,7 +38,21 @@ try{
   assert.equal(res.body.error,'openai_not_configured');
 
   process.env.OPENAI_API_KEY='test-only-not-a-real-secret';
+  // A configured key must NOT make a publicly accessible endpoint billable.
   res=await call(status,'GET');
+  assert.equal(res.body.configured,true);
+  assert.equal(res.body.enabled,false);
+  assert.equal(res.body.text,false);
+  assert.equal(res.body.image,false);
+  res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
+  assert.equal(res.statusCode,503);
+  assert.equal(res.body.error,'ai_beta_disabled');
+  res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
+  assert.equal(res.statusCode,503);
+  assert.equal(res.body.error,'ai_beta_disabled');
+  process.env.DD_AI_BETA_ENABLED='true';
+  res=await call(status,'GET');
+  assert.equal(res.body.enabled,true);
   assert.equal(res.body.configured,true);
   assert.equal(res.body.text,true);
   assert.equal(res.body.verified,false);
@@ -144,6 +160,8 @@ try{
   console.log('AI_CONTRACT_PASS: text and image status, validation, mocked GPT requests, privacy, credit confirmation and errors');
 }finally{
   globalThis.fetch=previousFetch;
+  if(previousFlag===undefined)delete process.env.DD_AI_BETA_ENABLED;
+  else process.env.DD_AI_BETA_ENABLED=previousFlag;
   if(previousKey===undefined)delete process.env.OPENAI_API_KEY;
   else process.env.OPENAI_API_KEY=previousKey;
 }
