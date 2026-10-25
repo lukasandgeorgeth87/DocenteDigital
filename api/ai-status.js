@@ -7,11 +7,13 @@ module.exports = function handler(req,res){
   res.statusCode=200;
   res.setHeader('Content-Type','application/json; charset=utf-8');
   res.setHeader('Cache-Control','no-store');
+  const configured=Boolean(process.env.OPENAI_API_KEY);
   res.end(JSON.stringify({
     ok:true,
-    configured:Boolean(process.env.OPENAI_API_KEY),
-    text:true,
-    image:Boolean(process.env.OPENAI_API_KEY),
+    configured,
+    text:configured,
+    image:configured,
+    verified:false,
     server_side:true
   }));
 };
