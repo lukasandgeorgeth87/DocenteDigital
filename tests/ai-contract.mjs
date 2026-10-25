@@ -9,6 +9,10 @@ const previousKey=process.env.OPENAI_API_KEY;
 const previousFlag=process.env.DD_AI_BETA_ENABLED;
 const previousToken=process.env.DD_AI_BETA_TOKEN;
 const previousFetch=globalThis.fetch;
+const previousQuotaUrl=process.env.UPSTASH_REDIS_REST_URL;
+const previousQuotaToken=process.env.UPSTASH_REDIS_REST_TOKEN;
+const previousQuotaMax=process.env.DD_AI_DAILY_MAX_UNITS;
+let quotaCount=0;
 
 function response(){
   return {
@@ -22,7 +26,25 @@ function response(){
 async function call(handler,method,body,headers){
   const res=response();
   const actualHeaders=headers===undefined?(process.env.DD_AI_BETA_TOKEN?{'x-dd-beta-token':process.env.DD_AI_BETA_TOKEN}:{}):headers;
-  await handler({method,body,headers:actualHeaders},res);
+  // Mock the durable Redis EVAL independently from the provider mock.
+  const providerFetch=globalThis.fetch;
+  globalThis.fetch=async(url,options)=>{
+    if(url==='https://quota.example.test'){
+      const [cmd,script,nkeys,key,cost,max]=JSON.parse(options.body);
+      assert.equal(cmd,'EVAL');
+      assert.equal(nkeys,'1');
+      assert.match(key,/^dd:beta:ai-quota:\\d{4}-\\d{2}-\\d{2}$/);
+      assert.match(script,/INCRBY/);
+      assert.equal(options.headers.Authorization,'Bearer quota-test-token');
+      const n=Number(cost), limit=Number(max);
+      if(quotaCount+n>limit)return {ok:true,status:200,json:async()=>({result:-1})};
+      quotaCount+=n;
+      return {ok:true,status:200,json:async()=>({result:quotaCount})};
+    }
+    return providerFetch(url,options);
+  };
+  try{await handler({method,body,headers:actualHeaders},res);}
+  finally{globalThis.fetch=providerFetch;}
   return res;
 }
 try{
@@ -60,6 +82,15 @@ try{
   assert.equal(res.statusCode,503);
   assert.equal(res.body.error,'beta_access_not_configured');
   process.env.DD_AI_BETA_TOKEN='local-test-token-32-chars-minimum-0123456789';
+  // A token and provider key without durable quota must still fail closed.
+  res=await call(status,'GET');
+  assert.equal(res.body.quota_configured,false);
+  res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
+  assert.equal(res.statusCode,503);
+  assert.equal(res.body.error,'ai_quota_not_configured');
+  process.env.UPSTASH_REDIS_REST_URL='https://quota.example.test';
+  process.env.UPSTASH_REDIS_REST_TOKEN='quota-test-token';
+  process.env.DD_AI_DAILY_MAX_UNITS='1000';
   res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'},{});
   assert.equal(res.statusCode,401,'Missing beta access token must be rejected');
   assert.equal(res.body.error,'beta_access_denied');
@@ -173,9 +204,32 @@ try{
   assert.equal(res.statusCode,429);
   assert.equal(res.body.retryable,true);
 
+  // One text unit per request and five image units, atomically across instances.
+  quotaCount=0;
+  process.env.DD_AI_DAILY_MAX_UNITS='1';
+  globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({output:[{content:[{type:'output_text',text:JSON.stringify({
+    result:'OK',options:[],warnings:[],teacher_note:''
+  })}]}]})});
+  res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
+  assert.equal(res.statusCode,200);
+  res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
+  assert.equal(res.statusCode,429);
+  assert.equal(res.body.error,'ai_daily_quota_exceeded');
+  res=await call(image,'POST',{prompt:'Imagen',confirmedCredit:true});
+  assert.equal(res.statusCode,429,'Image unit cost must be checked before paid provider');
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
+  assert.equal(res.statusCode,503);
+  assert.equal(res.body.error,'ai_quota_not_configured');
   console.log('AI_CONTRACT_PASS: text and image status, validation, mocked GPT requests, privacy, credit confirmation and errors');
 }finally{
   globalThis.fetch=previousFetch;
+  if(previousQuotaUrl===undefined)delete process.env.UPSTASH_REDIS_REST_URL;
+  else process.env.UPSTASH_REDIS_REST_URL=previousQuotaUrl;
+  if(previousQuotaToken===undefined)delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  else process.env.UPSTASH_REDIS_REST_TOKEN=previousQuotaToken;
+  if(previousQuotaMax===undefined)delete process.env.DD_AI_DAILY_MAX_UNITS;
+  else process.env.DD_AI_DAILY_MAX_UNITS=previousQuotaMax;
   if(previousToken===undefined)delete process.env.DD_AI_BETA_TOKEN;
   else process.env.DD_AI_BETA_TOKEN=previousToken;
   if(previousFlag===undefined)delete process.env.DD_AI_BETA_ENABLED;
