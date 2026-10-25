@@ -4,6 +4,8 @@ function clean(v,max=5000){return String(v??'').replace(/\u0000/g,'').trim().sli
 module.exports=async function handler(req,res){
   if(req.method!=='POST')return send(res,405,{ok:false,error:'method_not_allowed'});
   if(!process.env.OPENAI_API_KEY)return send(res,503,{ok:false,error:'openai_not_configured'});
+  // Fail-closed billing switch; still requires independent access control and quotas.
+  if(process.env.DD_AI_BETA_ENABLED!=='true')return send(res,503,{ok:false,error:'ai_beta_disabled'});
   const body=req.body&&typeof req.body==='object'?req.body:{};
   if(body.confirmedCredit!==true)return send(res,402,{ok:false,error:'premium_credit_confirmation_required'});
   const prompt=clean(body.prompt);
