@@ -67,6 +67,20 @@ try {
   await page.locator('#materials button[onclick="window.DDMaterials?.createBundle()"]').click();
   assert(await page.locator('#materialOutput .dd-grade-pack').count() === 3,
     'El paquete EIB no diferencia tres grados');
+  // Reproduce the legacy truth guard running AFTER the modern bundle renders.
+  // Before the fix it unconditionally re-added .hidden to #materialOutput,
+  // leaving the Word button at a 0x0 bounding rectangle.
+  const guardResult=await page.evaluate(() => {
+    window.ddMaterialSurfaceTruthReapply();
+    const output=document.getElementById('materialOutput');
+    return {
+      visible:!!output && !output.classList.contains('hidden'),
+      modern:!!output?.querySelector('.dd-editable-material'),
+      word:!!output?.querySelector('.dd-material-actions button:nth-child(2)')
+    };
+  });
+  assert(guardResult.visible && guardResult.modern && guardResult.word,
+    'El guard legado volvió a ocultar un material moderno: '+JSON.stringify(guardResult));
   assert(await page.evaluate(() => {
     const output=document.querySelector('#materialOutput');
     const actions=output?.querySelector(':scope > .dd-material-actions');
