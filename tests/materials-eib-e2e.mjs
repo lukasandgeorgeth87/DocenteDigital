@@ -100,9 +100,31 @@ try {
   const wordButton = page.locator('#materialOutput .dd-material-actions button', { hasText: 'Word' });
   await wordButton.waitFor({ state: 'visible', timeout: 12000 });
   assert(await wordButton.isEnabled(), 'El botón Word EIB está deshabilitado');
+  await page.evaluate(() => {
+    window.__ddWordClickTrace = { captured: 0, bubbled: 0, handler: 0, exporter: 0, exporterResult: null };
+    const trace = window.__ddWordClickTrace;
+    const button = document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)');
+    button.addEventListener('click', () => { trace.captured++; }, true);
+    button.addEventListener('click', () => { trace.bubbled++; });
+    const originalHandler = window.DDMaterials.downloadWord;
+    window.DDMaterials.downloadWord = function (...args) { trace.handler++; return originalHandler.apply(this, args); };
+    const originalExporter = window.DDWordExport.downloadHtml;
+    window.DDWordExport.downloadHtml = function (...args) {
+      trace.exporter++;
+      const result = originalExporter.apply(this, args);
+      trace.exporterResult = result;
+      return result;
+    };
+  });
   const downloadPromise = page.waitForEvent('download', { timeout: 12000 });
   await wordButton.click({ timeout: 12000 });
-  const download = await downloadPromise;
+  console.log('EIB_WORD_CLICK_TRACE:', JSON.stringify(await page.evaluate(() => window.__ddWordClickTrace)));
+  let download;
+  try { download = await downloadPromise; }
+  catch (error) {
+    console.log('EIB_WORD_CLICK_TIMEOUT_TRACE:', JSON.stringify(await page.evaluate(() => window.__ddWordClickTrace)));
+    throw error;
+  }
   assert(download.suggestedFilename().toLowerCase().endsWith('.docx'),
     'El paquete EIB no se exportó como DOCX');
   const xml = docxDocumentXml(await fs.readFile(await download.path()));
