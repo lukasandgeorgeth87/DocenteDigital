@@ -3,6 +3,15 @@ const {checkBetaAccess}=require('./_beta-access');
 const IMAGE_URL='https://api.openai.com/v1/images/generations';
 function send(res,status,data){res.statusCode=status;res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(data));}
 function clean(v,max=5000){return String(v??'').replace(/\u0000/g,'').trim().slice(0,max);}
+// The image endpoint requests PNG. A nonempty base64 string is not proof of an image.
+// Validate the PNG signature and IHDR before reporting a successful generation.
+function validPngBase64(value){
+  if(typeof value!=='string'||value.length<64||value.length>40*1024*1024||value.length%4!==0)return false;
+  if(!/^[A-Za-z0-9+/]+={0,2}$/.test(value))return false;
+  const header=Buffer.from(value.slice(0,32),'base64');
+  return header.length>=16 && header.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))
+    && header.readUInt32BE(8)===13 && header.toString('ascii',12,16)==='IHDR';
+}
 module.exports=async function handler(req,res){
   if(req.method!=='POST')return send(res,405,{ok:false,error:'method_not_allowed'});
   if(!process.env.OPENAI_API_KEY)return send(res,503,{ok:false,error:'openai_not_configured'});
@@ -30,7 +39,7 @@ module.exports=async function handler(req,res){
     const data=await r.json().catch(()=>({}));
     if(!r.ok){console.error('DocenteDigital image error',r.status,data?.error?.type||'unknown');return send(res,r.status===429?429:502,{ok:false,error:'image_request_failed',retryable:r.status===429||r.status>=500});}
     const first=data?.data?.[0]||{};
-    const imageBase64=typeof first.b64_json==='string'&&first.b64_json.trim()?first.b64_json:null;
+    const imageBase64=validPngBase64(first.b64_json)?first.b64_json:null;
     const imageUrl=typeof first.url==='string'&&/^https:\/\//i.test(first.url)?first.url:null;
     // HTTP 200 from the provider does not mean an image was generated.
     // Report failure when the provider omits the requested image.
