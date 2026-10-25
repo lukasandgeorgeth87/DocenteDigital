@@ -1,9 +1,9 @@
 # DocenteDigital — estado canónico para continuidad entre conversaciones
 
-**Actualización:** 2026-10-24, 23:16 (America/Lima; 2026-10-25 UTC).  
+**Actualización:** 2026-10-25, aproximadamente 00:20 (America/Lima).  
 **Repositorio:** https://github.com/lukasandgeorgeth87/DocenteDigital  
 **Rama de desarrollo/beta:** `audit/v5-continuity-offline-diagnostic`  
-**Último commit de código/CI previo a esta bitácora:** `d75e57008ab4328c2dd57076a3d0d817d4ef956f`.  
+**Último commit de código/prueba previo a esta bitácora:** `b689bccc20a485639300901a407cf5f3d5579be0`.  
 **Versión exacta más reciente:** consultar el HEAD de esta rama; el propio commit que actualiza esta bitácora es posterior al SHA citado.
 
 > Este documento es la fuente de continuidad para recuperar DocenteDigital desde otro chat. Verificar siempre GitHub, CI y Vercel en tiempo real antes de afirmar que una función está terminada. No confundir el HEAD de la rama con el despliegue público.
@@ -22,6 +22,16 @@
 - **Preview Vercel verificada READY:** commit `d75e5700...`, https://docente-digital-ctxmiq30k-jorgeluispalma87-7403.vercel.app ; HTTP 200 en `/` y `/api/ai-status` comprobados. Estado: `configured:false`, `text:false`, `image:false`, `verified:false`; no hubo generación real de IA. Variables Vercel consultadas sin descifrar: `OPENAI_API_KEY` existe solo para target `production`, no para `preview`. No copiar ni publicar la clave en una preview sin control de acceso y cuota.
 - **Producción pública (rama main):** https://docente-digital.vercel.app ; `/` HTTP 200, pero `/api/ai-status` HTTP 404 en verificación anterior. No confundir producción con preview de beta.
 - **Rama frente a main:** antes de nuevos cambios, 207 commits por delante, 0 por detrás; no fusionar a ciegas.
+
+## Ejecución adicional del 25/10/2026 (00:14–00:20, Perú)
+
+- **CI anterior comprobado:** run 40161330019, commit `d75e5700`, **PASS** completo (incluida imagen simulada). Fuente: https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40161330019.
+- **Regresión detectada:** run 40161420829 para `fb2b1941`, **FAIL** en prueba DOCX (espera de descarga agotada tras 30 s); continuidad y GPT simulado sí pasaron. Fuente: https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40161420829. No se concluye que el DOCX de usuario esté roto: el fallo es intermitente y requiere reproducción/diagnóstico.
+- **Corrección de seguridad de salida GPT:** `c6322be95a1dfc4ffab46df70bed60410ace2d72` modifica `api/ai.js` para rechazar respuestas JSON con estructura incorrecta y respuestas de proveedor con estado incompleto; no anuncia éxito pedagógico falso.
+- **Pruebas de regresión añadidas:** `c3b4479715ba87da4b1f32229820fab8bf4ee54f` amplía `tests/ai-contract.mjs` con rechazo de salida malformada y truncada. CI: https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40164847169 (pendiente al redactar).
+- **Diagnóstico DOCX reforzado:** `b689bccc20a485639300901a407cf5f3d5579be0` espera hidratación real de sesión, verifica el exportador OOXML y comunica si aparece alerta en vez de agotar 30 s sin diagnóstico. CI: https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40164916942 (pendiente al redactar).
+- **Vercel comprobado:** preview para `c3b44797` https://docente-digital-2wxpq6mqu-jorgeluispalma87-7403.vercel.app **READY**, GET `/` HTTP 200, GET `/api/ai-status` HTTP 200 y `configured:false, verified:false`. Aún no se verificó preview del SHA `b689bccc`.
+- **Bloqueantes inalterados:** sin GPT real (clave ausente en preview), sin autenticación/cuota de endpoint pagado, sin piloto ni backend multiusuario. **V5 21/100**, desarrollo histórico 75% (estimación, no prueba).
 
 ## Cambios recientes con evidencia
 
