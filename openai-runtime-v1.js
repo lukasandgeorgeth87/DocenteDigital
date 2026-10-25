@@ -69,6 +69,7 @@
 
   function friendlyError(error){
     if(error==='openai_not_configured')return 'La conexión está preparada, pero falta activar la clave segura de OpenAI en el servidor.';
+    if(error==='ai_beta_disabled')return 'La generación con IA está desactivada por seguridad hasta habilitar la beta protegida.';
     if(error==='openai_timeout')return 'OpenAI tardó demasiado. Puedes volver a intentarlo.';
     if(error==='openai_request_failed')return 'OpenAI no pudo responder en este momento. Intenta nuevamente.';
     if(error==='premium_credit_confirmation_required')return 'Debes confirmar el uso del crédito premium.';
@@ -77,7 +78,7 @@
 
   async function request(task,prompt,options={}){
     const status=await health();
-    if(!status?.configured)throw Object.assign(new Error(friendlyError('openai_not_configured')),{code:'openai_not_configured'});
+    if(!status?.text)throw Object.assign(new Error(friendlyError(status?.configured?'ai_beta_disabled':'openai_not_configured')),{code:status?.configured?'ai_beta_disabled':'openai_not_configured'});
     const controller=new AbortController();
     const timeout=setTimeout(()=>controller.abort(),32000);
     try{
