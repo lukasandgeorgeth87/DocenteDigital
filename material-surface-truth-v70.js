@@ -50,6 +50,9 @@
   else apply();
   setTimeout(apply,250);
 
+  // Explicit regression hook: verify the delayed legacy guard after a modern render.
+  window.ddMaterialSurfaceTruthReapply=apply;
+
   window.ddAuditMaterialSurfaceTruth=function(){
     const section=document.getElementById('materials');
     const button=materialButton(section);
