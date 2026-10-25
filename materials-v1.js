@@ -75,7 +75,11 @@
         area:(unit.areas||[])[0]||'',
         grades:unit.grades||state.grades||[],
         purpose:unit.reto||'',
-        evidence:unit.product||''
+        // The approved short product title is the canonical label. A later
+        // planning UI timer may replace unit.product (long description) with
+        // productTitle; materials must not capture the obsolete description.
+        evidence:(unit.selectionApproved && unit.productTitle && !['Producto final','Producto propuesto por el docente'].includes(String(unit.productTitle).trim()))
+          ? unit.productTitle : unit.product||''
       };
     }
     return {source:'free',title:'',topic:'',brief:'',area:'',grades:state.grades||[],purpose:'',evidence:''};
