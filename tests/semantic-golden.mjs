@@ -86,6 +86,18 @@ try{
     assert(unit.selectionApproved===true,`${c.name}: no registró elección explícita`);
     assert(situation.length>=40,`${c.name}: situación significativa demasiado vacía`);
     assert(product.length>=20,`${c.name}: producto/evidencia insuficiente`);
+    if(c.name==='biohuerto'){
+      await page.evaluate(()=>window.go('materials'));
+      await page.locator('#materialSource').selectOption('unit');
+      await page.evaluate(()=>window.DDMaterials.useCurrent());
+      await page.evaluate(()=>window.DDMaterials.create());
+      const linked=await page.locator('#materialOutput').innerText();
+      assert(linked.includes('Vinculación con la planificación') &&
+        linked.includes('Propósito o reto') && linked.includes('Evidencia o producto'),
+        'biohuerto: el material perdió propósito o producto de la unidad');
+      assert(linked.includes(String(unit.product).trim()),
+        'biohuerto: el material no conserva el producto seleccionado');
+    }
     if(c.name==='pinturas_rupestres'){
       assert(!/en la comunidad encontramos/i.test(title),'pinturas rupestres: copió la oración contextual dentro del título');
       assert(/pinturas rupestres|patrimonio|huellas del pasado/i.test(title),'pinturas rupestres: el título no recuperó el núcleo pedagógico');
