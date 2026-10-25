@@ -117,6 +117,25 @@ try {
     m.variety === 'Quechua Cusco-Collao (Cusco)' &&
     m.html.includes('únicamente en castellano')),
     'El historial EIB perdió la variedad o la advertencia');
+  console.log('EIB 5/5 Banco de división diferenciado por grado');
+  await page.locator('#materialType').selectOption('Banco de problemas');
+  await page.locator('#materialTopic').fill('División: repartimos gastos familiares');
+  for (const [grade, expected] of [
+    ['1.º', ['entre 2 familias', 'Dibuja dos grupos']],
+    ['3.º', ['cuántos sobran', 'multiplicación']],
+    ['5.º', ['S/ ', 'residuo', 'decimales']]
+  ]) {
+    await page.locator('#materialGrade').selectOption(grade);
+    await page.locator('#materials button[onclick="window.DDMaterials?.create()"]').click();
+    const content = await page.locator('#materialOutput .dd-editable-material').innerText();
+    for (const phrase of expected) {
+      assert(content.includes(phrase),
+        'Banco de división de ' + grade + ' no contiene ' + phrase);
+    }
+    assert(!content.includes('se registraron'),
+      'Banco de división de ' + grade + ' cayó en resta genérica');
+  }
+  console.log('MATERIALS_DIVISION_GRADES_PASS');
   console.log('MATERIALS_EIB_PASS');
 } finally {
   await browser.close();
