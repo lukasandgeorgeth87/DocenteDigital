@@ -47,8 +47,11 @@
 
   function sourceContext(){
     const source=$('materialSource')?.value||'session';
-    const session=state.lastSession;
     const unit=activeUnit();
+    // A previously generated session may belong to a different unit. Never
+    // propagate its topic, area, purpose or evidence into the active unit.
+    const session=state.lastSession && (!unit?.id || state.lastSession.unitId===unit.id)
+      ? state.lastSession : null;
     if(source==='session'&&session){
       return {
         source:'session',
@@ -61,7 +64,9 @@
         evidence:session.evidence||''
       };
     }
-    if(source==='unit'&&unit){
+    // If the default session source is unavailable/stale, use the active unit
+    // rather than silently generating unrelated free-topic worksheets.
+    if((source==='unit'||(source==='session'&&!session))&&unit){
       return {
         source:'unit',
         title:unit.title||'',
