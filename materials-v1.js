@@ -458,6 +458,9 @@
 
   function downloadWord(){
     const item=state.lastMaterial;if(!item)return alert('Primero crea un material.');
+    // Export the same edited version the teacher sees and persist it for reopening.
+    // Without this, Word silently uses stale HTML unless Guardar was clicked first.
+    saveEdits();
     const html=materialWordHtml(item);
     if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml(item.topic,html,false,item.type+'_'+item.topic);
     if(typeof wordBlob!=='function'||typeof downloadBlob!=='function')return alert('No se pudo preparar el Word en este dispositivo.');
