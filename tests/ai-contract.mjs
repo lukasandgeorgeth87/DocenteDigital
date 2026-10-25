@@ -4,6 +4,7 @@ import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url);
 const ai=require('../api/ai.js');
 const status=require('../api/ai-status.js');
+const image=require('../api/image.js');
 const previousKey=process.env.OPENAI_API_KEY;
 const previousFetch=globalThis.fetch;
 
@@ -85,7 +86,30 @@ try{
   res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
   assert.equal(res.statusCode,502);
   assert.equal(res.body.error,'invalid_structured_output');
-  console.log('AI_CONTRACT_PASS: status, configuration, input validation, mock GPT response, model routes, privacy and errors');
+  delete process.env.OPENAI_API_KEY;
+  res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
+  assert.equal(res.statusCode,503);
+  process.env.OPENAI_API_KEY='test-only-not-a-real-secret';
+  res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:false});
+  assert.equal(res.statusCode,402,'Image credits require explicit confirmation');
+  globalThis.fetch=async(url,options)=>{
+    captured={url,options};
+    return {ok:true,status:200,json:async()=>({data:[{b64_json:'ZmFrZS1wbmc='}]})};
+  };
+  res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true,size:'1024x1536',quality:'medium'});
+  assert.equal(res.statusCode,200);
+  assert.equal(res.body.image_base64,'ZmFrZS1wbmc=');
+  assert.equal(res.headers['cache-control'],'no-store');
+  assert.equal(captured.url,'https://api.openai.com/v1/images/generations');
+  const imagePayload=JSON.parse(captured.options.body);
+  assert.equal(imagePayload.model,'gpt-image-2');
+  assert.equal(imagePayload.n,1);
+  globalThis.fetch=async()=>({ok:false,status:429,json:async()=>({error:{type:'rate_limit_error'}})});
+  res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
+  assert.equal(res.statusCode,429);
+  assert.equal(res.body.retryable,true);
+
+  console.log('AI_CONTRACT_PASS: text and image status, validation, mocked GPT requests, privacy, credit confirmation and errors');
 }finally{
   globalThis.fetch=previousFetch;
   if(previousKey===undefined)delete process.env.OPENAI_API_KEY;
