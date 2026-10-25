@@ -208,11 +208,39 @@ try {
   assert(directorBytes.length > 500 && directorBytes[0] === 0x50 && directorBytes[1] === 0x4b, 'La exportación Word de Director no generó un DOCX ZIP');
   assert(directorDownload.suggestedFilename().toLowerCase().endsWith('.docx'), 'Director exportó una extensión distinta de DOCX');
 
+  // Regression: Word export of an edited institutional plan must also save
+  // those changes to the local history, even without clicking Guardar.
+  await page.evaluate(() => window.DDDirector.openPlan());
+  await page.locator('#ddPlanType').selectOption('Plan lector');
+  await page.locator('#ddPlanPeriod').fill('2027');
+  await page.locator('#ddPlanNeed').fill('Necesidad ficticia de fortalecer la lectura.');
+  await page.locator('#ddPlanEvidence').fill('Evidencia de prueba, no institucional.');
+  await page.locator('#ddPlanBuild').click();
+  assert(await page.locator('#ddPlanResult .dd-editable-material').count() === 1, 'Director no construyó el plan institucional');
+  await page.locator('#ddPlanResult .dd-editable-material').evaluate(el =>
+    el.insertAdjacentHTML('beforeend', '<p>Acuerdo de prueba conservado al exportar.</p>'));
+  const planDownloadPromise = page.waitForEvent('download', {timeout:15000});
+  await page.locator('#ddPlanWord').click();
+  const planDownload = await planDownloadPromise;
+  const planBytes = await fs.readFile(await planDownload.path());
+  assert(planBytes.length > 500 && planBytes[0] === 0x50 && planBytes[1] === 0x4b,
+    'Plan institucional no exportó un DOCX ZIP');
+  assert(planDownload.suggestedFilename().toLowerCase().endsWith('.docx'),
+    'Plan institucional exportó una extensión distinta de DOCX');
+  s = await state();
+  assert(s.lastDirectorDoc?.type === 'Plan' && s.lastDirectorDoc?.html?.includes('Acuerdo de prueba conservado'),
+    'Exportar el plan no conservó la edición en el estado persistido');
+  assert(s.directorDocs?.some(d => d.id === s.lastDirectorDoc.id && d.html.includes('Acuerdo de prueba conservado')),
+    'La edición exportada no se guardó en el historial del Director');
+
   await page.reload({waitUntil:'networkidle'});
   await waitPlanningRuntime();
   s = await state();
   assert(s.evaluationRecords?.some(r => r.student === 'EST-TEST-01' && r.level === 'A'), 'La evaluación desapareció tras recargar');
-  assert(s.lastDirectorDoc?.html?.includes('Revisión ficticia guardada.'), 'Los cambios del documento de Director desaparecieron tras recargar');
+  assert(s.directorDocs?.some(d => d.type === 'Informe' && d.html.includes('Revisión ficticia guardada.')),
+    'Los cambios del informe de Director desaparecieron tras recargar');
+  assert(s.lastDirectorDoc?.type === 'Plan' && s.lastDirectorDoc?.html?.includes('Acuerdo de prueba conservado'),
+    'La edición del plan exportado desapareció tras recargar');
 
   console.log('8/8 Vista móvil y navegación Director');
   await page.setViewportSize({ width: 390, height: 844 });
