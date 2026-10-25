@@ -432,9 +432,12 @@
     const editable=out.querySelector(':scope > .dd-editable-material');
     if(actions&&editable)out.insertBefore(actions,editable);
     out.classList.remove('hidden');
-    // Instant scroll avoids losing rapid follow-up taps while the previous
-    // smooth-scroll animation is still moving the action buttons.
-    out.scrollIntoView({behavior:'auto',block:'start'});
+    // Keep the first action button in the *visible* viewport, not behind the
+    // sticky topbar. Aligning the output itself at block:start placed Word
+    // underneath the fixed header on some Chromium runs (CI 40239607170).
+    // 'instant' also avoids an in-flight smooth scroll during the next click.
+    const firstAction=actions?.querySelector('button');
+    (firstAction||out).scrollIntoView({behavior:'instant',block:'center',inline:'nearest'});
   }
 
   function saveEdits(){
