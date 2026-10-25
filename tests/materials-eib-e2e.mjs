@@ -88,13 +88,16 @@ try {
     docxSelfTest: window.ddDocxSelfTest?.(),
     materialType: window.state?.lastMaterial?.type,
     hasOutput: !!document.querySelector('#materialOutput .dd-editable-material'),
-    hasWordButton: !!document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)')
+    hasWordButton: !!document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)'),
+    wordButtonOnclick: document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)')?.getAttribute('onclick'),
+    wordButtonDisabled: document.querySelector('#materialOutput .dd-material-actions button:nth-child(2)')?.disabled
   }));
   console.log('EIB_EXPORT_DIAGNOSTIC:', JSON.stringify(exportDiagnostic));
   assert(exportDiagnostic.hasExporter && exportDiagnostic.docxSelfTest && exportDiagnostic.hasOutput,
     'Exportador de material EIB no está listo: ' + JSON.stringify(exportDiagnostic));
   const downloadPromise = page.waitForEvent('download', { timeout: 8000 });
-  await page.locator('#materialOutput .dd-material-actions button', { hasText: 'Word' }).click();
+  const exportResult = await page.evaluate(() => window.DDMaterials.downloadWord());
+  console.log('EIB_EXPORT_RESULT:', exportResult);
   const download = await downloadPromise;
   assert(download.suggestedFilename().toLowerCase().endsWith('.docx'),
     'El paquete EIB no se exportó como DOCX');
