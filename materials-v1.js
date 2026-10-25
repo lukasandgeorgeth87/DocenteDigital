@@ -289,6 +289,26 @@
         n<=4?[[24,9],[38,17],[45,18],[52,26],[63,27],[71,35],[84,42],[96,38],[105,47],[120,65]]:
         [[47,18],[65,27],[82,36],[96,41],[125,58],[144,69],[175,87],[208,96],[250,135],[320,148]];
       nums.forEach(([a,b],i)=>items.push(`${i+1}. □ + ${b} = ${a}. Halla el valor de □ y comprueba tu respuesta.`));
+    }else if(/divisi[oó]n|repart|mitad|cociente/.test(t)){
+      // Avoid presenting generic subtraction as a division worksheet. Keep the
+      // progression concrete (1.º), exact/inexact (3.º), decimal/remainder (5.º).
+      for(let i=1;i<=10;i++){
+        if(n<=2){
+          const amount=2*i;
+          items.push(`${i}. Tenemos ${amount} panes para repartir por igual entre 2 familias. Dibuja dos grupos, reparte uno a uno y muestra cuántos recibe cada familia.`);
+        }else if(n<=4){
+          const groups=2+(i%4),each=3+i,remainder=i%2===0?0:1;
+          const total=groups*each+remainder;
+          items.push(`${i}. Se reparten ${total} panes entre ${groups} grupos por igual. ¿Cuántos recibe cada grupo${remainder?' y cuántos sobran':' sin que sobre ninguno'}? Representa el reparto y comprueba con una multiplicación.`);
+        }else if(i%2===0){
+          const amount=(4750+i*500)/100;
+          items.push(`${i}. Para comprar insumos, ${5} familias comparten un gasto de S/ ${amount.toFixed(2)}. ¿Cuánto aporta cada familia? Calcula con decimales y comprueba multiplicando por 5.`);
+        }else{
+          const families=3+(i%3),each=20+i,remainder=1+(i%(families-1));
+          const total=families*each+remainder;
+          items.push(`${i}. La comunidad reparte ${total} unidades de insumos entre ${families} familias. ¿Cuántas unidades enteras recibe cada una y cuál es el residuo? Explica qué hacer con lo que sobra y verifica la igualdad dividendo = divisor × cociente + residuo.`);
+        }
+      }
     }else{
       const ctx=topicInfo(topic);
       for(let i=1;i<=10;i++){
