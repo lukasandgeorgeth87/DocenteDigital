@@ -1,3 +1,4 @@
+const {quotaConfig}=require('./_ai-quota');
 module.exports = function handler(req,res){
   if(req.method !== 'GET'){
     res.statusCode=405;
@@ -10,14 +11,16 @@ module.exports = function handler(req,res){
   const configured=Boolean(process.env.OPENAI_API_KEY);
   const enabled=process.env.DD_AI_BETA_ENABLED==='true';
   const accessConfigured=typeof process.env.DD_AI_BETA_TOKEN==='string'&&process.env.DD_AI_BETA_TOKEN.length>=32;
+  const quotaConfigured=Boolean(quotaConfig());
   res.end(JSON.stringify({
     ok:true,
     configured,
     enabled,
     access_required:true,
     access_configured:accessConfigured,
-    text:configured&&enabled&&accessConfigured,
-    image:configured&&enabled&&accessConfigured,
+    quota_configured:quotaConfigured,
+    text:configured&&enabled&&accessConfigured&&quotaConfigured,
+    image:configured&&enabled&&accessConfigured&&quotaConfigured,
     verified:false,
     server_side:true
   }));
