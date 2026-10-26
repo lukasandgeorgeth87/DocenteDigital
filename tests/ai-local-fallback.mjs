@@ -98,3 +98,33 @@ await window.DDOpenAI.renderHubStatus();
 assert.match(card.innerHTML,/Falta límite de consumo/,'A missing durable quota must be visible instead of claiming beta is ready');
 assert.doesNotMatch(card.innerHTML,/conexión aún no verificada/);
 console.log('AI_LOCAL_FALLBACK_PASS: offline titles, selection and truthful connection status');
+
+
+ // When GPT is offline, invoking "improve material" must NEVER replace
+ // an existing edited worksheet. Local generation requires teacher action.
+const existingWorksheet='<article class="dd-editable-material">FICHA_EDITADA_POR_DOCENTE</article>';
+const worksheetHost={
+  innerHTML:existingWorksheet,notes:[],classList:{remove(){}},
+  querySelector(selector){return selector==='.dd-editable-material'?{}:null;},
+  prepend(node){this.notes.unshift(node);},
+  appendChild(node){this.notes.push(node);}
+};
+nodes.materialOutput=worksheetHost;
+window.DDMaterials={localCalls:0,create(){this.localCalls++;}};
+const priorCreateElement=document.createElement;
+document.createElement=()=>({
+  innerHTML:'',children:[],appendChild(child){this.children.push(child);},
+  textContent:'',className:'',type:'button',onclick:null
+});
+const materialButton={textContent:'Crear o mejorar con IA',dataset:{},disabled:false};
+await window.DDOpenAI.materialWithAI(materialButton);
+assert.equal(worksheetHost.innerHTML,existingWorksheet,'Provider failure must not erase edited material');
+assert.equal(worksheetHost.notes.length,1);
+assert.match(worksheetHost.notes[0].innerHTML,/Respaldo local sin IA/);
+assert.match(worksheetHost.notes[0].innerHTML,/cambios realizados se han conservado/);
+assert.equal(window.DDMaterials.localCalls,0,'Local recreation cannot happen without teacher permission');
+worksheetHost.notes[0].children[0].onclick();
+assert.equal(window.DDMaterials.localCalls,1,'Local fallback must work after explicit click');
+assert.equal(materialButton.disabled,false);
+document.createElement=priorCreateElement;
+console.log('AI_MATERIAL_OFFLINE_PRESERVATION_PASS: teacher edits survive GPT outage with opt-in local fallback');

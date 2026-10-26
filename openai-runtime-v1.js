@@ -262,7 +262,25 @@
       const note=document.createElement('div');note.className='success';note.innerHTML='<b>Contenido base generado con IA.</b> Puedes editarlo antes de imprimir o exportar.';
       host?.prepend(note);
     }catch(e){
-      if(host){host.classList.remove('hidden');host.innerHTML=`<div class="notice">${esc(e.message)}</div>`;}
+      if(host){
+        // An unavailable paid provider must NEVER erase a teacher-edited
+        // worksheet. Offer an explicit local-template fallback instead.
+        host.classList.remove('hidden');
+        const existingDraft=host.querySelector('.dd-editable-material');
+        const note=document.createElement('div');
+        note.className='notice dd-ai-material-fallback';
+        note.innerHTML='<b>Respaldo local sin IA.</b> '+esc(e.message)+
+          (existingDraft?'<p>Tu ficha y los cambios realizados se han conservado.</p>':
+            '<p>Puedes generar una ficha local usando tu contexto y seguir editándola.</p>');
+        const localButton=document.createElement('button');
+        localButton.type='button';
+        localButton.className='btn alt';
+        localButton.textContent='Crear con plantilla local (sin IA)';
+        localButton.onclick=()=>window.DDMaterials?.create();
+        note.appendChild(localButton);
+        if(existingDraft)host.prepend(note);
+        else{host.innerHTML='';host.appendChild(note);}
+      }
     }finally{setBusy(button,false);}
   }
 
