@@ -215,6 +215,28 @@
       ];
       return divisionTasks[index%divisionTasks.length];
     }
+    // The teacher's NEW school-garden challenge must also govern assessment,
+    // not only the worksheets. These are clearly fictitious practice values:
+    // never misrepresent them as real school measurements or harvest results.
+    if(area==='Matemática' && /biohuerto|huerto escolar|hortaliza/.test(planningText)){
+      var i=index%10;
+      if(n<=2){
+        var lettuce=3+i,carrot=2+(i%3);
+        return 'En un ejercicio hipotético del biohuerto se cuentan '+lettuce+
+          ' semillas de lechuga y '+carrot+
+          ' semillas de zanahoria. ¿Cuántas semillas de hortalizas hay en total? Dibuja, suma y comprueba.';
+      }
+      if(n<=4){
+        var rows=2+(i%4),perRow=4+(i%6);
+        return 'En un ensayo ficticio de hortalizas del biohuerto se preparan '+
+          rows+' filas con '+perRow+
+          ' semillas por fila. ¿Cuántas semillas se usan? Escribe la multiplicación y comprueba con un dibujo de las filas.';
+      }
+      var length=4+i,width=2+(i%3);
+      return 'En un plano hipotético del biohuerto, un cantero para hortalizas mide '+
+        length+' m de largo y '+width+
+        ' m de ancho. Calcula su área en m² y su perímetro en m; explica los procedimientos y qué medirías en la escuela.';
+    }
     var early=state.level==='Inicial'||n<=2;
     var advanced=!early&&n>=5;
     var steps;
@@ -411,9 +433,13 @@
     var instrument=chosenInstrument==='Automático según evidencia'?recommendedInstrument(state.level,type,area,cs.length):chosenInstrument;
     var technique=evaluationTechnique(state.level,type,area);
     var items=[];for(var i=0;i<count;i++){var c=cs[i%cs.length];items.push({task:assessmentTask(area,grade,i,unit),criterion:c.criterion});}
-    var situation=String((unit&&(unit.situationBrief||unit.situation))||'').trim();
+    var original=String((unit&&unit.situationBrief)||'').trim();
+    var situation=String((unit&&(unit.situation||unit.situationBrief))||'').trim();
     var product=String((unit&&(unit.selectionApproved&&unit.productTitle||unit.product))||'').trim();
-    var reference='<div class="dd-assessment-reference">'+(situation?'<p><b>Situación de partida:</b> '+E(situation)+'</p>':'')+(product?'<p><b>Producto vinculado:</b> '+E(product)+'</p>':'')+'</div>';
+    var reference='<div class="dd-assessment-reference">'+
+      (original&&original!==situation?'<p><b>Contexto original del docente:</b> '+E(original)+'</p>':'')+
+      (situation?'<p><b>Situación de partida:</b> '+E(situation)+'</p>':'')+
+      (product?'<p><b>Producto vinculado:</b> '+E(product)+'</p>':'')+'</div>';
     var body='<article class="dd-assessment-sheet"><div class="dd-material-kicker">Evaluación · '+E(area)+' · '+E(grade)+'</div><h1>'+E((unit&&unit.title)||'Evaluación de aprendizaje')+'</h1>'+reference+'<p><b>Modalidad:</b> '+E(type)+'<br><b>Técnica de recojo de evidencia:</b> '+E(technique)+'<br><b>Instrumento:</b> '+E(instrument)+'</p><p class="dd-small">Consignas diferenciadas por grado: borradores editables; el docente verifica su pertinencia, contexto y alineación con los criterios antes de aplicarlos.</p><ol>'+items.map(function(x){return '<li><p>'+E(x.task)+'</p><p class="dd-small"><b>Criterio asociado:</b> '+E(x.criterion)+'</p><div class="dd-answer-lines tall"></div></li>';}).join('')+'</ol><h2>Criterios que se observarán</h2><ul>'+cs.map(function(x){return '<li>'+E(x.criterion)+'</li>';}).join('')+'</ul><p class="dd-small"><b>Uso formativo:</b> registra la evidencia observada, contrástala con los criterios y utiliza la información para retroalimentar y decidir el siguiente paso de aprendizaje.</p></article>';
     state.lastAssessment={id:'a'+Date.now(),unitId:(unit&&unit.id)||'',unitTitle:(unit&&unit.title)||'',grade:grade,area:area,type:type,technique:technique,instrument:instrument,criteria:cs,html:body,createdAt:new Date().toISOString()};
     state.generatedAssessments.unshift(state.lastAssessment);state.generatedAssessments=state.generatedAssessments.slice(0,20);save();

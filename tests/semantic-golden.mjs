@@ -619,11 +619,60 @@ try{
   const gardenWord=await gardenWordPromise;
   assert(gardenWord.suggestedFilename().endsWith('.docx'),
     'Biohuerto: no se pudo exportar el paquete multigrado a DOCX');
+  // Continue through the REAL Evaluation module using the SAME approved
+  // garden unit as Materials, not a separate hardcoded math-only fixture.
+  // A worksheet with numerical garden exercises is not pedagogically coherent
+  // if assessment returns unsolvable generic "choose a strategy" prompts.
+  const gardenEvaluation=await page.evaluate(()=>{
+    window.go('evaluation');
+    window.DDEvaluation.openAssessment();
+    document.getElementById('ddAssArea').value='Matemática';
+    document.getElementById('ddAssCount').value='10';
+    return ['1.º','3.º','5.º'].map(grade=>{
+      document.getElementById('ddAssGrade').value=grade;
+      document.getElementById('ddAssCreate').click();
+      return {
+        grade,
+        tasks:[...document.querySelectorAll('#ddAssBody .dd-assessment-sheet ol > li > p:first-child')]
+          .map(p=>p.textContent.trim()),
+        reference:document.querySelector('#ddAssBody .dd-assessment-reference')?.textContent||'',
+        criteria:document.querySelector('#ddAssBody .dd-assessment-sheet ul')?.textContent||''
+      };
+    });
+  });
+  for(const group of gardenEvaluation){
+    assert(group.tasks.length===10&&new Set(group.tasks).size===10,
+      'Evaluación biohuerto: faltan diez consignas diferentes en '+group.grade+': '+JSON.stringify(group));
+    assert(group.tasks.every(task=>/biohuerto|hortalizas/i.test(task)&&/\d/.test(task)),
+      'Evaluación biohuerto: consignas numéricas desconectadas del reto en '+group.grade);
+    assert(group.reference.includes('Contexto original del docente')&&
+      group.reference.includes('Antes aprendimos a cultivar papa y oca')&&
+      group.reference.includes('Plano y registro de siembra de hortalizas'),
+      'Evaluación perdió el contexto original o producto aprobado en '+group.grade);
+  }
+  assert(/semillas de lechuga/.test(gardenEvaluation[0].tasks[0]) &&
+    /Dibuja, suma y comprueba/.test(gardenEvaluation[0].tasks[0])&&
+    /Cuenta y representa/.test(gardenEvaluation[0].criteria),
+    'Evaluación 1.º: no pide conteo y representación coherente con el criterio');
+  assert(/filas con \d+ semillas/.test(gardenEvaluation[1].tasks[0])&&
+    /multiplicación/.test(gardenEvaluation[1].tasks[0])&&
+    /Organiza cantidades en filas/.test(gardenEvaluation[1].criteria),
+    'Evaluación 3.º: no corresponde al material de filas y multiplicaciones');
+  assert(/m²/.test(gardenEvaluation[2].tasks[0])&&
+    /perímetro/.test(gardenEvaluation[2].tasks[0])&&
+    /Calcula y contrasta área/.test(gardenEvaluation[2].criteria),
+    'Evaluación 5.º: no corresponde al plano del biohuerto');
+  const gardenEvalWordPromise=page.waitForEvent('download');
+  await page.locator('#ddAssWord').click();
+  const gardenEvalWord=await gardenEvalWordPromise;
+  assert(gardenEvalWord.suggestedFilename().endsWith('.docx'),
+    'Evaluación del biohuerto 5.º no entrega Word DOCX');
   await page.evaluate(previous=>{
-    for(const key of ['units','activeUnitId','lastSession','lastMaterial','materials'])
+    for(const key of ['units','activeUnitId','lastSession','lastMaterial','materials','lastAssessment','generatedAssessments'])
       window.state[key]=previous[key];
     window.save();
   },previousGarden);
+  console.log('GARDEN_ASSESSMENT_CHAIN_PASS: materials→assessment, 30 numerical tasks, per-grade criteria and DOCX');
   console.log('GARDEN_MATH_135_PASS: new vegetable goal, ten contextual tasks per grade, approved product and Word');
 
   console.log('SEMANTIC_GOLDEN_PASS');
