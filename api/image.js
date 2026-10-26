@@ -1,6 +1,7 @@
 const {reserveQuota}=require('./_ai-quota');
 const {checkBetaAccess}=require('./_beta-access');
 const {betaEnvironmentAllowed}=require('./_ai-beta-environment');
+const {redactPersonalData}=require('./_ai-privacy');
 const IMAGE_URL='https://api.openai.com/v1/images/generations';
 function send(res,status,data){res.statusCode=status;res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(data));}
 function clean(v,max=5000){return String(v??'').replace(/\u0000/g,'').trim().slice(0,max);}
@@ -23,7 +24,7 @@ module.exports=async function handler(req,res){
   if(denied)return send(res,denied.status,{ok:false,error:denied.error});
   const body=req.body&&typeof req.body==='object'?req.body:{};
   if(body.confirmedCredit!==true)return send(res,402,{ok:false,error:'premium_credit_confirmation_required'});
-  const prompt=clean(body.prompt);
+  const prompt=redactPersonalData(clean(body.prompt));
   if(!prompt)return send(res,400,{ok:false,error:'empty_prompt'});
   const model=process.env.OPENAI_IMAGE_MODEL||'gpt-image-2';
   const size=['1024x1024','1024x1536','1536x1024'].includes(body.size)?body.size:'1024x1536';

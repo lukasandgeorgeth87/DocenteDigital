@@ -171,6 +171,24 @@ try{
   assert.equal(payload.input[0].content[0].text.includes('Ccotataqui'),true);
   assert.match(payload.instructions,/YA saben o practican/,'The provider must distinguish prior knowledge from the new challenge');
   assert.match(payload.instructions,/propósito → actividad por grado → evidencia → criterio/,'The provider must receive pedagogical traceability rules');
+  // The browser may inadvertently contain identifiers; scrub obvious PII on
+  // the server before any paid provider call, preserving the educational task.
+  res=await call(ai,'POST',{task:'material',
+    prompt:'Propón una ficha para hortalizas. Alumna: Luisa Rojas; contacto anita@example.pe.',
+    context:{
+      sourceText:'Estudiante: Ana Pérez, DNI 12345678, celular 987 654 321. Practicamos la siembra de hortalizas.',
+      purpose:'Sembrar hortalizas y registrar cambios',
+      grades:['1.º','3.º','5.º']
+    }
+  });
+  assert.equal(res.statusCode,200);
+  const privatePayload=JSON.stringify(JSON.parse(captured.options.body));
+  for(const leak of ['Ana Pérez','Luisa Rojas','12345678','987 654 321','anita@example.pe'])
+    assert.equal(privatePayload.includes(leak),false,'Provider received a recognized private identifier: '+leak);
+  for(const safe of ['[nombre omitido]','[correo omitido]','DNI [omitido]','[teléfono omitido]',
+    'siembra de hortalizas','Sembrar hortalizas','1.º','3.º','5.º'])
+    assert.ok(privatePayload.includes(safe),'Redaction discarded teaching content or placeholder: '+safe);
+
   res=await call(ai,'POST',{task:'material',prompt:'Ficha de hortalizas',context:{
     purpose:'Aprender a sembrar hortalizas',product:'Biohuerto escolar',
     criterion:'Justifica la selección de semillas',evidence:'Registro de siembra'
@@ -256,6 +274,12 @@ try{
   const imagePayload=JSON.parse(captured.options.body);
   assert.equal(imagePayload.model,'gpt-image-2');
   assert.equal(imagePayload.n,1);
+  res=await call(image,'POST',{prompt:'Dibuja semillas para la alumna: María Quispe. DNI: 87654321. Contacto: 912 345 678.',confirmedCredit:true});
+  assert.equal(res.statusCode,200);
+  const privateImagePrompt=JSON.parse(captured.options.body).prompt;
+  for(const leak of ['María Quispe','87654321','912 345 678'])
+    assert.equal(privateImagePrompt.includes(leak),false,'Image API received personal data: '+leak);
+  assert.match(privateImagePrompt,/Dibuja semillas/,'Image safety must not erase the learning topic');
   // Provider HTTP 200 with a nonempty base64 string that is not PNG must fail.
   globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:'ZmFrZS1wbmc='}]})});
   res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});

@@ -1,6 +1,7 @@
 const {reserveQuota}=require('./_ai-quota');
 const {checkBetaAccess}=require('./_beta-access');
 const {betaEnvironmentAllowed}=require('./_ai-beta-environment');
+const {redactPersonalData}=require('./_ai-privacy');
 const ROUTINE_MODEL = process.env.OPENAI_MODEL_ROUTINE || 'gpt-6-luna';
 const COMPLEX_MODEL = process.env.OPENAI_MODEL_COMPLEX || 'gpt-6.1-sol';
 const API_URL = 'https://api.openai.com/v1/responses';
@@ -58,8 +59,8 @@ function safeContext(raw){
   const out={};
   for(const key of allow){
     if(c[key] === undefined || c[key] === null) continue;
-    if(Array.isArray(c[key])) out[key]=c[key].slice(0,12).map(v=>cleanString(v,250));
-    else out[key]=cleanString(c[key], key==='sourceText' ? 7000 : 1200);
+    if(Array.isArray(c[key])) out[key]=c[key].slice(0,12).map(v=>redactPersonalData(cleanString(v,250)));
+    else out[key]=redactPersonalData(cleanString(c[key], key==='sourceText' ? 7000 : 1200));
   }
   return out;
 }
@@ -123,7 +124,7 @@ module.exports = async function handler(req,res){
   const cfg = TASKS[task];
   if(!cfg) return json(res,400,{ok:false,error:'unsupported_task'});
 
-  const prompt = cleanString(body.prompt,12000);
+  const prompt = redactPersonalData(cleanString(body.prompt,12000));
   if(!prompt) return json(res,400,{ok:false,error:'empty_prompt'});
   const context = safeContext(body.context);
   const requested = body.quality === 'high' ? 'complex' : cfg.mode;
