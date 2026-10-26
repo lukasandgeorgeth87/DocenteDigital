@@ -1,5 +1,26 @@
 # DocenteDigital — estado canónico para continuidad entre conversaciones
 
+## Resumen vigente — 26/10/2026, 02:23 (Perú) — evaluación de división con problemas concretos por grado
+
+- **Rama exclusiva:** `audit/v5-continuity-offline-diagnostic` del repositorio `lukasandgeorgeth87/DocenteDigital`. **Último SHA de prueba incorporada:** `67d4c12b02d85d79381231b53f607559807cc1b7` (el HEAD cambia al guardar este documento). **Commit funcional:** `35d020b56768e91d23a6d27ec916ed30689c70d2`.
+- **Avance funcional visible:** `evaluation-v1.js` ahora detecta únicamente en la planificación aprobada de Matemática las palabras división, dividir, reparto, repartir, mitad o mitades y ofrece seis **problemas numéricos diferentes** por grado. 1.º: mitades y reparto entre dos (10 panes, 8 semillas, 12 objetos); 3.º: divisiones exactas/inexactas (24 ÷ 4, 25 ÷ 4, 36 ÷ 3); 5.º: reparto decimal y residuo (S/ 87,50 ÷ 5; 145 ÷ 6). Son **situaciones ficticias de práctica**, no datos reales de la comunidad ni desempeños oficiales. Si la planificación no trata división, conserva consignas de su área; evita imponer el tema a otras unidades.
+- **Prueba nueva:** `tests/beta-e2e.mjs` (SHA `67d4c12b`) abre Evaluación en Chromium, cambia temporalmente a un contexto ficticio explícito de división, genera las tareas para 1.º/3.º/5.º, comprueba los números concretos y solicita **DOCX real** verificando `87,50` en el XML; restaura el contexto original antes de seguir con Registro y Director. **Resultado de esta prueba:** **PENDIENTE** al 26/10/2026 02:23 (Perú); no declararla PASS sin CI.
+- **CI real a las 02:23:** run `40285041964` para `67d4c12b`: `ai-context-fast` **PASS**; `browser-e2e` **EN PROGRESO** (instalación de Playwright Chromium). https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40285041964 . El CI anterior `40279586911` fue **PASS**, pero corresponde a código anterior, no a esta mejora. No hay FAIL nuevo demostrado.
+- **Preview del SHA `67d4c12b`:** Vercel **READY**; https://docente-digital-3xclh380b-jorgeluispalma87-7403.vercel.app ; respuestas **HTTP 200 verificadas** en `/` y `/api/ai-status`. El endpoint indica `configured:false`, `enabled:false`, `access_configured:false`, `quota_configured:false`, `verified:false`: **GPT real sigue desactivado**. No se modificó producción ni datos reales.
+- **Módulos:** runtime/navegación, unidades/proyectos, sesiones, materiales EIB, evaluación, Director, Word, respaldo/restauración y CI **parciales con pruebas previas**. Evaluación de división ahora tiene ejemplos numéricos implementados, **sin certificar todavía la regresión nueva ni la calidad curricular**. **No disponibles/verificados:** GPT real con acceso/cuota seguros, persistencia remota, autenticación individual, PDF integral, piloto humano, app PC.
+- **Riesgos S0–S4:** **S0** ninguno nuevo demostrado; **S1** activar IA pagada sin seguridad/cuota/acceso verificados; **S2** calidad pedagógica y coherencia completa de la cadena contexto→unidad/proyecto→sesión→materiales→evaluación, CI de navegador pendiente, revisión docente; **S3** UX móvil; **S4** aplicación PC futura.
+- **Siguiente paso:** comprobar conclusión del run `40285041964`; corregir cualquier FAIL de navegador y verificar DOCX; luego extender problemas contextualizados sin inventar estándares CNEB. **Decisiones:** GPT como motor principal **solo tras seguridad y prueba real**, plantillas locales como respaldo **identificado**, app PC después de la beta web.
+- **Métricas sin inflación:** desarrollo funcional histórico **75 % estimado**, cierre V5 **21/100**. Matriz: runtime 10, UX 10, IA 15, flujo docente 15, materiales 10, evaluación 10, director 10, persistencia/exportación 8, CI/CD 7, seguridad/piloto 5.
+
+### Bitácora acumulada — 26/10/2026, 02:17–02:23 (Perú)
+
+- `35d020b5` — `evaluation-v1.js`: tareas numéricas por grado, activadas por tema división/reparto/mitad.
+- `67d4c12b` — `tests/beta-e2e.mjs`: caso real de navegador + DOCX y restauración de la unidad original.
+- Run `40285041964`: IA rápida **PASS**; navegador **pendiente** a las 02:23. Preview del SHA de prueba READY y HTTP 200. No se modificó producción.
+
+---
+
+
 ## Resumen vigente — 26/10/2026, 01:23 (Perú) — evaluaciones diferenciadas por grado, Word y CI PASS
 
 - **Repositorio y rama exclusivos:** `lukasandgeorgeth87/DocenteDigital`, `audit/v5-continuity-offline-diagnostic`. **Último SHA funcional y prueba verificada:** `596a3b2c6e568b621970950cced105ba55ffb811`. Este registro crea un commit posterior; para el HEAD absoluto consultar la rama. **No se modificaron producción/main ni datos reales.**
