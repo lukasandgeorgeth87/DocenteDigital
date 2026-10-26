@@ -11,6 +11,23 @@ permissions:
   contents: read
 
 jobs:
+  ai-context-fast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate GPT API safety contract
+        run: node tests/ai-contract.mjs
+      - name: Validate offline fallback
+        run: node tests/ai-local-fallback.mjs
+      - name: Validate context isolation and private beta token
+        run: node tests/ai-beta-client.mjs
+
   browser-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20
