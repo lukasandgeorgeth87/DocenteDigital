@@ -1,4 +1,5 @@
 const {quotaConfig}=require('./_ai-quota');
+const {betaEnvironmentAllowed}=require('./_ai-beta-environment');
 module.exports = function handler(req,res){
   if(req.method !== 'GET'){
     res.statusCode=405;
@@ -9,13 +10,16 @@ module.exports = function handler(req,res){
   res.setHeader('Content-Type','application/json; charset=utf-8');
   res.setHeader('Cache-Control','no-store');
   const configured=Boolean(process.env.OPENAI_API_KEY);
-  const enabled=process.env.DD_AI_BETA_ENABLED==='true';
+  const environmentAllowed=betaEnvironmentAllowed();
+  const enabled=environmentAllowed&&process.env.DD_AI_BETA_ENABLED==='true';
   const accessConfigured=typeof process.env.DD_AI_BETA_TOKEN==='string'&&process.env.DD_AI_BETA_TOKEN.length>=32;
   const quotaConfigured=Boolean(quotaConfig());
   res.end(JSON.stringify({
     ok:true,
     configured,
     enabled,
+    preview_only:true,
+    environment_allowed:environmentAllowed,
     access_required:true,
     access_configured:accessConfigured,
     quota_configured:quotaConfigured,

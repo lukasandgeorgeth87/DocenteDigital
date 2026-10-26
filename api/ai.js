@@ -1,5 +1,6 @@
 const {reserveQuota}=require('./_ai-quota');
 const {checkBetaAccess}=require('./_beta-access');
+const {betaEnvironmentAllowed}=require('./_ai-beta-environment');
 const ROUTINE_MODEL = process.env.OPENAI_MODEL_ROUTINE || 'gpt-6-luna';
 const COMPLEX_MODEL = process.env.OPENAI_MODEL_COMPLEX || 'gpt-6.1-sol';
 const API_URL = 'https://api.openai.com/v1/responses';
@@ -109,6 +110,7 @@ function extractOutputText(data){
 
 module.exports = async function handler(req,res){
   if(req.method !== 'POST') return json(res,405,{ok:false,error:'method_not_allowed'});
+  if(!betaEnvironmentAllowed())return json(res,403,{ok:false,error:'ai_preview_only'});
   if(!process.env.OPENAI_API_KEY) return json(res,503,{ok:false,error:'openai_not_configured'});
   // Fail closed: setting a paid provider key alone must never activate a public endpoint.
   // This is a billing kill switch, NOT authentication or a substitute for quotas.

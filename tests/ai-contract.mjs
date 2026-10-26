@@ -7,6 +7,7 @@ const status=require('../api/ai-status.js');
 const image=require('../api/image.js');
 const previousKey=process.env.OPENAI_API_KEY;
 const previousFlag=process.env.DD_AI_BETA_ENABLED;
+const previousEnvironment=process.env.VERCEL_ENV;
 const previousToken=process.env.DD_AI_BETA_TOKEN;
 const previousFetch=globalThis.fetch;
 const previousQuotaUrl=process.env.UPSTASH_REDIS_REST_URL;
@@ -50,6 +51,7 @@ async function call(handler,method,body,headers){
   return res;
 }
 try{
+  process.env.VERCEL_ENV='preview';
   delete process.env.OPENAI_API_KEY;
   delete process.env.DD_AI_BETA_ENABLED;
   delete process.env.DD_AI_BETA_TOKEN;
@@ -93,6 +95,35 @@ try{
   process.env.UPSTASH_REDIS_REST_URL='https://quota.example.test';
   process.env.UPSTASH_REDIS_REST_TOKEN='quota-test-token';
   process.env.DD_AI_DAILY_MAX_UNITS='1000';
+  // Paid beta must never run in production or an unknown environment, even
+  // when all six secrets/switches exist. Verify denial before Redis or GPT.
+  const quotaBeforeProduction=quotaCount;
+  const beforeProductionFetch=globalThis.fetch;
+  let productionNetworkCalls=0;
+  globalThis.fetch=async()=>{productionNetworkCalls++;throw Error('Production must not call quota or OpenAI');};
+  process.env.VERCEL_ENV='production';
+  res=await call(status,'GET');
+  assert.equal(res.body.environment_allowed,false);
+  assert.equal(res.body.enabled,false);
+  assert.equal(res.body.text,false);
+  res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
+  assert.equal(res.statusCode,403);
+  assert.equal(res.body.error,'ai_preview_only');
+  res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
+  assert.equal(res.statusCode,403);
+  assert.equal(res.body.error,'ai_preview_only');
+  delete process.env.VERCEL_ENV;
+  res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
+  assert.equal(res.statusCode,403,'Unknown deployment environment must fail closed');
+  assert.equal(quotaCount,quotaBeforeProduction);
+  assert.equal(productionNetworkCalls,0);
+  globalThis.fetch=beforeProductionFetch;
+  process.env.VERCEL_ENV='preview';
+  res=await call(status,'GET');
+  assert.equal(res.body.environment_allowed,true);
+  assert.equal(res.body.enabled,true);
+  assert.equal(res.body.text,true);
+
   res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'},{});
   assert.equal(res.statusCode,401,'Missing beta access token must be rejected');
   assert.equal(res.body.error,'beta_access_denied');
@@ -282,6 +313,8 @@ try{
   assert.equal(res.body.error,'ai_quota_not_configured');
   console.log('AI_CONTRACT_PASS: text and image status, validation, mocked GPT requests, privacy, credit confirmation and errors');
 }finally{
+  if(previousEnvironment===undefined)delete process.env.VERCEL_ENV;
+  else process.env.VERCEL_ENV=previousEnvironment;
   globalThis.fetch=previousFetch;
   if(previousQuotaUrl===undefined)delete process.env.UPSTASH_REDIS_REST_URL;
   else process.env.UPSTASH_REDIS_REST_URL=previousQuotaUrl;
