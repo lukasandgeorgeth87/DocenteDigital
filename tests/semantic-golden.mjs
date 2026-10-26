@@ -300,14 +300,17 @@ try{
       window.downloadBlob = (blob, name) => { captured = {blob, name}; };
       try {
         document.getElementById('ddEvalCsv').click();
-        return captured ? {name:captured.name, text:await captured.blob.text()} : null;
+        if(!captured)return null;
+        const bytes = new Uint8Array(await captured.blob.arrayBuffer());
+        return {name:captured.name, bom:bytes[0]===0xEF&&bytes[1]===0xBB&&bytes[2]===0xBF,
+          text:await captured.blob.text()};
       } finally {
         window.downloadBlob = original;
       }
     });
     assert(csvResult && /\.csv$/i.test(csvResult.name), 'Evaluación no entregó un Blob CSV');
     const csv = csvResult.text;
-    assert(csv.charCodeAt(0) === 0xFEFF, 'CSV de evaluación perdió BOM UTF-8');
+    assert(csvResult.bom, 'CSV de evaluación perdió BOM UTF-8');
     const escapedCells = ['"\'=2+3"', '"\' \t=SUM(1,1)"', '"\'+SUM(1,2)"',
       '"\'@SUM(3,4)"', '"\'=SUM(4,5)"'];
     for (const escaped of escapedCells) {
