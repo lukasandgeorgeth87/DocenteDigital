@@ -99,6 +99,38 @@ try{
   }
   assert(draftValidation.corrupt,'Un borrador JSON corrupto quedó almacenado tras leerlo');
   await page.evaluate(()=>window.ddBetaDraftAutosave.clear());
+  // Regression: a previous unit with the same situation must not make a
+  // failed creation look successful and silently discard the teacher's draft.
+  const draftClickRegression=await page.evaluate(async()=>{
+    const key='docenteDigitalBetaDraftUnit',stateKey='docenteDigitalPrototype';
+    const originalState=localStorage.getItem(stateKey);
+    const title=document.getElementById('unitTitle'),situation=document.getElementById('unitSituation');
+    const oldTitle=title.value,oldSituation=situation.value;
+    const draftTitle='Unidad de continuidad',draftSituation='Prueba de continuidad';
+    title.value=draftTitle;situation.value=draftSituation;
+    localStorage.setItem(key,JSON.stringify({
+      title:draftTitle,situation:draftSituation,type:'Unidad de aprendizaje',
+      duration:'2 semanas',savedAt:new Date().toISOString()
+    }));
+    const button=document.createElement('button');
+    button.id='ddBuildUnit';button.type='button';document.body.appendChild(button);
+    button.click();
+    await new Promise(resolve=>setTimeout(resolve,650));
+    const retained=localStorage.getItem(key)!==null;
+    button.click();
+    const newState=JSON.parse(localStorage.getItem(stateKey)||'{}');
+    newState.units.unshift({id:'u-new-draft-regression',title:draftTitle,situationBrief:draftSituation});
+    localStorage.setItem(stateKey,JSON.stringify(newState));
+    await new Promise(resolve=>setTimeout(resolve,650));
+    const cleared=localStorage.getItem(key)===null;
+    if(originalState===null)localStorage.removeItem(stateKey);
+    else localStorage.setItem(stateKey,originalState);
+    title.value=oldTitle;situation.value=oldSituation;button.remove();
+    return {retained,cleared};
+  });
+  assert(draftClickRegression.retained,'Una unidad anterior con igual contexto borró el borrador sin crear otra');
+  assert(draftClickRegression.cleared,'Un borrador guardado como unidad nueva no se limpió');
+
 
   console.log('CONTINUITY 2/5 Exportación e importación de respaldo JSON');
   await page.evaluate(data=>localStorage.setItem('docenteDigitalPrototype',JSON.stringify(data)),fixture());

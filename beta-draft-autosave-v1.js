@@ -81,12 +81,23 @@
   }
   document.addEventListener('click',event=>{
     const build=event.target?.closest?.('#ddBuildUnit');if(!build)return;
+    // Flush the pending autosave before the creation handler changes the form.
+    // A previous unit with identical context is NOT proof this draft was saved.
+    saveDraft();
     const before=read();
+    let existingIds=[];
+    try{
+      const currentState=JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'{}');
+      existingIds=Array.isArray(currentState.units)?currentState.units.map(u=>String(u?.id||'')):[];
+    }catch(_e){}
     setTimeout(()=>{
       if(!before)return;
       try{
         const state=JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'{}');
-        const saved=Array.isArray(state.units)&&state.units.some(u=>String(u?.situationBrief||'').trim()===String(before.situation||'').trim());
+        const saved=Array.isArray(state.units)&&state.units.some(u=>
+          u?.id&&!existingIds.includes(String(u.id))&&
+          (!before.situation||String(u.situationBrief||'').trim()===String(before.situation).trim())&&
+          (!before.title||String(u.title||'').trim()===String(before.title).trim()));
         if(saved){localStorage.removeItem(KEY);updateStatus('Unidad/Proyecto construido; borrador temporal limpiado.');}
       }catch(_e){}
     },500);
