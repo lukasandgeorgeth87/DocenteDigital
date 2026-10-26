@@ -74,6 +74,7 @@
         title:session.title||'',
         topic:session.title||'',
         brief:session.brief||unit?.situation||unit?.situationBrief||'',
+        originalBrief:unit?.situationBrief||'',
         area:session.area||'',
         grades:session.grades||state.grades||[],
         purpose:session.purpose||'',
@@ -88,6 +89,7 @@
         title:unit.title||'',
         topic:unit.title||'',
         brief:unit.situation||unit.situationBrief||'',
+        originalBrief:unit.situationBrief||'',
         area:(unit.areas||[])[0]||'',
         grades:unit.grades||state.grades||[],
         purpose:unit.reto||'',
@@ -105,7 +107,10 @@
   // This is reference context, never an invented curricular performance standard.
   function planningReference(ctx){
     if(!ctx||ctx.source==='free')return '';
-    const fields=[['Origen',ctx.source==='session'?'Sesión':'Unidad / proyecto'],['Situación de partida',ctx.brief],['Propósito o reto',ctx.purpose],['Evidencia o producto',ctx.evidence]]
+    const original=String(ctx.originalBrief||'').trim(),current=String(ctx.brief||'').trim();
+    const fields=[['Origen',ctx.source==='session'?'Sesión':'Unidad / proyecto'],
+      ['Contexto original del docente',original&&original!==current?original:''],
+      ['Situación de partida',ctx.brief],['Propósito o reto',ctx.purpose],['Evidencia o producto',ctx.evidence]]
       .filter(([,value])=>String(value||'').trim());
     return '<section class="dd-planning-reference"><h3>Vinculación con la planificación</h3>'+fields.map(([label,value])=>'<p><b>'+E(label)+':</b> '+E(value)+'</p>').join('')+'</section>';
   }

@@ -610,7 +610,8 @@ try{
     /perímetro/.test(gardenPacks[2].worksheet),
     '5.º: deben plantearse área y perímetro con datos explícitamente hipotéticos');
   const fullGarden=await page.locator('#materialOutput').innerText();
-  assert(fullGarden.includes('Antes aprendimos a cultivar papa y oca') &&
+  assert(fullGarden.includes('Contexto original del docente') &&
+    fullGarden.includes('Antes aprendimos a cultivar papa y oca') &&
     fullGarden.includes('Plano y registro de siembra de hortalizas'),
     'La ficha multigrado perdió saberes previos o producto aprobado');
   const gardenWordPromise=page.waitForEvent('download');
