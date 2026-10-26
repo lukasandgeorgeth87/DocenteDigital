@@ -93,7 +93,7 @@ try{
       await page.evaluate(()=>window.DDMaterials.create());
       const linked=await page.locator('#materialOutput').innerText();
       assert(linked.includes('Vinculación con la planificación') &&
-        linked.includes('Propósito o reto') && linked.includes('Evidencia o producto'),
+        linked.includes('Situación de partida') && linked.includes(c.brief) && linked.includes('Propósito o reto') && linked.includes('Evidencia o producto'),
         'biohuerto: el material perdió propósito o producto de la unidad');
       const normalizeText = value => String(value||'').replace(/\\s+/g,' ').trim();
       // The approved product can be normalized asynchronously from description
