@@ -372,6 +372,20 @@ try {
   assert((await initialSummary.innerText()).includes('Visitas realizadas con evidencia: 0') &&
     (await initialSummary.innerText()).includes('Acuerdos con verificación registrada: 0'),
     'El seguimiento debe iniciar sin visitas ni compromisos artificialmente completados');
+  // Recurring monitoring must support multiple visits and agreements, both
+  // persisted without an extra Save click.
+  await page.locator('#ddPlanResult [data-dd-monitor-add-visit]').click();
+  assert(await page.locator('#ddPlanResult .dd-monitoring-table tbody tr').count()===monitoredRows+1,
+    'Director cannot schedule a repeat observation for the same grade');
+  const secondVisit=page.locator('#ddPlanResult .dd-monitoring-table tbody tr').last();
+  await secondVisit.locator('td[contenteditable="true"]').first().fill('3.º · segunda visita');
+  await page.locator('#ddPlanResult [data-dd-monitor-add-agreement]').click();
+  assert(await page.locator('#ddPlanResult .dd-monitoring-agreements tbody tr').count()===2,
+    'Director cannot record a second agreement');
+  await page.locator('#ddPlanResult .dd-monitoring-agreements tbody tr').last()
+    .locator('td[contenteditable="true"]').nth(2).fill('ACUERDO_SEGUNDO_FICTICIO');
+  assert((await initialSummary.innerText()).includes('Registros de visitas: '+(monitoredRows+1)),
+    'Director seguimiento no actualizó el número de visitas');
   const monitoringRow=page.locator('#ddPlanResult .dd-monitoring-table tbody tr').first();
   // Claiming a visit was completed MUST NOT count without actual evidence.
   await monitoringRow.locator('td[contenteditable="true"]').nth(4).fill('Realizada');
@@ -414,8 +428,16 @@ try {
   assert(await historyCard.count()===1,'Director perdió el plan de monitoreo tras recargar');
   await historyCard.locator('button').click();
   const restoredMonitoring=await page.locator('#ddDirResult .dd-editable-material').innerText();
-  assert(restoredMonitoring.includes('COMPROMISO_FICTICIO')&&restoredMonitoring.includes('2027-04-15'),
-    'Director no recuperó el seguimiento ya escrito');
+  assert(restoredMonitoring.includes('COMPROMISO_FICTICIO')&&
+    restoredMonitoring.includes('ACUERDO_SEGUNDO_FICTICIO')&&
+    restoredMonitoring.includes('3.º · segunda visita')&&
+    restoredMonitoring.includes('2027-04-15'),
+    'Director no recuperó visitas/acuerdos repetidos ni el seguimiento escrito');
+  // Controls must remain functional even after restoring HTML from localStorage.
+  await page.locator('#ddDirResult [data-dd-monitor-add-agreement]').click();
+  assert(await page.locator('#ddDirResult .dd-monitoring-agreements tbody tr').count()===3,
+    'Director: el botón para añadir acuerdos dejó de funcionar al recuperar');
+
   assert(restoredMonitoring.includes('Visitas realizadas con evidencia: 1')&&
     restoredMonitoring.includes('Acuerdos con verificación registrada: 1'),
     'Director perdió el resumen verificable al recuperar el documento');
@@ -429,8 +451,11 @@ try {
     monitorXml.includes('2027-04-15')&&
     monitorXml.includes('Retroalimentación y compromisos')&&
     monitorXml.includes('Visitas realizadas con evidencia: 1')&&
-    monitorXml.includes('Acuerdos con verificación registrada: 1'),
-    'El DOCX del plan de monitoreo omite compromisos, fecha o resumen de seguimiento');
+    monitorXml.includes('Acuerdos con verificación registrada: 1')&&
+    monitorXml.includes('ACUERDO_SEGUNDO_FICTICIO')&&
+    !monitorXml.includes('Añadir otra visita')&&
+    !monitorXml.includes('Añadir otro acuerdo'),
+    'El DOCX contiene controles de edición o pierde resumen y acuerdos repetidos');
   s=await state();
   assert(s.directorDocs?.some(d=>d.id===monitoringId&&d.html.includes('COMPROMISO_FICTICIO')),
     'Exportar Word perdió el registro actualizado en el historial');

@@ -129,7 +129,7 @@
       cols[1]&&cols[2]&&cols[3]&&cols[4]&&cols[5]&&
       !/^(pendiente|por completar|sin verificar)$/i.test(cols[5])).length;
     summary.innerHTML='<b>Resumen de seguimiento (solo registros verificables)</b>'+
-      '<p>Grados/secciones: '+visits.length+
+      '<p>Registros de visitas: '+visits.length+
       ' · Programaciones completas: '+scheduled+
       ' · Visitas realizadas con evidencia: '+realized+
       ' · Compromisos con responsable y plazo: '+commitments+
@@ -137,6 +137,37 @@
       (unsupported?'<p><b>Atención:</b> '+unsupported+
         ' visita(s) marcada(s) como realizada(s) SIN evidencia registrada. No se contabilizan como verificadas.</p>':'')+
       '<small>No se infieren visitas, logros ni cumplimiento por una fecha o un estado sin sustento.</small>';
+  }
+
+  // Follow-up is recurring, not limited to one annual visit per grade or
+  // one annual agreement. Delegate clicks so controls still work when
+  // a saved monitoring plan is reopened after a browser reload.
+  function bindMonitoringControls(host,persist){
+    const editor=host?.querySelector('.dd-editable-material');
+    if(!editor?.querySelector('.dd-monitoring-controls'))return;
+    editor.addEventListener('click',event=>{
+      const btn=event.target.closest('[data-dd-monitor-add-visit],[data-dd-monitor-add-agreement]');
+      if(!btn||!editor.contains(btn))return;
+      const visit=btn.hasAttribute('data-dd-monitor-add-visit');
+      const body=editor.querySelector(visit?'.dd-monitoring-table tbody':'.dd-monitoring-agreements tbody');
+      if(!body)return;
+      const row=document.createElement('tr');
+      row.innerHTML=Array.from({length:6},(_,i)=>{
+        const initial=visit&&i===5?'Pendiente':'';
+        return '<td contenteditable="true">'+initial+'</td>';
+      }).join('');
+      body.appendChild(row);
+      updateMonitoringSummary(host);
+      persist();
+    });
+  }
+
+  // Keep editing controls in the saved plan, never in its exported DOCX.
+  function directorWordHtml(html){
+    const wrapper=document.createElement('div');
+    wrapper.innerHTML=html;
+    wrapper.querySelectorAll('.dd-monitoring-controls').forEach(el=>el.remove());
+    return wrapper.innerHTML;
   }
 
   function renderDocument(item){
@@ -149,6 +180,7 @@
     // Reopening a saved monitoring plan must immediately recompute its true
     // follow-up counts from the recorded evidence, not trust a stale summary.
     updateMonitoringSummary(box);
+    bindMonitoringControls(box,saveCurrent);
     box.querySelector('.dd-editable-material')?.addEventListener('input',()=>{
       updateMonitoringSummary(box);
       saveCurrent();
@@ -166,8 +198,9 @@
   function downloadCurrent(){
     saveCurrent();
     const item=state.lastDirectorDoc;if(!item)return;
-    if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml(item.type,item.html,false,item.type+'_'+item.title);
-    downloadBlob(wordBlob(item.type,item.html),cleanFileName(item.type+'_'+item.title)+'.doc');
+    const wordHtml=directorWordHtml(item.html);
+    if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml(item.type,wordHtml,false,item.type+'_'+item.title);
+    downloadBlob(wordBlob(item.type,wordHtml),cleanFileName(item.type+'_'+item.title)+'.doc');
   }
 
   function openPlan(){
@@ -200,11 +233,17 @@
       <p>Registra observaciones REALES cuando se efectúen; esta tabla no acredita visitas, logros ni desempeños.</p>
       <div class="dd-scroll"><table class="dd-table dd-monitoring-table">
       <thead><tr><th>Grado / sección</th><th>Fecha programada</th><th>Foco de observación</th><th>Responsable</th><th>Evidencia recogida</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="actions dd-monitoring-controls" contenteditable="false">
+        <button type="button" data-dd-real-action="true" data-dd-monitor-add-visit class="btn alt">+ Añadir otra visita</button>
+      </div>
       <h2>IX. Retroalimentación y compromisos verificables</h2>
       <p>Redacta hallazgos sustentados, acuerdos consensuados y una fecha de verificación después de cada acompañamiento.</p>
       <div class="dd-scroll"><table class="dd-table dd-monitoring-agreements">
       <thead><tr><th>Grado / fecha</th><th>Hallazgo con evidencia</th><th>Compromiso</th><th>Responsable</th><th>Fecha de revisión</th><th>Verificación / resultado</th></tr></thead>
       <tbody><tr>${Array.from({length:6},()=>'<td contenteditable="true"></td>').join('')}</tr></tbody></table></div>
+      <div class="actions dd-monitoring-controls" contenteditable="false">
+        <button type="button" data-dd-real-action="true" data-dd-monitor-add-agreement class="btn alt">+ Añadir otro acuerdo</button>
+      </div>
       <h2>X. Seguimiento de acuerdos</h2>
       <p contenteditable="true">Pendiente de evidencia: registrar si los compromisos se cumplieron y qué ajustes se requieren, con fecha y sustento.</p>
       <h2>XI. Base normativa verificada</h2>
@@ -248,11 +287,13 @@
     $('ddPlanSave').onclick=savePlanCurrent;
     updateMonitoringSummary(box);
     savePlanCurrent();
+    bindMonitoringControls(box,savePlanCurrent);
     box.querySelector('.dd-editable-material')?.addEventListener('input',savePlanCurrent);
     $('ddPlanWord').onclick=()=>{
       savePlanCurrent();
-      if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml(item.title,item.html,false,item.title);
-      downloadBlob(wordBlob(item.title,item.html),cleanFileName(item.title)+'.doc');
+      const wordHtml=directorWordHtml(item.html);
+      if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml(item.title,wordHtml,false,item.title);
+      downloadBlob(wordBlob(item.title,wordHtml),cleanFileName(item.title)+'.doc');
     };
     $('ddPlanPrint').onclick=()=>window.print();
   }
