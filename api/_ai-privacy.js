@@ -3,7 +3,10 @@
 // without labels, addresses and rare identifiers still require teacher review.
 function redactPersonalData(value){
   return String(value??'')
-    .replace(/\b(estudiante|alumn[oa])\s*:\s*[A-ZÁÉÍÓÚÑ][a-záéíóúñ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñ]*)*(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñ]*)*){0,3}/gi,'$1: [nombre omitido]')
+    // Case-insensitive labels but CASE-SENSITIVE name tokens: a trailing
+    // lower-case verb ("aprende a sembrar") must not be mistaken for a surname.
+    // Permit particles (de la / del) and uppercase names common in school lists.
+    .replace(/\b([Ee][Ss][Tt][Uu][Dd][Ii][Aa][Nn][Tt][Ee]|[Aa][Ll][Uu][Mm][Nn][AaOo])\s*:\s*[A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*)*(?:\s+(?:(?:de|del|la|las|los|y)\s+){0,3}[A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*)*){0,5}/g,'$1: [nombre omitido]')
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,'[correo omitido]')
     // Also redact labeled DNI with grouped digits (spaces, dots, hyphens or slashes).
     .replace(/\b(?:DNI|D\.N\.I\.?|documento(?: nacional)? de identidad)\s*(?:N[°º.]?\s*)?[:#-]?\s*\d(?:[\s.\/-]?\d){7}(?!\d)/gi,'DNI [omitido]')

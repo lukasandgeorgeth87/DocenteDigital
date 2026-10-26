@@ -216,6 +216,21 @@ try{
   assert.match(hyphenatedPrivacyPayload,/DNI \[omitido\]/);
   assert.match(hyphenatedPrivacyPayload,/hortalizas/);
 
+  // Compound surnames with lower-case particles previously leaked "de la Cruz".
+  // The old /i expression also erased verbs following a student's first name.
+  res=await call(ai,'POST',{task:'material',
+    prompt:'Estudiante: Ana María de la Cruz aprende a sembrar hortalizas.',
+    context:{sourceText:'ESTUDIANTE: JOSÉ DE LA CRUZ. Registro de semillas de lechuga.'}
+  });
+  assert.equal(res.statusCode,200);
+  const compoundNamePayload=JSON.stringify(JSON.parse(captured.options.body));
+  for(const leak of ['Ana María','de la Cruz','JOSÉ DE LA CRUZ'])
+    assert.equal(compoundNamePayload.includes(leak),false,'Compound name leaked to GPT: '+leak);
+  assert.match(compoundNamePayload,/aprende a sembrar hortalizas/,
+    'Name redaction must preserve the learning activity after a labeled pupil');
+  assert.match(compoundNamePayload,/Registro de semillas de lechuga/,
+    'Name redaction must preserve context after an uppercase pupil name');
+
   res=await call(ai,'POST',{task:'material',prompt:'Ficha de hortalizas',context:{
     purpose:'Aprender a sembrar hortalizas',product:'Biohuerto escolar',
     criterion:'Justifica la selección de semillas',evidence:'Registro de siembra'
@@ -319,6 +334,13 @@ try{
   for(const leak of ['Ana-María','Pérez','1234/5678'])
     assert.equal(hyphenatedImagePrompt.includes(leak),false,'Unredacted private identifier in image prompt: '+leak);
   assert.match(hyphenatedImagePrompt,/Dibuja hortalizas/);
+  res=await call(image,'POST',{prompt:'Dibuja hortalizas. Alumna: María de la Cruz observa semillas.',confirmedCredit:true});
+  assert.equal(res.statusCode,200);
+  const compoundImagePrompt=JSON.parse(captured.options.body).prompt;
+  for(const leak of ['María de la Cruz','de la Cruz'])
+    assert.equal(compoundImagePrompt.includes(leak),false,'Compound name leaked to image provider: '+leak);
+  assert.match(compoundImagePrompt,/observa semillas/,
+    'Image prompt lost its pedagogical action after removing a name');
 
   // Provider HTTP 200 with a nonempty base64 string that is not PNG must fail.
   globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:'ZmFrZS1wbmc='}]})});
