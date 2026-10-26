@@ -386,7 +386,7 @@ try {
   await visitFields.nth(2).fill('Sin registro');
   assert((await initialSummary.innerText()).includes('Programaciones completas: 0'),
     'Director contó marcadores pendientes como programación completa');
-  await visitFields.nth(0).fill('');
+  await visitFields.nth(0).fill('3.º · segunda visita');
   await visitFields.nth(1).fill('');
   await visitFields.nth(2).fill('');
   await page.locator('#ddPlanResult [data-dd-monitor-add-agreement]').click();
