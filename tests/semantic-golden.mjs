@@ -321,6 +321,62 @@ try{
   assert(missingGradeCriterion.validGrade === '1.º' && missingGradeCriterion.validText.includes('CRITERIO_1_UNICO'),
     'evaluación: el criterio legítimo de 1.º dejó de funcionar');
 
+  // Pedagogical integrity: levels and next-step suggestions without actual
+  // observed evidence must not produce invented conclusions or feedback.
+  const evidenceGate = await page.evaluate(() => {
+    const previous = {
+      units: window.state.units, activeUnitId: window.state.activeUnitId,
+      evaluationRecords: window.state.evaluationRecords
+    };
+    const host = document.getElementById('evaluation');
+    const fixture = host || document.createElement('section');
+    if (!host) { fixture.id = 'evaluation'; document.body.appendChild(fixture); }
+    try {
+      const unit = {
+        id:'test-evidence-required', title:'Evaluación ficticia sin evidencia',
+        grades:['3.º'], areas:['Matemática'], purposes:[]
+      };
+      const record = {
+        unitId:unit.id, grade:'3.º', area:'Matemática',
+        criterion:'Explica un reparto con objetos', student:'ESTUDIANTE_FICTICIO',
+        level:'A', evidenceNote:'', nextStep:'Practicar otro reparto'
+      };
+      window.state.units = [...(previous.units || []), unit];
+      window.state.activeUnitId = unit.id;
+      window.state.evaluationRecords = [...(previous.evaluationRecords || []), record];
+      window.DDEvaluation.openConclusions();
+      const noEvidenceConclusion =
+        document.querySelector('#ddConBody textarea')?.value || '';
+      window.DDEvaluation.openFeedback();
+      const noEvidenceFeedback =
+        document.querySelector('#ddFbBody textarea')?.value || '';
+      record.evidenceNote = 'Representó ocho fichas en dos grupos iguales';
+      window.DDEvaluation.openConclusions();
+      const withEvidenceConclusion =
+        document.querySelector('#ddConBody textarea')?.value || '';
+      window.DDEvaluation.openFeedback();
+      const withEvidenceFeedback =
+        document.querySelector('#ddFbBody textarea')?.value || '';
+      return {noEvidenceConclusion,noEvidenceFeedback,
+        withEvidenceConclusion,withEvidenceFeedback};
+    } finally {
+      window.state.units = previous.units;
+      window.state.activeUnitId = previous.activeUnitId;
+      window.state.evaluationRecords = previous.evaluationRecords;
+      if (!host) fixture.remove();
+      window.save();
+    }
+  });
+  assert(/Falta registrar una evidencia observada/.test(evidenceGate.noEvidenceConclusion) &&
+    !/evidencia los aprendizajes esperados|demuestra un desempeño destacado/.test(evidenceGate.noEvidenceConclusion),
+    'evaluación: conclusión afirmó logros sin evidencia: '+JSON.stringify(evidenceGate));
+  assert(/Falta registrar una evidencia observada/.test(evidenceGate.noEvidenceFeedback) &&
+    !/Fortaleza observada|muestra avances/.test(evidenceGate.noEvidenceFeedback),
+    'evaluación: retroalimentación inventó fortalezas sin evidencia: '+JSON.stringify(evidenceGate));
+  assert(evidenceGate.withEvidenceConclusion.includes('Representó ocho fichas') &&
+    evidenceGate.withEvidenceFeedback.includes('Representó ocho fichas'),
+    'evaluación: la evidencia legítima dejó de alimentar conclusiones/retroalimentación: '+JSON.stringify(evidenceGate));
+
   // Security regression: CSV export must not execute user-provided spreadsheet
   // formulas. Download the actual file from the real Evaluation UI.
   await page.evaluate(() => window.go('evaluation'));
