@@ -138,7 +138,15 @@
   function downloadCsv(unit,grade){
     var rows=state.evaluationRecords.filter(function(r){return r.unitId===((unit&&unit.id)||'')&&r.grade===grade;});
     var all=[['Estudiante','Grado','Área','Criterio','Nivel','Evidencia observada','Siguiente paso']].concat(rows.map(function(r){return [r.student,r.grade,r.area,r.criterion,label(r.level),r.evidenceNote,r.nextStep];}));
-    var csv=all.map(function(row){return row.map(function(v){return '"'+String(v||'').replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+    // CSV quoting does not prevent spreadsheet formula execution. Student codes,
+    // teacher notes and criteria are untrusted text; force formula-like cells
+    // to be interpreted as literal text when opened in Excel/Sheets.
+    function safeCsvCell(value){
+      var cell=String(value==null?'':value);
+      if(/^[\\s\\uFEFF]*[=+\\-@]/.test(cell)||/^[\\t\\r\\n]/.test(cell))cell="'"+cell;
+      return '"'+cell.replace(/"/g,'""')+'"';
+    }
+    var csv=all.map(function(row){return row.map(safeCsvCell).join(',');}).join('\n');
     downloadBlob(new Blob(['\ufeff',csv],{type:'text/csv;charset=utf-8'}),cleanFileName('Registro_evaluacion_'+((unit&&unit.title)||grade))+'.csv');
   }
 
