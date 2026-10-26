@@ -203,6 +203,19 @@ try{
   assert.ok(spacedDniPayload.includes('DNI [omitido]'));
   assert.ok(spacedDniPayload.includes('hortalizas'),'Privacy redaction removed the learning topic');
 
+  // Regression: hyphenated pupil names and slash-separated DNI must not reach GPT.
+  res=await call(ai,'POST',{task:'material',
+    prompt:'Prepara una ficha para Alumna: Ana-María Pérez. D.N.I. 1234/5678.',
+    context:{sourceText:'Estudiante: José-Luis Quispe; cultivamos hortalizas.'}
+  });
+  assert.equal(res.statusCode,200);
+  const hyphenatedPrivacyPayload=JSON.stringify(JSON.parse(captured.options.body));
+  for(const leak of ['Ana-María','Pérez','José-Luis','Quispe','1234/5678'])
+    assert.equal(hyphenatedPrivacyPayload.includes(leak),false,'Unredacted private identifier in GPT payload: '+leak);
+  assert.match(hyphenatedPrivacyPayload,/\[nombre omitido\]/);
+  assert.match(hyphenatedPrivacyPayload,/DNI \[omitido\]/);
+  assert.match(hyphenatedPrivacyPayload,/hortalizas/);
+
   res=await call(ai,'POST',{task:'material',prompt:'Ficha de hortalizas',context:{
     purpose:'Aprender a sembrar hortalizas',product:'Biohuerto escolar',
     criterion:'Justifica la selección de semillas',evidence:'Registro de siembra'
@@ -299,6 +312,13 @@ try{
   const groupedDniImagePrompt=JSON.parse(captured.options.body).prompt;
   assert.equal(groupedDniImagePrompt.includes('1122.3344'),false,'Formatted DNI leaked to image provider');
   assert.match(groupedDniImagePrompt,/Dibuja hortalizas/);
+
+  res=await call(image,'POST',{prompt:'Dibuja hortalizas. Alumna: Ana-María Pérez; D.N.I. 1234/5678.',confirmedCredit:true});
+  assert.equal(res.statusCode,200);
+  const hyphenatedImagePrompt=JSON.parse(captured.options.body).prompt;
+  for(const leak of ['Ana-María','Pérez','1234/5678'])
+    assert.equal(hyphenatedImagePrompt.includes(leak),false,'Unredacted private identifier in image prompt: '+leak);
+  assert.match(hyphenatedImagePrompt,/Dibuja hortalizas/);
 
   // Provider HTTP 200 with a nonempty base64 string that is not PNG must fail.
   globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:'ZmFrZS1wbmc='}]})});
