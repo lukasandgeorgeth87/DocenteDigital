@@ -12,7 +12,10 @@
   save();
 
   function activeUnit(){
-    return (state.units||[]).find(function(u){return u.id===state.activeUnitId;})||(state.units||[])[0]||null;
+    // An explicitly selected unit may have been deleted or removed by restore.
+    // Never substitute a different unit when displaying student evaluation data.
+    if(state.activeUnitId)return (state.units||[]).find(function(u){return u.id===state.activeUnitId;})||null;
+    return (state.units||[])[0]||null;
   }
 
   function purposes(unit){
@@ -25,12 +28,17 @@
   }
 
   function criteriaFor(unit,grade,area){
+    // A stale unit selection must not show another unit's criteria or a
+    // previous session's assessment evidence.
+    if(state.activeUnitId&&!unit)return [];
     var out=[];
     purposes(unit).filter(function(p){return !area||p.area===area;}).forEach(function(p){
       var c=(p.criteria||[]).find(function(x){return String(x.grade)===String(grade);})||(p.criteria||[])[0];
       if(c&&c.text)out.push({area:p.area,criterion:c.text,evidence:p.evidence||'',instrument:p.instrument||''});
     });
-    if(!out.length&&state.lastSession){
+    if(!out.length&&state.lastSession&&
+      (unit ? state.lastSession.unitId===unit.id : !state.activeUnitId&&!state.lastSession.unitId) &&
+      (!area||state.lastSession.area===area)){
       out.push({area:state.lastSession.area||area||'Área',criterion:state.lastSession.criterion||'Criterio de evaluación',evidence:state.lastSession.evidence||'',instrument:state.lastSession.instrument||''});
     }
     return out;
