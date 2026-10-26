@@ -47,10 +47,12 @@
     if(state.activeUnitId&&!unit)return [];
     var out=[];
     purposes(unit).filter(function(p){return !area||p.area===area;}).forEach(function(p){
-      var c=(p.criteria||[]).find(function(x){return String(x.grade)===String(grade);})||(p.criteria||[])[0];
+      // Criteria are grade-specific. A missing grade must never inherit the first
+      // available grade's criterion (especially in multigrade classrooms).
+      var c=(p.criteria||[]).find(function(x){return String(x.grade).trim()===String(grade).trim();});
       if(c&&c.text)out.push({area:p.area,criterion:c.text,evidence:p.evidence||'',instrument:p.instrument||''});
     });
-    if(!out.length&&state.lastSession&&
+    if(!out.length&&(!unit||!Array.isArray(unit.purposes)||!unit.purposes.length)&&state.lastSession&&
       (unit ? state.lastSession.unitId===unit.id : !state.activeUnitId&&!state.lastSession.unitId) &&
       (!area||state.lastSession.area===area)){
       out.push({area:state.lastSession.area||area||'Área',criterion:state.lastSession.criterion||'Criterio de evaluación',evidence:state.lastSession.evidence||'',instrument:state.lastSession.instrument||''});
