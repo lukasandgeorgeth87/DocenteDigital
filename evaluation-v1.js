@@ -6,6 +6,20 @@
   var $=function(id){return document.getElementById(id);};
   var E=function(v){return escapeHtml(v);};
 
+  // The simplified planning shell can replace the evaluation screen markup.
+  // Recreate the output panel on demand instead of silently ignoring clicks.
+  function ensureEvaluationPanel(){
+    var panel=ensureEvaluationPanel();
+    if(panel)return panel;
+    var screen=$('evaluation');
+    if(!screen)return null;
+    panel=document.createElement('div');
+    panel.id='evaluationPanel';
+    panel.className='card hidden topgap';
+    screen.appendChild(panel);
+    return panel;
+  }
+
   state.evaluationRecords=Array.isArray(state.evaluationRecords)?state.evaluationRecords:[];
   state.studentRoster=state.studentRoster&&typeof state.studentRoster==='object'?state.studentRoster:{};
   state.generatedAssessments=Array.isArray(state.generatedAssessments)?state.generatedAssessments:[];
@@ -69,7 +83,7 @@
   }
 
   function openRegister(){
-    var unit=activeUnit(),panel=$('evaluationPanel');if(!panel)return;
+    var unit=activeUnit(),panel=ensureEvaluationPanel();if(!panel)return;
     var grades=(unit&&unit.grades)||state.grades||[],areas=(unit&&unit.areas)||state.areas||[];
     panel.classList.remove('hidden');
     panel.innerHTML=context(unit)+'<h2>📋 Registro de evaluación</h2><p class="sub">Los criterios se recuperan de la planificación. El docente registra la evidencia observada; DocenteDigital no inventa resultados. Durante la Beta usa iniciales o códigos y evita datos sensibles.</p><div class="form2"><label>Grado / edad<select id="ddEvalGrade">'+grades.map(function(g){return '<option>'+E(g)+'</option>';}).join('')+'</select></label><label>Área<select id="ddEvalArea"><option value="">Todas las áreas</option>'+areas.map(function(a){return '<option>'+E(a)+'</option>';}).join('')+'</select></label></div><div class="actions"><button class="btn alt" id="ddEvalRoster">👥 Editar estudiantes</button><button class="btn" id="ddEvalLoad">Cargar criterios</button></div><div id="ddEvalBody" class="topgap"></div>';
@@ -168,7 +182,7 @@
   }
 
   function openAssessment(){
-    var unit=activeUnit(),panel=$('evaluationPanel');if(!panel)return;
+    var unit=activeUnit(),panel=ensureEvaluationPanel();if(!panel)return;
     var grades=(unit&&unit.grades)||state.grades||[],areas=(unit&&unit.areas)||state.areas||[];
     panel.classList.remove('hidden');
     panel.innerHTML=context(unit)+'<h2>🧪 Evaluación de unidad/proyecto</h2><p class="sub">La evaluación se construye desde criterios y evidencias. DocenteDigital sugiere una técnica e instrumento pertinente, pero el docente puede cambiarlo.</p><div class="form2"><label>Grado / edad<select id="ddAssGrade">'+grades.map(function(g){return '<option>'+E(g)+'</option>';}).join('')+'</select></label><label>Área<select id="ddAssArea">'+areas.map(function(a){return '<option>'+E(a)+'</option>';}).join('')+'</select></label><label>Modalidad<select id="ddAssType"><option>Mixta</option><option>Escrita</option><option>Oral</option><option>Desempeño</option></select></label><label>Instrumento<select id="ddAssInstrument">'+instrumentOptions('Automático según evidencia')+'</select></label><label>Número de tareas<select id="ddAssCount"><option>4</option><option selected>6</option><option>8</option><option>10</option></select></label></div><div class="actions"><button class="btn" id="ddAssCreate">✨ Construir evaluación</button></div><div id="ddAssBody" class="topgap"></div>';
@@ -211,7 +225,7 @@
   }
 
   function openConclusions(forcedGrade){
-    var unit=activeUnit(),panel=$('evaluationPanel');if(!panel)return;
+    var unit=activeUnit(),panel=ensureEvaluationPanel();if(!panel)return;
     var grades=(unit&&unit.grades)||state.grades||[],areas=(unit&&unit.areas)||state.areas||[],grade=forcedGrade||grades[0]||'';
     panel.classList.remove('hidden');
     panel.innerHTML=context(unit)+'<h2>📝 Borradores de conclusiones descriptivas</h2><p class="sub">Se construyen con las evidencias y niveles ya registrados. El docente revisa y valida cada texto antes de usarlo.</p><div class="form2"><label>Grado / edad<select id="ddConGrade">'+grades.map(function(g){return '<option '+(g===grade?'selected':'')+'>'+E(g)+'</option>';}).join('')+'</select></label><label>Área<select id="ddConArea"><option value="">Todas las áreas</option>'+areas.map(function(a){return '<option>'+E(a)+'</option>';}).join('')+'</select></label></div><div class="actions"><button class="btn" id="ddConGenerate">Generar desde registros</button></div><div id="ddConBody" class="topgap"></div>';
@@ -243,7 +257,7 @@
   }
 
   function openRubric(){
-    var unit=activeUnit(),panel=$('evaluationPanel');if(!panel)return;
+    var unit=activeUnit(),panel=ensureEvaluationPanel();if(!panel)return;
     var grades=(unit&&unit.grades)||state.grades||[],areas=(unit&&unit.areas)||state.areas||[];
     panel.classList.remove('hidden');
     panel.innerHTML=context(unit)+'<h2>📏 Rúbrica desde mis criterios</h2><p class="sub">DocenteDigital no cambia el criterio de la planificación: solo propone descriptores observables para que el docente los revise y edite.</p><div class="form2"><label>Grado / edad<select id="ddRubGrade">'+grades.map(function(g){return '<option>'+E(g)+'</option>';}).join('')+'</select></label><label>Área<select id="ddRubArea">'+areas.map(function(a){return '<option>'+E(a)+'</option>';}).join('')+'</select></label></div><div class="actions"><button class="btn" id="ddRubBuild">✨ Construir rúbrica</button></div><div id="ddRubBody" class="topgap"></div>';
@@ -281,7 +295,7 @@
   }
 
   function openFeedback(){
-    var unit=activeUnit(),panel=$('evaluationPanel');if(!panel)return;
+    var unit=activeUnit(),panel=ensureEvaluationPanel();if(!panel)return;
     var grades=(unit&&unit.grades)||state.grades||[],areas=(unit&&unit.areas)||state.areas||[];
     panel.classList.remove('hidden');
     panel.innerHTML=context(unit)+'<h2>💬 Retroalimentación y siguiente paso</h2><p class="sub">Se construye únicamente con evidencias ya registradas. El borrador queda oculto para el estudiante hasta que el docente lo revise.</p><div class="form2"><label>Grado / edad<select id="ddFbGrade">'+grades.map(function(g){return '<option>'+E(g)+'</option>';}).join('')+'</select></label><label>Área<select id="ddFbArea"><option value="">Todas las áreas</option>'+areas.map(function(a){return '<option>'+E(a)+'</option>';}).join('')+'</select></label></div><div class="actions"><button class="btn" id="ddFbBuild">Preparar borradores</button></div><div id="ddFbBody" class="topgap"></div>';
