@@ -152,8 +152,38 @@
   // Each assessment item must ask for a different observable action. The
   // previous implementation repeated the same generic prompt 4–10 times.
   // These are editable task prompts, NOT verified MINEDU performances.
-  function assessmentTask(area,grade,index){
+  function assessmentTask(area,grade,index,unit){
     var n=parseInt(String(grade||'').match(/\d+/)?.[0]||'1',10);
+    // Only select division examples when the teacher's approved planning
+    // explicitly refers to division/repartition. Other maths units retain
+    // their existing tasks rather than inheriting an unrelated topic.
+    var planningText=[unit&&unit.title,unit&&unit.situationBrief,unit&&unit.situation,unit&&unit.reto]
+      .filter(Boolean).join(' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    if(area==='Matemática' && /division|dividir|reparto|repartir|mitad|mitades/.test(planningText)){
+      var divisionTasks=n<=2?[
+        'Observa 10 panes dibujados. Repártelos en dos grupos iguales. ¿Cuántos panes recibe cada grupo?',
+        'Dibuja 8 semillas y marca la mitad. ¿Cuántas semillas marcaste?',
+        'Representa con fichas el reparto de 12 objetos entre dos personas. Dibuja los dos grupos.',
+        'Comprueba con dibujos si 6 panes pueden repartirse por igual entre dos niñas o niños.',
+        'Una familia tiene 14 tarjetas y entrega la mitad a otra familia. ¿Cuántas tarjetas entrega?',
+        'Explica con material concreto por qué dos grupos de 5 forman 10 objetos.'
+      ]:n>=5?[
+        'Identifica los datos: cinco familias reparten S/ 87,50 en partes iguales. ¿Cuánto corresponde a cada familia?',
+        'Calcula 145 ÷ 6. Expresa el cociente entero y el residuo; interpreta qué representa cada uno.',
+        'Se distribuyen S/ 156 entre 8 equipos. Resuelve y comprueba el resultado mediante multiplicación.',
+        'Compara 87,50 ÷ 5 y 87,50 ÷ 10. Justifica cuál entrega mayor cantidad por persona.',
+        'Un comité dispone de 145 tarjetas para 6 grupos. ¿Cuántas recibe cada grupo y cuántas quedan sin repartir?',
+        'Diseña un reparto con decimales que tenga resultado exacto y explica cómo lo verificas.'
+      ]:[
+        'Identifica los datos: 24 panes se reparten entre 4 familias. ¿Cuántos recibe cada una?',
+        'Representa con grupos o un esquema la operación 25 ÷ 4. ¿Cuántos recibe cada grupo y cuántos sobran?',
+        'Resuelve 36 ÷ 3 y comprueba el resultado con una multiplicación.',
+        'Compara el reparto de 24 objetos entre 4 personas y entre 6 personas. ¿Qué cambia?',
+        'Una familia distribuye 29 tarjetas entre 5 grupos. Calcula el cociente y el residuo.',
+        'Inventa un reparto exacto de 32 semillas, resuélvelo y explica por qué no sobra ninguna.'
+      ];
+      return divisionTasks[index%divisionTasks.length];
+    }
     var early=state.level==='Inicial'||n<=2;
     var advanced=!early&&n>=5;
     var steps;
@@ -305,7 +335,7 @@
     var chosenInstrument=$('ddAssInstrument')?.value||'Automático según evidencia';
     var instrument=chosenInstrument==='Automático según evidencia'?recommendedInstrument(state.level,type,area,cs.length):chosenInstrument;
     var technique=evaluationTechnique(state.level,type,area);
-    var items=[];for(var i=0;i<count;i++){var c=cs[i%cs.length];items.push({task:assessmentTask(area,grade,i),criterion:c.criterion});}
+    var items=[];for(var i=0;i<count;i++){var c=cs[i%cs.length];items.push({task:assessmentTask(area,grade,i,unit),criterion:c.criterion});}
     var situation=String((unit&&(unit.situationBrief||unit.situation))||'').trim();
     var product=String((unit&&(unit.selectionApproved&&unit.productTitle||unit.product))||'').trim();
     var reference='<div class="dd-assessment-reference">'+(situation?'<p><b>Situación de partida:</b> '+E(situation)+'</p>':'')+(product?'<p><b>Producto vinculado:</b> '+E(product)+'</p>':'')+'</div>';
