@@ -138,6 +138,17 @@ try{
   // independiente: volver a la raíz después de restaurar un perfil válido.
   await page.goto(baseUrl,{waitUntil:'networkidle'});
   await waitPlanningRuntime();
+  // A late autosave in the old document must never overwrite the snapshot
+  // that the recovery handler has just restored before location.reload().
+  const restoreWriteProtected=await page.evaluate(()=>{
+    const key='docenteDigitalPrototype',original=localStorage.getItem(key);
+    window.__ddRestoreNavigationPending=true;
+    try{
+      localStorage.setItem(key,JSON.stringify({units:[],lastSession:null}));
+      return localStorage.getItem(key)===original;
+    }finally{window.__ddRestoreNavigationPending=false;}
+  });
+  assert(restoreWriteProtected,'Un autosave tardío sobrescribió el estado durante la restauración');
   await page.waitForFunction(()=>typeof window.ddDocxSelfTest==='function',null,{timeout:10000});
   const beforePlan=await page.evaluate(()=>({
     active:document.querySelector('.screen.active')?.id||'',
