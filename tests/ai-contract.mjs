@@ -138,6 +138,18 @@ try{
   assert.equal(payload.text.format.strict,true);
   assert.equal(payload.input[0].content[0].text.includes('studentName'),false);
   assert.equal(payload.input[0].content[0].text.includes('Ccotataqui'),true);
+  assert.match(payload.instructions,/YA saben o practican/,'The provider must distinguish prior knowledge from the new challenge');
+  assert.match(payload.instructions,/propósito → actividad por grado → evidencia → criterio/,'The provider must receive pedagogical traceability rules');
+  res=await call(ai,'POST',{task:'material',prompt:'Ficha de hortalizas',context:{
+    purpose:'Aprender a sembrar hortalizas',product:'Biohuerto escolar',
+    criterion:'Justifica la selección de semillas',evidence:'Registro de siembra'
+  }});
+  assert.equal(res.statusCode,200);
+  const materialPayload=JSON.parse(captured.options.body);
+  assert.match(materialPayload.instructions,/aprendizaje NUEVO/);
+  for(const value of ['Aprender a sembrar hortalizas','Biohuerto escolar','Justifica la selección de semillas','Registro de siembra'])
+    assert.ok(materialPayload.input[0].content[0].text.includes(value),'Missing linked material context: '+value);
+
 
   await call(ai,'POST',{task:'significant_situation',prompt:'Unidad',quality:'high'});
   assert.equal(JSON.parse(captured.options.body).model,'gpt-6.1-sol');
