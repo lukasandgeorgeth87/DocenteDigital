@@ -96,6 +96,20 @@ assert.equal(isolated.product,'Biohuerto demostrativo aprobado');
 assert.equal(isolated.criterion,'');
 assert.equal(isolated.evidence,'');
 assert.equal(isolated.topic,'Biohuerto','Stale sessions must fall back to the active unit topic');
+// An orphan session from a previously closed unit must never contaminate
+// a new planning flow when no unit is selected.
+window.state.activeUnitId=null;
+window.state.lastSession.unitId='u1';
+await window.DDOpenAI.request('material','Ficha para un nuevo contexto sin unidad');
+const orphan=JSON.parse(captured.body).context;
+for(const key of ['title','brief','purpose','product','criterion','evidence'])
+  assert.equal(orphan[key],'',key+' must not leak from orphan session when no unit is active');
+assert.equal(orphan.topic,'','Old session title must not be reused without active unit');
+await window.DDOpenAI.request('session_strategy','Estrategia para un nuevo contexto');
+const orphanStrategy=JSON.parse(captured.body).context;
+for(const key of ['purpose','criterion','evidence'])
+  assert.equal(orphanStrategy[key],'',key+' must not leak into session strategy without active unit');
+window.state.activeUnitId='u1';
 window.state.lastSession.unitId='u1';
 nodes.unitTitle.value='';
 nodes.unitSituation.value='';
