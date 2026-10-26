@@ -121,13 +121,17 @@
     const visits=readRows('.dd-monitoring-table tbody tr');
     const agreements=readRows('.dd-monitoring-agreements tbody tr');
     const completed=status=>/^(realizad[ao]|completad[ao]|verificad[ao])\b/i.test(status||'');
+    // Free-text placeholders are NOT evidence. In particular "Pendiente de
+    // verificación", "Sin evidencia" and "No se verificó" must never raise
+    // completed counters in the Director dashboard or exported Word.
+    const missingRecord=value=>/^(?:pendiente\b|sin\s+(?:evidencia|sustento|verificaci[oó]n|verificar|registro)\b|no\s+(?:(?:hay|existe)\b|(?:se\s+)?(?:ha\s+)?(?:verific|registr|recog|realiz)\w*)|por\s+(?:completar|verificar|registrar)\b|a[uú]n\s+no\b|ningun[ao]?\b|n\/a\b)/i.test(String(value||'').trim());
+    const hasRecord=value=>!!String(value||'').trim()&&!missingRecord(value);
     const scheduled=visits.filter(cols=>cols[1]&&cols[2]&&cols[3]).length;
-    const realized=visits.filter(cols=>completed(cols[5])&&cols[4]).length;
-    const unsupported=visits.filter(cols=>completed(cols[5])&&!cols[4]).length;
+    const realized=visits.filter(cols=>completed(cols[5])&&hasRecord(cols[4])).length;
+    const unsupported=visits.filter(cols=>completed(cols[5])&&!hasRecord(cols[4])).length;
     const commitments=agreements.filter(cols=>cols[2]&&cols[3]&&cols[4]).length;
     const checked=agreements.filter(cols=>
-      cols[1]&&cols[2]&&cols[3]&&cols[4]&&cols[5]&&
-      !/^(pendiente|por completar|sin verificar)$/i.test(cols[5])).length;
+      hasRecord(cols[1])&&cols[2]&&cols[3]&&cols[4]&&hasRecord(cols[5])).length;
     summary.innerHTML='<b>Resumen de seguimiento (solo registros verificables)</b>'+
       '<p>Registros de visitas: '+visits.length+
       ' · Programaciones completas: '+scheduled+

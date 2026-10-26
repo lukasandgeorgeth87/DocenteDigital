@@ -392,6 +392,10 @@ try {
   assert((await initialSummary.innerText()).includes('SIN evidencia registrada')&&
     (await initialSummary.innerText()).includes('Visitas realizadas con evidencia: 0'),
     'Director contabilizó como realizada una visita sin evidencia');
+  await monitoringRow.locator('td[contenteditable="true"]').nth(3).fill('Sin evidencia registrada');
+  assert((await initialSummary.innerText()).includes('Visitas realizadas con evidencia: 0')&&
+    (await initialSummary.innerText()).includes('SIN evidencia registrada'),
+    'Director contó el marcador «Sin evidencia» como evidencia de visita');
   await monitoringRow.locator('td[contenteditable="true"]').nth(3).fill(
     'Evidencia de prueba: notas sobre consignas diferenciadas.');
   assert((await initialSummary.innerText()).includes('Visitas realizadas con evidencia: 1')&&
@@ -409,10 +413,22 @@ try {
   assert((await initialSummary.innerText()).includes('Compromisos con responsable y plazo: 1')&&
     (await initialSummary.innerText()).includes('Acuerdos con verificación registrada: 0'),
     'La programación de un acuerdo no debe inventar su verificación');
+  await agreements.locator('td[contenteditable="true"]').nth(5).fill('Pendiente de verificación');
+  assert((await initialSummary.innerText()).includes('Acuerdos con verificación registrada: 0'),
+    'Director contó «Pendiente de verificación» como acuerdo verificado');
+  await agreements.locator('td[contenteditable="true"]').nth(5).fill('No se verificó todavía');
+  assert((await initialSummary.innerText()).includes('Acuerdos con verificación registrada: 0'),
+    'Director contó «No se verificó» como acuerdo verificado');
   await agreements.locator('td[contenteditable="true"]').nth(5).fill(
     'Verificación ficticia registrada, exclusivamente para ensayo automatizado.');
   assert((await initialSummary.innerText()).includes('Acuerdos con verificación registrada: 1'),
     'El seguimiento no reconoció la verificación explícitamente sustentada');
+  await agreements.locator('td[contenteditable="true"]').nth(1).fill('Sin evidencia');
+  assert((await initialSummary.innerText()).includes('Acuerdos con verificación registrada: 0'),
+    'Director contó un acuerdo sin hallazgo sustentado como verificado');
+  await agreements.locator('td[contenteditable="true"]').nth(1).fill('Evidencia de prueba de observación');
+  assert((await initialSummary.innerText()).includes('Acuerdos con verificación registrada: 1'),
+    'Director no restauró el conteo al registrar evidencia del hallazgo');
   const monitoredState=await state();
   assert(monitoredState.lastDirectorDoc?.type==='Plan'&&
     monitoredState.lastDirectorDoc.html.includes('COMPROMISO_FICTICIO')&&

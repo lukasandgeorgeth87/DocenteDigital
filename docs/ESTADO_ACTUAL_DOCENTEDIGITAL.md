@@ -1,5 +1,17 @@
 # DocenteDigital — estado canónico para continuidad entre conversaciones
 
+## Estado más reciente — 26/10/2026, 13:18 (Perú) — Director: marcadores sin evidencia NO cuentan como verificación
+
+- **Repo/rama:** `lukasandgeorgeth87/DocenteDigital` / `audit/v5-continuity-offline-diagnostic`. **SHA base antes de este cambio:** `6069db28361960295dcc9d544c2e2f0106a6cd3d` (documentación sobre commit funcional `e5be5cc4419fc81c14637e4d8efbe079c141cd91`). **SHA de este commit de código+pruebas+estado:** consultar HEAD GitHub; no puede autoincluirse. Producción y datos reales sin cambios.
+- **Corrección funcional:** `director-v1.js` ya no considera los marcadores «Sin evidencia», «Pendiente de verificación», «No se verificó» o «No hay evidencia» como sustento para contabilizar visitas realizadas o acuerdos verificados. Los contadores y Word continúan basándose en evidencia efectivamente escrita, sin inferir cumplimiento. Es una heurística de texto libre, no una auditoría documental ni certificación de visitas.
+- **Prueba nueva:** `tests/beta-e2e.mjs` añade regresiones de marcadores negativos de visita, acuerdo y hallazgo, y comprueba la restauración del conteo tras ingresar evidencia ficticia. **Prueba directa de patrones 9 casos PASS** y **parseo JS del módulo PASS** en esta ejecución; **GitHub Actions del nuevo SHA PENDIENTE** hasta confirmación, no atribuirle PASS. **CI del SHA anterior `e5be5cc4` PASS**, run [40374713909](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40374713909), jobs `browser-e2e` y `ai-context-fast` SUCCESS.
+- **Preview comprobado anterior a este cambio:** Vercel `6069db28361960295dcc9d544c2e2f0106a6cd3d` **READY**, https://docente-digital-jdcn91lnr-jorgeluispalma87-7403.vercel.app ; GET `/api/ai-status` **HTTP 200** (26/10/2026 13:17 Perú): `configured:true`, `enabled:false`, `quota_configured:false`, `verified:false`. **Preview del nuevo SHA pendiente**, no presentar el anterior como nuevo.
+- **Módulos:** Director **parcial** con monitoreo multigrado, registros repetidos, resumen prudente, autoguardado, historial y Word en casos CI; unidad/proyecto, sesiones, materiales 1.º/3.º/5.º, evaluación, exportación DOCX y persistencia local **parciales**; plantillas locales respaldo sin IA. GPT real **NO disponible** por ausencia de Redis Upstash para cuota atómica, persistencia multiusuario y piloto humano no verificados, app PC futura sin implementar.
+- **S0–S4:** S0 ningún nuevo incidente crítico; **S1** Redis y primera generación GPT privada con cuota y acceso comprobados; **S2** prueba integral y revisión curricular/humana del flujo docente y Director; **S3** UX/accesibilidad móvil; **S4** app PC futura. **Siguiente:** comprobar CI E2E y Preview SHA exacto de este cambio; después configurar cuota segura Redis en Preview con permisos, probar GPT solo con datos ficticios y validar beta docente/director.
+- **Decisiones:** GPT principal solo tras cuota+acceso+autorización; plantillas respaldo rotuladas; PC posterior. **Métricas sin incremento:** desarrollo funcional histórico **75 % estimado** y cierre V5 **21/100**. Matriz: runtime 10, UX 10, IA 15, flujo docente 15, materiales 10, evaluación 10, director 10, persistencia/exportación 8, CI/CD 7, seguridad/piloto 5.
+
+
+
 
 
 
