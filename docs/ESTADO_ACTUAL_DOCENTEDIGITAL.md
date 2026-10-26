@@ -1,5 +1,28 @@
 # DocenteDigital — estado canónico para continuidad entre conversaciones
 
+
+## Resumen vigente — 26/10/2026, 04:00:50 (Perú) — evaluación de división con diez tareas distintas, CI PASS
+
+- **Repositorio/rama única:** `lukasandgeorgeth87/DocenteDigital` / `audit/v5-continuity-offline-diagnostic`. **Último SHA funcional/de prueba verificado:** `dc8e5f8764a6de3a6b26e681def54bd5db0553ee`. Este documento crea un SHA posterior; consultar el HEAD de GitHub para el SHA absoluto. El antecedente de continuidad `e1a0de32b12518005b09837f2992a6c065f72f21` se conserva; esta ejecución no repitió una prueba aislada de ese commit antiguo.
+- **Corrección visible:** `76f1d603`, archivo `evaluation-v1.js`: la modalidad de evaluación de división ya no repite las seis primeras consignas al solicitar **8 o 10 tareas**. Hay **diez consignas distintas** por grado: 1.º reparto solo entre dos con objetos/dibujos; 3.º exactas e inexactas; 5.º decimales, cociente y residuo. Se corrigió además la consigna que decía «10 panes dibujados» sin proporcionar dibujo: ahora solicita dibujarlos. Los ejemplos son ficticios y editables, no datos locales ni desempeños CNEB certificados.
+- **Regresión en navegador:** `e845bf6d`, `b406accc`, `dc8e5f87` en `tests/semantic-golden.mjs`. El caso construye una unidad ficticia de división, solicita 10 consignas en **1.º, 3.º y 5.º**, verifica **30 tareas / 10 únicas por grado** y presencia de cantidades en al menos nueve por grado, y restaura el estado original. `e845bf6d` produjo **FAIL** en run **40295778217** por un error en la propia aserción (regex escapada incorrectamente); se corrigió en `b406accc` y se aisló mejor el estado de prueba en `dc8e5f87`.
+- **CI confirmado:** run **40295898269** sobre SHA **`dc8e5f87`**, **completed/success**; jobs `ai-context-fast` y `browser-e2e` **PASS**, incluida `semantic-golden`. También run **40295797661** sobre `b406accc` **PASS**. Evidencias: https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40295898269 y https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40295778217 . No se realizó piloto humano ni prueba de GPT real.
+- **Preview comprobada:** Vercel **READY** para SHA `dc8e5f87`: https://docente-digital-50t6r3ihv-jorgeluispalma87-7403.vercel.app . Verificados **HTTP 200** en `/` y `/api/ai-status`. Estado de IA: `configured:false`, `enabled:false`, `access_configured:false`, `quota_configured:false`; **GPT real NO disponible**. No se tocaron producción/main ni datos reales.
+- **Módulos funcionales/parciales/no disponibles:** runtime y UX, unidad/proyecto, sesión, materiales EIB, evaluación, Director, DOCX, respaldo/restauración y CI/CD cuentan con pruebas automatizadas pero su integración pedagógica y uso docente siguen **PARCIALES**. La generación de diez tareas diferenciadas de división tiene **PASS automatizado**. **No disponibles o no verificados:** GPT real con seguridad/cuotas, autenticación individual, Redis/persistencia remota, PDF integral, piloto privado docente y aplicación PC.
+- **Riesgos S0–S4:** **S0** sin bloqueo nuevo confirmado; **S1** privacidad, acceso y cuota durable para GPT pagado; **S2** coherencia y revisión curricular integral contexto→unidad→sesión→materiales→evaluación, datos reales de piloto, PDF y calidad de consignas de otras áreas; **S3** UX móvil y edición; **S4** app PC futura. **Próximo paso verificable:** ejecutar con datos ficticios una cadena completa de planificación a evaluación y DOCX, revisando si propósito, evidencia y criterio se conservan, antes de activar GPT real.
+- **Decisiones vigentes:** GPT será motor principal **solo tras** autorización y controles de seguridad/cuota con pruebas reales; plantillas locales son **respaldo identificado**, no equivalentes a GPT; app PC **posterior** a la beta web.
+- **Métricas sin inflación:** desarrollo funcional histórico **75 % estimado**; cierre V5 **21/100** (sin aumento por esta corrección aislada). Matriz de cierre: runtime **10**, UX **10**, IA **15**, flujo docente **15**, materiales **10**, evaluación **10**, director **10**, persistencia/exportación **8**, CI/CD **7**, seguridad/piloto **5**.
+
+### Bitácora de esta ejecución
+
+- `76f1d603` — `evaluation-v1.js`: cuatro tareas adicionales de división por grado y corrección de instrucción visual falsa.
+- `e845bf6d` — `tests/semantic-golden.mjs`: nueva prueba de diez consignas por grado; **FAIL** inicial por error de aserción.
+- `b406accc` — `tests/semantic-golden.mjs`: corrige regex y admite una tarea abierta; **PASS** run `40295797661`.
+- `dc8e5f87` — `tests/semantic-golden.mjs`: restaura arreglo de evaluaciones sin contaminar fixtures; **PASS** run `40295898269`.
+- **Archivos modificados:** `evaluation-v1.js`, `tests/semantic-golden.mjs`, y este documento canónico. **Producción y datos reales intactos.**
+
+---
+
 ## Resumen vigente — 26/10/2026, 02:28 (Perú) — problemas matemáticos contextualizados y reexportación Word corregida, CI PASS
 
 - **Repositorio/rama:** `lukasandgeorgeth87/DocenteDigital` / `audit/v5-continuity-offline-diagnostic`. **Último SHA funcional y pruebas verificadas:** `2f8091e289827063c541e79ead567cd83c105a05`; este documento genera un commit posterior y el HEAD absoluto debe consultarse en GitHub. Producción/main y datos reales intactos.
