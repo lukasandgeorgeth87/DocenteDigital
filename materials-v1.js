@@ -241,6 +241,32 @@
       `Representa mediante dibujo, modelado o movimiento algo que descubriste sobre ${topic}.`,
       'Comparte tu descubrimiento con un compañero.'
     ];
+    // A division worksheet must contain solvable numerical tasks, not only
+    // generic prompts about choosing a strategy. All figures are practice data.
+    if(area==='Matemática' && /division|repart|mitad|cociente/.test(N(topic))){
+      const t=N(topic);
+      const objects=/choclo|tamal|wawa|pan|fiesta|santos/.test(t)?'panes':
+        /semill|biohuerto|huerto|cultivo/.test(t)?'semillas':
+        /gasto|presupuesto|compra|precio/.test(t)?'monedas':'fichas';
+      if(n<=2)return [
+        `Dibuja 10 ${objects} y repártelos por igual entre 2 grupos. ¿Cuántos quedan en cada grupo?`,
+        `Representa la mitad de 8 ${objects} con dibujos o material concreto.`,
+        'Marca la mitad de 12: 4, 6 u 8. Comprueba formando dos grupos iguales.',
+        `Inventa un reparto de ${objects} entre 2 grupos y dibuja cómo lo resolviste.`
+      ];
+      if(n<=4)return [
+        `Reparte 24 ${objects} entre 4 grupos iguales. Escribe la división y comprueba con una multiplicación.`,
+        `Reparte 25 ${objects} entre 4 grupos. ¿Cuántos recibe cada uno y cuántos sobran?`,
+        'Explica con un dibujo por qué 25 ÷ 4 tiene residuo y 24 ÷ 4 es exacta.',
+        'Crea otro problema de reparto inexacto y comprueba que el residuo sea menor que el divisor.'
+      ];
+      return [
+        'Presupuesto hipotético: cinco familias comparten S/ 87.50. ¿Cuánto aporta cada familia? Divide con decimales y comprueba multiplicando.',
+        `Se reparten 145 ${objects} entre 6 grupos. Halla el cociente y el residuo; interpreta qué hacer con lo que sobra.`,
+        'Comprueba el reparto anterior usando dividendo = divisor × cociente + residuo.',
+        'Explica por qué un residuo de 1 unidad no se interpreta igual que S/ 0.10 en un reparto de dinero.'
+      ];
+    }
     if(area==='Matemática')return [
       `Representa una situación relacionada con ${topic} usando material, dibujo, esquema, tabla o expresión matemática.`,
       'Identifica los datos necesarios y explica qué se necesita hallar.',
