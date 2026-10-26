@@ -64,6 +64,9 @@
     if(document.body)showStorageWarning();else window.addEventListener('DOMContentLoaded',showStorageWarning,{once:true});
   }
   Storage.prototype.setItem=function(key,value){
+    // Restore writes the authoritative snapshot immediately before navigation.
+    // Delayed autosave callbacks from the old page must not overwrite it.
+    if(this===localStorage && key===KEY && window.__ddRestoreNavigationPending)return undefined;
     try{return nativeSetItem.call(this,key,value)}
     catch(error){
       const quota=error&&(error.name==='QuotaExceededError'||error.name==='NS_ERROR_DOM_QUOTA_REACHED'||error.code===22||error.code===1014);
@@ -131,10 +134,12 @@
       try{
         const parsed=JSON.parse(localStorage.getItem(RESET_BACKUP_KEY)||'null');
         if(!parsed||typeof parsed.data!=='string')throw new Error('Copia inválida');
+        window.__ddRestoreNavigationPending=true;
         nativeSetItem.call(localStorage,KEY,parsed.data);
         localStorage.removeItem(RESET_BACKUP_KEY);
         location.reload();
       }catch(error){
+        window.__ddRestoreNavigationPending=false;
         alert('No se pudo restaurar la copia guardada. No se eliminará automáticamente.');
         console.warn('DocenteDigital: fallo al restaurar copia de restablecimiento.',error);
       }
