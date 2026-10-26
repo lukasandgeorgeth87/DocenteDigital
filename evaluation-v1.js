@@ -393,7 +393,10 @@
   }
 
   function conclusion(student,recs){
-    var valid=recs.filter(function(r){return r.level;});if(!valid.length)return '';
+    var valid=recs.filter(function(r){return r.level&&String(r.evidenceNote||'').trim();});
+    // A selected achievement level alone is not an observable learning trace.
+    // Do not claim that a student demonstrated learning without recorded evidence.
+    if(!valid.length)return 'Falta registrar una evidencia observada junto con el nivel de logro. No se puede redactar una conclusión descriptiva sustentada todavía.';
     var counts={C:0,B:0,A:0,AD:0};valid.forEach(function(r){counts[r.level]=(counts[r.level]||0)+1;});
     var dominant=['AD','A','B','C'].sort(function(a,b){return counts[b]-counts[a];})[0];
     var good=valid.find(function(r){return r.level==='AD'||r.level==='A';})||valid[0];
@@ -464,8 +467,9 @@
   }
 
   function feedbackText(student,recs){
-    var valid=recs.filter(function(r){return r.level||r.evidenceNote||r.nextStep;});
-    if(!valid.length)return '';
+    var valid=recs.filter(function(r){return String(r.evidenceNote||'').trim();});
+    // Next steps and achievement levels are not substitutes for observed work.
+    if(!valid.length)return 'Falta registrar una evidencia observada antes de proponer retroalimentación individual sustentada.';
     var strongest=valid.find(function(r){return r.level==='AD'||r.level==='A';})||valid[0];
     var need=valid.find(function(r){return r.level==='C'||r.level==='B';})||valid[valid.length-1];
     var strength=strongest.evidenceNote
