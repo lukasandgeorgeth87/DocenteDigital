@@ -19,9 +19,16 @@
   function safeContext(extra={},task=''){
     const s=appState(),t=s.teacherContext||{},u=(s.units||[]).find(x=>x.id===s.activeUnitId)||{};
     const linked=task==='material'||task==='session_strategy';
-    // Never borrow a session from a different unit when building materials.
-    const session=linked && s.lastSession && (!u.id || s.lastSession.unitId===u.id)
-      ? s.lastSession : {};
+    const materialSource=task==='material'?(document.getElementById('materialSource')?.value||'session'):'session';
+    const unitLinked=linked&&materialSource!=='free';
+    // Only use a session from the active unit, and only when the teacher
+    // explicitly selected session materials (or requests session strategies).
+    const candidate=s.lastSession;
+    const session=unitLinked&&materialSource==='session'&&candidate&&(!u.id||candidate.unitId===u.id)
+      ? candidate : {};
+    const unitProduct=u.selectionApproved&&String(u.productTitle||'').trim()&&
+      !['Producto final','Producto propuesto por el docente'].includes(String(u.productTitle).trim())
+      ? u.productTitle : u.product||'';
     const ctx={
       level:s.level||'',
       ieType:s.ieType||'',
@@ -37,19 +44,19 @@
       province:t.province||'',
       region:t.region||'',
       ugel:t.ugel||'',
-      planningType:document.getElementById('unitType')?.value||u.type||'',
-      duration:document.getElementById('unitDuration')?.value||u.duration||'',
-      title:document.getElementById('unitTitle')?.value||u.title||'',
-      brief:document.getElementById('unitSituation')?.value||u.situationBrief||'',
-      // Only carry approved prior-unit fields into downstream work. A new unit's
-      // title/situation proposals must not inherit an unrelated active unit.
-      purpose:linked?(session.purpose||u.reto||u.purpose||''):'',
-      product:linked?(u.product||''):'',
+      // A draft of the NEXT unit may remain in the planning form. It must not
+      // override the approved unit when generating downstream resources.
+      planningType:linked?(unitLinked?u.type||'':''):(document.getElementById('unitType')?.value||u.type||''),
+      duration:linked?(unitLinked?u.duration||'':''):(document.getElementById('unitDuration')?.value||u.duration||''),
+      title:linked?(unitLinked?u.title||'':''):(document.getElementById('unitTitle')?.value||u.title||''),
+      brief:linked?(session.brief||(unitLinked?(u.situation||u.situationBrief||''):'')):(document.getElementById('unitSituation')?.value||u.situationBrief||''),
+      purpose:linked?(session.purpose||(unitLinked?(u.reto||u.purpose||''):'')):'',
+      product:unitLinked?unitProduct:'',
       criterion:linked?(session.criterion||''):'',
       evidence:linked?(session.evidence||''):'',
-      area:document.getElementById('materialArea')?.value||session.area||'',
+      area:document.getElementById('materialArea')?.value||session.area||(unitLinked?(u.areas||[])[0]||'':''),
       grade:document.getElementById('materialGrade')?.value||'',
-      topic:document.getElementById('materialTopic')?.value||session.title||'',
+      topic:document.getElementById('materialTopic')?.value||session.title||(unitLinked?u.title||'':''),
       teacherInstruction:document.getElementById('materialInstruction')?.value||'',
       sourceText:document.getElementById('materialSourceText')?.value||''
     };
