@@ -1,5 +1,28 @@
 # DocenteDigital — estado canónico para continuidad entre conversaciones
 
+## Resumen vigente — 26/10/2026, 02:28 (Perú) — problemas matemáticos contextualizados y reexportación Word corregida, CI PASS
+
+- **Repositorio/rama:** `lukasandgeorgeth87/DocenteDigital` / `audit/v5-continuity-offline-diagnostic`. **Último SHA funcional y pruebas verificadas:** `2f8091e289827063c541e79ead567cd83c105a05`; este documento genera un commit posterior y el HEAD absoluto debe consultarse en GitHub. Producción/main y datos reales intactos.
+- **Mejora de Evaluación:** `35d020b5` en `evaluation-v1.js`: cuando la unidad de Matemática trata explícitamente **división, reparto o mitad**, genera seis problemas **numéricos concretos y diferenciados**: 1.º mitades y reparto entre dos; 3.º división exacta/inexacta; 5.º decimales y residuo. Para otros temas conserva las tareas existentes, sin imponer división. Los números son ejemplos ficticios de práctica, no hechos de la comunidad ni estándares oficiales.
+- **Fallo real detectado y corregido:** el run `40285041964` para `67d4c12b` terminó **FAIL** en `tests/beta-e2e.mjs`, línea 239: **timeout esperando segunda descarga Word** después de cambiar el contenido, aunque el botón se pulsó. Causa identificada: `docx-export-v29.js` descartaba silenciosamente durante 1200 ms una nueva descarga si el **nombre de archivo coincidía**, incluso cuando el contenido había cambiado. Corrección `4af1b608`: el bloqueo de doble clic ahora considera también el **contenido HTML**, permitiendo exportar inmediatamente una edición nueva con el mismo nombre sin duplicar un clic idéntico.
+- **Pruebas nuevas:** `67d4c12b` en `tests/beta-e2e.mjs` verifica en Chromium tres grados con problemas numéricos, descarga DOCX con `87,50` y restaura contexto ficticio original. `2f8091e2` en `tests/docx-structure.mjs` verifica **dos DOCX consecutivos con el mismo nombre y contenido distinto**, ambos descargados con su contenido correcto, y confirma que una tercera descarga **idéntica** se bloquea para evitar doble clic accidental.
+- **CI final comprobado:** GitHub Actions run **40285732388**, SHA `2f8091e2`, estado **completed/success**, **PASS** `ai-context-fast` y **PASS** `browser-e2e`, incluida regresión de evaluación y Word. https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40285732388 . El FAIL previo **40285041964** se conserva como evidencia de la corrección, no se oculta. Este PASS no certifica calidad pedagógica humana.
+- **Vercel:** preview correspondiente al SHA probado `2f8091e2` **READY**: https://docente-digital-c6axt1xmw-jorgeluispalma87-7403.vercel.app . **HTTP 200 verificados** en `/` y `/api/ai-status`. IA reporta `configured:false`, `enabled:false`, `access_configured:false`, `quota_configured:false`, `verified:false`. **GPT real no habilitado**; plantillas locales continúan como respaldo identificado.
+- **Módulos:** runtime, UX, unidad/proyecto, sesión, materiales EIB, evaluación diferenciada, Director, DOCX, respaldo/restauración y CI/CD **parciales con pruebas automatizadas**. Evaluación de división y reexportación Word tienen ahora **prueba real PASS**. **No disponibles/verificados:** GPT real seguro, cuotas Redis y autenticación individual, persistencia remota, PDF integral, revisión curricular humana, piloto docente y aplicación PC.
+- **Riesgos S0–S4:** **S0** sin incidencias nuevas demostradas; **S1** seguridad/privacidad/acceso/cuota para GPT pagado antes de habilitarlo; **S2** coherencia completa contexto→unidad/proyecto→sesión→materiales→evaluación, validez curricular y piloto real; **S3** experiencia móvil y edición; **S4** app PC futura. **Siguiente paso:** validar coherencia pedagógica de una unidad completa con un caso ficticio, ampliar temas matemáticos más allá de división sin suponer contexto, y preparar piloto privado con acceso seguro.
+- **Decisiones y porcentajes:** GPT **principal solo después** de controles de seguridad, pruebas con proveedor real y autorización; plantillas locales **respaldo rotulado**; aplicación PC futura posterior a beta web. Desarrollo funcional histórico **75 % estimado**; cierre V5 **21/100** sin incremento por esta prueba parcial. Matriz: runtime 10, UX 10, IA 15, flujo docente 15, materiales 10, evaluación 10, director 10, persistencia/exportación 8, CI/CD 7, seguridad/piloto 5.
+
+### Bitácora acumulada — 26/10/2026, 02:17–02:28 (Perú)
+
+- `35d020b5` — `evaluation-v1.js`: seis problemas matemáticos numéricos diferenciados para división explícita.
+- `67d4c12b` — `tests/beta-e2e.mjs`: tres grados, problemas y Word; run **40285041964 FAIL** por segunda descarga silenciada.
+- `2808709b` — primer registro de continuidad con navegador pendiente; CI posterior evidenció FAIL.
+- `4af1b608` — `docx-export-v29.js`: reexportación inmediata si el HTML cambia aunque el nombre coincida.
+- `2f8091e2` — `tests/docx-structure.mjs`: dos exportaciones distintas y una repetición idéntica bloqueada; run **40285732388 PASS** en IA y navegador, beta READY y HTTP 200.
+
+---
+
+
 ## Resumen vigente — 26/10/2026, 02:23 (Perú) — evaluación de división con problemas concretos por grado
 
 - **Rama exclusiva:** `audit/v5-continuity-offline-diagnostic` del repositorio `lukasandgeorgeth87/DocenteDigital`. **Último SHA de prueba incorporada:** `67d4c12b02d85d79381231b53f607559807cc1b7` (el HEAD cambia al guardar este documento). **Commit funcional:** `35d020b56768e91d23a6d27ec916ed30689c70d2`.
