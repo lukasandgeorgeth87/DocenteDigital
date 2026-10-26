@@ -184,6 +184,40 @@ try {
   assert(await page.evaluate(() => typeof window.DDEvaluation?.openRubric === 'function'), 'Rúbrica no está conectada');
   assert(await page.evaluate(() => typeof window.DDEvaluation?.openFeedback === 'function'), 'Retroalimentación no está conectada');
 
+  // Regression: the assessment generator used to repeat one generic task
+  // six times, without the teacher-approved situation or product.
+  await page.evaluate(() => window.DDEvaluation.openAssessment());
+  await page.locator('#ddAssGrade').waitFor({state:'visible'});
+  await page.locator('#ddAssArea').selectOption({label:'Matemática'});
+  await page.locator('#ddAssCount').selectOption('6');
+  const assessmentTasks = {};
+  for (const grade of ['1.º', '3.º', '5.º']) {
+    await page.locator('#ddAssGrade').selectOption({label:grade});
+    await page.locator('#ddAssCreate').click();
+    const tasks = (await page.locator('#ddAssBody .dd-assessment-sheet ol li > p:first-child').allTextContents()).map(x=>x.trim());
+    assert(tasks.length === 6, `Evaluación ${grade}: se esperaban 6 tareas, hay ${tasks.length}`);
+    assert(new Set(tasks).size === 6, `Evaluación ${grade}: consignas repetidas`);
+    assert((await page.locator('#ddAssBody .dd-assessment-sheet ol li .dd-small').count()) >= 6,
+      `Evaluación ${grade}: las tareas no muestran el criterio asociado`);
+    assessmentTasks[grade] = tasks;
+  }
+  assert(assessmentTasks['1.º'][0].includes('Observa'), 'Evaluación 1.º no propone una acción concreta accesible');
+  assert(assessmentTasks['5.º'][0].includes('Identifica los datos'), 'Evaluación 5.º no exige análisis de datos');
+  assert(assessmentTasks['1.º'][0] !== assessmentTasks['5.º'][0], 'Evaluación no diferencia 1.º y 5.º');
+  const assessmentBody = await page.locator('#ddAssBody').innerText();
+  assert(assessmentBody.includes(brief), 'La evaluación perdió la situación original aprobada');
+  assert(assessmentBody.includes('Producto vinculado:'), 'La evaluación no muestra el producto de la unidad');
+  const assessmentState = await state();
+  assert(assessmentState.lastAssessment?.unitId === assessmentState.activeUnitId,
+    'La evaluación generada no quedó vinculada a la unidad activa');
+  const assessmentDownloadPromise = page.waitForEvent('download');
+  await page.locator('#ddAssWord').click();
+  const assessmentDownload = await assessmentDownloadPromise;
+  assert(assessmentDownload.suggestedFilename().endsWith('.docx'), 'La evaluación no descargó DOCX');
+  const assessmentBytes = await fs.readFile(await assessmentDownload.path());
+  assert(docxDocumentXml(assessmentBytes).includes('Identifica los datos'),
+    'El DOCX de evaluación no conserva la consigna diferenciada de 5.º');
+
   // A visible button is not proof of a usable assessment: save a synthetic
   // student's evidence, reload later and verify it survives persistence.
   await page.evaluate(() => window.DDEvaluation.openRegister());
