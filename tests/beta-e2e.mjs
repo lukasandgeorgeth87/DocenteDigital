@@ -379,6 +379,16 @@ try {
     'Director cannot schedule a repeat observation for the same grade');
   const secondVisit=page.locator('#ddPlanResult .dd-monitoring-table tbody tr').last();
   await secondVisit.locator('td[contenteditable="true"]').first().fill('3.º · segunda visita');
+  // Placeholder text in date/focus/responsible must not fabricate a complete schedule.
+  const visitFields=secondVisit.locator('td[contenteditable="true"]');
+  await visitFields.nth(0).fill('Por completar');
+  await visitFields.nth(1).fill('Pendiente de definir');
+  await visitFields.nth(2).fill('Sin registro');
+  assert((await initialSummary.innerText()).includes('Programaciones completas: 0'),
+    'Director contó marcadores pendientes como programación completa');
+  await visitFields.nth(0).fill('');
+  await visitFields.nth(1).fill('');
+  await visitFields.nth(2).fill('');
   await page.locator('#ddPlanResult [data-dd-monitor-add-agreement]').click();
   assert(await page.locator('#ddPlanResult .dd-monitoring-agreements tbody tr').count()===2,
     'Director cannot record a second agreement');
@@ -407,6 +417,11 @@ try {
   const followup=page.locator('#ddPlanResult .dd-monitoring-agreements tbody td[contenteditable="true"]').nth(2);
   await followup.fill('COMPROMISO_FICTICIO: revisar consignas diferenciadas por grado.');
   const agreements=page.locator('#ddPlanResult .dd-monitoring-agreements tbody tr').first();
+  // A commitment with pending owner/date is NOT a fully assigned commitment.
+  await agreements.locator('td[contenteditable="true"]').nth(3).fill('Pendiente de asignar');
+  await agreements.locator('td[contenteditable="true"]').nth(4).fill('Por completar');
+  assert((await initialSummary.innerText()).includes('Compromisos con responsable y plazo: 0'),
+    'Director contó marcadores pendientes como responsable y plazo reales');
   await agreements.locator('td[contenteditable="true"]').nth(1).fill('Evidencia de prueba de observación');
   await agreements.locator('td[contenteditable="true"]').nth(3).fill('Responsable ficticio');
   await agreements.locator('td[contenteditable="true"]').nth(4).fill('2027-04-22');
