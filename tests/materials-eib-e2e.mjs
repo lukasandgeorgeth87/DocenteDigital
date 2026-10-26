@@ -249,6 +249,14 @@ try {
     assert(!content.includes('Representa una situación relacionada con'),
       'Ficha de división de ' + grade + ' volvió a consignas genéricas');
   }
+  // Verify that the same grade-specific exercises survive Word export.
+  const [mathDownload] = await Promise.all([
+    page.waitForEvent('download', { timeout: 20000 }),
+    page.evaluate(() => window.DDMaterials.downloadWord())
+  ]);
+  const mathXml = docxDocumentXml(await fs.readFile(await mathDownload.path()));
+  assert(mathXml.includes('S/ 87.50') && mathXml.includes('145 monedas'),
+    'El DOCX de división perdió los ejercicios numéricos de 5.º');
   console.log('MATERIALS_DIVISION_WORKSHEETS_PASS');
   console.log('MATERIALS_DIVISION_GRADES_PASS');
   console.log('MATERIALS_EIB_PASS');
