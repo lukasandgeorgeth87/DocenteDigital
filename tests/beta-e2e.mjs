@@ -218,6 +218,36 @@ try {
   assert(docxDocumentXml(assessmentBytes).includes('Identifica los datos'),
     'El DOCX de evaluación no conserva la consigna diferenciada de 5.º');
 
+  // Regression: an explicitly approved division context must produce solvable,
+  // differentiated numerical problems rather than generic instructions.
+  await page.evaluate(() => {
+    const u = state.units.find(x => x.id === state.activeUnitId);
+    window.__ddPreviousAssessmentSituation = u.situationBrief;
+    u.situationBrief = 'En Matemática practicamos la división, el reparto y la mitad con cantidades de la comunidad.';
+    save();
+    window.DDEvaluation.openAssessment();
+  });
+  await page.locator('#ddAssArea').selectOption({label:'Matemática'});
+  for(const [grade,expected] of [['1.º','10 panes'],['3.º','24 panes'],['5.º','87,50']]){
+    await page.locator('#ddAssGrade').selectOption({label:grade});
+    await page.locator('#ddAssCreate').click();
+    const generated=(await page.locator('#ddAssBody .dd-assessment-sheet ol li > p:first-child').allTextContents()).join(' ');
+    assert(generated.includes(expected), `Evaluación contextualizada ${grade}: falta problema numérico ${expected}`);
+    assert(generated.includes('÷') || /repart/i.test(generated),
+      `Evaluación contextualizada ${grade}: no presenta reparto o división`);
+  }
+  const divisionWordPromise=page.waitForEvent('download');
+  await page.locator('#ddAssWord').click();
+  const divisionWord=await divisionWordPromise;
+  assert(docxDocumentXml(await fs.readFile(await divisionWord.path())).includes('87,50'),
+    'El DOCX de evaluación contextualizada perdió el problema decimal de 5.º');
+  await page.evaluate(() => {
+    const u = state.units.find(x => x.id === state.activeUnitId);
+    u.situationBrief = window.__ddPreviousAssessmentSituation;
+    delete window.__ddPreviousAssessmentSituation;
+    save();
+  });
+
   // A visible button is not proof of a usable assessment: save a synthetic
   // student's evidence, reload later and verify it survives persistence.
   await page.evaluate(() => window.DDEvaluation.openRegister());
