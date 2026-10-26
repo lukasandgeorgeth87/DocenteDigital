@@ -35,7 +35,7 @@ const window={
   proposeUnitTitleOptions(){return ['Exploramos nuestro patrimonio','Conocemos las pinturas rupestres'];},
   ddPlanningRegressionV51:{
     preview(raw){
-      return /biohuerto escolar.*hortalizas/i.test(raw)
+      return /biohuerto escolar/i.test(raw) && /hortalizas/i.test(raw)
         ? {situations:[{text:'Aprovechamos lo que sabemos de la siembra de papas para aprender a sembrar hortalizas en el biohuerto escolar.'}]}
         : null;
     }
