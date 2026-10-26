@@ -12,10 +12,20 @@
   function read(){
     try{
       const d=JSON.parse(localStorage.getItem(KEY)||'null');
-      if(!d||typeof d!=='object')return null;
-      if(!d.savedAt||Date.now()-new Date(d.savedAt).getTime()>MAX_AGE_MS){localStorage.removeItem(KEY);return null;}
+      if(!d||typeof d!=='object'||Array.isArray(d))return null;
+      const savedAt=typeof d.savedAt==='string'?Date.parse(d.savedAt):NaN;
+      const age=Date.now()-savedAt;
+      // Rechazar fechas ilegibles, borradores caducados y relojes muy adelantados.
+      if(!Number.isFinite(savedAt)||age>MAX_AGE_MS||age<-(5*60*1000)){
+        localStorage.removeItem(KEY);
+        return null;
+      }
       return d;
-    }catch(_e){return null;}
+    }catch(_e){
+      // Un JSON dañado no debe reaparecer indefinidamente en cada inicio.
+      try{localStorage.removeItem(KEY);}catch(_ignored){}
+      return null;
+    }
   }
   function current(){
     return {

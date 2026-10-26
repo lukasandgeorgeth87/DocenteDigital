@@ -75,6 +75,29 @@ try{
   await openUnitDraft();
   await page.waitForFunction(expected=>document.getElementById('unitSituation')?.value===expected,draftText,{timeout:10000});
   assert(await page.locator('#unitSituation').inputValue()===draftText,'El borrador no reapareció después de recargar');
+  // Regression: corrupt, expired or future-dated local drafts must not be restored.
+  const draftValidation=await page.evaluate(()=>{
+    const key='docenteDigitalBetaDraftUnit',api=window.ddBetaDraftAutosave;
+    const base={title:'Unidad ficticia',situation:'Solo datos de prueba',type:'Unidad de aprendizaje',duration:'3 semanas'};
+    const check=savedAt=>{
+      localStorage.setItem(key,JSON.stringify({...base,savedAt}));
+      const recovered=!!api.read();
+      return {recovered,cleared:localStorage.getItem(key)===null};
+    };
+    const valid=check(new Date(Date.now()-60000).toISOString());
+    const expired=check(new Date(Date.now()-8*24*60*60*1000).toISOString());
+    const malformed=check('fecha-no-valida');
+    const future=check(new Date(Date.now()+24*60*60*1000).toISOString());
+    localStorage.setItem(key,'{json-incompleto');
+    const corrupt=api.read()===null&&localStorage.getItem(key)===null;
+    return {valid,expired,malformed,future,corrupt};
+  });
+  assert(draftValidation.valid.recovered,'Se rechazó un borrador local reciente válido');
+  for(const key of ['expired','malformed','future']){
+    assert(!draftValidation[key].recovered&&draftValidation[key].cleared,
+      'Se aceptó un borrador con fecha inválida o caducada: '+key);
+  }
+  assert(draftValidation.corrupt,'Un borrador JSON corrupto quedó almacenado tras leerlo');
   await page.evaluate(()=>window.ddBetaDraftAutosave.clear());
 
   console.log('CONTINUITY 2/5 Exportación e importación de respaldo JSON');

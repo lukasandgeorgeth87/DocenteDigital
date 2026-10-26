@@ -1,7 +1,15 @@
 # DocenteDigital — estado canónico para continuidad entre conversaciones
 
+## Estado más reciente — 26/10/2026, 09:20 (Perú) — integridad del autoguardado local
 
+- **Repositorio/rama:** `lukasandgeorgeth87/DocenteDigital` / `audit/v5-continuity-offline-diagnostic`. **SHA anterior confirmado:** `7a507eee3c4ceab03cc15bd891f084467c8393ca`; **SHA del cambio actual:** consultar HEAD de esta rama (este documento se incorpora en el mismo commit que el código y las pruebas). Continuidad desde `e1a0de32b12518005b09837f2992a6c065f72f21`: comparación GitHub previa **224 commits adelante, 0 detrás**.
+- **Cambio real de código:** `beta-draft-autosave-v1.js` rechaza borradores locales con fecha ilegible, más de siete días de antigüedad o fecha futura superior a cinco minutos; elimina JSON corrupto en vez de intentar recuperarlo indefinidamente. No cambia producción ni datos reales.
+- **Regresión nueva:** `tests/continuity-resilience.mjs` comprueba borrador válido, caducado, fecha malformada, fecha futura y JSON roto con almacenamiento ficticio. **PASS/FAIL del nuevo commit: PENDIENTE de GitHub Actions**; no presentar esta prueba como ejecutada hasta comprobar CI. Último PASS completo previo: commit `966e726ca7812ed9d0b8472e9d81dff613d7de6e`, run https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40336915886.
+- **Vercel:** última Preview comprobada READY para `966e726`: https://docente-digital-jm0foeetz-jorgeluispalma87-7403.vercel.app . El SHA documental `7a507eee` registró status Vercel **FAIL por límite de builds**; NO hay despliegue del cambio actual verificado. No afirmar HTTP 200 de este nuevo SHA.
+- **Módulos:** parciales: unidad/proyecto, sesiones, materiales, evaluación, Director, Word, persistencia local; respaldo por plantillas explícito. **No disponibles/verificados:** GPT real, beta con autenticación individual propia, persistencia multiusuario, piloto humano, app PC. **S0:** sin incidente nuevo; **S1:** secretos OpenAI/Redis/acceso Preview y límite de builds; **S2:** prueba integral y calidad curricular; **S3:** UX móvil; **S4:** PC futura.
+- **Próximo paso:** verificar CI del commit nuevo y Preview SHA exacto cuando Vercel lo permita; después probar cadena pedagógica completa con datos ficticios. **Decisión:** GPT principal solo con autorización, seguridad y cuotas verificadas; plantillas de respaldo sin simular GPT; PC futura. **Métricas sin cambios:** 75 % funcional histórico estimado y 21/100 cierre V5 (runtime 10, UX 10, IA 15, flujo docente 15, materiales 10, evaluación 10, director 10, persistencia/exportación 8, CI/CD 7, seguridad/piloto 5).
 
+---
 
 ## Resumen vigente — 26/10/2026, 08:54 (Perú) — consentimiento individual de imagen premium, CI completo PASS, Preview READY
 
