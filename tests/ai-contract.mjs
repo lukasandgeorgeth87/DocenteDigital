@@ -191,6 +191,18 @@ try{
     'siembra de hortalizas','Sembrar hortalizas','1.º','3.º','5.º'])
     assert.ok(privatePayload.includes(safe),'Redaction discarded teaching content or placeholder: '+safe);
 
+  // A common Peruvian DNI written in groups must never reach paid providers.
+  res=await call(ai,'POST',{task:'material',
+    prompt:'Prepara ejercicios sobre hortalizas. DNI: 1234 5678.',
+    context:{sourceText:'Ficha de cultivo. Documento nacional de identidad N° 4321-8765.'}
+  });
+  assert.equal(res.statusCode,200);
+  const spacedDniPayload=JSON.stringify(JSON.parse(captured.options.body));
+  for(const dni of ['1234 5678','4321-8765'])
+    assert.equal(spacedDniPayload.includes(dni),false,'Formatted DNI leaked to text provider: '+dni);
+  assert.ok(spacedDniPayload.includes('DNI [omitido]'));
+  assert.ok(spacedDniPayload.includes('hortalizas'),'Privacy redaction removed the learning topic');
+
   res=await call(ai,'POST',{task:'material',prompt:'Ficha de hortalizas',context:{
     purpose:'Aprender a sembrar hortalizas',product:'Biohuerto escolar',
     criterion:'Justifica la selección de semillas',evidence:'Registro de siembra'
@@ -282,6 +294,12 @@ try{
   for(const leak of ['María Quispe','87654321','912 345 678'])
     assert.equal(privateImagePrompt.includes(leak),false,'Image API received personal data: '+leak);
   assert.match(privateImagePrompt,/Dibuja semillas/,'Image safety must not erase the learning topic');
+  res=await call(image,'POST',{prompt:'Dibuja hortalizas, DNI N° 1122.3344',confirmedCredit:true});
+  assert.equal(res.statusCode,200);
+  const groupedDniImagePrompt=JSON.parse(captured.options.body).prompt;
+  assert.equal(groupedDniImagePrompt.includes('1122.3344'),false,'Formatted DNI leaked to image provider');
+  assert.match(groupedDniImagePrompt,/Dibuja hortalizas/);
+
   // Provider HTTP 200 with a nonempty base64 string that is not PNG must fail.
   globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:'ZmFrZS1wbmc='}]})});
   res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});

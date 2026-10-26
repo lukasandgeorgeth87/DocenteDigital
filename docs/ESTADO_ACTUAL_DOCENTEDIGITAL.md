@@ -1,5 +1,16 @@
 # DocenteDigital — estado canónico para continuidad entre conversaciones
 
+## Estado más reciente — 26/10/2026, 10:20 (Perú) — corrección DNI segmentado en privacidad GPT (CI pendiente)
+
+- **Repositorio/rama:** `lukasandgeorgeth87/DocenteDigital` / `audit/v5-continuity-offline-diagnostic`. **SHA base verificado:** `fe2407f7250bf9714ce1a12c5a764abb13336848`; el SHA de este commit se obtiene del HEAD de esta rama. Se preservó producción y no se usaron datos reales.
+- **Corrección funcional:** `api/_ai-privacy.js` ahora oculta números DNI de ocho dígitos también cuando están separados por espacios, guiones o puntos (p. ej. `DNI: 1234 5678`, `DNI N° 1122.3344`); antes solo detectaba ocho dígitos contiguos. El filtrado es heurístico, no garantiza anonimización completa.
+- **Regresión nueva:** `tests/ai-contract.mjs` añade verificaciones con solicitudes simuladas tanto para texto GPT como para imágenes, y comprueba que se conserva la tarea de hortalizas. **CI de este nuevo commit: PENDIENTE**; no atribuir PASS hasta que GitHub Actions confirme el SHA exacto. **Último CI previo PASS:** run `40344408495`, SHA `fe2407f7250bf9714ce1a12c5a764abb13336848` (ai-context-fast y browser-e2e SUCCESS).
+- **Despliegue:** último Preview Vercel READY verificado por API para SHA `0dccdb7fdf2c374beb67fccc498c08d4cf655a00`: https://docente-digital-dh5qil8y8-jorgeluispalma87-7403.vercel.app . **No es un preview del nuevo commit.** Intentos posteriores limitados por Vercel HTTP 402 `api-deployments-free-per-day`; no se solicitó producción.
+- **Módulos:** unidad/proyecto, sesiones, materiales multigrado, evaluación, Director, Word y recuperación local **parciales**, con casos técnicos probados previamente; plantillas locales como respaldo explícito. GPT real **no disponible** (bandera Preview `DD_AI_BETA_ENABLED=false`; Redis Upstash no configurado); persistencia multiusuario y piloto humano **no disponibles**; app PC **futura/no implementada**.
+- **Riesgos y siguiente paso:** **S0** sin nuevo incidente confirmado; **S1** Redis y cuota atómica, habilitación controlada y despliegue exacto; **S2** evaluación humana de cadena docente y EIB; **S3** UX móvil; **S4** futura app PC. Confirmar CI de este SHA, no elevar métricas sin prueba de beta; después corregir el siguiente fallo concreto de flujo docente.
+- **Decisiones:** GPT principal solo con seguridad, cuotas y autorización; plantillas respaldo rotuladas; PC futura. **Indicadores independientes sin aumento:** desarrollo funcional histórico estimado **75 %** y cierre V5 histórico **21/100**. Matriz V5: runtime 10, UX 10, IA 15, flujo docente 15, materiales 10, evaluación 10, director 10, persistencia/exportación 8, CI/CD 7, seguridad/piloto 5.
+
+
 
 
 ## Estado más reciente — 26/10/2026, 09:56 (Perú) — Matemática de biohuerto por grados validada, CI PASS, deploy limitado
