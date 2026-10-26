@@ -6,6 +6,7 @@
   const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
   const enc=new TextEncoder();
   let lastDownloadName='';
+  let lastDownloadContentKey='';
   let lastDownloadAt=0;
   let shareInFlight=false;
   const DUPLICATE_WINDOW_MS=1200;
@@ -89,10 +90,10 @@
     return new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
   }
   function fileName(title){return (typeof cleanFileName==='function'?cleanFileName(title):String(title||'documento').replace(/[^\w -]+/g,'').trim().replace(/\s+/g,'_'))+'.docx'}
-  function downloadDocx(blob,name){
+  function downloadDocx(blob,name,contentKey=''){
     const now=Date.now();
-    if(name===lastDownloadName&&now-lastDownloadAt<DUPLICATE_WINDOW_MS)return false;
-    lastDownloadName=name;lastDownloadAt=now;
+    if(name===lastDownloadName&&contentKey===lastDownloadContentKey&&now-lastDownloadAt<DUPLICATE_WINDOW_MS)return false;
+    lastDownloadName=name;lastDownloadContentKey=contentKey;lastDownloadAt=now;
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1800);
     return true;
   }
@@ -135,7 +136,7 @@
     downloadHtml:function(title,html,landscape=false,customName=''){
       const blob=docxBlob(title,html,landscape);
       const name=customName?cleanFileName(customName)+'.docx':fileName(title);
-      return downloadDocx(blob,name);
+      return downloadDocx(blob,name,String(html||''));
     },
     shareHtml:function(title,html,landscape=false,customName=''){
       const blob=docxBlob(title,html,landscape);
