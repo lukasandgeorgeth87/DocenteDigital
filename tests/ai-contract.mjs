@@ -183,6 +183,8 @@ try{
   });
   assert.equal(res.statusCode,200);
   const privatePayload=JSON.stringify(JSON.parse(captured.options.body));
+  assert.ok(privatePayload.includes('Estudiante: [nombre omitido]'), 'Mixed-case student label must be anonymized');
+  assert.ok(privatePayload.includes('Alumna: [nombre omitido]'), 'Mixed-case pupil label must be anonymized');
   for(const leak of ['Ana Pérez','Luisa Rojas','12345678','987 654 321','anita@example.pe'])
     assert.equal(privatePayload.includes(leak),false,'Provider received a recognized private identifier: '+leak);
   for(const safe of ['[nombre omitido]','[correo omitido]','DNI [omitido]','[teléfono omitido]',
