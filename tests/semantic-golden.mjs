@@ -134,6 +134,37 @@ try{
         isolation.output.includes('Evidencia o producto'),
         'biohuerto: material contaminado por sesión de otra unidad: '+JSON.stringify(isolation));
 
+      // A deleted/restored unit can leave an explicit ID that no longer exists.
+      // Never fall back to another unit or its session and leak its approved
+      // product into a new worksheet.
+      const staleSelection = await page.evaluate(() => {
+        const previousId = window.state.activeUnitId;
+        const previousSession = window.state.lastSession;
+        try {
+          window.state.activeUnitId = 'missing-unit-id';
+          window.state.lastSession = {
+            unitId: previousId, title: 'Sesión privada de la unidad anterior',
+            purpose: 'Propósito privado anterior', evidence: 'Producto privado anterior'
+          };
+          document.querySelector('#materialTopic').value = '';
+          window.DDMaterials.useCurrent();
+          window.DDMaterials.create();
+          return {
+            source: window.state.lastMaterial?.source,
+            topic: window.state.lastMaterial?.topic,
+            output: document.querySelector('#materialOutput')?.innerText || ''
+          };
+        } finally {
+          window.state.activeUnitId = previousId;
+          window.state.lastSession = previousSession;
+          window.save();
+        }
+      });
+      assert(staleSelection.source === 'free' &&
+        !/Sesión privada|Propósito privado|Producto privado|Vinculación con la planificación/i.test(staleSelection.output),
+        'biohuerto: ID activo inexistente filtró planificación ajena: '+JSON.stringify(staleSelection));
+
+
     }
     if(c.name==='pinturas_rupestres'){
       assert(!/en la comunidad encontramos/i.test(title),'pinturas rupestres: copió la oración contextual dentro del título');
