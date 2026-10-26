@@ -203,6 +203,58 @@ try{
   assert(!antText.includes('cómo viven y qué características tienen'),'hormigas: reintrodujo detalle inventado sobre cómo viven');
 
 
+  // Regression: a criterion defined for 1st grade must never appear in a 3rd
+  // grade assessment, even if the last session belongs to the same unit.
+  const missingGradeCriterion = await page.evaluate(() => {
+    const previousUnits = window.state.units;
+    const previousActive = window.state.activeUnitId;
+    const previousSession = window.state.lastSession;
+    const previousLast = window.state.lastAssessment;
+    const previousGenerated = [...(window.state.generatedAssessments || [])];
+    const host = document.getElementById('evaluation');
+    const fixture = host || document.createElement('section');
+    if (!host) { fixture.id = 'evaluation'; document.body.appendChild(fixture); }
+    try {
+      const unit = {
+        id: 'test-grade-specific-criterion', title: 'Unidad multigrado ficticia',
+        situation: 'Separamos materiales de la escuela.',
+        areas: ['Matemática'], grades: ['1.º','3.º'],
+        purposes: [{ area: 'Matemática', evidence: 'Representación',
+          criteria: [{ grade: '1.º', text: 'CRITERIO_1_UNICO: representa con objetos.' }] }]
+      };
+      window.state.units = [...(previousUnits || []), unit];
+      window.state.activeUnitId = unit.id;
+      window.state.lastSession = {
+        unitId: unit.id, grade: '1.º', area: 'Matemática',
+        criterion: 'CRITERIO_SESION_AJENA_AL_GRADO'
+      };
+      window.DDEvaluation.openAssessment();
+      document.getElementById('ddAssGrade').value = '3.º';
+      document.getElementById('ddAssArea').value = 'Matemática';
+      document.getElementById('ddAssCreate').click();
+      const missingText = document.getElementById('ddAssBody').innerText;
+      const unchanged = window.state.lastAssessment === previousLast;
+      document.getElementById('ddAssGrade').value = '1.º';
+      document.getElementById('ddAssCreate').click();
+      const validText = document.getElementById('ddAssBody').innerText;
+      return { missingText, unchanged, validText, validGrade: window.state.lastAssessment?.grade };
+    } finally {
+      window.state.units = previousUnits;
+      window.state.activeUnitId = previousActive;
+      window.state.lastSession = previousSession;
+      window.state.lastAssessment = previousLast;
+      window.state.generatedAssessments = previousGenerated;
+      if (!host) fixture.remove();
+      window.save();
+    }
+  });
+  assert(missingGradeCriterion.unchanged && /No hay criterios disponibles/.test(missingGradeCriterion.missingText),
+    'evaluación: 3.º reutilizó un criterio de 1.º o de sesión previa: ' + JSON.stringify(missingGradeCriterion));
+  assert(!/CRITERIO_1_UNICO|CRITERIO_SESION_AJENA_AL_GRADO/.test(missingGradeCriterion.missingText),
+    'evaluación: se filtró un criterio de otro grado');
+  assert(missingGradeCriterion.validGrade === '1.º' && missingGradeCriterion.validText.includes('CRITERIO_1_UNICO'),
+    'evaluación: el criterio legítimo de 1.º dejó de funcionar');
+
   // Regression: requesting ten division tasks must not repeat the first six.
   // Use a fictitious unit and the real evaluation UI, without modifying user data.
   const divisionTen = await page.evaluate(() => {
