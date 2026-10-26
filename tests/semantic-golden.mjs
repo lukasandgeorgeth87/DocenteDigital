@@ -1,5 +1,4 @@
 import { chromium } from 'playwright';
-import { readFile } from 'node:fs/promises';
 
 const baseUrl = process.env.BASE_URL || 'http://127.0.0.1:4173';
 const browser = await chromium.launch({ headless: true });
@@ -292,10 +291,22 @@ try{
     return prior;
   });
   try {
-    const downloadPromise = page.waitForEvent('download', {timeout:10000});
-    await page.locator('#ddEvalCsv').click();
-    const download = await downloadPromise;
-    const csv = await readFile(await download.path(), 'utf8');
+    // Capture the Blob passed by the real CSV button to the global download
+    // helper. This tests exported bytes without depending on browser download
+    // event timing or filesystem permissions in headless CI.
+    const csvResult = await page.evaluate(async () => {
+      const original = window.downloadBlob;
+      let captured = null;
+      window.downloadBlob = (blob, name) => { captured = {blob, name}; };
+      try {
+        document.getElementById('ddEvalCsv').click();
+        return captured ? {name:captured.name, text:await captured.blob.text()} : null;
+      } finally {
+        window.downloadBlob = original;
+      }
+    });
+    assert(csvResult && /\\.csv$/i.test(csvResult.name), 'Evaluación no entregó un Blob CSV');
+    const csv = csvResult.text;
     assert(csv.charCodeAt(0) === 0xFEFF, 'CSV de evaluación perdió BOM UTF-8');
     const escapedCells = ['"\'=2+3"', '"\'=SUM(1,1)"', '"\'+SUM(1,2)"',
       '"\'@SUM(3,4)"', '"\' \t=SUM(4,5)"'];
