@@ -373,8 +373,8 @@ try{
   assert(/Falta registrar una evidencia observada/.test(evidenceGate.noEvidenceFeedback) &&
     !/Fortaleza observada|muestra avances/.test(evidenceGate.noEvidenceFeedback),
     'evaluación: retroalimentación inventó fortalezas sin evidencia: '+JSON.stringify(evidenceGate));
-  assert(evidenceGate.withEvidenceConclusion.includes('Representó ocho fichas') &&
-    evidenceGate.withEvidenceFeedback.includes('Representó ocho fichas'),
+  assert(/representó ocho fichas/i.test(evidenceGate.withEvidenceConclusion) &&
+    /representó ocho fichas/i.test(evidenceGate.withEvidenceFeedback),
     'evaluación: la evidencia legítima dejó de alimentar conclusiones/retroalimentación: '+JSON.stringify(evidenceGate));
 
   // Security regression: CSV export must not execute user-provided spreadsheet
