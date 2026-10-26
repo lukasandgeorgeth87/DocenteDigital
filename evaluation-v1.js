@@ -161,26 +161,38 @@
       .filter(Boolean).join(' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     if(area==='Matemática' && /division|dividir|reparto|repartir|mitad|mitades/.test(planningText)){
       var divisionTasks=n<=2?[
-        'Observa 10 panes dibujados. Repártelos en dos grupos iguales. ¿Cuántos panes recibe cada grupo?',
+        'Dibuja 10 panes y repártelos en dos grupos iguales. ¿Cuántos panes recibe cada grupo?',
         'Dibuja 8 semillas y marca la mitad. ¿Cuántas semillas marcaste?',
         'Representa con fichas el reparto de 12 objetos entre dos personas. Dibuja los dos grupos.',
         'Comprueba con dibujos si 6 panes pueden repartirse por igual entre dos niñas o niños.',
         'Una familia tiene 14 tarjetas y entrega la mitad a otra familia. ¿Cuántas tarjetas entrega?',
-        'Explica con material concreto por qué dos grupos de 5 forman 10 objetos.'
+        'Explica con material concreto por qué dos grupos de 5 forman 10 objetos.',
+        'Reparte 16 hojas entre dos mesas. Dibuja cuántas hojas quedan en cada mesa.',
+        'Coloca 18 fichas en dos cajas con igual cantidad. ¿Cuántas van en cada caja?',
+        'Hay 4 panes para dos familias. Muestra con dibujos cuántos recibe cada familia.',
+        'Forma dos grupos iguales usando 20 semillas. ¿Cuántas semillas hay en cada grupo?'
       ]:n>=5?[
         'Identifica los datos: cinco familias reparten S/ 87,50 en partes iguales. ¿Cuánto corresponde a cada familia?',
         'Calcula 145 ÷ 6. Expresa el cociente entero y el residuo; interpreta qué representa cada uno.',
         'Se distribuyen S/ 156 entre 8 equipos. Resuelve y comprueba el resultado mediante multiplicación.',
         'Compara 87,50 ÷ 5 y 87,50 ÷ 10. Justifica cuál entrega mayor cantidad por persona.',
         'Un comité dispone de 145 tarjetas para 6 grupos. ¿Cuántas recibe cada grupo y cuántas quedan sin repartir?',
-        'Diseña un reparto con decimales que tenga resultado exacto y explica cómo lo verificas.'
+        'Diseña un reparto con decimales que tenga resultado exacto y explica cómo lo verificas.',
+        'Se distribuyen S/ 123,60 entre 6 comités. ¿Cuánto recibe cada uno? Comprueba el cálculo.',
+        'Calcula 258 ÷ 7. Indica el cociente entero y el residuo y comprueba tu respuesta.',
+        'Cinco familias comparten un presupuesto de S/ 96,75. ¿Cuánto corresponde a cada familia?',
+        'Reparte 247 panes entre 8 puestos. Calcula cuántos recibe cada uno y decide qué hacer con los sobrantes.'
       ]:[
         'Identifica los datos: 24 panes se reparten entre 4 familias. ¿Cuántos recibe cada una?',
         'Representa con grupos o un esquema la operación 25 ÷ 4. ¿Cuántos recibe cada grupo y cuántos sobran?',
         'Resuelve 36 ÷ 3 y comprueba el resultado con una multiplicación.',
         'Compara el reparto de 24 objetos entre 4 personas y entre 6 personas. ¿Qué cambia?',
         'Una familia distribuye 29 tarjetas entre 5 grupos. Calcula el cociente y el residuo.',
-        'Inventa un reparto exacto de 32 semillas, resuélvelo y explica por qué no sobra ninguna.'
+        'Inventa un reparto exacto de 32 semillas, resuélvelo y explica por qué no sobra ninguna.',
+        'Reparte 42 lápices entre 6 estudiantes. Calcula y verifica la cantidad para cada uno.',
+        'Se reparten 47 tarjetas entre 5 equipos. ¿Cuántas recibe cada equipo y cuántas sobran?',
+        'Organiza 63 panes en 7 canastas iguales. ¿Cuántos panes lleva cada canasta?',
+        'Distribuye 38 semillas en 4 grupos iguales. ¿Cuántas recibe cada grupo y cuántas sobran?'
       ];
       return divisionTasks[index%divisionTasks.length];
     }
@@ -339,7 +351,7 @@
     var situation=String((unit&&(unit.situationBrief||unit.situation))||'').trim();
     var product=String((unit&&(unit.selectionApproved&&unit.productTitle||unit.product))||'').trim();
     var reference='<div class="dd-assessment-reference">'+(situation?'<p><b>Situación de partida:</b> '+E(situation)+'</p>':'')+(product?'<p><b>Producto vinculado:</b> '+E(product)+'</p>':'')+'</div>';
-    var body='<article class="dd-assessment-sheet"><div class="dd-material-kicker">Evaluación · '+E(area)+' · '+E(grade)+'</div><h1>'+E((unit&&unit.title)||'Evaluación de aprendizaje')+'</h1>'+reference+'<p><b>Modalidad:</b> '+E(type)+'<br><b>Técnica de recojo de evidencia:</b> '+E(technique)+'<br><b>Instrumento:</b> '+E(instrument)+'</p><p class="dd-small">Consignas diferenciadas por grado: borradores editables; el docente aporta los datos o textos concretos y valida su pertinencia.</p><ol>'+items.map(function(x){return '<li><p>'+E(x.task)+'</p><p class="dd-small"><b>Criterio asociado:</b> '+E(x.criterion)+'</p><div class="dd-answer-lines tall"></div></li>';}).join('')+'</ol><h2>Criterios que se observarán</h2><ul>'+cs.map(function(x){return '<li>'+E(x.criterion)+'</li>';}).join('')+'</ul><p class="dd-small"><b>Uso formativo:</b> registra la evidencia observada, contrástala con los criterios y utiliza la información para retroalimentar y decidir el siguiente paso de aprendizaje.</p></article>';
+    var body='<article class="dd-assessment-sheet"><div class="dd-material-kicker">Evaluación · '+E(area)+' · '+E(grade)+'</div><h1>'+E((unit&&unit.title)||'Evaluación de aprendizaje')+'</h1>'+reference+'<p><b>Modalidad:</b> '+E(type)+'<br><b>Técnica de recojo de evidencia:</b> '+E(technique)+'<br><b>Instrumento:</b> '+E(instrument)+'</p><p class="dd-small">Consignas diferenciadas por grado: borradores editables; el docente verifica su pertinencia, contexto y alineación con los criterios antes de aplicarlos.</p><ol>'+items.map(function(x){return '<li><p>'+E(x.task)+'</p><p class="dd-small"><b>Criterio asociado:</b> '+E(x.criterion)+'</p><div class="dd-answer-lines tall"></div></li>';}).join('')+'</ol><h2>Criterios que se observarán</h2><ul>'+cs.map(function(x){return '<li>'+E(x.criterion)+'</li>';}).join('')+'</ul><p class="dd-small"><b>Uso formativo:</b> registra la evidencia observada, contrástala con los criterios y utiliza la información para retroalimentar y decidir el siguiente paso de aprendizaje.</p></article>';
     state.lastAssessment={id:'a'+Date.now(),unitId:(unit&&unit.id)||'',unitTitle:(unit&&unit.title)||'',grade:grade,area:area,type:type,technique:technique,instrument:instrument,criteria:cs,html:body,createdAt:new Date().toISOString()};
     state.generatedAssessments.unshift(state.lastAssessment);state.generatedAssessments=state.generatedAssessments.slice(0,20);save();
     box.innerHTML='<div class="dd-editable-material" contenteditable="true" spellcheck="true">'+body+'</div><div class="actions topgap"><button class="btn" id="ddAssWord">⬇ Word</button><button class="btn alt" id="ddAssPrint">🖨 Imprimir / PDF</button></div>';
