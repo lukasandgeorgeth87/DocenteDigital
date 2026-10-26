@@ -89,6 +89,7 @@
   }
 
   function friendlyError(error){
+    if(error==='ai_preview_only')return 'La generación con IA de pago está disponible solo en la beta privada de prueba, nunca en producción.';
     if(error==='openai_not_configured')return 'La conexión está preparada, pero falta activar la clave segura de OpenAI en el servidor.';
     if(error==='ai_beta_disabled')return 'La generación con IA está desactivada por seguridad hasta habilitar la beta protegida.';
     if(error==='beta_access_not_configured')return 'El servidor aún no tiene configurada la protección de acceso de la beta.';
@@ -103,6 +104,7 @@
   }
 
   function statusError(status){
+    if(status?.environment_allowed===false)return 'ai_preview_only';
     if(!status?.configured)return 'openai_not_configured';
     if(!status?.enabled)return 'ai_beta_disabled';
     if(status.access_configured===false)return 'beta_access_not_configured';
@@ -271,7 +273,16 @@
   async function generatePremiumImage(){
     const status=await health();
     if(!status?.image){alert(friendlyError(statusError(status)));return;}
-    const s=appState(),last=s.lastSession||{};
+    // The API requires confirmedCredit=true. That must reflect a genuine,
+    // per-request decision by the teacher, not a permanently hardcoded flag.
+    const approved=typeof window.confirm==='function'&&window.confirm(
+      'Generar una imagen con IA puede tener costo y utiliza 5 unidades de la cuota diaria de la beta. ¿Confirmas esta generación?'
+    );
+    if(!approved)return;
+    const s=appState();
+    // Never bill a generation based on an orphan session from another unit.
+    const last=s.lastSession&&s.activeUnitId&&s.lastSession.unitId===s.activeUnitId
+      ? s.lastSession : {};
     const prompt=[
       'Crea una imagen educativa para '+(s.level||'educación')+'.',
       'Tema: '+(last.title||$('materialTopic')?.value||'aprendizaje escolar')+'.',
@@ -286,7 +297,7 @@
       if(!r.ok||!data.ok)throw new Error(friendlyError(data.error));
       const src=data.image_base64?'data:image/png;base64,'+data.image_base64:data.image_url;
       if(!src)throw new Error('La imagen no llegó correctamente.');
-      const panel=document.createElement('div');panel.className='dd-panel';panel.innerHTML=`<span class="pill">Imagen nueva</span><h3>Generada con IA</h3><img src="${src}" alt="Imagen educativa generada" style="max-width:100%;max-height:520px;object-fit:contain;border-radius:12px"><div class="actions topgap"><button class="btn alt" type="button" id="ddUseGeneratedImage">Usar en esta sesión</button></div>`;
+      const panel=document.createElement('div');panel.className='dd-panel';panel.innerHTML=`<span class="pill">Imagen nueva</span><h3>Generada con IA</h3><img src="${esc(src)}" alt="Imagen educativa generada" style="max-width:100%;max-height:520px;object-fit:contain;border-radius:12px"><div class="actions topgap"><button class="btn alt" type="button" id="ddUseGeneratedImage">Usar en esta sesión</button></div>`;
       const target=$('ddSessionSuggestions')||$('materialOutput')||$('aihub');target?.prepend(panel);
       $('ddUseGeneratedImage')?.addEventListener('click',()=>{
         try{localStorage.setItem('docenteDigitalGeneratedImage',JSON.stringify({src,title:last.title||'Imagen educativa',selectedAt:new Date().toISOString()}));}catch(_e){}
@@ -323,7 +334,9 @@
   async function renderHubStatus(){
     const card=$('ddAiConnectedCard');if(!card)return;
     const s=await health(true);
-    card.innerHTML=s.text
+    card.innerHTML=s.environment_allowed===false
+      ? '<div class="notice"><b>IA de pago restringida a la beta privada.</b><br>La producción no permite generación pagada. Utiliza un despliegue de prueba protegido.</div>'
+      : s.text
       ? '<div class="notice"><b>IA habilitada, conexión aún no verificada.</b><br>Para usarla, introduce el código temporal de acceso a la beta privada. Luego usa «Probar OpenAI real». La clave de OpenAI permanece en el servidor.</div>'
       : s.configured&&s.enabled&&!s.access_configured
         ? '<div class="notice"><b>Beta aún no protegida.</b><br>Falta configurar el código de acceso privado en el servidor. No se permite consumir la API.</div>'

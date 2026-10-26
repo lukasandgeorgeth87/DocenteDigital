@@ -21,15 +21,23 @@ const nodes={
 };
 const document={
   readyState:'complete',body:{},
-  getElementById:id=>nodes[id]||null
+  getElementById:id=>nodes[id]||null,
+  createElement:()=>({className:'',innerHTML:''})
 };
 const window={state:{}};
-let captured=null;
+let captured=null, imageCaptured=null, imageCalls=0;
 const fetch=async(url,options={})=>{
   if(url==='/api/ai-status')return {ok:true,json:async()=>({
     ok:true,configured:true,enabled:true,access_configured:true,
     access_required:true,text:true,image:true,verified:false
   })};
+  if(url==='/api/image'){
+    imageCalls++;
+    imageCaptured=options;
+    return {ok:true,status:200,json:async()=>({
+      ok:true,image_url:'https://example.test/safe-educational-image.png'
+    })};
+  }
   if(url==='/api/ai'){
     captured=options;
     return {ok:true,status:200,json:async()=>({
@@ -120,3 +128,31 @@ assert.equal(fresh.brief,'','A blank new-unit situation must not borrow the prev
 for(const key of ['purpose','product','criterion','evidence'])assert.equal(fresh[key],'',key+' must not leak from prior unit into a new title proposal');
 console.log('AI_CONTEXT_TRACEABILITY_PASS: approved unit/session/free contexts isolated from stale drafts');
 console.log('AI_BETA_CLIENT_PASS: memory-only token, request header, no localStorage secret');
+
+// Premium image credits must never be silently spent by a hardcoded
+// confirmedCredit:true. Explicit teacher consent is required for EACH image.
+let imageConsent=false, consentMessage='';
+window.confirm=message=>{consentMessage=String(message);return imageConsent;};
+nodes.materialTopic={value:'Hortalizas del nuevo proyecto'};
+nodes.materialArea={value:'Ciencia y Tecnología'};
+let imagePanel=null;
+nodes.ddSessionSuggestions={prepend:panel=>{imagePanel=panel;}};
+window.state={level:'Primaria',activeUnitId:'unidad-actual',
+  lastSession:{unitId:'unidad-antigua',title:'Minerales de otro proyecto',area:'Comunicación'}};
+await window.DDOpenAI.generatePremiumImage();
+assert.match(consentMessage,/5 unidades/,'Consent must show the real quota cost');
+assert.equal(imageCalls,0,'Declining consent must not call the paid image endpoint');
+assert.equal(imagePanel,null,'Declining consent must not display a generated image');
+imageConsent=true;
+await window.DDOpenAI.generatePremiumImage();
+assert.equal(imageCalls,1,'Confirmed image should request the provider exactly once');
+assert.equal(JSON.parse(imageCaptured.body).confirmedCredit,true);
+assert.equal(imageCaptured.headers['x-dd-beta-token'],'temporary-preview-token-12345678901234567890');
+assert.match(JSON.parse(imageCaptured.body).prompt,/Hortalizas del nuevo proyecto/);
+assert.doesNotMatch(JSON.parse(imageCaptured.body).prompt,/Minerales de otro proyecto/,
+  'A stale session must not contaminate a paid image prompt');
+assert.match(imagePanel.innerHTML,/Imagen educativa generada/);
+imageConsent=false;
+await window.DDOpenAI.generatePremiumImage();
+assert.equal(imageCalls,1,'A later image request must ask consent again');
+console.log('AI_IMAGE_CONSENT_PASS: per-image confirmation, quota notice, stale-session isolation');
