@@ -501,6 +501,61 @@ try{
   assert(/dos grupos|dos mesas|dos cajas|dos familias/i.test(divisionTen[0].tasks[9]),
     'evaluación: 1.º debe conservar repartos solo entre dos');
 
+  // Actual reload-and-recover workflow for the same teacher-approved unit.
+  // A teacher's edited assessment must survive navigation and reload even
+  // BEFORE they press Word. Reopening a deleted/foreign unit must be blocked.
+  const beforeRecovery=await state();
+  await page.evaluate(() => {
+    const unit={id:'test-recover-assessment',title:'Repartos para evaluación recuperable',
+      situation:'Docentes y estudiantes practican repartos con semillas.',
+      product:'Registro de repartos',areas:['Matemática'],grades:['3.º'],
+      purposes:[{area:'Matemática',evidence:'Procedimiento explicado',instrument:'Lista de cotejo',
+        criteria:[{grade:'3.º',text:'Explica su procedimiento de reparto con datos.'}]}]};
+    window.state.units.push(unit);
+    window.state.activeUnitId=unit.id;
+    window.save();
+    window.go('evaluation');
+    window.DDEvaluation.openAssessment();
+    document.getElementById('ddAssCreate').click();
+  });
+  const recoveryEditor=page.locator('#ddAssBody .dd-editable-material');
+  assert(await recoveryEditor.count()===1,'Evaluación nueva no expone el editor');
+  await recoveryEditor.locator('ol > li:first-child > p:first-child').evaluate(element => {
+    element.textContent='EVIDENCIA_DOCENTE_EDITADA: reparte 21 semillas entre 3 grupos y explica.';
+    element.dispatchEvent(new InputEvent('input',{bubbles:true}));
+  });
+  const savedRecovery=await state();
+  assert(savedRecovery.lastAssessment?.html?.includes('EVIDENCIA_DOCENTE_EDITADA') &&
+    savedRecovery.generatedAssessments?.some(a=>a.unitId==='test-recover-assessment'&&
+      a.html.includes('EVIDENCIA_DOCENTE_EDITADA')),
+    'Evaluación: los cambios no se autoguardaron antes de exportar Word');
+  await page.reload({waitUntil:'networkidle'});
+  await waitPlanningRuntime();
+  await page.evaluate(()=>{window.go('evaluation');window.DDEvaluation.openAssessment();});
+  assert(await page.locator('#ddAssRestore').count()===1,
+    'Evaluación: no ofrece recuperar borrador guardado de la unidad activa');
+  await page.locator('#ddAssRestore').click();
+  const recovered=await page.locator('#ddAssBody .dd-editable-material').innerText();
+  assert(recovered.includes('EVIDENCIA_DOCENTE_EDITADA'),
+    'Evaluación: se perdieron correcciones del docente al recargar y recuperar');
+  const recoveredDownloadPromise=page.waitForEvent('download');
+  await page.locator('#ddAssWord').click();
+  const recoveredDownload=await recoveredDownloadPromise;
+  assert(recoveredDownload.suggestedFilename().endsWith('.docx'),
+    'Evaluación recuperada no conserva descarga DOCX');
+  await page.evaluate(()=>{
+    window.state.activeUnitId='unit-deleted-or-not-found';
+    window.DDEvaluation.openAssessment();
+  });
+  assert(await page.locator('#ddAssRestore').count()===0,
+    'Evaluación: selección inexistente ofrece recuperar el documento de otra unidad');
+  await page.evaluate(prior=>{
+    for(const key of ['units','activeUnitId','lastAssessment','generatedAssessments'])
+      window.state[key]=prior[key];
+    window.save();
+  },beforeRecovery);
+  console.log('ASSESSMENT_RECOVERY_PASS: auto-save, reload, same-unit recovery, Word, orphan guard');
+
   console.log('SEMANTIC_GOLDEN_PASS');
 }finally{
   await browser.close();

@@ -352,12 +352,56 @@
     return items.map(function(x){return '<option '+(selected===x?'selected':'')+'>'+E(x)+'</option>';}).join('');
   }
 
+  // Saved assessments belong to one exact unit. An orphan or deleted unit
+  // must never reveal an unrelated teacher's saved assessment document.
+  function latestAssessmentForUnit(unit){
+    if(!unit||!unit.id)return null;
+    return (state.generatedAssessments||[]).find(function(a){
+      return a&&a.unitId===unit.id&&typeof a.html==='string'&&a.html.trim();
+    })||null;
+  }
+
+  function persistAssessmentEdits(){
+    var a=state.lastAssessment,unit=activeUnit();
+    var editor=$('ddAssBody')?.querySelector('.dd-editable-material');
+    if(!a||!unit||a.unitId!==unit.id||!editor)return false;
+    a.html=editor.innerHTML;
+    var saved=(state.generatedAssessments||[]).find(function(x){return x.id===a.id&&x.unitId===unit.id;});
+    if(saved)saved.html=a.html;
+    save();
+    return true;
+  }
+
+  function showAssessmentDocument(a){
+    var box=$('ddAssBody');
+    if(!box||!a)return;
+    box.innerHTML='<div class="dd-editable-material" contenteditable="true" spellcheck="true">'+a.html+'</div><div class="actions topgap"><button class="btn" id="ddAssWord">⬇ Word</button><button class="btn alt" id="ddAssPrint">🖨 Imprimir / PDF</button></div>';
+    $('ddAssWord').onclick=downloadAssessmentWord;
+    $('ddAssPrint').onclick=function(){window.print();};
+    // Saving while the teacher types makes closing/reloading safe even if
+    // they have not downloaded Word yet.
+    box.querySelector('.dd-editable-material').addEventListener('input',persistAssessmentEdits);
+  }
+
+  function restoreAssessment(){
+    var unit=activeUnit(),saved=latestAssessmentForUnit(unit);
+    if(!saved)return;
+    state.lastAssessment=saved;
+    save();
+    if($('ddAssGrade'))$('ddAssGrade').value=saved.grade;
+    if($('ddAssArea'))$('ddAssArea').value=saved.area;
+    if($('ddAssType'))$('ddAssType').value=saved.type;
+    showAssessmentDocument(saved);
+  }
+
   function openAssessment(){
     var unit=activeUnit(),panel=ensureEvaluationPanel();if(!panel)return;
     var grades=(unit&&unit.grades)||state.grades||[],areas=(unit&&unit.areas)||state.areas||[];
     panel.classList.remove('hidden');
-    panel.innerHTML=context(unit)+'<h2>🧪 Evaluación de unidad/proyecto</h2><p class="sub">La evaluación se construye desde criterios y evidencias. DocenteDigital sugiere una técnica e instrumento pertinente, pero el docente puede cambiarlo.</p><div class="form2"><label>Grado / edad<select id="ddAssGrade">'+grades.map(function(g){return '<option>'+E(g)+'</option>';}).join('')+'</select></label><label>Área<select id="ddAssArea">'+areas.map(function(a){return '<option>'+E(a)+'</option>';}).join('')+'</select></label><label>Modalidad<select id="ddAssType"><option>Mixta</option><option>Escrita</option><option>Oral</option><option>Desempeño</option></select></label><label>Instrumento<select id="ddAssInstrument">'+instrumentOptions('Automático según evidencia')+'</select></label><label>Número de tareas<select id="ddAssCount"><option>4</option><option selected>6</option><option>8</option><option>10</option></select></label></div><div class="actions"><button class="btn" id="ddAssCreate">✨ Construir evaluación</button></div><div id="ddAssBody" class="topgap"></div>';
+    var recent=latestAssessmentForUnit(unit);
+    panel.innerHTML=context(unit)+'<h2>🧪 Evaluación de unidad/proyecto</h2><p class="sub">La evaluación se construye desde criterios y evidencias. DocenteDigital sugiere una técnica e instrumento pertinente, pero el docente puede cambiarlo.</p><div class="form2"><label>Grado / edad<select id="ddAssGrade">'+grades.map(function(g){return '<option>'+E(g)+'</option>';}).join('')+'</select></label><label>Área<select id="ddAssArea">'+areas.map(function(a){return '<option>'+E(a)+'</option>';}).join('')+'</select></label><label>Modalidad<select id="ddAssType"><option>Mixta</option><option>Escrita</option><option>Oral</option><option>Desempeño</option></select></label><label>Instrumento<select id="ddAssInstrument">'+instrumentOptions('Automático según evidencia')+'</select></label><label>Número de tareas<select id="ddAssCount"><option>4</option><option selected>6</option><option>8</option><option>10</option></select></label></div><div class="actions"><button class="btn" id="ddAssCreate">✨ Construir evaluación</button>'+(recent?'<button class="btn alt" id="ddAssRestore">↺ Recuperar evaluación guardada</button>':'')+'</div><div id="ddAssBody" class="topgap"></div>';
     $('ddAssCreate').onclick=buildAssessment;
+    if(recent)$('ddAssRestore').onclick=restoreAssessment;
   }
 
   function buildAssessment(){
@@ -373,21 +417,15 @@
     var body='<article class="dd-assessment-sheet"><div class="dd-material-kicker">Evaluación · '+E(area)+' · '+E(grade)+'</div><h1>'+E((unit&&unit.title)||'Evaluación de aprendizaje')+'</h1>'+reference+'<p><b>Modalidad:</b> '+E(type)+'<br><b>Técnica de recojo de evidencia:</b> '+E(technique)+'<br><b>Instrumento:</b> '+E(instrument)+'</p><p class="dd-small">Consignas diferenciadas por grado: borradores editables; el docente verifica su pertinencia, contexto y alineación con los criterios antes de aplicarlos.</p><ol>'+items.map(function(x){return '<li><p>'+E(x.task)+'</p><p class="dd-small"><b>Criterio asociado:</b> '+E(x.criterion)+'</p><div class="dd-answer-lines tall"></div></li>';}).join('')+'</ol><h2>Criterios que se observarán</h2><ul>'+cs.map(function(x){return '<li>'+E(x.criterion)+'</li>';}).join('')+'</ul><p class="dd-small"><b>Uso formativo:</b> registra la evidencia observada, contrástala con los criterios y utiliza la información para retroalimentar y decidir el siguiente paso de aprendizaje.</p></article>';
     state.lastAssessment={id:'a'+Date.now(),unitId:(unit&&unit.id)||'',unitTitle:(unit&&unit.title)||'',grade:grade,area:area,type:type,technique:technique,instrument:instrument,criteria:cs,html:body,createdAt:new Date().toISOString()};
     state.generatedAssessments.unshift(state.lastAssessment);state.generatedAssessments=state.generatedAssessments.slice(0,20);save();
-    box.innerHTML='<div class="dd-editable-material" contenteditable="true" spellcheck="true">'+body+'</div><div class="actions topgap"><button class="btn" id="ddAssWord">⬇ Word</button><button class="btn alt" id="ddAssPrint">🖨 Imprimir / PDF</button></div>';
-    $('ddAssWord').onclick=downloadAssessmentWord;$('ddAssPrint').onclick=function(){window.print();};
+    showAssessmentDocument(state.lastAssessment);
   }
 
   function downloadAssessmentWord(){
     var a=state.lastAssessment;if(!a)return;
     var editor=$('ddAssBody')?.querySelector('.dd-editable-material');
     if(!editor)return;
+    if(!persistAssessmentEdits())return;
     var edited=editor.innerHTML;
-    // Preserve the teacher's corrections in the saved assessment, not only
-    // in the exported Word. Reopening the record must not restore stale text.
-    a.html=edited;
-    var saved=(state.generatedAssessments||[]).find(function(x){return x.id===a.id;});
-    if(saved)saved.html=edited;
-    save();
     if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml(a.unitTitle||'Evaluación',edited,false,'Evaluacion_'+a.area+'_'+a.grade);
     downloadBlob(wordBlob(a.unitTitle||'Evaluación',edited),cleanFileName('Evaluacion_'+a.area+'_'+a.grade)+'.doc');
   }
