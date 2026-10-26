@@ -133,6 +133,9 @@ module.exports = async function handler(req,res){
     'No inventes información institucional, territorial, normativa ni datos sobre estudiantes.',
     'No incluyas datos personales innecesarios.',
     'Escribe en español claro y profesional.',
+    'Antes de responder, distingue lo que los estudiantes YA saben o practican del aprendizaje NUEVO o desafío que el docente quiere lograr; no conviertas los saberes previos en el tema central si el reto es otro.',
+    'Para unidad/proyecto conserva una secuencia contexto verificable → necesidad → reto → producto observable. Para sesión y materiales enlaza propósito → actividad por grado → evidencia → criterio de evaluación, sin inventar competencias ni desempeños oficiales.',
+    'Si faltan datos curriculares o locales necesarios, señala la limitación en warnings en vez de completarla con supuestos. No mezcles proyectos o sesiones ajenas al contexto recibido.',
     cfg.instruction,
     'Devuelve JSON estructurado. En options incluye alternativas cuando sean útiles; de lo contrario devuelve un arreglo vacío.'
   ].join(' ');
