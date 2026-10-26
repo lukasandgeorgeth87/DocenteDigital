@@ -43,6 +43,7 @@ try {
     await page.locator('[data-dd-grade-group="Primaria"] input[type="checkbox"][value="' + grade + '"]').locator('..').click();
   }
   await page.locator('[data-dd-area-group="Primaria"] input[type="checkbox"][value="Comunicación"]').locator('..').click();
+  await page.locator('[data-dd-area-group="Primaria"] input[type="checkbox"][value="Matemática"]').locator('..').click();
   await page.locator('#linguisticMode').selectOption('EIB');
   await page.locator('#language').selectOption('Bilingüe');
   await page.locator('#quechuaVar').selectOption('Quechua Cusco-Collao (Cusco)');
@@ -231,6 +232,7 @@ try {
   }
   console.log('EIB 6/6 Fichas de división con cálculos reales diferenciados');
   await page.locator('#materialType').selectOption('Ficha de trabajo');
+  await page.locator('#materialArea').selectOption('Matemática');
   await page.locator('#materialTopic').fill('División: repartimos gastos familiares');
   for (const [grade, expected, forbidden] of [
     ['1.º', ['10 monedas', 'entre 2 grupos', 'mitad de 8'], ['25 ÷ 4', 'S/ 87.50']],
