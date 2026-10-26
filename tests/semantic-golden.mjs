@@ -124,7 +124,6 @@ try{
           window.DDMaterials.create();
           // Evaluation must also reject the stale selection rather than
           // showing criteria from the first saved unit or a foreign session.
-          window.go('evaluation');
           window.DDEvaluation.openRubric();
           document.querySelector('#ddRubBuild')?.click();
           const rubricText = document.querySelector('#ddRubBody')?.innerText || '';
