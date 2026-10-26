@@ -149,13 +149,123 @@
     return n<=2?'interpretar, relacionar y sustentar':'analizar críticamente, contrastar, argumentar y proponer';
   }
 
-  function assessmentTask(area,criterion,grade){
-    var d=difficulty(grade);
-    if(area==='Matemática')return 'Resuelve una situación nueva vinculada con el aprendizaje trabajado. Representa los datos, elige una estrategia, resuelve, comprueba y explica por qué tu respuesta tiene sentido. Nivel esperado: '+d+'.';
-    if(area==='Comunicación'||/Castellano|Inglés/.test(area))return 'Lee, escucha o produce un texto breve relacionado con el tema trabajado. Identifica el propósito, organiza la información relevante y justifica sus decisiones con evidencias. Nivel esperado: '+d+'.';
-    if(area==='Ciencia y Tecnología')return 'Analiza una observación, registro o conjunto breve de datos. Formula una explicación o conclusión y señala qué evidencia la sustenta. Nivel esperado: '+d+'.';
-    if(area==='Personal Social'||area==='Ciencias Sociales'||area==='DPCC')return 'Analiza una situación relacionada con el aprendizaje trabajado y sustenta una propuesta o conclusión usando criterios y evidencias. Nivel esperado: '+d+'.';
-    return 'Realiza una actuación o producción que permita demostrar el criterio: “'+criterion+'”. Explica qué hiciste, qué decisiones tomaste y qué evidencia muestra tu aprendizaje. Nivel esperado: '+d+'.';
+  // Each assessment item must ask for a different observable action. The
+  // previous implementation repeated the same generic prompt 4–10 times.
+  // These are editable task prompts, NOT verified MINEDU performances.
+  function assessmentTask(area,grade,index){
+    var n=parseInt(String(grade||'').match(/\d+/)?.[0]||'1',10);
+    var early=state.level==='Inicial'||n<=2;
+    var advanced=!early&&n>=5;
+    var steps;
+    if(area==='Matemática'){
+      steps=early?[
+        'Observa la situación y señala qué cantidades aparecen.',
+        'Representa las cantidades con objetos, marcas o dibujos.',
+        'Muestra con material cómo resolverías la pregunta.',
+        'Cuenta o compara para comprobar tu respuesta.',
+        'Dibuja otra forma de mostrar el mismo resultado.',
+        'Explica con tus palabras cómo llegaste a tu respuesta.',
+        'Identifica cuál de dos respuestas es posible y di por qué.',
+        'Completa una representación que haya quedado a medias.',
+        'Inventa con objetos una situación parecida y cuéntala.',
+        'Revisa tu trabajo con un compañero y corrige si es necesario.'
+      ]:advanced?[
+        'Identifica los datos, las condiciones y la incógnita del problema.',
+        'Representa las relaciones entre cantidades con un esquema o expresión.',
+        'Elige una estrategia y resuelve justificando cada operación.',
+        'Verifica el resultado mediante un procedimiento independiente.',
+        'Analiza si el resultado es razonable en el contexto planteado.',
+        'Compara dos procedimientos y argumenta cuál resulta más eficiente.',
+        'Detecta un posible error de razonamiento y explica cómo corregirlo.',
+        'Modifica un dato, predice el efecto y comprueba tu predicción.',
+        'Formula un nuevo problema equivalente y presenta su solución.',
+        'Relaciona el procedimiento con una decisión del producto final.'
+      ]:[
+        'Identifica los datos y la pregunta que debes responder.',
+        'Organiza los datos mediante un dibujo, tabla o esquema.',
+        'Elige una operación o estrategia y explica tu elección.',
+        'Resuelve mostrando los pasos de tu procedimiento.',
+        'Comprueba el resultado con otra representación.',
+        'Explica qué significa la respuesta en la situación.',
+        'Compara dos formas de resolver y encuentra semejanzas.',
+        'Localiza y corrige un error en un procedimiento.',
+        'Cambia un dato y resuelve la nueva situación.',
+        'Plantea un problema parecido y explica cómo resolverlo.'
+      ];
+    }else if(area==='Comunicación'||/Castellano|Inglés/.test(area)){
+      steps=early?[
+        'Observa el título o las imágenes y anticipa de qué tratará el texto.',
+        'Escucha o lee el texto con apoyo y señala de quién o de qué habla.',
+        'Ubica una información que aparece claramente en el texto.',
+        'Ordena con dibujos dos o tres hechos o ideas del texto.',
+        'Explica con tus palabras una idea importante.',
+        'Relaciona una imagen con la parte del texto que corresponde.',
+        'Formula una pregunta sobre lo leído o escuchado.',
+        'Cuenta a un compañero lo que comprendiste.',
+        'Produce una frase o dibujo para comunicar la idea principal.',
+        'Revisa si tu producción comunica lo que querías decir.'
+      ]:[
+        'Anticipa el propósito comunicativo a partir del título y del contexto.',
+        'Identifica la información explícita que responde a la pregunta central.',
+        'Organiza las ideas principales y secundarias del texto.',
+        'Explica una relación entre dos ideas usando evidencias del texto.',
+        'Interpreta una información que no está expresada literalmente.',
+        'Distingue un hecho de una opinión o interpretación.',
+        'Contrasta dos informaciones y señala coincidencias y diferencias.',
+        'Elabora un texto o exposición para un destinatario definido.',
+        'Revisa la coherencia y claridad de tu producción con criterios.',
+        'Sustenta una conclusión citando información del texto trabajado.'
+      ];
+    }else if(area==='Ciencia y Tecnología'){
+      steps=early?[
+        'Observa un objeto o fenómeno relacionado con el tema y descríbelo.',
+        'Señala qué te gustaría averiguar.',
+        'Expresa con un dibujo lo que crees que ocurrirá.',
+        'Observa o manipula materiales seguros siguiendo indicaciones.',
+        'Dibuja o marca lo que sucedió.',
+        'Compara lo que pensabas con lo que observaste.',
+        'Menciona una semejanza o diferencia visible.',
+        'Cuenta qué hiciste para averiguar la respuesta.',
+        'Explica un cuidado necesario al trabajar con materiales.',
+        'Comunica con palabras o dibujos qué descubriste.'
+      ]:[
+        'Describe el fenómeno y formula una pregunta investigable.',
+        'Diferencia lo observado de una explicación posible.',
+        'Propón una predicción que pueda contrastarse con evidencias.',
+        'Organiza un procedimiento de observación o indagación seguro.',
+        'Registra los resultados en una tabla, dibujo o esquema.',
+        'Compara los datos obtenidos con tu predicción inicial.',
+        'Identifica patrones, cambios o diferencias en los resultados.',
+        'Explica una conclusión usando evidencias registradas.',
+        'Señala una limitación del procedimiento y cómo mejorarla.',
+        'Comunica los hallazgos y distingue lo comprobado de lo pendiente.'
+      ];
+    }else{
+      steps=early?[
+        'Observa una situación cercana y describe lo que reconoces.',
+        'Cuenta una experiencia o conocimiento previo relacionado.',
+        'Señala una pregunta que te gustaría resolver.',
+        'Representa con dibujo u objetos una idea importante.',
+        'Compara dos elementos y menciona una diferencia.',
+        'Escucha a un compañero y responde con respeto.',
+        'Ordena dos o tres acciones que realizaste.',
+        'Explica con tus palabras qué aprendiste.',
+        'Propón una acción sencilla para aplicar lo aprendido.',
+        'Revisa tu producción y comparte una mejora.'
+      ]:[
+        'Describe la situación y distingue información conocida y pendiente.',
+        'Formula una pregunta pertinente al aprendizaje.',
+        'Organiza la información disponible en un esquema.',
+        'Compara dos perspectivas, datos o explicaciones.',
+        'Analiza una causa o relación entre hechos.',
+        'Sustenta una interpretación con una evidencia.',
+        'Reconoce una limitación de la información disponible.',
+        'Propón una acción o solución justificada.',
+        'Explica cómo tu propuesta se relaciona con el producto final.',
+        'Evalúa tu trabajo con el criterio y señala qué mejorarías.'
+      ];
+    }
+    return steps[index%steps.length];
   }
 
   function evaluationTechnique(level,modality,area){
@@ -195,8 +305,11 @@
     var chosenInstrument=$('ddAssInstrument')?.value||'Automático según evidencia';
     var instrument=chosenInstrument==='Automático según evidencia'?recommendedInstrument(state.level,type,area,cs.length):chosenInstrument;
     var technique=evaluationTechnique(state.level,type,area);
-    var items=[];for(var i=0;i<count;i++){var c=cs[i%cs.length];items.push(assessmentTask(area,c.criterion,grade));}
-    var body='<article class="dd-assessment-sheet"><div class="dd-material-kicker">Evaluación · '+E(area)+' · '+E(grade)+'</div><h1>'+E((unit&&unit.title)||'Evaluación de aprendizaje')+'</h1><p><b>Modalidad:</b> '+E(type)+'<br><b>Técnica de recojo de evidencia:</b> '+E(technique)+'<br><b>Instrumento:</b> '+E(instrument)+'</p><ol>'+items.map(function(x){return '<li><p>'+E(x)+'</p><div class="dd-answer-lines tall"></div></li>';}).join('')+'</ol><h2>Criterios que se observarán</h2><ul>'+cs.map(function(x){return '<li>'+E(x.criterion)+'</li>';}).join('')+'</ul><p class="dd-small"><b>Uso formativo:</b> registra la evidencia observada, contrástala con los criterios y utiliza la información para retroalimentar y decidir el siguiente paso de aprendizaje.</p></article>';
+    var items=[];for(var i=0;i<count;i++){var c=cs[i%cs.length];items.push({task:assessmentTask(area,grade,i),criterion:c.criterion});}
+    var situation=String((unit&&(unit.situationBrief||unit.situation))||'').trim();
+    var product=String((unit&&(unit.selectionApproved&&unit.productTitle||unit.product))||'').trim();
+    var reference='<div class="dd-assessment-reference">'+(situation?'<p><b>Situación de partida:</b> '+E(situation)+'</p>':'')+(product?'<p><b>Producto vinculado:</b> '+E(product)+'</p>':'')+'</div>';
+    var body='<article class="dd-assessment-sheet"><div class="dd-material-kicker">Evaluación · '+E(area)+' · '+E(grade)+'</div><h1>'+E((unit&&unit.title)||'Evaluación de aprendizaje')+'</h1>'+reference+'<p><b>Modalidad:</b> '+E(type)+'<br><b>Técnica de recojo de evidencia:</b> '+E(technique)+'<br><b>Instrumento:</b> '+E(instrument)+'</p><p class="dd-small">Consignas diferenciadas por grado: borradores editables; el docente aporta los datos o textos concretos y valida su pertinencia.</p><ol>'+items.map(function(x){return '<li><p>'+E(x.task)+'</p><p class="dd-small"><b>Criterio asociado:</b> '+E(x.criterion)+'</p><div class="dd-answer-lines tall"></div></li>';}).join('')+'</ol><h2>Criterios que se observarán</h2><ul>'+cs.map(function(x){return '<li>'+E(x.criterion)+'</li>';}).join('')+'</ul><p class="dd-small"><b>Uso formativo:</b> registra la evidencia observada, contrástala con los criterios y utiliza la información para retroalimentar y decidir el siguiente paso de aprendizaje.</p></article>';
     state.lastAssessment={id:'a'+Date.now(),unitId:(unit&&unit.id)||'',unitTitle:(unit&&unit.title)||'',grade:grade,area:area,type:type,technique:technique,instrument:instrument,criteria:cs,html:body,createdAt:new Date().toISOString()};
     state.generatedAssessments.unshift(state.lastAssessment);state.generatedAssessments=state.generatedAssessments.slice(0,20);save();
     box.innerHTML='<div class="dd-editable-material" contenteditable="true" spellcheck="true">'+body+'</div><div class="actions topgap"><button class="btn" id="ddAssWord">⬇ Word</button><button class="btn alt" id="ddAssPrint">🖨 Imprimir / PDF</button></div>';
