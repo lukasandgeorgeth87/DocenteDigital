@@ -213,7 +213,7 @@ try{
   const prefixedDniPayload=JSON.stringify(JSON.parse(captured.options.body));
   for(const leak of ['1234 5678','87654321','1122-3344','44332211'])
     assert.equal(prefixedDniPayload.includes(leak),false,'Prefixed DNI leaked to GPT: '+leak);
-  assert.match(prefixedDniPayload,/DNI \\[omitido\\]/);
+  assert.ok(prefixedDniPayload.includes('DNI [omitido]'));
   assert.match(prefixedDniPayload,/siembra de hortalizas/,
     'DNI redaction must preserve the pedagogical context');
 
