@@ -203,6 +203,54 @@ try{
   assert(!antText.includes('cómo viven y qué características tienen'),'hormigas: reintrodujo detalle inventado sobre cómo viven');
 
 
+  // Regression: no teacher-approved purposes must NOT fabricate curricular
+  // criteria; a last session may only supply its own grade's explicit criterion.
+  const missingApprovedCriteria = await page.evaluate(() => {
+    const oldUnits = window.state.units, oldActive = window.state.activeUnitId;
+    const oldSession = window.state.lastSession, oldLast = window.state.lastAssessment;
+    const oldGenerated = [...(window.state.generatedAssessments || [])];
+    const host = document.getElementById('evaluation');
+    const fixture = host || document.createElement('section');
+    if (!host) { fixture.id = 'evaluation'; document.body.appendChild(fixture); }
+    try {
+      const unit = {id:'test-no-approved-criteria',title:'Prueba sin criterios',
+        areas:['Matemática'],grades:['1.º','3.º'],purposes:[]};
+      window.state.units = [...(oldUnits || []),unit];
+      window.state.activeUnitId = unit.id;
+      window.state.lastSession = null;
+      window.DDEvaluation.openAssessment();
+      document.getElementById('ddAssGrade').value = '3.º';
+      document.getElementById('ddAssArea').value = 'Matemática';
+      document.getElementById('ddAssCreate').click();
+      const emptyText = document.getElementById('ddAssBody').innerText;
+      const emptyUnchanged = window.state.lastAssessment === oldLast;
+      window.state.lastSession = {unitId:unit.id,area:'Matemática',
+        grades:['1.º'],criterion:'CRITERIO_EXPLICITO_SOLO_PRIMERO'};
+      document.getElementById('ddAssCreate').click();
+      const otherText = document.getElementById('ddAssBody').innerText;
+      const otherUnchanged = window.state.lastAssessment === oldLast;
+      document.getElementById('ddAssGrade').value = '1.º';
+      document.getElementById('ddAssCreate').click();
+      const validText = document.getElementById('ddAssBody').innerText;
+      return {emptyText,emptyUnchanged,otherText,otherUnchanged,validText};
+    } finally {
+      window.state.units = oldUnits;
+      window.state.activeUnitId = oldActive;
+      window.state.lastSession = oldSession;
+      window.state.lastAssessment = oldLast;
+      window.state.generatedAssessments = oldGenerated;
+      if (!host) fixture.remove();
+      window.save();
+    }
+  });
+  assert(missingApprovedCriteria.emptyUnchanged && missingApprovedCriteria.otherUnchanged &&
+    /No hay criterios disponibles/.test(missingApprovedCriteria.emptyText) &&
+    /No hay criterios disponibles/.test(missingApprovedCriteria.otherText) &&
+    !/Demuestra el aprendizaje previsto|CRITERIO_EXPLICITO_SOLO_PRIMERO/.test(
+      missingApprovedCriteria.emptyText+' '+missingApprovedCriteria.otherText) &&
+    missingApprovedCriteria.validText.includes('CRITERIO_EXPLICITO_SOLO_PRIMERO'),
+    'evaluación: inventó criterios o heredó uno de otro grado: '+JSON.stringify(missingApprovedCriteria));
+
   // Regression: a criterion defined for 1st grade must never appear in a 3rd
   // grade assessment, even if the last session belongs to the same unit.
   const missingGradeCriterion = await page.evaluate(() => {
