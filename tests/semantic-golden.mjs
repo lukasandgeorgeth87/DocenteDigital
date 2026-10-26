@@ -234,10 +234,21 @@ try{
       document.getElementById('ddAssCreate').click();
       const missingText = document.getElementById('ddAssBody').innerText;
       const unchanged = window.state.lastAssessment === previousLast;
+      // "3 años" is an Inicial age, NOT an alternative spelling of 3.º.
+      unit.purposes[0].criteria.push({grade:'3 años',text:'CRITERIO_INICIAL_3_ANOS'});
+      document.getElementById('ddAssCreate').click();
+      const ageText = document.getElementById('ddAssBody').innerText;
+      const ageRejected = window.state.lastAssessment === previousLast;
+      // The equivalent 3° ordinal must now match 3.º without borrowing 1.º.
+      unit.purposes[0].criteria.push({grade:'3°',text:'CRITERIO_3_VARIANTE: explica el reparto.'});
+      document.getElementById('ddAssCreate').click();
+      const variantText = document.getElementById('ddAssBody').innerText;
+      const variantGrade = window.state.lastAssessment?.grade;
       document.getElementById('ddAssGrade').value = '1.º';
       document.getElementById('ddAssCreate').click();
       const validText = document.getElementById('ddAssBody').innerText;
-      return { missingText, unchanged, validText, validGrade: window.state.lastAssessment?.grade };
+      return { missingText, unchanged, ageText, ageRejected, variantText, variantGrade,
+        validText, validGrade: window.state.lastAssessment?.grade };
     } finally {
       window.state.units = previousUnits;
       window.state.activeUnitId = previousActive;
@@ -252,6 +263,13 @@ try{
     'evaluación: 3.º reutilizó un criterio de 1.º o de sesión previa: ' + JSON.stringify(missingGradeCriterion));
   assert(!/CRITERIO_1_UNICO|CRITERIO_SESION_AJENA_AL_GRADO/.test(missingGradeCriterion.missingText),
     'evaluación: se filtró un criterio de otro grado');
+  assert(missingGradeCriterion.ageRejected && /No hay criterios disponibles/.test(missingGradeCriterion.ageText) &&
+    !missingGradeCriterion.ageText.includes('CRITERIO_INICIAL_3_ANOS'),
+    'evaluación: confundió la edad de Inicial con el tercer grado de Primaria');
+  assert(missingGradeCriterion.variantGrade === '3.º' &&
+    missingGradeCriterion.variantText.includes('CRITERIO_3_VARIANTE') &&
+    !missingGradeCriterion.variantText.includes('CRITERIO_1_UNICO'),
+    'evaluación: no reconoció la grafía equivalente 3° para 3.º: ' + JSON.stringify(missingGradeCriterion));
   assert(missingGradeCriterion.validGrade === '1.º' && missingGradeCriterion.validText.includes('CRITERIO_1_UNICO'),
     'evaluación: el criterio legítimo de 1.º dejó de funcionar');
 
