@@ -117,6 +117,9 @@
     $('ddDirSave').onclick=saveCurrent;
     $('ddDirWord').onclick=downloadCurrent;
     $('ddDirPrint').onclick=()=>window.print();
+    // A director's adjustments must survive navigation or reload even if
+    // the Save/Word toolbar was never clicked. Bind only this document.
+    box.querySelector('.dd-editable-material')?.addEventListener('input',saveCurrent);
   }
 
   function saveCurrent(){
@@ -150,8 +153,33 @@
     p.scrollIntoView({behavior:'smooth',block:'start'});
   }
 
+  // This plan must support actual school follow-up: separate scheduling
+  // from verified observations and agreements, by the grades selected by the
+  // director. Empty cells mean NOT RECORDED, never an invented visit.
+  function monitoringTable(){
+    const grades=(Array.isArray(state.grades)?state.grades:[]).filter(Boolean);
+    const rows=(grades.length?grades:['Por definir']).map(grade=>
+      `<tr data-grade="${E(grade)}"><td>${E(grade)}</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true">Pendiente</td></tr>`
+    ).join('');
+    return `<h2>VIII. Programación de monitoreo por grado / sección</h2>
+      <p>Registra observaciones REALES cuando se efectúen; esta tabla no acredita visitas, logros ni desempeños.</p>
+      <div class="dd-scroll"><table class="dd-table dd-monitoring-table">
+      <thead><tr><th>Grado / sección</th><th>Fecha programada</th><th>Foco de observación</th><th>Responsable</th><th>Evidencia recogida</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <h2>IX. Retroalimentación y compromisos verificables</h2>
+      <p>Redacta hallazgos sustentados, acuerdos consensuados y una fecha de verificación después de cada acompañamiento.</p>
+      <div class="dd-scroll"><table class="dd-table dd-monitoring-agreements">
+      <thead><tr><th>Grado / fecha</th><th>Hallazgo con evidencia</th><th>Compromiso</th><th>Responsable</th><th>Fecha de revisión</th><th>Verificación / resultado</th></tr></thead>
+      <tbody><tr>${Array.from({length:6},()=>'<td contenteditable="true"></td>').join('')}</tr></tbody></table></div>
+      <h2>X. Seguimiento de acuerdos</h2>
+      <p contenteditable="true">Pendiente de evidencia: registrar si los compromisos se cumplieron y qué ajustes se requieren, con fecha y sustento.</p>
+      <h2>XI. Base normativa verificada</h2>
+      <p contenteditable="true">Pendiente de verificación: incorporar únicamente las normas vigentes que correspondan a la institución.</p>`;
+  }
+
   function buildPlan(){
     const type=$('ddPlanType').value,period=$('ddPlanPeriod').value.trim(),need=$('ddPlanNeed').value.trim(),evidence=$('ddPlanEvidence').value.trim();
+    const isMonitoring=type==='Plan de monitoreo y acompañamiento';
+    const monitoring=isMonitoring?monitoringTable():'';
     const html=`<article class="dd-director-doc">
       ${headerHtml(type.toUpperCase())}
       <h1>${E(type)} · ${E(period)}</h1>
@@ -164,7 +192,7 @@
       <h2>VI. Actividades, responsables y cronograma</h2>
       <table class="dd-table"><thead><tr><th>Actividad</th><th>Responsable</th><th>Periodo</th><th>Evidencia</th></tr></thead><tbody><tr><td contenteditable="true">Actividad 1</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr><tr><td contenteditable="true">Actividad 2</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr></tbody></table>
       <h2>VII. Seguimiento y evaluación</h2><p contenteditable="true">Indica cómo se revisarán avances, evidencias y decisiones de reajuste.</p>
-      <h2>VIII. Base normativa</h2><p contenteditable="true">Incorpora únicamente normativa vigente y verificada relacionada con este plan.</p>
+      ${monitoring||'<h2>VIII. Base normativa</h2><p contenteditable="true">Incorpora únicamente normativa vigente y verificada relacionada con este plan.</p>'}
     </article>`;
     const item={id:'dir'+Date.now(),type:'Plan',title:type,createdAt:new Date().toISOString(),html};
     state.directorDocs.unshift(item);state.directorDocs=state.directorDocs.slice(0,40);state.lastDirectorDoc=item;save();
@@ -182,6 +210,7 @@
       save();
     }
     $('ddPlanSave').onclick=savePlanCurrent;
+    box.querySelector('.dd-editable-material')?.addEventListener('input',savePlanCurrent);
     $('ddPlanWord').onclick=()=>{
       savePlanCurrent();
       if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml(item.title,item.html,false,item.title);

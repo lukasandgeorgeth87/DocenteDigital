@@ -338,6 +338,73 @@ try {
   assert(s.lastDirectorDoc?.type === 'Plan' && s.lastDirectorDoc?.html?.includes('Acuerdo de prueba conservado'),
     'La edición del plan exportado desapareció tras recargar');
 
+  // Director is more than generic letters. Its monitoring plan must let
+  // a rural multigrade director plan real follow-up, record observable
+  // evidence, autosave BEFORE Word, restore after reload, and export exactly
+  // the verified edits. All data below are fictitious.
+  await page.evaluate(()=>window.go('director'));
+  await page.evaluate(()=>window.DDDirector.openPlan());
+  await page.locator('#ddPlanType').selectOption('Plan de monitoreo y acompañamiento');
+  await page.locator('#ddPlanPeriod').fill('2027');
+  await page.locator('#ddPlanNeed').fill('Necesidad ficticia: observar estrategias diferenciadas en aula multigrado.');
+  await page.locator('#ddPlanEvidence').fill('Evidencia hipotética de planificación; no se han realizado observaciones.');
+  await page.locator('#ddPlanBuild').click();
+  const monitorEditor=page.locator('#ddPlanResult .dd-editable-material');
+  assert(await monitorEditor.count()===1,'Director no generó plan de monitoreo editable');
+  const monitoredRows=await page.locator('#ddPlanResult .dd-monitoring-table tbody tr').count();
+  const currentGrades=await page.evaluate(()=>window.state.grades||[]);
+  assert(monitoredRows===(currentGrades.length||1),
+    'Plan de monitoreo no crea una fila de programación por cada grado seleccionado');
+  for(const required of ['1.º','3.º','5.º']){
+    if(currentGrades.includes(required))assert(
+      await page.locator('#ddPlanResult .dd-monitoring-table tbody tr').filter({hasText:required}).count()===1,
+      'Plan de monitoreo omitió un grado del aula: '+required);
+  }
+  const initialMonitoring=await monitorEditor.innerText();
+  assert(initialMonitoring.includes('Programación de monitoreo')&&
+    initialMonitoring.includes('Retroalimentación y compromisos')&&
+    initialMonitoring.includes('Pendiente de verificación'),
+    'El plan no incluye programación, seguimiento de acuerdos o advertencia normativa');
+  assert(!initialMonitoring.includes('Observación realizada')&&
+    !initialMonitoring.includes('Logro alcanzado'),
+    'Director no debe inventar visitas ni resultados');
+  const editCell=page.locator('#ddPlanResult .dd-monitoring-table tbody tr')
+    .first().locator('td[contenteditable="true"]').first();
+  await editCell.fill('2027-04-15 · programación ficticia');
+  const followup=page.locator('#ddPlanResult .dd-monitoring-agreements tbody td[contenteditable="true"]').nth(2);
+  await followup.fill('COMPROMISO_FICTICIO: revisar consignas diferenciadas por grado.');
+  const monitoredState=await state();
+  assert(monitoredState.lastDirectorDoc?.type==='Plan'&&
+    monitoredState.lastDirectorDoc.html.includes('COMPROMISO_FICTICIO')&&
+    monitoredState.directorDocs?.some(d=>d.id===monitoredState.lastDirectorDoc.id&&
+      d.html.includes('2027-04-15')),
+    'Director no autoguardó fechas/compromisos antes de pulsar Guardar o Word');
+  const monitoringId=monitoredState.lastDirectorDoc.id;
+  await page.reload({waitUntil:'networkidle'});
+  await waitPlanningRuntime();
+  await page.evaluate(()=>{window.go('director');window.DDDirector.openHistory();});
+  const historyCard=page.locator('#directorPanel .dd-director-history article')
+    .filter({hasText:'Plan de monitoreo y acompañamiento'}).first();
+  assert(await historyCard.count()===1,'Director perdió el plan de monitoreo tras recargar');
+  await historyCard.locator('button').click();
+  const restoredMonitoring=await page.locator('#ddDirResult .dd-editable-material').innerText();
+  assert(restoredMonitoring.includes('COMPROMISO_FICTICIO')&&restoredMonitoring.includes('2027-04-15'),
+    'Director no recuperó el seguimiento ya escrito');
+  const monitorWordPromise=page.waitForEvent('download',{timeout:15000});
+  await page.locator('#ddDirWord').click();
+  const monitorWord=await monitorWordPromise;
+  assert(monitorWord.suggestedFilename().toLowerCase().endsWith('.docx'),
+    'Plan de monitoreo no exportó Word DOCX');
+  const monitorXml=docxDocumentXml(await fs.readFile(await monitorWord.path()));
+  assert(monitorXml.includes('COMPROMISO_FICTICIO')&&
+    monitorXml.includes('2027-04-15')&&
+    monitorXml.includes('Retroalimentación y compromisos'),
+    'El DOCX del plan de monitoreo omite compromiso, fecha o sección de seguimiento');
+  s=await state();
+  assert(s.directorDocs?.some(d=>d.id===monitoringId&&d.html.includes('COMPROMISO_FICTICIO')),
+    'Exportar Word perdió el registro actualizado en el historial');
+  console.log('DIRECTOR_MONITORING_PASS: grade scheduling, evidence fields, live autosave, reload, recovery and DOCX');
+
   console.log('8/9 Materiales diferenciados 1.º/3.º/5.º: edición, DOCX y recuperación');
   await page.evaluate(() => window.go('materials'));
   assert(await page.evaluate(() => typeof window.DDMaterials?.createBundle === 'function'),
