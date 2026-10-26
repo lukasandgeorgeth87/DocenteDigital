@@ -214,7 +214,32 @@
       if(!text)throw new Error('La IA no devolvió una situación.');
       host.innerHTML=`<div class="notice"><b>Situación propuesta por IA</b><p>${esc(text)}</p><button type="button" class="btn alt" id="ddUseAiSituation">Usar y seguir editando</button></div>`;
       $('ddUseAiSituation').onclick=()=>{$('unitSituation').value=text;$('unitSituation').dispatchEvent(new Event('input',{bubbles:true}));host.innerHTML='';};
-    }catch(e){host.innerHTML=`<div class="notice">${esc(e.message)}</div>`;}
+    }catch(e){
+      // The classroom still needs an editable planning path when private GPT
+      // is disabled or unavailable. Use only a known, explicit local scenario;
+      // otherwise preserve the teacher's own words rather than fabricate facts.
+      const original=$('unitSituation')?.value?.trim()||'';
+      const title=$('unitTitle')?.value?.trim()||'';
+      let localText='';
+      try{
+        const pack=window.ddPlanningRegressionV51?.preview?.([title,original].filter(Boolean).join('. '));
+        localText=String(pack?.situations?.[0]?.text||'').trim();
+      }catch(_e){}
+      const candidate=localText||original;
+      if(!candidate){
+        if(host)host.innerHTML=`<div class="notice">${esc(e.message)} Escribe primero el contexto real para continuar sin IA.</div>`;
+      }else if(host){
+        const label=localText?'Propuesta local revisable (sin IA)':'Texto del docente conservado (sin IA)';
+        host.innerHTML=`<div class="notice"><b>${label}</b><p>${esc(candidate)}</p><small>El servicio GPT no está disponible. Este respaldo no agrega datos territoriales ni criterios oficiales. Revisa y adapta el borrador antes de usarlo.</small><div class="actions topgap"><button type="button" class="btn alt" id="ddUseAiSituation">Usar y seguir editando</button></div></div>`;
+        $('ddUseAiSituation').onclick=()=>{
+          const field=$('unitSituation');
+          if(!field)return;
+          field.value=candidate;
+          field.dispatchEvent(new Event('input',{bubbles:true}));
+          host.innerHTML='';
+        };
+      }
+    }
     finally{setBusy(button,false);}
   }
 

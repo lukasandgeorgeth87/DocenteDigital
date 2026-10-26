@@ -7,7 +7,7 @@ let configured=false;
 let enabled=false;
 let quotaConfigured=true;
 const title={value:'Patrimonio de nuestra comunidad',dataset:{}};
-const situation={value:'Investigamos pinturas rupestres',dataset:{}};
+const situation={value:'Investigamos pinturas rupestres',dataset:{},dispatchEvent(){this.changed=true;}};
 const kind={value:'Unidad de aprendizaje'};
 const box={
   innerHTML:'',
@@ -21,7 +21,10 @@ const box={
   }
 };
 const card={innerHTML:''};
-const nodes={unitTitle:title,unitSituation:situation,unitType:kind,unitTitleSuggestions:box,ddAiConnectedCard:card};
+const situationApply={onclick:null};
+const situationResult={set innerHTML(value){this._html=value;nodes.ddUseAiSituation=situationApply;},get innerHTML(){return this._html||'';}};
+const nodes={unitTitle:title,unitSituation:situation,unitType:kind,unitTitleSuggestions:box,
+  ddAiConnectedCard:card,ddUnitAiResult:situationResult,ddUseAiSituation:situationApply};
 const document={
   readyState:'loading',
   addEventListener(){},
@@ -29,10 +32,17 @@ const document={
 };
 const window={
   state:{},
-  proposeUnitTitleOptions(){return ['Exploramos nuestro patrimonio','Conocemos las pinturas rupestres'];}
+  proposeUnitTitleOptions(){return ['Exploramos nuestro patrimonio','Conocemos las pinturas rupestres'];},
+  ddPlanningRegressionV51:{
+    preview(raw){
+      return /biohuerto escolar.*hortalizas/i.test(raw)
+        ? {situations:[{text:'Aprovechamos lo que sabemos de la siembra de papas para aprender a sembrar hortalizas en el biohuerto escolar.'}]}
+        : null;
+    }
+  }
 };
 const fetch=async()=>({ok:true,json:async()=>({ok:true,configured,enabled,access_configured:true,quota_configured:quotaConfigured,text:configured&&enabled&&quotaConfigured,image:configured&&enabled&&quotaConfigured,verified:false})});
-runInNewContext(source,{window,document,fetch,setTimeout,clearTimeout,AbortController,console});
+runInNewContext(source,{window,document,fetch,setTimeout,clearTimeout,AbortController,console,Event:class Event{}});
 
 const button={textContent:'Tres títulos con IA',dataset:{},disabled:false};
 await window.DDOpenAI.improveTitles(button);
@@ -43,6 +53,34 @@ box.buttons[1].click();
 assert.equal(title.value,'Conocemos las pinturas rupestres','A local suggestion must remain selectable');
 assert.equal(title.dataset.autoTitle,'false');
 assert.equal(button.disabled,false,'The action must be re-enabled after fallback');
+
+// GPT may be disabled for the private preview; significant-situation
+// planning must offer truthful, editable LOCAL assistance, not a dead button.
+const situationButton={textContent:'Situación significativa con IA',dataset:{},disabled:false};
+situation.value='Sabemos sembrar papas; queremos sembrar hortalizas en el biohuerto escolar.';
+await window.DDOpenAI.improveSituation(situationButton);
+assert.match(situationResult.innerHTML,/Propuesta local revisable \(sin IA\)/);
+assert.match(situationResult.innerHTML,/hortalizas/);
+assert.doesNotMatch(situationResult.innerHTML,/Situación propuesta por IA/);
+assert.equal(situation.value,'Sabemos sembrar papas; queremos sembrar hortalizas en el biohuerto escolar.',
+  'A local draft must not overwrite teacher work without explicit acceptance');
+assert.equal(typeof situationApply.onclick,'function');
+situationApply.onclick();
+assert.match(situation.value,/aprender a sembrar hortalizas/);
+assert.equal(situation.changed,true,'Applying the local suggestion should notify the editor');
+assert.equal(situationButton.disabled,false);
+
+// Unknown community facts cannot be fabricated by a narrow local template.
+situation.value='En la comunidad encontramos una roca de forma singular.';
+situation.changed=false;
+await window.DDOpenAI.improveSituation(situationButton);
+assert.match(situationResult.innerHTML,/Texto del docente conservado \(sin IA\)/);
+assert.match(situationResult.innerHTML,/roca de forma singular/);
+assert.doesNotMatch(situationResult.innerHTML,/hortalizas|papas|costumbre inventada/i);
+situationApply.onclick();
+assert.equal(situation.value,'En la comunidad encontramos una roca de forma singular.');
+assert.equal(situationButton.disabled,false);
+console.log('AI_SITUATION_LOCAL_FALLBACK_PASS: teacher-approved context and safe editable local draft');
 
 configured=true;
 await window.DDOpenAI.renderHubStatus();
