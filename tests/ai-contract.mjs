@@ -245,6 +245,19 @@ try{
   assert.match(compoundNamePayload,/Registro de semillas de lechuga/,
     'Name redaction must preserve context after an uppercase pupil name');
 
+  // School rosters often use "Nombres y apellidos" instead of "Estudiante".
+  // Assert the actual outgoing provider request contains no labeled pupil names.
+  res=await call(ai,'POST',{task:'material',
+    prompt:'Nombres y apellidos: Ana María Pérez. Explica fracciones equivalentes.',
+    context:{sourceText:'Nombre completo: Juan Carlos de la Cruz. Apellidos y nombres: Quispe Huamán Lucía. Nombre del estudiante: Diego Rojas. Actividad de mercado de Calca.'}
+  });
+  assert.equal(res.statusCode,200);
+  const rosterPayload=JSON.stringify(JSON.parse(captured.options.body));
+  for(const leak of ['Ana María Pérez','Juan Carlos de la Cruz','Quispe Huamán Lucía','Diego Rojas'])
+    assert.equal(rosterPayload.includes(leak),false,'School roster name leaked to GPT: '+leak);
+  for(const preserved of ['fracciones equivalentes','mercado de Calca','[nombre omitido]'])
+    assert.ok(rosterPayload.includes(preserved),'Roster redaction lost teaching content: '+preserved);
+
   res=await call(ai,'POST',{task:'material',prompt:'Ficha de hortalizas',context:{
     purpose:'Aprender a sembrar hortalizas',product:'Biohuerto escolar',
     criterion:'Justifica la selección de semillas',evidence:'Registro de siembra'
@@ -355,6 +368,12 @@ try{
     assert.equal(compoundImagePrompt.includes(leak),false,'Compound name leaked to image provider: '+leak);
   assert.match(compoundImagePrompt,/observa semillas/,
     'Image prompt lost its pedagogical action after removing a name');
+
+  res=await call(image,'POST',{prompt:'Ficha de fracciones. Nombres y apellidos: Ana María Pérez.',confirmedCredit:true});
+  assert.equal(res.statusCode,200);
+  const rosterImagePrompt=JSON.parse(captured.options.body).prompt;
+  assert.equal(rosterImagePrompt.includes('Ana María Pérez'),false,'School roster name leaked to image provider');
+  assert.match(rosterImagePrompt,/Ficha de fracciones/);
 
   // Provider HTTP 200 with a nonempty base64 string that is not PNG must fail.
   globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:'ZmFrZS1wbmc='}]})});
