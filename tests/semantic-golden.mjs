@@ -305,7 +305,7 @@ try{
         window.downloadBlob = original;
       }
     });
-    assert(csvResult && /\\.csv$/i.test(csvResult.name), 'Evaluación no entregó un Blob CSV');
+    assert(csvResult && /\.csv$/i.test(csvResult.name), 'Evaluación no entregó un Blob CSV');
     const csv = csvResult.text;
     assert(csv.charCodeAt(0) === 0xFEFF, 'CSV de evaluación perdió BOM UTF-8');
     const escapedCells = ['"\'=2+3"', '"\'=SUM(1,1)"', '"\'+SUM(1,2)"',
