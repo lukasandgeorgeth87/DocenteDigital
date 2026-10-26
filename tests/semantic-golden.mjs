@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { readFile } from 'node:fs/promises';
 
 const baseUrl = process.env.BASE_URL || 'http://127.0.0.1:4173';
 const browser = await chromium.launch({ headless: true });
@@ -254,6 +255,64 @@ try{
     'evaluación: se filtró un criterio de otro grado');
   assert(missingGradeCriterion.validGrade === '1.º' && missingGradeCriterion.validText.includes('CRITERIO_1_UNICO'),
     'evaluación: el criterio legítimo de 1.º dejó de funcionar');
+
+  // Security regression: CSV export must not execute user-provided spreadsheet
+  // formulas. Download the actual file from the real Evaluation UI.
+  const csvFixture = await page.evaluate(() => {
+    const prior = {
+      units: window.state.units, activeUnitId: window.state.activeUnitId,
+      evaluationRecords: window.state.evaluationRecords,
+      studentRoster: window.state.studentRoster
+    };
+    const host = document.getElementById('evaluation');
+    if (!host) {
+      const fixture = document.createElement('section');
+      fixture.id = 'evaluation';
+      fixture.dataset.csvSecurityFixture = 'true';
+      document.body.appendChild(fixture);
+    }
+    const unit = {
+      id: 'test-csv-formula-security', title: 'Unidad ficticia para CSV',
+      grades: ['3.º'], areas: ['Matemática'],
+      purposes: [{area:'Matemática', evidence:'Respuesta escrita',
+        instrument:'Lista de cotejo', criteria:[{grade:'3.º',text:'=SUM(1,1)'}]}]
+    };
+    window.state.units = [...(prior.units || []), unit];
+    window.state.activeUnitId = unit.id;
+    window.state.studentRoster = {...(prior.studentRoster || {}), '3.º':['=2+3','Código B']};
+    window.state.evaluationRecords = [
+      ...(prior.evaluationRecords || []),
+      {unitId:unit.id,grade:'3.º',area:'Matemática',criterion:'=SUM(1,1)',
+        student:'=2+3',level:'A',evidenceNote:'+SUM(1,2)',nextStep:'@SUM(3,4)'},
+      {unitId:unit.id,grade:'3.º',area:'Matemática',criterion:'=SUM(1,1)',
+        student:'Código B',level:'B',evidenceNote:'Dibujo correcto',nextStep:' \t=SUM(4,5)'}
+    ];
+    window.DDEvaluation.openRegister();
+    return prior;
+  });
+  try {
+    const downloadPromise = page.waitForEvent('download', {timeout:10000});
+    await page.locator('#ddEvalCsv').click();
+    const download = await downloadPromise;
+    const csv = await readFile(await download.path(), 'utf8');
+    assert(csv.charCodeAt(0) === 0xFEFF, 'CSV de evaluación perdió BOM UTF-8');
+    const escapedCells = ['"\'=2+3"', '"\'=SUM(1,1)"', '"\'+SUM(1,2)"',
+      '"\'@SUM(3,4)"', '"\' \t=SUM(4,5)"'];
+    for (const escaped of escapedCells) {
+      assert(csv.includes(escaped), 'CSV permite fórmula peligrosa sin neutralizar: '+escaped);
+    }
+    assert(csv.includes('"Código B"') && csv.includes('"Dibujo correcto"'),
+      'CSV alteró campos de texto ordinarios');
+  } finally {
+    await page.evaluate(prior => {
+      window.state.units = prior.units;
+      window.state.activeUnitId = prior.activeUnitId;
+      window.state.evaluationRecords = prior.evaluationRecords;
+      window.state.studentRoster = prior.studentRoster;
+      document.querySelector('[data-csv-security-fixture="true"]')?.remove();
+      window.save();
+    }, csvFixture);
+  }
 
   // Regression: requesting ten division tasks must not repeat the first six.
   // Use a fictitious unit and the real evaluation UI, without modifying user data.
