@@ -124,11 +124,21 @@ try{
           window.DDMaterials.create();
           // Evaluation must also reject the stale selection rather than
           // showing criteria from the first saved unit or a foreign session.
+          // The simple planning shell can omit the evaluation screen in this
+          // fixture. Mount a minimal host to exercise the actual evaluation
+          // module's rubric/register logic, without claiming full UI coverage.
+          const existingEval = document.getElementById('evaluation');
+          const fixtureEval = existingEval || document.createElement('section');
+          if (!existingEval) {
+            fixtureEval.id = 'evaluation';
+            document.body.appendChild(fixtureEval);
+          }
           window.DDEvaluation.openRubric();
           document.querySelector('#ddRubBuild')?.click();
           const rubricText = document.querySelector('#ddRubBody')?.innerText || '';
           window.DDEvaluation.openRegister();
           const registerText = document.querySelector('#ddEvalBody')?.innerText || '';
+          if (!existingEval) fixtureEval.remove();
           return {
             rubricText, registerText,
             evaluationPanel: document.querySelector('#evaluationPanel')?.innerText?.slice(0,300),
