@@ -203,6 +203,20 @@ try{
   assert.ok(spacedDniPayload.includes('DNI [omitido]'));
   assert.ok(spacedDniPayload.includes('hortalizas'),'Privacy redaction removed the learning topic');
 
+  // Common Peruvian DNI prefixes previously leaked identifiers into the provider.
+  // Check the actual mocked paid-provider payload, not just the redaction helper.
+  res=await call(ai,'POST',{task:'material',
+    prompt:'Crea ejercicios. DNI N.º 1234 5678; DNI Nro. 87654321; DNI: N.º 1122-3344.',
+    context:{sourceText:'Documento nacional de identidad N.° 44332211. Practicamos la siembra de hortalizas.'}
+  });
+  assert.equal(res.statusCode,200);
+  const prefixedDniPayload=JSON.stringify(JSON.parse(captured.options.body));
+  for(const leak of ['1234 5678','87654321','1122-3344','44332211'])
+    assert.equal(prefixedDniPayload.includes(leak),false,'Prefixed DNI leaked to GPT: '+leak);
+  assert.match(prefixedDniPayload,/DNI \\[omitido\\]/);
+  assert.match(prefixedDniPayload,/siembra de hortalizas/,
+    'DNI redaction must preserve the pedagogical context');
+
   // Regression: hyphenated pupil names and slash-separated DNI must not reach GPT.
   res=await call(ai,'POST',{task:'material',
     prompt:'Prepara una ficha para Alumna: Ana-María Pérez. D.N.I. 1234/5678.',

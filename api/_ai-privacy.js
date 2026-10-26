@@ -8,8 +8,8 @@ function redactPersonalData(value){
     // Permit particles (de la / del) and uppercase names common in school lists.
     .replace(/\b([Ee][Ss][Tt][Uu][Dd][Ii][Aa][Nn][Tt][Ee]|[Aa][Ll][Uu][Mm][Nn][AaOo])\s*:\s*[A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*)*(?:\s+(?:(?:de|del|la|las|los|y)\s+){0,3}[A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*)*){0,5}/g,'$1: [nombre omitido]')
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,'[correo omitido]')
-    // Also redact labeled DNI with grouped digits (spaces, dots, hyphens or slashes).
-    .replace(/\b(?:DNI|D\.N\.I\.?|documento(?: nacional)? de identidad)\s*(?:N[°º.]?\s*)?[:#-]?\s*\d(?:[\s.\/-]?\d){7}(?!\d)/gi,'DNI [omitido]')
+    // Also redact labeled DNI with grouped digits and Peruvian N.º / N.° / Nro. / No. prefixes.
+    .replace(/\b(?:DNI|D\.N\.I\.?|documento(?: nacional)? de identidad)\s*[:#-]?\s*(?:N(?:\.\s*[°º]|[°º.]|ro\.?|o\.?|úmero)?\s*)?[:#-]?\s*\d(?:[\s.\/-]?\d){7}(?!\d)/gi,'DNI [omitido]')
     .replace(/(?<!\d)(?:\+?51[\s.-]*)?9(?:[\s.-]?\d){8}(?!\d)/g,'[teléfono omitido]');
 }
 module.exports={redactPersonalData};
