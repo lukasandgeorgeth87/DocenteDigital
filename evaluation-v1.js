@@ -41,6 +41,15 @@
     });
   }
 
+  // A saved grade may use 3.º, 3.° or 3° depending on the input form.
+  // Match these equivalent primary/secondary ordinals without confusing
+  // them with Inicial ages such as "3 años".
+  function criterionGradeKey(value){
+    var raw=String(value==null?'':value).trim();
+    var ordinal=raw.match(/^(\d{1,2})\s*\.?\s*[º°ª]?\s*(?:grado)?$/i);
+    return ordinal?'ordinal:'+Number(ordinal[1]):'literal:'+raw.toLocaleLowerCase();
+  }
+
   function criteriaFor(unit,grade,area){
     // A stale unit selection must not show another unit's criteria or a
     // previous session's assessment evidence.
@@ -49,7 +58,7 @@
     purposes(unit).filter(function(p){return !area||p.area===area;}).forEach(function(p){
       // Criteria are grade-specific. A missing grade must never inherit the first
       // available grade's criterion (especially in multigrade classrooms).
-      var c=(p.criteria||[]).find(function(x){return String(x.grade).trim()===String(grade).trim();});
+      var c=(p.criteria||[]).find(function(x){return criterionGradeKey(x.grade)===criterionGradeKey(grade);});
       if(c&&c.text)out.push({area:p.area,criterion:c.text,evidence:p.evidence||'',instrument:p.instrument||''});
     });
     if(!out.length&&(!unit||!Array.isArray(unit.purposes)||!unit.purposes.length)&&state.lastSession&&
