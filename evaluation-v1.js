@@ -9,7 +9,7 @@
   // The simplified planning shell can replace the evaluation screen markup.
   // Recreate the output panel on demand instead of silently ignoring clicks.
   function ensureEvaluationPanel(){
-    var panel=ensureEvaluationPanel();
+    var panel=$('evaluationPanel');
     if(panel)return panel;
     var screen=$('evaluation');
     if(!screen)return null;
