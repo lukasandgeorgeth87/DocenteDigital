@@ -275,16 +275,16 @@ try{
       id: 'test-csv-formula-security', title: 'Unidad ficticia para CSV',
       grades: ['3.º'], areas: ['Matemática'],
       purposes: [{area:'Matemática', evidence:'Respuesta escrita',
-        instrument:'Lista de cotejo', criteria:[{grade:'3.º',text:'=SUM(1,1)'}]}]
+        instrument:'Lista de cotejo', criteria:[{grade:'3.º',text:' \t=SUM(1,1)'}]}]
     };
     window.state.units = [...(prior.units || []), unit];
     window.state.activeUnitId = unit.id;
     window.state.studentRoster = {...(prior.studentRoster || {}), '3.º':['=2+3','Código B']};
     window.state.evaluationRecords = [
       ...(prior.evaluationRecords || []),
-      {unitId:unit.id,grade:'3.º',area:'Matemática',criterion:'=SUM(1,1)',
+      {unitId:unit.id,grade:'3.º',area:'Matemática',criterion:' \t=SUM(1,1)',
         student:'=2+3',level:'A',evidenceNote:'+SUM(1,2)',nextStep:'@SUM(3,4)'},
-      {unitId:unit.id,grade:'3.º',area:'Matemática',criterion:'=SUM(1,1)',
+      {unitId:unit.id,grade:'3.º',area:'Matemática',criterion:' \t=SUM(1,1)',
         student:'Código B',level:'B',evidenceNote:'Dibujo correcto',nextStep:' \t=SUM(4,5)'}
     ];
     window.DDEvaluation.openRegister();
@@ -308,8 +308,8 @@ try{
     assert(csvResult && /\.csv$/i.test(csvResult.name), 'Evaluación no entregó un Blob CSV');
     const csv = csvResult.text;
     assert(csv.charCodeAt(0) === 0xFEFF, 'CSV de evaluación perdió BOM UTF-8');
-    const escapedCells = ['"\'=2+3"', '"\'=SUM(1,1)"', '"\'+SUM(1,2)"',
-      '"\'@SUM(3,4)"', '"\' \t=SUM(4,5)"'];
+    const escapedCells = ['"\'=2+3"', '"\' \t=SUM(1,1)"', '"\'+SUM(1,2)"',
+      '"\'@SUM(3,4)"', '"\'=SUM(4,5)"'];
     for (const escaped of escapedCells) {
       assert(csv.includes(escaped), 'CSV permite fórmula peligrosa sin neutralizar: '+escaped);
     }
