@@ -237,6 +237,39 @@
     </article>`;
   }
 
+  // A school-garden project needs genuinely solvable, grade-appropriate math
+  // tasks rather than unrelated "there were N items" subtraction stories.
+  // Quantities below are clearly practice figures, not observations or
+  // agronomic recommendations for a real school's garden.
+  function isGardenMath(topic){
+    return /biohuerto|huerto escolar|hortaliza/.test(N(topic));
+  }
+
+  function gardenMathActivities(grade){
+    const n=gradeNumber(grade);
+    if(n<=2)return [
+      'Práctica con cantidades ficticias: dibuja 6 semillas de lechuga y 4 de zanahoria. ¿Cuántas semillas hay en total?',
+      'Representa 12 plantines con fichas; si 3 se trasladan a otro cantero, ¿cuántos quedan?',
+      'Organiza 10 semillas en dos colecciones según el tipo. Cuenta cada colección y verifica que juntas suman 10.',
+      'Compara dos bandejas: una tiene 8 semillas y otra 5. ¿Cuál tiene más y cuántas semillas de diferencia hay?',
+      'Dibuja una nueva situación de siembra usando una suma de números hasta 20 y explica tu respuesta.'
+    ];
+    if(n<=4)return [
+      'Situación ficticia: se preparan 4 filas con 6 semillas por fila. Dibuja la organización, multiplica y halla el total.',
+      'Se reparten 25 semillas de hortalizas entre 4 equipos. ¿Cuántas recibe cada equipo y cuántas sobran?',
+      'Para registrar el ensayo, organiza en una tabla 3 canteros con 8, 12 y 10 plantines. Halla el total y compara las cantidades.',
+      'Se necesitan 5 etiquetas para cada uno de 6 canteros. ¿Cuántas etiquetas se preparan? Comprueba con una suma reiterada.',
+      'Propón otro problema de reparto para la organización del biohuerto y comprueba que tu resultado sea razonable.'
+    ];
+    return [
+      'Plano hipotético: un cantero rectangular mide 6 m de largo y 4 m de ancho. Calcula el perímetro y el área en m².',
+      'En ese plano se reservan 2 m² para un sendero. ¿Cuántos m² quedan si el cantero tenía 24 m²? Justifica.',
+      'Compara dos canteros ficticios de 6 m × 4 m y 8 m × 3 m. ¿Tienen la misma área? ¿Y el mismo perímetro?',
+      'Para un ejercicio de presupuesto se estiman 6 bolsas a S/ 7.50 cada una. Calcula el gasto y el cambio de S/ 50.',
+      'Diseña un plano a escala sencilla con medidas elegidas por ti, comprueba el área y explica qué datos de la escuela faltaría medir realmente.'
+    ];
+  }
+
   function worksheetActivities(topic,level,grade,area){
     const info=topicInfo(topic),n=gradeNumber(grade);
     if(level==='Inicial')return [
@@ -272,6 +305,7 @@
         'Explica por qué un residuo de 1 unidad no se interpreta igual que S/ 0.10 en un reparto de dinero.'
       ];
     }
+    if(area==='Matemática'&&isGardenMath(topic))return gardenMathActivities(grade);
     if(area==='Matemática')return [
       `Representa una situación relacionada con ${topic} usando material, dibujo, esquema, tabla o expresión matemática.`,
       'Identifica los datos necesarios y explica qué se necesita hallar.',
@@ -316,7 +350,7 @@
     return `<article class="dd-material-sheet">
       <div class="dd-material-kicker">Ficha de trabajo · ${E(area)} · ${E(grade)}</div>
       <h1>${E(topic)}</h1>
-      <p><b>Propósito:</b> desarrollar una evidencia observable mediante acciones de comprensión, aplicación y explicación.</p>
+      <p><b>${area==='Matemática'&&isGardenMath(topic)?'Práctica matemática contextualizada':'Propósito'}:</b> ${area==='Matemática'&&isGardenMath(topic)?'usar datos hipotéticos del biohuerto para contar, organizar o medir según el grado; contrastar con datos reales antes de planificar una siembra.':'desarrollar una evidencia observable mediante acciones de comprensión, aplicación y explicación.'}</p>
       ${source?`<div class="dd-source-base"><b>Recurso base proporcionado por el docente</b><p>${E(source.slice(0,2200))}${source.length>2200?'…':''}</p></div>`:''}
       <ol class="dd-big-list">${acts.map((a,i)=>`<li><b>${i+1}.</b> ${E(a)}<div class="dd-answer-lines"></div></li>`).join('')}</ol>
       <div class="dd-material-reflect"><b>Al final:</b> ¿qué aprendiste?, ¿qué estrategia te ayudó?, ¿qué mejorarías?</div>
@@ -367,6 +401,21 @@
           const families=3+(i%3),each=20+i,remainder=1+(i%(families-1));
           const total=families*each+remainder;
           items.push(`${i}. La comunidad reparte ${total} unidades de insumos entre ${families} familias. ¿Cuántas unidades enteras recibe cada una y cuál es el residuo? Explica qué hacer con lo que sobra y verifica la igualdad dividendo = divisor × cociente + residuo.`);
+        }
+      }
+    }else if(isGardenMath(topic)){
+      // Ten distinct, solvable examples per grade with numbers declared as
+      // practice data; no fabricated measurements or harvest predictions.
+      for(let i=1;i<=10;i++){
+        if(n<=2){
+          const lechuga=3+i,zanahoria=2+i%3;
+          items.push(`${i}. En un ejercicio ficticio del biohuerto se cuentan ${lechuga} semillas de lechuga y ${zanahoria} de zanahoria. ¿Cuántas hay en total? Dibújalas y comprueba la suma.`);
+        }else if(n<=4){
+          const rows=2+i%4,perRow=4+i%6;
+          items.push(`${i}. Se organiza un ensayo de hortalizas con ${rows} filas de ${perRow} semillas por fila. ¿Cuántas semillas se necesitan? Escribe una multiplicación y comprueba con un dibujo o suma reiterada.`);
+        }else{
+          const length=4+i,width=2+i%3;
+          items.push(`${i}. En un plano hipotético del biohuerto, un cantero rectangular mide ${length} m de largo y ${width} m de ancho. Calcula su área en m² y su perímetro en m; explica cómo lo verificas y qué medida real faltaría comprobar.`);
         }
       }
     }else{

@@ -556,6 +556,75 @@ try{
   },beforeRecovery);
   console.log('ASSESSMENT_RECOVERY_PASS: auto-save, reload, same-unit recovery, Word, orphan guard');
 
+
+  // Golden pedagogical chain: prior tuber knowledge is not the new goal.
+  // The NEW challenge is sowing vegetables in the school garden. Verify real
+  // grade-differentiated math tasks, the selected final product and Word.
+  const previousGarden=await state();
+  const gardenPacks=await page.evaluate(()=>{
+    const garden={
+      id:'test-hortalizas-biohuerto',
+      title:'Planificamos la siembra de hortalizas en nuestro biohuerto',
+      situationBrief:'Antes aprendimos a cultivar papa y oca en las chacras. Ahora queremos planificar y sembrar hortalizas en un biohuerto escolar.',
+      situation:'Partimos de los saberes sobre papa y oca para investigar qué necesitamos aprender al planificar la siembra de hortalizas.',
+      reto:'¿Cómo organizaremos la siembra de hortalizas en el biohuerto usando información y medidas que podamos comprobar?',
+      product:'Plano y registro de siembra de hortalizas',
+      productTitle:'Plano y registro de siembra de hortalizas',
+      selectionApproved:true,
+      areas:['Matemática'],grades:['1.º','3.º','5.º'],
+      purposes:[{area:'Matemática',evidence:'Plan y registro de medidas',criteria:[
+        {grade:'1.º',text:'Cuenta y representa cantidades sencillas'},
+        {grade:'3.º',text:'Organiza cantidades en filas y verifica operaciones'},
+        {grade:'5.º',text:'Calcula y contrasta área y perímetro de un cantero hipotético'}
+      ]}]
+    };
+    window.state.units.push(garden);
+    window.state.activeUnitId=garden.id;
+    window.state.lastSession=null;
+    window.save();
+    window.go('materials');
+    document.getElementById('materialSource').value='unit';
+    window.DDMaterials.useCurrent();
+    document.getElementById('materialArea').value='Matemática';
+    window.DDMaterials.createBundle();
+    return [...document.querySelectorAll('#materialOutput .dd-grade-pack')].map(block=>({
+      grade:block.querySelector('.dd-grade-pack-head')?.textContent?.trim(),
+      problems:[...block.querySelectorAll('.dd-problem-list li')].map(li=>li.textContent.trim()),
+      worksheet:block.querySelector('.dd-big-list')?.textContent?.trim()||''
+    }));
+  });
+  assert(gardenPacks.length===3,'Biohuerto multigrado: faltan bloques 1.º, 3.º o 5.º');
+  for(const pack of gardenPacks){
+    assert(pack.problems.length===10&&new Set(pack.problems).size===10,
+      'Biohuerto: cada grado debe recibir diez problemas diferentes: '+JSON.stringify(pack));
+    assert(pack.problems.every(p=>/biohuerto|hortalizas/i.test(p)),
+      'Biohuerto: el banco de problemas se alejó del reto nuevo de hortalizas');
+  }
+  assert(/1.º/.test(gardenPacks[0].grade)&&/semillas de lechuga/i.test(gardenPacks[0].problems[0])&&
+    /Dibuja/i.test(gardenPacks[0].worksheet),
+    '1.º: deben usarse cantidades concretas, semillas y dibujos, no áreas');
+  assert(/3.º/.test(gardenPacks[1].grade)&&/filas de \d+ semillas/i.test(gardenPacks[1].problems[0])&&
+    /multiplicación/i.test(gardenPacks[1].worksheet),
+    '3.º: deben aparecer filas, multiplicación y comprobación');
+  assert(/5.º/.test(gardenPacks[2].grade)&&/m²/.test(gardenPacks[2].problems[0])&&
+    /perímetro/.test(gardenPacks[2].worksheet),
+    '5.º: deben plantearse área y perímetro con datos explícitamente hipotéticos');
+  const fullGarden=await page.locator('#materialOutput').innerText();
+  assert(fullGarden.includes('Antes aprendimos a cultivar papa y oca') &&
+    fullGarden.includes('Plano y registro de siembra de hortalizas'),
+    'La ficha multigrado perdió saberes previos o producto aprobado');
+  const gardenWordPromise=page.waitForEvent('download');
+  await page.locator('#materialOutput .dd-material-actions button[onclick*="downloadWord"]').click();
+  const gardenWord=await gardenWordPromise;
+  assert(gardenWord.suggestedFilename().endsWith('.docx'),
+    'Biohuerto: no se pudo exportar el paquete multigrado a DOCX');
+  await page.evaluate(previous=>{
+    for(const key of ['units','activeUnitId','lastSession','lastMaterial','materials'])
+      window.state[key]=previous[key];
+    window.save();
+  },previousGarden);
+  console.log('GARDEN_MATH_135_PASS: new vegetable goal, ten contextual tasks per grade, approved product and Word');
+
   console.log('SEMANTIC_GOLDEN_PASS');
 }finally{
   await browser.close();
