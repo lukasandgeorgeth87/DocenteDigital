@@ -143,7 +143,7 @@
     // to be interpreted as literal text when opened in Excel/Sheets.
     function safeCsvCell(value){
       var cell=String(value==null?'':value);
-      if(/^[\\s\\uFEFF]*[=+\\-@]/.test(cell)||/^[\\t\\r\\n]/.test(cell))cell="'"+cell;
+      if(/^[\s\uFEFF]*[=+\-@]/.test(cell)||/^[\t\r\n]/.test(cell))cell="'"+cell;
       return '"'+cell.replace(/"/g,'""')+'"';
     }
     var csv=all.map(function(row){return row.map(safeCsvCell).join(',');}).join('\n');
