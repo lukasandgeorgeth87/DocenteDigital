@@ -258,6 +258,19 @@ try{
   for(const preserved of ['fracciones equivalentes','mercado de Calca','[nombre omitido]'])
     assert.ok(rosterPayload.includes(preserved),'Roster redaction lost teaching content: '+preserved);
 
+  // Uppercase school-roster headings and alternate separators previously leaked
+  // pupils' names. Verify the outgoing mocked provider payload, not only helper output.
+  res=await call(ai,'POST',{task:'material',
+    prompt:'NOMBRES Y APELLIDOS: ANA MARÍA PÉREZ. Explica fracciones equivalentes. Nombre Completo = Juan Carlos de la Cruz.',
+    context:{sourceText:'APELLIDOS Y NOMBRES - QUISPE HUAMÁN LUCÍA. Nombre del Estudiante: Diego Rojas. Actividad de mercado.'}
+  });
+  assert.equal(res.statusCode,200);
+  const uppercaseRosterPayload=JSON.stringify(JSON.parse(captured.options.body));
+  for(const leak of ['ANA MARÍA PÉREZ','Juan Carlos de la Cruz','QUISPE HUAMÁN LUCÍA','Diego Rojas'])
+    assert.equal(uppercaseRosterPayload.includes(leak),false,'Uppercase or separated roster name leaked to GPT: '+leak);
+  for(const safe of ['[nombre omitido]','fracciones equivalentes','Actividad de mercado'])
+    assert.ok(uppercaseRosterPayload.includes(safe),'Roster privacy removed teaching context: '+safe);
+
   res=await call(ai,'POST',{task:'material',prompt:'Ficha de hortalizas',context:{
     purpose:'Aprender a sembrar hortalizas',product:'Biohuerto escolar',
     criterion:'Justifica la selección de semillas',evidence:'Registro de siembra'
