@@ -368,11 +368,37 @@ try {
   assert(!initialMonitoring.includes('Observación realizada')&&
     !initialMonitoring.includes('Logro alcanzado'),
     'Director no debe inventar visitas ni resultados');
+  const initialSummary=page.locator('#ddPlanResult .dd-monitor-summary');
+  assert((await initialSummary.innerText()).includes('Visitas realizadas con evidencia: 0') &&
+    (await initialSummary.innerText()).includes('Acuerdos con verificación registrada: 0'),
+    'El seguimiento debe iniciar sin visitas ni compromisos artificialmente completados');
+  const monitoringRow=page.locator('#ddPlanResult .dd-monitoring-table tbody tr').first();
+  // Claiming a visit was completed MUST NOT count without actual evidence.
+  await monitoringRow.locator('td[contenteditable="true"]').nth(4).fill('Realizada');
+  assert((await initialSummary.innerText()).includes('SIN evidencia registrada')&&
+    (await initialSummary.innerText()).includes('Visitas realizadas con evidencia: 0'),
+    'Director contabilizó como realizada una visita sin evidencia');
+  await monitoringRow.locator('td[contenteditable="true"]').nth(3).fill(
+    'Evidencia de prueba: notas sobre consignas diferenciadas.');
+  assert((await initialSummary.innerText()).includes('Visitas realizadas con evidencia: 1')&&
+    !(await initialSummary.innerText()).includes('SIN evidencia registrada'),
+    'El seguimiento no reconoció una visita registrada con evidencia');
   const editCell=page.locator('#ddPlanResult .dd-monitoring-table tbody tr')
     .first().locator('td[contenteditable="true"]').first();
   await editCell.fill('2027-04-15 · programación ficticia');
   const followup=page.locator('#ddPlanResult .dd-monitoring-agreements tbody td[contenteditable="true"]').nth(2);
   await followup.fill('COMPROMISO_FICTICIO: revisar consignas diferenciadas por grado.');
+  const agreements=page.locator('#ddPlanResult .dd-monitoring-agreements tbody tr').first();
+  await agreements.locator('td[contenteditable="true"]').nth(1).fill('Evidencia de prueba de observación');
+  await agreements.locator('td[contenteditable="true"]').nth(3).fill('Responsable ficticio');
+  await agreements.locator('td[contenteditable="true"]').nth(4).fill('2027-04-22');
+  assert((await initialSummary.innerText()).includes('Compromisos con responsable y plazo: 1')&&
+    (await initialSummary.innerText()).includes('Acuerdos con verificación registrada: 0'),
+    'La programación de un acuerdo no debe inventar su verificación');
+  await agreements.locator('td[contenteditable="true"]').nth(5).fill(
+    'Verificación ficticia registrada, exclusivamente para ensayo automatizado.');
+  assert((await initialSummary.innerText()).includes('Acuerdos con verificación registrada: 1'),
+    'El seguimiento no reconoció la verificación explícitamente sustentada');
   const monitoredState=await state();
   assert(monitoredState.lastDirectorDoc?.type==='Plan'&&
     monitoredState.lastDirectorDoc.html.includes('COMPROMISO_FICTICIO')&&
@@ -390,6 +416,9 @@ try {
   const restoredMonitoring=await page.locator('#ddDirResult .dd-editable-material').innerText();
   assert(restoredMonitoring.includes('COMPROMISO_FICTICIO')&&restoredMonitoring.includes('2027-04-15'),
     'Director no recuperó el seguimiento ya escrito');
+  assert(restoredMonitoring.includes('Visitas realizadas con evidencia: 1')&&
+    restoredMonitoring.includes('Acuerdos con verificación registrada: 1'),
+    'Director perdió el resumen verificable al recuperar el documento');
   const monitorWordPromise=page.waitForEvent('download',{timeout:15000});
   await page.locator('#ddDirWord').click();
   const monitorWord=await monitorWordPromise;
@@ -398,8 +427,10 @@ try {
   const monitorXml=docxDocumentXml(await fs.readFile(await monitorWord.path()));
   assert(monitorXml.includes('COMPROMISO_FICTICIO')&&
     monitorXml.includes('2027-04-15')&&
-    monitorXml.includes('Retroalimentación y compromisos'),
-    'El DOCX del plan de monitoreo omite compromiso, fecha o sección de seguimiento');
+    monitorXml.includes('Retroalimentación y compromisos')&&
+    monitorXml.includes('Visitas realizadas con evidencia: 1')&&
+    monitorXml.includes('Acuerdos con verificación registrada: 1'),
+    'El DOCX del plan de monitoreo omite compromisos, fecha o resumen de seguimiento');
   s=await state();
   assert(s.directorDocs?.some(d=>d.id===monitoringId&&d.html.includes('COMPROMISO_FICTICIO')),
     'Exportar Word perdió el registro actualizado en el historial');

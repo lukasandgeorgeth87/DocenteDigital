@@ -110,6 +110,35 @@
     renderDocument(item);
   }
 
+  // Summarize ONLY observable, recorded evidence. A proposed date alone,
+  // or an unsupported "Realizada" status, is never a verified visit.
+  function updateMonitoringSummary(host){
+    const editor=host?.querySelector('.dd-editable-material');
+    const summary=editor?.querySelector('.dd-monitor-summary');
+    if(!summary)return;
+    const readRows=selector=>[...editor.querySelectorAll(selector)].map(row=>
+      [...row.querySelectorAll('td')].map(cell=>cell.textContent.trim()));
+    const visits=readRows('.dd-monitoring-table tbody tr');
+    const agreements=readRows('.dd-monitoring-agreements tbody tr');
+    const completed=status=>/^(realizad[ao]|completad[ao]|verificad[ao])\b/i.test(status||'');
+    const scheduled=visits.filter(cols=>cols[1]&&cols[2]&&cols[3]).length;
+    const realized=visits.filter(cols=>completed(cols[5])&&cols[4]).length;
+    const unsupported=visits.filter(cols=>completed(cols[5])&&!cols[4]).length;
+    const commitments=agreements.filter(cols=>cols[2]&&cols[3]&&cols[4]).length;
+    const checked=agreements.filter(cols=>
+      cols[1]&&cols[2]&&cols[3]&&cols[4]&&cols[5]&&
+      !/^(pendiente|por completar|sin verificar)$/i.test(cols[5])).length;
+    summary.innerHTML='<b>Resumen de seguimiento (solo registros verificables)</b>'+
+      '<p>Grados/secciones: '+visits.length+
+      ' · Programaciones completas: '+scheduled+
+      ' · Visitas realizadas con evidencia: '+realized+
+      ' · Compromisos con responsable y plazo: '+commitments+
+      ' · Acuerdos con verificación registrada: '+checked+'</p>'+
+      (unsupported?'<p><b>Atención:</b> '+unsupported+
+        ' visita(s) marcada(s) como realizada(s) SIN evidencia registrada. No se contabilizan como verificadas.</p>':'')+
+      '<small>No se infieren visitas, logros ni cumplimiento por una fecha o un estado sin sustento.</small>';
+  }
+
   function renderDocument(item){
     const box=$('ddDirResult');if(!box)return;
     box.innerHTML=`<div class="dd-editable-material" contenteditable="true" spellcheck="true">${item.html}</div>
@@ -117,14 +146,19 @@
     $('ddDirSave').onclick=saveCurrent;
     $('ddDirWord').onclick=downloadCurrent;
     $('ddDirPrint').onclick=()=>window.print();
-    // A director's adjustments must survive navigation or reload even if
-    // the Save/Word toolbar was never clicked. Bind only this document.
-    box.querySelector('.dd-editable-material')?.addEventListener('input',saveCurrent);
+    // Reopening a saved monitoring plan must immediately recompute its true
+    // follow-up counts from the recorded evidence, not trust a stale summary.
+    updateMonitoringSummary(box);
+    box.querySelector('.dd-editable-material')?.addEventListener('input',()=>{
+      updateMonitoringSummary(box);
+      saveCurrent();
+    });
   }
 
   function saveCurrent(){
     const item=state.lastDirectorDoc,ed=$('ddDirResult')?.querySelector('.dd-editable-material');
     if(!item||!ed)return;
+    updateMonitoringSummary($('ddDirResult'));
     item.html=ed.innerHTML;item.updatedAt=new Date().toISOString();
     const i=state.directorDocs.findIndex(x=>x.id===item.id);if(i>=0)state.directorDocs[i]=item;save();
   }
@@ -161,7 +195,8 @@
     const rows=(grades.length?grades:['Por definir']).map(grade=>
       `<tr data-grade="${E(grade)}"><td>${E(grade)}</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true">Pendiente</td></tr>`
     ).join('');
-    return `<h2>VIII. Programación de monitoreo por grado / sección</h2>
+    return `<section class="dd-monitor-summary notice" contenteditable="false" aria-live="polite"><b>Resumen de seguimiento</b><p>Sin registros verificados.</p></section>
+      <h2>VIII. Programación de monitoreo por grado / sección</h2>
       <p>Registra observaciones REALES cuando se efectúen; esta tabla no acredita visitas, logros ni desempeños.</p>
       <div class="dd-scroll"><table class="dd-table dd-monitoring-table">
       <thead><tr><th>Grado / sección</th><th>Fecha programada</th><th>Foco de observación</th><th>Responsable</th><th>Evidencia recogida</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></div>
@@ -202,6 +237,7 @@
     function savePlanCurrent(){
       const ed=box.querySelector('.dd-editable-material');
       if(!ed)return;
+      updateMonitoringSummary(box);
       item.html=ed.innerHTML;
       item.updatedAt=new Date().toISOString();
       const i=state.directorDocs.findIndex(x=>x.id===item.id);
@@ -210,6 +246,8 @@
       save();
     }
     $('ddPlanSave').onclick=savePlanCurrent;
+    updateMonitoringSummary(box);
+    savePlanCurrent();
     box.querySelector('.dd-editable-material')?.addEventListener('input',savePlanCurrent);
     $('ddPlanWord').onclick=()=>{
       savePlanCurrent();
