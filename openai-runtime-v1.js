@@ -23,8 +23,9 @@
     const unitLinked=linked&&materialSource!=='free';
     // Only use a session from the active unit, and only when the teacher
     // explicitly selected session materials (or requests session strategies).
+    // Without an active unit, an old lastSession must never leak into a new planning context.
     const candidate=s.lastSession;
-    const session=unitLinked&&materialSource==='session'&&candidate&&(!u.id||candidate.unitId===u.id)
+    const session=unitLinked&&materialSource==='session'&&candidate&&u.id&&candidate.unitId===u.id
       ? candidate : {};
     const unitProduct=u.selectionApproved&&String(u.productTitle||'').trim()&&
       !['Producto final','Producto propuesto por el docente'].includes(String(u.productTitle).trim())
