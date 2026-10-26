@@ -122,7 +122,15 @@ try{
           };
           window.DDMaterials.useCurrent();
           window.DDMaterials.create();
+          // Evaluation must also reject the stale selection rather than
+          // showing criteria from the first saved unit or a foreign session.
+          window.DDEvaluation.openRubric();
+          document.querySelector('#ddRubBuild')?.click();
+          const rubricText = document.querySelector('#ddRubBody')?.innerText || '';
+          window.DDEvaluation.openRegister();
+          const registerText = document.querySelector('#ddEvalBody')?.innerText || '';
           return {
+            rubricText, registerText,
             source: window.state.lastMaterial?.source,
             topic: window.state.lastMaterial?.topic,
             output: document.querySelector('#materialOutput')?.innerText || ''
@@ -160,6 +168,9 @@ try{
           window.save();
         }
       });
+      assert(/No hay criterios disponibles/i.test(staleSelection.rubricText) &&
+        /Aún no hay criterios disponibles/i.test(staleSelection.registerText),
+        'evaluación: selección borrada reutilizó criterios de otra unidad: '+JSON.stringify(staleSelection));
       assert(staleSelection.source === 'free' &&
         !/Sesión privada|Propósito privado|Producto privado|Vinculación con la planificación/i.test(staleSelection.output),
         'biohuerto: ID activo inexistente filtró planificación ajena: '+JSON.stringify(staleSelection));
