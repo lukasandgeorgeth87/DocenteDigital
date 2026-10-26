@@ -15,7 +15,10 @@
   save();
 
   function activeUnit(){
-    return (state.units||[]).find(u=>u.id===state.activeUnitId)||(state.units||[])[0]||null;
+    // A stale active ID must not silently select an unrelated saved unit.
+    // Fall back to the first unit only when no explicit selection exists.
+    if(state.activeUnitId)return (state.units||[]).find(u=>u.id===state.activeUnitId)||null;
+    return (state.units||[])[0]||null;
   }
 
   function profile(){
@@ -61,7 +64,9 @@
     }
     // A previously generated session may belong to a different unit. Never
     // propagate its topic, area, purpose or evidence into the active unit.
-    const session=state.lastSession && (!unit?.id || state.lastSession.unitId===unit.id)
+    const session=state.lastSession && (unit?.id
+      ? state.lastSession.unitId===unit.id
+      : !state.activeUnitId && !state.lastSession.unitId)
       ? state.lastSession : null;
     if(source==='session'&&session){
       return {
