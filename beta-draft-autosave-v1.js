@@ -80,7 +80,12 @@
     restore();
   }
   document.addEventListener('click',event=>{
-    const build=event.target?.closest?.('#ddBuildUnit');if(!build)return;
+    // The live planning form uses onclick="createUnitDemo()"; older beta
+    // surfaces used #ddBuildUnit. Cover both real creation entry points.
+    const button=event.target?.closest?.('button');
+    if(!button)return;
+    const isBuild=button.id==='ddBuildUnit'||/\bcreateUnitDemo\s*\(/.test(button.getAttribute('onclick')||'');
+    if(!isBuild)return;
     // Flush the pending autosave before the creation handler changes the form.
     // A previous unit with identical context is NOT proof this draft was saved.
     saveDraft();

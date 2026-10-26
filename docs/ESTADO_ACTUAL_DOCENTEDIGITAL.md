@@ -1,5 +1,13 @@
 # DocenteDigital — estado canónico para continuidad entre conversaciones
 
+## Actualización complementaria — 26/10/2026, 18:25 (Perú) — conectar limpieza de borrador al botón realmente utilizado
+
+- **SHA base previo:** `d489199dc8fd13863134d98f6ecddae1804d3c29`; esta actualización es un commit posterior en la misma rama (ver HEAD). Se comprobó en `index.html` que el formulario real usa `onclick="createUnitDemo()"`, mientras que el listener anterior solo observaba `#ddBuildUnit`. **Corrección:** el listener cubre ambos botones sin alterar el flujo de creación. Se agrega regresión en navegador que simula el clic inline y una unidad nueva guardada.
+- **Pruebas:** `ai-context-fast` del SHA anterior en ejecución [40419254012](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40419254012) **PASS**; `browser-e2e` anterior **EN CURSO** cuando se preparó este commit. **CI del nuevo SHA pendiente**; no afirmar PASS hasta finalizar.
+- **Despliegue:** Preview del SHA anterior `d489199dc8fd13863134d98f6ecddae1804d3c29` **READY**: https://docente-digital-hazzg8zv7-jorgeluispalma87-7403.vercel.app (HTTP sin verificar). Preview nuevo pendiente. Producción y datos reales intactos.
+- **Pendientes y decisiones sin cambios:** S0 ninguno nuevo; S1 CI nuevo, HTTP Preview, Redis/cuota y GPT ficticio protegido; S2 revisión curricular; S3 UX móvil; S4 app PC futura. GPT principal con cuota/permiso, plantillas respaldo; **75 % histórico estimado**, **21/100 cierre V5 histórico**, sin incremento. Bitácora: `beta-draft-autosave-v1.js`, `tests/continuity-resilience.mjs`, este documento.
+
+
 ## Estado más reciente — 26/10/2026, 18:19 (Perú) — continuidad: no descartar borrador por coincidencia con unidad anterior
 
 - **Repositorio/rama exclusiva:** `lukasandgeorgeth87/DocenteDigital` / `audit/v5-continuity-offline-diagnostic`. **SHA base verificado antes del cambio:** `1ccb627bdb32bd21f8e77f6d8af957679549daad`. Este documento, el código y la regresión se publican en un mismo commit; consultar HEAD de la rama para el SHA final (un commit no puede incluir su propio SHA en su contenido). Producción y datos reales no modificados.

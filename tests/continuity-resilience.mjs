@@ -130,6 +130,37 @@ try{
   });
   assert(draftClickRegression.retained,'Una unidad anterior con igual contexto borró el borrador sin crear otra');
   assert(draftClickRegression.cleared,'Un borrador guardado como unidad nueva no se limpió');
+  // The actual planning form uses an inline createUnitDemo() handler rather
+  // than #ddBuildUnit. Simulate its persistence synchronously during click.
+  const liveButtonRegression=await page.evaluate(async()=>{
+    const key='docenteDigitalBetaDraftUnit',stateKey='docenteDigitalPrototype';
+    const savedState=localStorage.getItem(stateKey);
+    const title=document.getElementById('unitTitle'),situation=document.getElementById('unitSituation');
+    const oldTitle=title.value,oldSituation=situation.value;
+    const draftTitle='Unidad desde botón real',draftSituation='Reto nuevo de continuidad';
+    title.value=draftTitle;situation.value=draftSituation;
+    localStorage.setItem(key,JSON.stringify({
+      title:draftTitle,situation:draftSituation,savedAt:new Date().toISOString()
+    }));
+    const originalCreate=window.createUnitDemo;
+    window.createUnitDemo=()=>{
+      const state=JSON.parse(localStorage.getItem(stateKey)||'{}');
+      state.units.unshift({id:'u-inline-create-regression',title:draftTitle,situationBrief:draftSituation});
+      localStorage.setItem(stateKey,JSON.stringify(state));
+    };
+    const button=document.createElement('button');
+    button.type='button';button.setAttribute('onclick','createUnitDemo()');
+    document.body.appendChild(button);button.click();
+    await new Promise(resolve=>setTimeout(resolve,650));
+    const cleared=localStorage.getItem(key)===null;
+    button.remove();window.createUnitDemo=originalCreate;
+    title.value=oldTitle;situation.value=oldSituation;
+    if(savedState===null)localStorage.removeItem(stateKey);
+    else localStorage.setItem(stateKey,savedState);
+    return cleared;
+  });
+  assert(liveButtonRegression,'El botón real createUnitDemo() no limpió el borrador tras crear unidad');
+
 
 
   console.log('CONTINUITY 2/5 Exportación e importación de respaldo JSON');
