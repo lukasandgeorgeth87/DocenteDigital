@@ -229,6 +229,25 @@ try {
     assert(!content.includes('se registraron'),
       'Banco de división de ' + grade + ' cayó en resta genérica');
   }
+  console.log('EIB 6/6 Fichas de división con cálculos reales diferenciados');
+  await page.locator('#materialType').selectOption('Ficha de trabajo');
+  await page.locator('#materialTopic').fill('División: repartimos gastos familiares');
+  for (const [grade, expected, forbidden] of [
+    ['1.º', ['10 monedas', 'entre 2 grupos', 'mitad de 8'], ['25 ÷ 4', 'S/ 87.50']],
+    ['3.º', ['24 monedas', '25 monedas', 'residuo'], ['S/ 87.50']],
+    ['5.º', ['S/ 87.50', '145 monedas', 'cociente y el residuo'], ['mitad de 8']]
+  ]) {
+    await page.locator('#materialGrade').selectOption(grade);
+    await page.evaluate(() => window.DDMaterials.create());
+    const content = await page.locator('#materialOutput .dd-editable-material').innerText();
+    for (const phrase of expected) assert(content.includes(phrase),
+      'Ficha de división de ' + grade + ' no contiene ' + phrase);
+    for (const phrase of forbidden) assert(!content.includes(phrase),
+      'Ficha de división de ' + grade + ' recibió tarea de otro ciclo: ' + phrase);
+    assert(!content.includes('Representa una situación relacionada con'),
+      'Ficha de división de ' + grade + ' volvió a consignas genéricas');
+  }
+  console.log('MATERIALS_DIVISION_WORKSHEETS_PASS');
   console.log('MATERIALS_DIVISION_GRADES_PASS');
   console.log('MATERIALS_EIB_PASS');
 } finally {
