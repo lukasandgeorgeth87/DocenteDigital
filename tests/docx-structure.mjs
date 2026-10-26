@@ -65,6 +65,25 @@ try{
   assert(raw.includes('Leemos un texto informativo'),'El documento no contiene el título esperado de la sesión');
   assert(raw.includes('Identifica e interpreta información relevante del texto'),'El documento no contiene el criterio efectivo generado por el Núcleo de Sesión');
   assert(download.suggestedFilename().toLowerCase().endsWith('.docx'),'Nombre de archivo sin extensión .docx');
+  // Same filename with edited content must export immediately; previously
+  // the 1200 ms duplicate-click guard silently discarded the new document.
+  const firstEditedPromise=page.waitForEvent('download',{timeout:15000});
+  const firstEditedStarted=await page.evaluate(()=>
+    window.DDWordExport.downloadHtml('Edición rápida','<p>VERSION_UNO</p>',false,'Evaluacion_rapida'));
+  assert(firstEditedStarted===true,'Primera exportación editable bloqueada');
+  const firstEdited=await firstEditedPromise;
+  assert((await fs.readFile(await firstEdited.path())).toString('utf8').includes('VERSION_UNO'),
+    'Primer DOCX editable sin contenido');
+  const secondEditedPromise=page.waitForEvent('download',{timeout:15000});
+  const secondEditedStarted=await page.evaluate(()=>
+    window.DDWordExport.downloadHtml('Edición rápida','<p>VERSION_DOS</p>',false,'Evaluacion_rapida'));
+  assert(secondEditedStarted===true,'La exportación de una edición nueva fue bloqueada por nombre duplicado');
+  const secondEdited=await secondEditedPromise;
+  assert((await fs.readFile(await secondEdited.path())).toString('utf8').includes('VERSION_DOS'),
+    'El segundo DOCX no contiene la edición nueva');
+  const duplicateBlocked=await page.evaluate(()=>
+    window.DDWordExport.downloadHtml('Edición rápida','<p>VERSION_DOS</p>',false,'Evaluacion_rapida'));
+  assert(duplicateBlocked===false,'La protección contra doble clic idéntico dejó de funcionar');
   console.log('DOCX_STRUCTURE_PASS');
 }finally{
   await browser.close();
