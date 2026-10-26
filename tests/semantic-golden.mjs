@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 
 const baseUrl = process.env.BASE_URL || 'http://127.0.0.1:4173';
 const browser = await chromium.launch({ headless: true });
-const context = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+const context = await browser.newContext({ viewport: { width: 1366, height: 768 }, acceptDownloads: true });
 const page = await context.newPage();
 
 function assert(condition, message){ if(!condition) throw new Error(message); }
@@ -258,6 +258,7 @@ try{
 
   // Security regression: CSV export must not execute user-provided spreadsheet
   // formulas. Download the actual file from the real Evaluation UI.
+  await page.evaluate(() => window.go('evaluation'));
   const csvFixture = await page.evaluate(() => {
     const prior = {
       units: window.state.units, activeUnitId: window.state.activeUnitId,
