@@ -202,6 +202,57 @@ try{
   assert(!antText.includes('por qué están allí'),'hormigas: reintrodujo la pregunta inventada “por qué están allí”');
   assert(!antText.includes('cómo viven y qué características tienen'),'hormigas: reintrodujo detalle inventado sobre cómo viven');
 
+
+  // Regression: requesting ten division tasks must not repeat the first six.
+  // Use a fictitious unit and the real evaluation UI, without modifying user data.
+  const divisionTen = await page.evaluate(() => {
+    const previousUnits = window.state.units;
+    const previousActive = window.state.activeUnitId;
+    const previousLast = window.state.lastAssessment;
+    const previousGenerated = window.state.generatedAssessments;
+    const host = document.getElementById('evaluation');
+    const fixture = host || document.createElement('section');
+    if (!host) { fixture.id = 'evaluation'; document.body.appendChild(fixture); }
+    try {
+      const grades = ['1.º', '3.º', '5.º'];
+      const unit = {
+        id: 'test-division-ten', title: 'División y reparto comunitario',
+        situation: 'Repartimos panes y semillas en la comunidad.',
+        areas: ['Matemática'], grades,
+        purposes: [{ area: 'Matemática', evidence: 'Solución explicada',
+          instrument: 'Lista de cotejo',
+          criteria: grades.map(grade => ({grade, text: 'Resuelve repartos según su grado.'})) }]
+      };
+      window.state.units = [...(previousUnits || []), unit];
+      window.state.activeUnitId = unit.id;
+      window.DDEvaluation.openAssessment();
+      document.getElementById('ddAssArea').value = 'Matemática';
+      document.getElementById('ddAssCount').value = '10';
+      return grades.map(grade => {
+        document.getElementById('ddAssGrade').value = grade;
+        document.getElementById('ddAssCreate').click();
+        const tasks = [...document.querySelectorAll('#ddAssBody .dd-assessment-sheet ol > li > p:first-child')]
+          .map(p => p.textContent.trim());
+        return { grade, tasks, unique: new Set(tasks).size };
+      });
+    } finally {
+      window.state.units = previousUnits;
+      window.state.activeUnitId = previousActive;
+      window.state.lastAssessment = previousLast;
+      window.state.generatedAssessments = previousGenerated;
+      if (!host) fixture.remove();
+      window.save();
+    }
+  });
+  for (const group of divisionTen) {
+    assert(group.tasks.length === 10 && group.unique === 10,
+      'evaluación: se repiten consignas de división para ' + group.grade + ': ' + JSON.stringify(group));
+    assert(group.tasks.every(task => /\\d/.test(task)),
+      'evaluación: una consigna de división no contiene cantidades concretas para ' + group.grade);
+  }
+  assert(/dos grupos|dos mesas|dos cajas|dos familias/i.test(divisionTen[0].tasks[9]),
+    'evaluación: 1.º debe conservar repartos solo entre dos');
+
   console.log('SEMANTIC_GOLDEN_PASS');
 }finally{
   await browser.close();
