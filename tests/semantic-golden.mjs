@@ -209,7 +209,7 @@ try{
     const previousUnits = window.state.units;
     const previousActive = window.state.activeUnitId;
     const previousLast = window.state.lastAssessment;
-    const previousGenerated = window.state.generatedAssessments;
+    const previousGenerated = [...(window.state.generatedAssessments || [])];
     const host = document.getElementById('evaluation');
     const fixture = host || document.createElement('section');
     if (!host) { fixture.id = 'evaluation'; document.body.appendChild(fixture); }
