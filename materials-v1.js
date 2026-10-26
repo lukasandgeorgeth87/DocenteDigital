@@ -260,7 +260,7 @@
       'Dibuja una nueva situación de siembra usando una suma de números hasta 20 y explica tu respuesta.'
     ];
     if(n<=4)return [
-      'Situación ficticia: se preparan 4 filas con 6 semillas por fila. Dibuja la organización, multiplica y halla el total.',
+      'Situación ficticia: se preparan 4 filas con 6 semillas por fila. Escribe la multiplicación, compruébala con un dibujo de las filas y halla el total.',
       'Se reparten 25 semillas de hortalizas entre 4 equipos. ¿Cuántas recibe cada equipo y cuántas sobran?',
       'Para registrar el ensayo, organiza en una tabla 3 canteros con 8, 12 y 10 plantines. Halla el total y compara las cantidades.',
       'Se necesitan 5 etiquetas para cada uno de 6 canteros. ¿Cuántas etiquetas se preparan? Comprueba con una suma reiterada.',
