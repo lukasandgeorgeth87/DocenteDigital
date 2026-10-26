@@ -1,9 +1,24 @@
 # DocenteDigital — estado canónico para continuidad entre conversaciones
 
-**Actualización:** 25/10/2026, 18:23 (America/Lima); consultar primero el resumen vigente y la última entrada cronológica.
+## Resumen vigente — 25/10/2026, 19:27 (Perú)
+
+- **Repositorio/rama:** `lukasandgeorgeth87/DocenteDigital` / `audit/v5-continuity-offline-diagnostic`. **Último commit de código/prueba integral PASS:** `0d9a4364531bd8451224badb7d485a573211c957`. **GitHub Actions:** run `40249174678`, `SUCCESS` (25/10/2026, hora Perú). Evidencia: https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40249174678 . La propia actualización de este documento crea un commit posterior: consultar HEAD para el SHA absoluto más reciente.
+- **Preview Vercel:** `https://docente-digital-6u4u7jxws-jorgeluispalma87-7403.vercel.app`, estado **READY**, deployment asociado exactamente a `0d9a4364`, target `null` (preview, NO producción). Verificación: metadatos de Vercel; **HTTP público no confirmado por comprobación independiente**. No se tocaron producción ni datos reales.
+- **Cambios funcionales de esta ejecución:** `openai-runtime-v1.js` ahora aísla contexto GPT por fuente elegida (unidad, sesión o libre), conserva producto aprobado, ignora sesiones de otra unidad y evita que el borrador vacío de una unidad nueva herede el título/situación de la unidad anterior. `storage-recovery-v26.js` bloquea escrituras tardías del documento antiguo durante la recarga posterior a restauración, para proteger la copia recuperada. No se activó GPT real.
+- **Pruebas añadidas:** `tests/ai-beta-client.mjs` comprueba fuente unidad/sesión/libre, borradores vacíos y contaminación entre unidades; `tests/continuity-resilience.mjs` comprueba bloqueo de autosave tardío. **PASS en run 40249174678:** contrato IA simulado, fallback local veraz, cliente beta/token, onboarding móvil 3 niveles, E2E unidad→sesión→DOCX→backup/restauración→evaluación/Director, EIB y clic Word, semántica, privacidad, continuidad, OOXML, accesibilidad. **FAIL histórico preservado:** run `40248890025` intento 1 falló en restauración intermitente (beta-e2e línea 172); reintento 2 `SUCCESS`. El fallo no se borra de la bitácora y debe vigilarse en repeticiones.
+- **Módulos funcionales con evidencia:** runtime/navegación, planificación local unidad/sesión, materiales EIB sin traducción inventada, exportación DOCX, respaldo/restauración, flujos de evaluación y Director, pruebas CI. **Parciales:** calidad y trazabilidad curricular completa por grado, UX, seguridad de piloto, restauración bajo cargas repetidas, PDF. **No disponibles como beta real:** generación GPT conectada con créditos, Redis productivo comprobado, autenticación individual, sincronización remota de documentos, aplicación PC.
+- **Pendientes S0–S4:** S0 ninguno nuevo confirmado; S1 proteger GPT con autenticación, límites y presupuesto antes de consumo real; S2 validar calidad CNEB, coherencia unidad/proyecto→sesiones→materiales→criterios/evidencias y reproducibilidad de restauración; S3 recursos móviles 404 y pulido; S4 futura app PC.
+- **Siguiente paso concreto:** añadir casos pedagógicos adversariales multigrado para detectar si GPT/plantillas confunden saber previo con nuevo desafío y si las evidencias de sesiones/fichas no corresponden al producto; ejecutar CI repetido para restauración y probar beta privada con datos ficticios. **Decisiones:** GPT será motor principal solo tras activación segura y prueba privada; plantillas locales, respaldo identificado; aplicación PC después de estabilizar beta web.
+- **Métricas sin inflación:** desarrollo funcional histórico **75 % estimado**; cierre V5 **21/100**. Matriz: runtime 10, UX 10, IA 15, flujo docente 15, materiales 10, evaluación 10, director 10, persistencia/exportación 8, CI/CD 7, seguridad/piloto 5. No incrementar sin evidencia y criterios de cierre explícitos.
+- **Bitácora acumulada de commits de esta ejecución:** `4befd517` (aislamiento inicial GPT), `f89614c4` (prueba), `b6318a3f` (borrador vacío), `8445b766` (prueba), `4c1f336e` (protección restauración), `0d9a4364` (regresión). Runs `40248810206` PASS, `40248872595` PASS, `40248890025` FAIL inicial / PASS reintento, `40249164523` PASS, `40249174678` PASS. 
+
+---
+
+
+**Actualización:** 25/10/2026, 19:27 (America/Lima); consultar primero el resumen vigente y la última entrada cronológica.
 **Repositorio:** https://github.com/lukasandgeorgeth87/DocenteDigital  
 **Rama de desarrollo/beta:** `audit/v5-continuity-offline-diagnostic`  
-**Último commit de código/prueba con CI integral PASS:** `7699bef5f6d615493d252c45c6dba7a056c44342` (run `40244286236`, SUCCESS).
+**Último commit de código/prueba con CI integral PASS:** `0d9a4364531bd8451224badb7d485a573211c957` (run `40249174678`, SUCCESS).
 **Versión exacta más reciente:** consultar el HEAD de esta rama; el propio commit que actualiza esta bitácora es posterior al SHA citado.
 
 > Este documento es la fuente de continuidad para recuperar DocenteDigital desde otro chat. Verificar siempre GitHub, CI y Vercel en tiempo real antes de afirmar que una función está terminada. No confundir el HEAD de la rama con el despliegue público.
