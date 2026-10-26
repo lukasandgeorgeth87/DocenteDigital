@@ -33,12 +33,9 @@
   }
 
   function purposes(unit){
-    if(unit&&Array.isArray(unit.purposes)&&unit.purposes.length)return unit.purposes;
-    var areas=(unit&&unit.areas)||state.areas||[];
-    var grades=(unit&&unit.grades)||state.grades||[];
-    return areas.map(function(area){
-      return {area:area,evidence:'Producción o actuación observable vinculada al propósito.',instrument:'Instrumento pertinente.',criteria:grades.map(function(g){return {grade:g,text:'Demuestra el aprendizaje previsto de '+area+' mediante una actuación observable y explicada.'};})};
-    });
+    // Missing approved purposes are not permission to invent evaluation criteria.
+    // Show an explicit absence instead of recording a generic rubric as curricular fact.
+    return unit&&Array.isArray(unit.purposes)?unit.purposes:[];
   }
 
   // A saved grade may use 3.º, 3.° or 3° depending on the input form.
@@ -63,8 +60,11 @@
     });
     if(!out.length&&(!unit||!Array.isArray(unit.purposes)||!unit.purposes.length)&&state.lastSession&&
       (unit ? state.lastSession.unitId===unit.id : !state.activeUnitId&&!state.lastSession.unitId) &&
-      (!area||state.lastSession.area===area)){
-      out.push({area:state.lastSession.area||area||'Área',criterion:state.lastSession.criterion||'Criterio de evaluación',evidence:state.lastSession.evidence||'',instrument:state.lastSession.instrument||''});
+      (!area||state.lastSession.area===area)&&
+      String(state.lastSession.criterion||'').trim()&&
+      (Array.isArray(state.lastSession.grades)?state.lastSession.grades:[state.lastSession.grade])
+        .some(function(g){return g!=null&&criterionGradeKey(g)===criterionGradeKey(grade);})){
+      out.push({area:state.lastSession.area||area||'Área',criterion:state.lastSession.criterion,evidence:state.lastSession.evidence||'',instrument:state.lastSession.instrument||''});
     }
     return out;
   }
