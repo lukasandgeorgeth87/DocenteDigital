@@ -46,10 +46,10 @@
       ugel:t.ugel||'',
       // A draft of the NEXT unit may remain in the planning form. It must not
       // override the approved unit when generating downstream resources.
-      planningType:linked?(unitLinked?u.type||'':''):(document.getElementById('unitType')?.value||u.type||''),
-      duration:linked?(unitLinked?u.duration||'':''):(document.getElementById('unitDuration')?.value||u.duration||''),
-      title:linked?(unitLinked?u.title||'':''):(document.getElementById('unitTitle')?.value||u.title||''),
-      brief:linked?(session.brief||(unitLinked?(u.situation||u.situationBrief||''):'')):(document.getElementById('unitSituation')?.value||u.situationBrief||''),
+      planningType:linked?(unitLinked?u.type||'':''):(document.getElementById('unitType')?document.getElementById('unitType').value:u.type||''),
+      duration:linked?(unitLinked?u.duration||'':''):(document.getElementById('unitDuration')?document.getElementById('unitDuration').value:u.duration||''),
+      title:linked?(unitLinked?u.title||'':''):(document.getElementById('unitTitle')?document.getElementById('unitTitle').value:u.title||''),
+      brief:linked?(session.brief||(unitLinked?(u.situation||u.situationBrief||''):'')):(document.getElementById('unitSituation')?document.getElementById('unitSituation').value:u.situationBrief||''),
       purpose:linked?(session.purpose||(unitLinked?(u.reto||u.purpose||''):'')):'',
       product:unitLinked?unitProduct:'',
       criterion:linked?(session.criterion||''):'',
