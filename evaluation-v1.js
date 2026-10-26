@@ -379,7 +379,15 @@
 
   function downloadAssessmentWord(){
     var a=state.lastAssessment;if(!a)return;
-    var edited=$('ddAssBody').querySelector('.dd-editable-material').innerHTML;
+    var editor=$('ddAssBody')?.querySelector('.dd-editable-material');
+    if(!editor)return;
+    var edited=editor.innerHTML;
+    // Preserve the teacher's corrections in the saved assessment, not only
+    // in the exported Word. Reopening the record must not restore stale text.
+    a.html=edited;
+    var saved=(state.generatedAssessments||[]).find(function(x){return x.id===a.id;});
+    if(saved)saved.html=edited;
+    save();
     if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml(a.unitTitle||'Evaluación',edited,false,'Evaluacion_'+a.area+'_'+a.grade);
     downloadBlob(wordBlob(a.unitTitle||'Evaluación',edited),cleanFileName('Evaluacion_'+a.area+'_'+a.grade)+'.doc');
   }
