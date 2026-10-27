@@ -20,7 +20,8 @@ function validPngBase64(value){
     const length=bytes.readUInt32BE(offset);
     const end=offset+12+length;
     if(end>bytes.length)return false;
-    const type=bytes.toString('ascii',offset+4,offset+8);
+    // latin1 preserves high-bit bytes; ascii would silently mask 0x80 and accept invalid PNG chunk names.
+    const type=bytes.toString('latin1',offset+4,offset+8);
     if(!/^[A-Za-z]{2}[A-Z][A-Za-z]$/.test(type))return false; // PNG third-letter reserved bit must be uppercase.
     // Unknown critical chunks must not be silently treated as valid PNG data.
     if(type[0]===type[0].toUpperCase()&&!['IHDR','PLTE','IDAT','IEND'].includes(type))return false;
