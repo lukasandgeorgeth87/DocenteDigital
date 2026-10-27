@@ -504,17 +504,19 @@ try{
   };
   // PNG palette and critical-chunk regressions: CRC and zlib alone do not
   // prove a decoder can display an indexed image.
-  const pngWithChunks=(colorType,bitDepth,beforeIdat=[],idatTail=Buffer.alloc(0))=>{
+  const pngWithChunks=(colorType,bitDepth,beforeIdat=[],idatTail=Buffer.alloc(0),afterIdat=[])=>{
     const header=Buffer.alloc(13);
     header.writeUInt32BE(1,0);
     header.writeUInt32BE(1,4);
     header[8]=bitDepth;header[9]=colorType;
-    const raw=colorType===6?[0,255,0,0,255]:[0,0];
+    const channels={0:1,2:3,3:1,4:2,6:4}[colorType];
+    const raw=[0,...Array(channels).fill(0)];
     return Buffer.concat([
       Buffer.from([137,80,78,71,13,10,26,10]),
       pngChunk('IHDR',header),
       ...beforeIdat,
       pngChunk('IDAT',Buffer.concat([deflateSync(Buffer.from(raw)),idatTail])),
+      ...afterIdat,
       pngChunk('IEND',Buffer.alloc(0))
     ]).toString('base64');
   };
@@ -524,6 +526,19 @@ try{
   res=await call(image,'POST',{prompt:'Paleta escolar',confirmedCredit:true});
   assert.equal(res.statusCode,200,'A valid indexed PNG with PLTE must remain supported');
   assert.equal(res.body.image_base64,validIndexed);
+  // Valid transparency remains supported for indexed, grayscale and RGB PNG.
+  const transparency=pngChunk('tRNS',Buffer.from([128]));
+  const validTransparencyPngs=[
+    pngWithChunks(3,8,[redPalette,transparency]),
+    pngWithChunks(0,8,[pngChunk('tRNS',Buffer.from([0,0]))]),
+    pngWithChunks(2,8,[pngChunk('tRNS',Buffer.alloc(6))])
+  ];
+  for(const valid of validTransparencyPngs){
+    globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:valid}]})});
+    res=await call(image,'POST',{prompt:'Transparencia escolar',confirmedCredit:true});
+    assert.equal(res.statusCode,200,'Valid PNG tRNS transparency must remain supported');
+    assert.equal(res.body.image_base64,valid);
+  }
   const invalidPalettePngs=[
     // CRC-correct IDAT with junk after a complete zlib stream must fail.
     // inflateSync without info:true silently accepts this malformed PNG.
@@ -533,12 +548,20 @@ try{
     pngWithChunks(3,1,[pngChunk('PLTE',Buffer.from([255,0,0,0,255,0,0,0,255]))]), // More colors than 1-bit allows.
     pngWithChunks(3,8,[redPalette,redPalette]), // Duplicate palette.
     pngWithChunks(0,8,[redPalette]), // Grayscale forbids PLTE.
-    pngWithChunks(6,8,[pngChunk('ABCD',Buffer.from([1]))]) // Unknown critical chunk.
+    pngWithChunks(6,8,[pngChunk('ABCD',Buffer.from([1]))]), // Unknown critical chunk.
+    pngWithChunks(6,8,[transparency]), // RGBA already has alpha; tRNS forbidden.
+    pngWithChunks(3,8,[transparency,redPalette]), // Indexed tRNS before PLTE.
+    pngWithChunks(3,8,[redPalette,pngChunk('tRNS',Buffer.alloc(0))]), // Empty alpha table.
+    pngWithChunks(3,8,[redPalette,pngChunk('tRNS',Buffer.from([255,0]))]), // More alpha entries than colors.
+    pngWithChunks(3,8,[redPalette,transparency,transparency]), // Duplicate tRNS.
+    pngWithChunks(0,8,[transparency]), // Grayscale tRNS must contain exactly 2 bytes.
+    pngWithChunks(2,8,[pngChunk('tRNS',Buffer.alloc(5))]), // RGB tRNS must contain exactly 6 bytes.
+    pngWithChunks(3,8,[redPalette],Buffer.alloc(0),[transparency]) // tRNS after IDAT.
   ];
   for(const invalid of invalidPalettePngs){
     globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:invalid}]})});
     res=await call(image,'POST',{prompt:'Paleta escolar',confirmedCredit:true});
-    assert.equal(res.statusCode,502,'Malformed PNG palette or unknown critical chunk must be rejected');
+    assert.equal(res.statusCode,502,'Malformed PNG palette, transparency or unknown critical chunk must be rejected');
     assert.equal(res.body.error,'invalid_image_output');
   }
   const validAdam7=interlacedPng([0,255,0,0,255]);
