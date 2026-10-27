@@ -112,6 +112,11 @@ try{
       title:draftTitle,situation:draftSituation,type:'Unidad de aprendizaje',
       duration:'2 semanas',savedAt:new Date().toISOString()
     }));
+    // A matching historical unit is not evidence of a fresh save.
+    // The API itself must refuse to clear the draft for that old unit.
+    const previousUnit=JSON.parse(localStorage.getItem(stateKey)||'{}').units?.find(u=>
+      u.title===draftTitle&&u.situationBrief===draftSituation);
+    const oldUnitRejected=!!previousUnit&&window.ddBetaDraftAutosave.clearIfPersisted(previousUnit)===false;
     const button=document.createElement('button');
     button.id='ddBuildUnit';button.type='button';document.body.appendChild(button);
     button.click();
@@ -123,8 +128,9 @@ try{
     if(originalState===null)localStorage.removeItem(stateKey);
     else localStorage.setItem(stateKey,originalState);
     title.value=oldTitle;situation.value=oldSituation;button.remove();
-    return {retained};
+    return {retained,oldUnitRejected};
   });
+  assert(draftClickRegression.oldUnitRejected,'clearIfPersisted aceptó una unidad histórica como si fuera nueva');
   assert(draftClickRegression.retained,'Una unidad anterior con igual contexto borró el borrador sin crear otra');
   // The live createUnitDemo() opens the situation/product chooser. Only
   // confirming both steps invokes the underlying persistence handler.
