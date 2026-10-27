@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-import {crc32} from 'node:zlib';
+import {crc32,deflateSync} from 'node:zlib';
 
 const require=createRequire(import.meta.url);
 const ai=require('../api/ai.js');
@@ -438,7 +438,38 @@ try{
   const ihdrAt=oversizedPng.indexOf(Buffer.from('IHDR'));
   oversizedPng.writeUInt32BE(8193,ihdrAt+4);
   oversizedPng.writeUInt32BE(crc32(oversizedPng.subarray(ihdrAt,ihdrAt+17)),ihdrAt+17);
+  // Adam7: even with correct CRC and zlib, each interlaced pass needs
+  // the exact scanline length and a PNG filter byte between 0 and 4.
+  const pngChunk=(type,data)=>{
+    const chunk=Buffer.alloc(data.length+12);
+    chunk.writeUInt32BE(data.length,0);
+    chunk.write(type,4,4,'ascii');
+    data.copy(chunk,8);
+    chunk.writeUInt32BE(crc32(chunk.subarray(4,chunk.length-4)),chunk.length-4);
+    return chunk;
+  };
+  const interlacedPng=(scanlines)=>{
+    const header=Buffer.alloc(13);
+    header.writeUInt32BE(1,0);
+    header.writeUInt32BE(1,4);
+    header[8]=8;header[9]=6;header[12]=1;
+    return Buffer.concat([
+      Buffer.from([137,80,78,71,13,10,26,10]),
+      pngChunk('IHDR',header),
+      pngChunk('IDAT',deflateSync(Buffer.from(scanlines))),
+      pngChunk('IEND',Buffer.alloc(0))
+    ]).toString('base64');
+  };
+  const validAdam7=interlacedPng([0,255,0,0,255]);
+  globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:validAdam7}]})});
+  res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
+  assert.equal(res.statusCode,200,'Valid Adam7 PNG must remain supported');
+  assert.equal(res.body.image_base64,validAdam7);
   for(const invalid of [
+    interlacedPng([5,255,0,0,255]), // Invalid filter, valid CRC and zlib.
+    interlacedPng([0,255,0,0,255,0]), // Extra decompressed bytes.
+    interlacedPng([0]), // Truncated pass.
+
     forgedZlibPng.toString('base64'),
     oversizedPng.toString('base64'),
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9f4NvK0AAAAASUVORK5CYII=',
