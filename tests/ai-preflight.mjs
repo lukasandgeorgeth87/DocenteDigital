@@ -42,20 +42,26 @@ try{
   globalThis.fetch=async(url,options)=>{
     calls++;
     seen={url,options};
-    return {ok:true,json:async()=>({result:'PONG'})};
+    return {ok:true,json:async()=>({result:'NO_QUOTA_KEY'})};
   };
   res=await request();
   assert.equal(res.statusCode,200);
   assert.equal(res.body.quota_atomic_eval,true);
+  assert.equal(res.body.quota_write_tested,false,'A read-only probe cannot certify Redis write permissions');
   assert.equal(res.body.provider_tested,false);
   assert.equal(res.body.paid_call,false);
   assert.equal(res.body.beta_enabled,false);
   assert.equal(res.body.openai_configured,false);
   assert.equal(res.headers['cache-control'],'no-store');
   assert.equal(seen.url,'https://quota.example.test');
-  assert.deepEqual(JSON.parse(seen.options.body),['EVAL',"return redis.call('PING')",'0']);
+  assert.deepEqual(JSON.parse(seen.options.body),['EVAL',"return redis.call('GET',KEYS[1]) or 'NO_QUOTA_KEY'",'1','dd:beta:ai-quota:'+new Date().toISOString().slice(0,10)]);
+  assert.doesNotMatch(JSON.parse(seen.options.body)[1],/\b(?:INCRBY|SET|EXPIRE|DEL)\b/,'Preflight must never write quota state');
   assert.equal(seen.options.headers.Authorization,'Bearer redis-test-only-token');
   assert.equal(calls,1,'Preflight must make exactly one non-billable Redis request');
+  globalThis.fetch=async()=>({ok:true,json:async()=>({result:'3'})});
+  res=await request();
+  assert.equal(res.statusCode,200,'A pre-existing numeric quota value must be accepted without mutation');
+  assert.equal(res.body.quota_write_tested,false);
   globalThis.fetch=async()=>({ok:true,json:async()=>({result:'unexpected'})});
   res=await request();
   assert.equal(res.statusCode,503,'An unsupported EVAL result must fail closed');
