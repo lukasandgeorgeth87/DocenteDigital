@@ -573,6 +573,8 @@ function createUnitDemo(){
     activities:buildActivities(brief,duration),createdAt:new Date().toISOString()
   };
   state.units.unshift(unit);state.activeUnitId=unit.id;save();
+  // Do not discard the teacher's draft unless this exact new unit exists in storage.
+  window.ddBetaDraftAutosave?.clearIfPersisted?.(unit);
   byId('unitReady').classList.remove('hidden');
   renderUnits();renderUnitOutput(unit);fillSessionUnits();
   byId('unitOutput').scrollIntoView({behavior:'smooth'});
