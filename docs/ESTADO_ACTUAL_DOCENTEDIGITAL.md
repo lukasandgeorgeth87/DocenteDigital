@@ -1,3 +1,9 @@
+## Verificación posterior — 27/10/2026 (Perú) — PNG no ASCII, CI integral PASS
+
+- **SHA exacto probado:** [`9a3ea96`](https://github.com/lukasandgeorgeth87/DocenteDigital/commit/9a3ea9625e1500ee6f6516c9c663a835c63e7973); [GitHub Actions `40600726617`](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40600726617) terminó **SUCCESS** a las 23:16:44 UTC del 27/10/2026. Jobs `ai-context-fast` **PASS** y `browser-e2e` **PASS**. El contrato API comprobó el rechazo de dos PNG con bytes no ASCII en el nombre de chunk y CRC correcto, conservando el chunk auxiliar ASCII válido. En el navegador pasaron beta docente, materiales EIB, regresiones semánticas, privacidad de red, continuidad, DOCX y accesibilidad conforme al workflow.
+- **Preview:** Vercel informó **READY** para el SHA de pruebas en https://docente-digital-luplkfzk8-jorgeluispalma87-7403.vercel.app. READY no verifica acceso humano privado ni generación pagada real.
+- **Límites:** CI con proveedor GPT y Redis **simulados**, servidor estático y Playwright; no prueba GPT/Upstash reales, autenticación multiusuario ni piloto humano. `main`, producción, datos reales y secretos sin cambios. Este registro `[skip ci]` no atribuye el PASS al commit documental. Riesgos S1–S4 e indicadores históricos sin cambios.
+
 ## Actualización — 27/10/2026 (Perú) — rechazo de nombres PNG con bytes no ASCII
 
 - **Hallazgo reproducido localmente:** `Buffer.from([0xe1,0x62,0x43,0x61]).toString('ascii')` devuelve `abCa` porque Node elimina el bit alto. El validador de `api/image.js` interpretaba así nombres de chunks malformados con CRC correcto y podía aceptarlos como auxiliares válidos.
