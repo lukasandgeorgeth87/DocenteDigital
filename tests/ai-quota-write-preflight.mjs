@@ -66,12 +66,19 @@ try{
   assert.equal(res.headers['cache-control'],'no-store');
   assert.equal(requestBody[0],'EVAL');
   assert.equal(requestBody[2],'1');
-  assert.equal(requestBody[3],'dd:beta:quota-preflight:synthetic');
+  assert.match(requestBody[3],/^dd:beta:quota-preflight:synthetic:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+  const firstSyntheticKey=requestBody[3];
   assert.match(requestBody[1],/INCRBY/);
   assert.match(requestBody[1],/EXPIRE/);
   assert.match(requestBody[1],/TTL/);
   assert.doesNotMatch(requestBody[3],/ai-quota:/);
-  assert.equal(calls,1,'Exactly one synthetic Redis call is allowed');
+  assert.equal(calls,1,'Exactly one synthetic Redis call per request is allowed');
+  res=await request();
+  assert.equal(res.statusCode,200);
+  assert.equal(calls,2,'Second authorized request must make exactly one more Redis call');
+  assert.notEqual(requestBody[3],firstSyntheticKey,'Each preflight must use an isolated expiring key');
+  assert.match(requestBody[3],/^dd:beta:quota-preflight:synthetic:/);
+  assert.doesNotMatch(requestBody[3],/ai-quota:/);
   for(const result of [0,61,-1,'60',null]){
     globalThis.fetch=async()=>({ok:true,json:async()=>({result})});
     res=await request();
