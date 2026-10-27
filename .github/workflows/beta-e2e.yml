@@ -23,6 +23,9 @@ jobs:
           node-version: '22'
       - name: Validate GPT API safety contract
         run: node tests/ai-contract.mjs
+
+      - name: Validate protected non-billable Redis preflight
+        run: node tests/ai-preflight.mjs
       - name: Validate offline fallback
         run: node tests/ai-local-fallback.mjs
       - name: Validate context isolation and private beta token
