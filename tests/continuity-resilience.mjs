@@ -121,8 +121,9 @@ try{
     const newState=JSON.parse(localStorage.getItem(stateKey)||'{}');
     newState.units.unshift({id:'u-new-draft-regression',title:draftTitle,situationBrief:draftSituation});
     localStorage.setItem(stateKey,JSON.stringify(newState));
+    const confirmed=window.ddBetaDraftAutosave.clearIfPersisted(newState.units[0]);
     await new Promise(resolve=>setTimeout(resolve,650));
-    const cleared=localStorage.getItem(key)===null;
+    const cleared=confirmed&&localStorage.getItem(key)===null;
     if(originalState===null)localStorage.removeItem(stateKey);
     else localStorage.setItem(stateKey,originalState);
     title.value=oldTitle;situation.value=oldSituation;button.remove();
@@ -142,18 +143,14 @@ try{
     localStorage.setItem(key,JSON.stringify({
       title:draftTitle,situation:draftSituation,savedAt:new Date().toISOString()
     }));
-    const originalCreate=window.createUnitDemo;
-    window.createUnitDemo=()=>{
-      const state=JSON.parse(localStorage.getItem(stateKey)||'{}');
-      state.units.unshift({id:'u-inline-create-regression',title:draftTitle,situationBrief:draftSituation});
-      localStorage.setItem(stateKey,JSON.stringify(state));
-    };
-    const button=document.createElement('button');
-    button.type='button';button.setAttribute('onclick','createUnitDemo()');
-    document.body.appendChild(button);button.click();
+    // Exercise the actual production handler, not a mock that bypasses save().
+    const button=document.querySelector('#unitPanel button[onclick="createUnitDemo()"]');
+    if(!button)throw new Error('No se encontró el botón real de creación');
+    button.click();
     await new Promise(resolve=>setTimeout(resolve,650));
-    const cleared=localStorage.getItem(key)===null;
-    button.remove();window.createUnitDemo=originalCreate;
+    const persisted=JSON.parse(localStorage.getItem(stateKey)||'{}');
+    const created=persisted.units?.some(u=>u.title===draftTitle&&u.situationBrief===draftSituation);
+    const cleared=created&&localStorage.getItem(key)===null;
     title.value=oldTitle;situation.value=oldSituation;
     if(savedState===null)localStorage.removeItem(stateKey);
     else localStorage.setItem(stateKey,savedState);
