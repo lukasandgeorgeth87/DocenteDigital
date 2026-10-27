@@ -53,6 +53,8 @@ async function call(handler,method,body,headers){
 }
 try{
   process.env.VERCEL_ENV='preview';
+  // Exercise the authorized Preview branch by default; negative branch cases below override it.
+  process.env.VERCEL_GIT_COMMIT_REF='audit/v5-continuity-offline-diagnostic';
   delete process.env.OPENAI_API_KEY;
   delete process.env.DD_AI_BETA_ENABLED;
   delete process.env.DD_AI_BETA_TOKEN;
