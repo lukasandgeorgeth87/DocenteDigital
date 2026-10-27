@@ -117,6 +117,17 @@
 
   function topicInfo(topic){
     const t=N(topic);
+    if(/\b(?:todos\s+los\s+santos|dia\s+de\s+(?:los\s+)?difuntos)\b/.test(t))return {
+      key:'remembrance',icon:'🗓️',
+      words:['noviembre','tradición','memoria','familias','respeto','diversidad','fuentes','relato'],
+      facts:[
+        'El 1 de noviembre se conmemora el Día de Todos los Santos; en el calendario católico, el 2 de noviembre corresponde a la conmemoración de los fieles difuntos.',
+        'En el Perú existen diversas formas familiares y regionales de recordar estas fechas. Una costumbre de una región no debe atribuirse automáticamente a todas las familias.',
+        'Para conocer las tradiciones podemos consultar textos, imágenes documentadas y testimonios compartidos de forma voluntaria y con permiso.',
+        'Escuchar y comparar distintos relatos culturales nos ayuda a comprender la diversidad y respetar a quienes celebran de otra manera o no participan.'
+      ]
+    };
+
     if(/mamifer|animal|fauna|pelo|pluma|escama/.test(t))return {
       key:'animals',icon:'🐾',
       words:['animal','mamífero','hábitat','alimento','cría','pelo','huella','movimiento'],
@@ -181,6 +192,13 @@
 
   function readingTitle(topic,level,grade,info){
     const n=gradeNumber(grade);
+    if(info.key==='remembrance'){
+      if(level==='Inicial')return 'Recordamos y aprendemos sobre nuestras tradiciones';
+      if(level==='Secundaria'||n>=5)return 'Todos los Santos y diversidad cultural: memoria, fuentes y respeto';
+      if(n<=2)return 'Dos días de noviembre: conocemos las tradiciones';
+      return 'Todos los Santos: diferentes maneras de recordar';
+    }
+
     if(info.key==='animals'){
       if(level==='Inicial')return 'Pelos, patas y muchas sorpresas';
       if(n<=2)return 'Animales que podemos observar';
@@ -208,6 +226,41 @@
           : n<=4
             ? ['¿Cuál es la idea principal?','¿Qué dato del texto ayuda a comprenderla?','¿Qué relación encuentras entre dos ideas?','Formula una pregunta que todavía podría investigarse.']
             : ['¿Cuál es la idea central y qué evidencias del texto la sostienen?','¿Qué relación o contraste importante aparece?','¿Qué afirmación necesitaría más evidencia?','Aplica una idea del texto a una situación distinta.'];
+    }else if(info.key==='remembrance'){
+      if(level==='Inicial'){
+        paragraphs=[
+          'En noviembre algunas familias recuerdan fechas importantes y comparten relatos sobre sus tradiciones. Otras familias tienen costumbres diferentes.',
+          'Podemos conocer estas formas de recordar mediante cuentos, imágenes y conversaciones cuidadosas.',
+          'Escuchamos con respeto y compartimos lo que aprendemos usando dibujos o palabras. Nadie tiene que contar experiencias personales que prefiera guardar.'
+        ];
+        questions=[
+          '¿Qué muestra la imagen o el relato compartido?',
+          '¿Qué descubrimos sobre las maneras de recordar?',
+          'Dibuja o cuenta una idea que te llamó la atención, sin compartir recuerdos privados.'
+        ];
+      }else{
+        paragraphs=[
+          'El 1 de noviembre se conoce como Día de Todos los Santos. El 2 de noviembre, en la tradición católica, se conmemora a los fieles difuntos.',
+          'En distintas partes del Perú existen maneras diversas de vivir y recordar estas fechas. No todas las familias practican las mismas costumbres ni comparten las mismas creencias.',
+          'Para conocer una tradición se pueden consultar lecturas, imágenes con fuente y testimonios ofrecidos voluntariamente. Antes de afirmar que algo ocurre en nuestra localidad, debemos comprobarlo.',
+          'Aprender sobre estas conmemoraciones es una oportunidad para escuchar a otros, distinguir hechos y opiniones y valorar las diferencias con respeto.'
+        ];
+        questions=n<=2?[
+          '¿Qué se recuerda el 1 y el 2 de noviembre según el texto?',
+          '¿Todas las familias celebran de la misma manera? Explica tu respuesta.',
+          'Dibuja una idea del texto y cuéntala con tus palabras.'
+        ]:n<=4?[
+          '¿Qué información aporta el texto sobre cada fecha?',
+          '¿Por qué debemos evitar decir que todas las familias tienen la misma costumbre?',
+          'Nombra una fuente que usarías para conocer una tradición y explica por qué.',
+          'Escribe un mensaje breve para respetar la diversidad cultural.'
+        ]:[
+          'Distingue dos afirmaciones verificables de una interpretación en el texto.',
+          '¿Qué evidencias necesitarías antes de describir una costumbre de tu localidad?',
+          'Compara dos formas de recordar sin valorar una como superior.',
+          'Redacta una conclusión sustentada y respetuosa; indica qué pregunta sigue abierta.'
+        ];
+      }
     }else if(level==='Inicial'){
       if(info.key==='animals')paragraphs=[
         'Algunos animales tienen pelo. Otros tienen plumas o escamas. Podemos mirar sus patas, su cuerpo y la manera en que se mueven.',
@@ -277,6 +330,37 @@
 
   function worksheetActivities(topic,level,grade,area){
     const info=topicInfo(topic),n=gradeNumber(grade);
+    if(info.key==='remembrance'&&area!=='Matemática'){
+      if(level==='Inicial')return [
+        'Observa o escucha un relato cultural preparado por la docente sobre las fechas de noviembre. ¿Qué observas?',
+        'Elige una imagen de una tradición descrita y cuenta qué te llama la atención.',
+        'Representa con dibujos o modelado algo que aprendiste del relato, sin compartir recuerdos íntimos.',
+        'Escucha a tus compañeros: ¿qué ideas parecidas y distintas encontramos?',
+        'Explica cómo mostramos respeto cuando las familias tienen creencias diferentes.'
+      ];
+      if(n<=2)return [
+        'Lee o escucha el texto sobre el 1 y 2 de noviembre y señala a qué corresponde cada fecha.',
+        'Marca una idea importante del texto y acompáñala con un dibujo.',
+        'Completa: no todas las familias celebran igual porque...',
+        'Formula una pregunta sobre una tradición que te gustaría conocer usando una fuente.',
+        'Escribe o explica una frase sobre cómo respetar las costumbres de otras familias.'
+      ];
+      if(n<=4)return [
+        'Elabora un cuadro con información sobre el 1 y 2 de noviembre, citando el texto consultado.',
+        'Identifica una semejanza y una diferencia entre prácticas culturales descritas en dos fuentes.',
+        'Explica por qué un testimonio voluntario no representa necesariamente a toda una comunidad.',
+        'Diseña dos preguntas respetuosas que podrías investigar sin solicitar datos familiares privados.',
+        'Redacta un párrafo sobre la diversidad cultural e identifica la evidencia que respalda tu conclusión.'
+      ];
+      return [
+        'Contrasta dos fuentes sobre Todos los Santos: registra su procedencia, propósito y datos comprobables.',
+        'Distingue un hecho documentado de una creencia, interpretación u opinión, sin desacreditar a sus portadores.',
+        'Explica qué generalizaciones no podrías hacer sobre todas las familias de tu localidad.',
+        'Diseña una breve pieza de divulgación con dos evidencias y lenguaje respetuoso.',
+        'Evalúa qué información adicional necesitarías antes de describir una práctica cultural como representativa.'
+      ];
+    }
+
     if(level==='Inicial')return [
       `Observa los materiales, imágenes u objetos relacionados con ${topic} y señala lo que llama tu atención.`,
       'Agrupa dos o más elementos usando una característica visible.',
@@ -370,6 +454,7 @@
       water:['💧','🌧️','🏞️','🚿','🌱','🥤','☁️','🪣'],
       waste:['📄','📦','🥫','🧴','🍂','♻️','🗑️','🌍'],
       equations:['⚖️','➕','➖','✖️','➗','🟰','🔢','✅'],
+      remembrance:['🗓️','📖','🕯️','👥','🤝','🌎','🔎','💬'],
       generic:['🔎','💡','📝','📚','🧩','⭐','❓','✅']
     }[info.key]||[];
     return `<article class="dd-material-sheet">
