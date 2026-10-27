@@ -121,16 +121,20 @@ try{
     const newState=JSON.parse(localStorage.getItem(stateKey)||'{}');
     newState.units.unshift({id:'u-new-draft-regression',title:draftTitle,situationBrief:draftSituation});
     localStorage.setItem(stateKey,JSON.stringify(newState));
+    const snapshotBefore=window.ddBetaDraftAutosave.read();
+    const storedUnit=JSON.parse(localStorage.getItem(stateKey)||'{}').units?.[0];
     const confirmed=window.ddBetaDraftAutosave.clearIfPersisted(newState.units[0]);
     await new Promise(resolve=>setTimeout(resolve,650));
+    const snapshotAfter=window.ddBetaDraftAutosave.read();
     const cleared=confirmed&&localStorage.getItem(key)===null;
+    const diagnostic={confirmed,snapshotBefore,storedUnit,snapshotAfter};
     if(originalState===null)localStorage.removeItem(stateKey);
     else localStorage.setItem(stateKey,originalState);
     title.value=oldTitle;situation.value=oldSituation;button.remove();
-    return {retained,cleared};
+    return {retained,cleared,diagnostic};
   });
   assert(draftClickRegression.retained,'Una unidad anterior con igual contexto borró el borrador sin crear otra');
-  assert(draftClickRegression.cleared,'Un borrador guardado como unidad nueva no se limpió');
+  assert(draftClickRegression.cleared,'Un borrador guardado como unidad nueva no se limpió: '+JSON.stringify(draftClickRegression.diagnostic));
   // The actual planning form uses an inline createUnitDemo() handler rather
   // than #ddBuildUnit. Simulate its persistence synchronously during click.
   const liveButtonRegression=await page.evaluate(async()=>{
