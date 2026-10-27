@@ -40,7 +40,7 @@ function validPngBase64(value){
     if(type==='PLTE'){
       // Indexed images require a well-formed palette before the first IDAT.
       // Grayscale PNGs forbid PLTE; a duplicate or late palette is invalid.
-      if(seenData||seenPalette||colorType===0||colorType===4||!length||length>768||length%3!==0||(colorType===3&&length/3>2**bitDepth))return false;
+      if(seenData||seenPalette||seenTransparency||colorType===0||colorType===4||!length||length>768||length%3!==0||(colorType===3&&length/3>2**bitDepth))return false;
       seenPalette=true;
       paletteEntries=length/3;
     }
