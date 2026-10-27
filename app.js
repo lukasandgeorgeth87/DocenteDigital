@@ -426,7 +426,7 @@ function refreshUnitTitleSuggestions(){
 
 function chooseUnitTitle(title){
   const input=byId('unitTitle');
-  if(input){input.value=title;input.dataset.autoTitle='false';input.focus();}
+  if(input){input.value=title;input.dataset.autoTitle='false';input.dataset.ddSuggestedTitle='true';input.focus();}
   document.querySelectorAll('.dd-title-option').forEach(b=>b.classList.toggle('active',b.textContent.trim()===title));
 }
 
