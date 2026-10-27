@@ -117,11 +117,11 @@ module.exports=async function handler(req,res){
     if(!r.ok){console.error('DocenteDigital image error',r.status,data?.error?.type||'unknown');return send(res,r.status===429?429:502,{ok:false,error:'image_request_failed',retryable:r.status===429||r.status>=500});}
     const first=data?.data?.[0]||{};
     const imageBase64=validPngBase64(first.b64_json)?first.b64_json:null;
-    const imageUrl=typeof first.url==='string'&&/^https:\/\//i.test(first.url)?first.url:null;
-    // HTTP 200 from the provider does not mean an image was generated.
-    // Report failure when the provider omits the requested image.
-    if(!imageBase64&&!imageUrl)return send(res,502,{ok:false,error:'invalid_image_output',retryable:true});
-    return send(res,200,{ok:true,image_base64:imageBase64,image_url:imageUrl,revised_prompt:first.revised_prompt||null});
+    // The request explicitly asks the provider for PNG bytes. A URL alone
+    // does not prove the image is PNG and could point the teacher's browser
+    // to an unrelated host, bypassing the structural validator above.
+    if(!imageBase64)return send(res,502,{ok:false,error:'invalid_image_output',retryable:true});
+    return send(res,200,{ok:true,image_base64:imageBase64,image_url:null,revised_prompt:first.revised_prompt||null});
   }catch(e){
     if(e?.name==='AbortError')return send(res,504,{ok:false,error:'image_timeout',retryable:true});
     return send(res,500,{ok:false,error:'image_runtime_error'});

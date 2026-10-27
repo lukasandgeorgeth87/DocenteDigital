@@ -445,6 +445,25 @@ try{
   // while an IHDR-looking payload, corrupt CRC or missing IEND must fail.
   // These previously slipped past the signature-only validator.
   const validPng='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
+  // A provider URL is not an image validation substitute. The paid endpoint
+  // requests PNG bytes, so URL-only and invalid-PNG-with-URL must fail closed.
+  for(const providerImage of [
+    {url:'https://untrusted.example.test/worksheet.png'},
+    {b64_json:'ZmFrZS1wbmc=',url:'https://untrusted.example.test/worksheet.png'}
+  ]){
+    globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[providerImage]})});
+    res=await call(image,'POST',{prompt:'Ficha escolar',confirmedCredit:true});
+    assert.equal(res.statusCode,502,'An image URL must not bypass PNG validation');
+    assert.equal(res.body.error,'invalid_image_output');
+  }
+  // A valid PNG may be accepted, but a second URL must not reach the client.
+  globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{
+    b64_json:validPng,url:'https://untrusted.example.test/track.png'
+  }]})});
+  res=await call(image,'POST',{prompt:'Ficha escolar',confirmedCredit:true});
+  assert.equal(res.statusCode,200,'Valid PNG bytes remain accepted');
+  assert.equal(res.body.image_base64,validPng);
+  assert.equal(res.body.image_url,null,'Provider URL must not be forwarded to the teacher browser');
   const damagedPng=Buffer.from(validPng,'base64');
   damagedPng[45]^=1;
   // A valid CRC alone does not prove the IDAT zlib stream can be decoded.
