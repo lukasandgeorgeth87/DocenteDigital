@@ -402,7 +402,9 @@ function refreshUnitTitleSuggestions(){
   const box=byId('unitTitleSuggestions');
   const writtenTitle=input?.value.trim()||'';
   const assisted=(!brief&&!writtenTitle)?ddAssistPlanningContext(false):'';
-  const effectiveBrief=[writtenTitle,brief||assisted].filter(Boolean).join('. ');
+  // Never feed generated title back as context: that creates recursive suggestions.
+  const manuallyWrittenTitle=input?.dataset.autoTitle==='true'?'':writtenTitle;
+  const effectiveBrief=brief||assisted||manuallyWrittenTitle;
   if(!effectiveBrief){
     if(box)box.innerHTML='<small>Puedes escribir una idea o dejar que DocenteDigital proponga un punto de partida.</small>';
     return;
