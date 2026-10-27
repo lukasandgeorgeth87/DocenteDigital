@@ -70,7 +70,7 @@ try{
   await page.waitForFunction(()=>typeof window.ddNaturalPlanningTitles==='function'&&typeof window.refreshUnitTitleSuggestions==='function',null,{timeout:10000});
   const titleRegression=await page.evaluate(()=>{
     const input=document.getElementById('unitTitle'),brief=document.getElementById('unitSituation');
-    const saved={title:input.value,auto:input.dataset.autoTitle,situation:brief.value,level:state.level};
+    const saved={title:input.value,auto:input.dataset.autoTitle,suggested:input.dataset.ddSuggestedTitle,situation:brief.value,level:state.level};
     const text='el 1 y 2 de noviembre recordamos la fiesta de todos los santos';
     try{
       input.value='Aprendemos desde nuestro contexto: '+text+' Aprendemos desde nuestro contexto';
@@ -92,10 +92,13 @@ try{
         title:input.value,
         options:[...document.querySelectorAll('#unitTitleSuggestions .dd-title-option')].map(b=>b.textContent.trim())
       };
-      return {byLevel,first,second};
+      window.chooseUnitTitle(second.options[0]);
+      const afterChoice=window.ddNaturalPlanningTitles(text,'Unidad de aprendizaje');
+      return {byLevel,first,second,afterChoice,clickedSuggestionMarked:input.dataset.ddSuggestedTitle==='true'};
     }finally{
       input.value=saved.title;
       if(saved.auto===undefined)delete input.dataset.autoTitle;else input.dataset.autoTitle=saved.auto;
+      if(saved.suggested===undefined)delete input.dataset.ddSuggestedTitle;else input.dataset.ddSuggestedTitle=saved.suggested;
       brief.value=saved.situation;
       state.level=saved.level;
     }
@@ -106,6 +109,8 @@ try{
     assert(titles.filter(t=>/Todos los Santos/i.test(t)).length>=2,level+': se perdió la festividad expresada');
     assert(titles.every(t=>t.length<120&&!/Aprendemos desde nuestro contexto/i.test(t)),level+': títulos repetitivos o demasiado extensos');
   }
+  assert(titleRegression.clickedSuggestionMarked,'Elegir un título no lo marcó como derivado del contexto');
+  assert(JSON.stringify(titleRegression.afterChoice)===JSON.stringify(titleRegression.byLevel.Primaria),'Elegir una sugerencia volvió a inyectarla en el contexto');
   assert(titleRegression.first.title===titleRegression.second.title,'El título creció al recalcularlo');
   assert(JSON.stringify(titleRegression.first.options)===JSON.stringify(titleRegression.second.options),'Las propuestas cambiaron sin que cambiara el contexto');
   assert(titleRegression.second.options.length===3,'El formulario principal no ofrece tres títulos');
