@@ -8,6 +8,7 @@ const image=require('../api/image.js');
 const previousKey=process.env.OPENAI_API_KEY;
 const previousFlag=process.env.DD_AI_BETA_ENABLED;
 const previousEnvironment=process.env.VERCEL_ENV;
+const previousBranch=process.env.VERCEL_GIT_COMMIT_REF;
 const previousToken=process.env.DD_AI_BETA_TOKEN;
 const previousFetch=globalThis.fetch;
 const previousQuotaUrl=process.env.UPSTASH_REDIS_REST_URL;
@@ -117,8 +118,25 @@ try{
   assert.equal(res.statusCode,403,'Unknown deployment environment must fail closed');
   assert.equal(quotaCount,quotaBeforeProduction);
   assert.equal(productionNetworkCalls,0);
-  globalThis.fetch=beforeProductionFetch;
+  // A foreign or unidentified Preview must never inherit billable AI access.
+  // This applies to BOTH paid endpoints and the status advertised to clients.
   process.env.VERCEL_ENV='preview';
+  for(const branch of [undefined,'another-preview-branch']){
+    if(branch===undefined)delete process.env.VERCEL_GIT_COMMIT_REF;
+    else process.env.VERCEL_GIT_COMMIT_REF=branch;
+    res=await call(status,'GET');
+    assert.equal(res.body.environment_allowed,false,'Unapproved Preview branch must not be advertised as ready');
+    assert.equal(res.body.text,false);
+    assert.equal(res.body.image,false);
+    res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
+    assert.equal(res.statusCode,403,'Unapproved Preview branch must not bill text');
+    res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
+    assert.equal(res.statusCode,403,'Unapproved Preview branch must not bill images');
+  }
+  assert.equal(quotaCount,quotaBeforeProduction,'Foreign Preview must not consume quota');
+  assert.equal(productionNetworkCalls,0,'Foreign Preview must not contact Redis or OpenAI');
+  globalThis.fetch=beforeProductionFetch;
+  process.env.VERCEL_GIT_COMMIT_REF='audit/v5-continuity-offline-diagnostic';
   res=await call(status,'GET');
   assert.equal(res.body.environment_allowed,true);
   assert.equal(res.body.enabled,true);
@@ -447,6 +465,8 @@ try{
 }finally{
   if(previousEnvironment===undefined)delete process.env.VERCEL_ENV;
   else process.env.VERCEL_ENV=previousEnvironment;
+  if(previousBranch===undefined)delete process.env.VERCEL_GIT_COMMIT_REF;
+  else process.env.VERCEL_GIT_COMMIT_REF=previousBranch;
   globalThis.fetch=previousFetch;
   if(previousQuotaUrl===undefined)delete process.env.UPSTASH_REDIS_REST_URL;
   else process.env.UPSTASH_REDIS_REST_URL=previousQuotaUrl;
