@@ -1,3 +1,8 @@
+## Verificación posterior — 27/10/2026 (Perú) — CI integral PASS del control PNG
+
+- **SHA de código efectivamente probado:** [`e0055d9`](https://github.com/lukasandgeorgeth87/DocenteDigital/commit/e0055d9e0d20c2bbf36e878cd34dcb6a642d2928); [GitHub Actions 40539929841](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40539929841) **SUCCESS**. Jobs `ai-context-fast` **PASS** y `browser-e2e` **PASS**, incluidos `tests/ai-contract.mjs` (nuevos casos PNG indexado y chunks críticos), recorrido beta docente, materiales EIB, evaluación/continuidad cubierta, DOCX, privacidad de red y accesibilidad básica. La entrada inmediatamente siguiente conserva el estado parcial previo a la finalización del workflow.
+- **Límites:** son pruebas CI con proveedor y cuota Redis simulados, y navegador con servidor estático; no acreditan imagen generada por GPT real, Redis/Upstash real, Preview del SHA, acceso humano privado ni autenticación multiusuario. Mantener GPT pagado desactivado, `main` y producción intactos. Este registro documental se guarda con `[skip ci]` y no atribuye al commit documental pruebas del SHA de código.
+
 ## Actualización — 27/10/2026 (Perú) — endurecimiento de PNG en generación de imágenes para materiales
 
 - **Commit de código y regresiones:** [`e0055d9`](https://github.com/lukasandgeorgeth87/DocenteDigital/commit/e0055d9e0d20c2bbf36e878cd34dcb6a642d2928) en `audit/v5-continuity-offline-diagnostic`. Cambios limitados a `api/image.js` y `tests/ai-contract.mjs`; no se modificaron `main`, producción, datos reales ni secretos.
