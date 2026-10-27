@@ -116,6 +116,61 @@ try{
   assert(titleRegression.second.options.length===3,'El formulario principal no ofrece tres títulos');
   assert(titleRegression.second.options.every(t=>/Todos los Santos/i.test(t)),'El formulario principal no usa los títulos contextuales');
   console.log('TITLE_CONTEXT_TODOS_LOS_SANTOS_PASS',JSON.stringify(titleRegression.second));
+  // Regression from the teacher's 27 Oct significant-situation screenshot:
+  // a stale auto-title must NOT be merged into the teacher's genuine context.
+  console.log('SITUATION_CONTEXT: Todos los Santos; cultural meaning + products');
+  const situationRegression=await page.evaluate(()=>{
+    const situation=document.getElementById('unitSituation');
+    const title=document.getElementById('unitTitle');
+    const type=document.getElementById('unitType');
+    const saved={
+      situation:situation.value,title:title.value,
+      auto:title.dataset.autoTitle,selected:title.dataset.ddSuggestedTitle,
+      type:type.value,level:state.level,pending:state.pendingUnitChoice
+    };
+    const teacherText='el 1 y 2 de noviembre recordamos la fiesta de todos los santos';
+    const results={};
+    try{
+      situation.value=teacherText;
+      title.value='Aprendemos desde nuestro contexto: Aprendemos desde nuestro contexto';
+      title.dataset.autoTitle='true';
+      type.value='Unidad de aprendizaje';
+      for(const level of ['Inicial','Primaria','Secundaria']){
+        state.level=level;
+        window.createUnitDemo(); // actual planning flow (also wrapped by safety guards)
+        const choice=state.pendingUnitChoice||{};
+        results[level]={
+          brief:choice.brief,
+          situations:(choice.situations||[]).map(x=>({title:x.title,text:x.text})),
+          products:(choice.products||[]).map(x=>({title:x.title,text:x.text})),
+          challenge:choice.reto||''
+        };
+      }
+    }finally{
+      situation.value=saved.situation;
+      title.value=saved.title;
+      if(saved.auto===undefined)delete title.dataset.autoTitle;else title.dataset.autoTitle=saved.auto;
+      if(saved.selected===undefined)delete title.dataset.ddSuggestedTitle;else title.dataset.ddSuggestedTitle=saved.selected;
+      type.value=saved.type;
+      state.level=saved.level;
+      state.pendingUnitChoice=saved.pending;
+      document.getElementById('ddProposalChooser')?.classList.add('hidden');
+      if(typeof window.save==='function')window.save();
+    }
+    return results;
+  });
+  for(const [level,pack] of Object.entries(situationRegression)){
+    assert(pack.brief==='el 1 y 2 de noviembre recordamos la fiesta de todos los santos',level+': original teacher context changed');
+    assert(pack.situations.length===2,level+': expected two significant situations');
+    assert(pack.products.length===3,level+': expected three contextual products');
+    const combined=pack.situations.map(x=>x.title+' '+x.text).join(' ')+pack.products.map(x=>x.title+' '+x.text).join(' ');
+    assert(!/Aprendemos desde nuestro contexto|aprendemos · nuestro · contexto/i.test(combined),level+': generated-title content leaked into proposals');
+    assert(pack.situations.every(x=>/Todos los Santos/.test(x.text)),level+': teacher cultural topic missing');
+    assert(pack.products.some(x=>/Todos los Santos/.test(x.title)),level+': contextual products missing');
+    assert(pack.situations.every(x=>x.text.length>250),level+': situation too superficial to guide a session');
+    assert(!pack.situations.some(x=>/todas las familias celebran igual/i.test(x.text)),level+': false family generalization');
+  }
+  console.log('SITUATION_CONTEXT_TODOS_LOS_SANTOS_PASS',JSON.stringify(Object.fromEntries(Object.entries(situationRegression).map(([level,pack])=>[level,{titles:pack.situations.map(x=>x.title),products:pack.products.map(x=>x.title)}]))));
   const draftText='Borrador rural de prueba que debe sobrevivir a una recarga antes de crear la unidad.';
   await page.locator('#unitSituation').fill(draftText);
   await page.waitForTimeout(700);
