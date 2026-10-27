@@ -534,6 +534,15 @@ try{
   globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:validAncillary}]})});
   res=await call(image,'POST',{prompt:'Material con metadatos PNG',confirmedCredit:true});
   assert.equal(res.statusCode,200,'Well-formed unknown ancillary PNG chunk must remain accepted');
+  // PNG chunk names must be literal ASCII letters. Node's 'ascii' decoder
+  // masks high-bit bytes (e.g. 0xe1 -> 'a'), allowing CRC-correct malformed
+  // chunks to masquerade as valid ancillary names. Recompute CRC after forging.
+  const nonAsciiChunkPngs=[4,6].map(byteIndex=>{
+    const forged=pngChunk('abCa',Buffer.from([1,2]));
+    forged[byteIndex]|=0x80;
+    forged.writeUInt32BE(crc32(forged.subarray(4,forged.length-4)),forged.length-4);
+    return pngWithChunks(6,8,[forged]);
+  });
   const validTransparencyPngs=[
     pngWithChunks(3,8,[redPalette,transparency]),
     pngWithChunks(0,8,[pngChunk('tRNS',Buffer.from([0,0]))]),
@@ -561,6 +570,7 @@ try{
     pngWithChunks(0,8,[redPalette]), // Grayscale forbids PLTE.
     pngWithChunks(6,8,[pngChunk('ABCD',Buffer.from([1]))]), // Unknown critical chunk.
     pngWithChunks(6,8,[pngChunk('abca',Buffer.from([1,2]))]), // Invalid PNG reserved bit (third lowercase type letter).
+    ...nonAsciiChunkPngs, // Invalid high-bit PNG chunk type bytes, even with correct CRC.
     pngWithChunks(6,8,[transparency]), // RGBA already has alpha; tRNS forbidden.
     pngWithChunks(3,8,[transparency,redPalette]), // Indexed tRNS before PLTE.
     pngWithChunks(3,8,[redPalette,pngChunk('tRNS',Buffer.alloc(0))]), // Empty alpha table.
