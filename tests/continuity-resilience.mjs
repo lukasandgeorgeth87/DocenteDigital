@@ -170,7 +170,8 @@ try{
     const ids=['materialSource','materialType','materialTopic','materialGrade','materialArea','materialLanguage'];
     const fields=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)]));
     const original=Object.fromEntries(ids.map(id=>[id,fields[id]?.value]));
-    const oldMaterials=state.materials;
+    // create() mutates the materials array; keep a snapshot to restore test isolation.
+    const oldMaterials=Array.isArray(state.materials)?state.materials.slice():[];
     const oldLast=state.lastMaterial;
     const records=[];
     try{
