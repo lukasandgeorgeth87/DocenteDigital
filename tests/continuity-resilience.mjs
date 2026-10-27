@@ -148,7 +148,12 @@ try{
     // Step 1: the real button opens choices; it does NOT persist a unit yet.
     const button=document.querySelector('#unitPanel button[onclick="createUnitDemo()"]');
     if(!button)throw new Error('No se encontró el botón real de creación');
+    // A normal (non-heritage) topic must use the real two-option generator,
+    // not silently fall back after a ReferenceError in situationOptions().
+    window.__ddProposalChoiceFallback=false;
     button.click();
+    const proposalFallback=window.__ddProposalChoiceFallback===true;
+    const proposalCount=document.querySelectorAll('#ddProposalChooser input[name="ddSituation"]').length;
     const afterOpening=localStorage.getItem(key)!==null;
     // Step 2: select an actual situation from the production chooser.
     const situationChoice=document.querySelector('#ddProposalChooser input[name="ddSituation"]');
@@ -172,8 +177,10 @@ try{
     title.value=oldTitle;situation.value=oldSituation;
     if(savedState===null)localStorage.removeItem(stateKey);
     else localStorage.setItem(stateKey,savedState);
-    return {afterOpening,afterSituation,created:!!created,cleared};
+    return {afterOpening,afterSituation,created:!!created,cleared,proposalFallback,proposalCount};
   });
+  assert(!liveButtonRegression.proposalFallback&&liveButtonRegression.proposalCount===2,
+    'La propuesta común cayó al respaldo o no generó dos situaciones: '+JSON.stringify(liveButtonRegression));
   assert(liveButtonRegression.afterOpening&&liveButtonRegression.afterSituation,
     'Se perdió el borrador antes de confirmar la unidad: '+JSON.stringify(liveButtonRegression));
   assert(liveButtonRegression.created&&liveButtonRegression.cleared,
