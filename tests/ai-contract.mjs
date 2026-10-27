@@ -510,7 +510,7 @@ try{
     header.writeUInt32BE(1,4);
     header[8]=bitDepth;header[9]=colorType;
     const channels={0:1,2:3,3:1,4:2,6:4}[colorType];
-    const raw=[0,...Array(channels).fill(0)];
+    const raw=[0,...Array(Math.ceil(channels*bitDepth/8)).fill(0)];
     return Buffer.concat([
       Buffer.from([137,80,78,71,13,10,26,10]),
       pngChunk('IHDR',header),
@@ -531,7 +531,12 @@ try{
   const validTransparencyPngs=[
     pngWithChunks(3,8,[redPalette,transparency]),
     pngWithChunks(0,8,[pngChunk('tRNS',Buffer.from([0,0]))]),
-    pngWithChunks(2,8,[pngChunk('tRNS',Buffer.alloc(6))])
+    pngWithChunks(2,8,[pngChunk('tRNS',Buffer.alloc(6))]),
+    // Maximum in-range transparent sample is valid for each bit depth.
+    pngWithChunks(0,1,[pngChunk('tRNS',Buffer.from([0,1]))]),
+    pngWithChunks(0,8,[pngChunk('tRNS',Buffer.from([0,255]))]),
+    pngWithChunks(2,8,[pngChunk('tRNS',Buffer.from([0,255,0,255,0,255]))]),
+    pngWithChunks(2,16,[pngChunk('tRNS',Buffer.from([255,255,255,255,255,255]))])
   ];
   for(const valid of validTransparencyPngs){
     globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:valid}]})});
@@ -556,6 +561,9 @@ try{
     pngWithChunks(3,8,[redPalette,transparency,transparency]), // Duplicate tRNS.
     pngWithChunks(0,8,[transparency]), // Grayscale tRNS must contain exactly 2 bytes.
     pngWithChunks(2,8,[pngChunk('tRNS',Buffer.alloc(5))]), // RGB tRNS must contain exactly 6 bytes.
+    pngWithChunks(0,1,[pngChunk('tRNS',Buffer.from([0,2]))]), // Gray 1-bit cannot encode transparent sample 2.
+    pngWithChunks(0,8,[pngChunk('tRNS',Buffer.from([1,0]))]), // Gray 8-bit cannot encode transparent sample 256.
+    pngWithChunks(2,8,[pngChunk('tRNS',Buffer.from([0,0,1,0,0,0]))]), // RGB 8-bit green sample 256 is invalid.
     pngWithChunks(2,8,[pngChunk('tRNS',Buffer.alloc(6)),redPalette]), // Optional RGB palette cannot follow tRNS.
     pngWithChunks(3,8,[redPalette],Buffer.alloc(0),[transparency]) // tRNS after IDAT.
   ];

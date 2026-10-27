@@ -50,8 +50,11 @@ function validPngBase64(value){
       // Grayscale and truecolor use fixed-size transparent color samples.
       if(seenData||seenTransparency||![0,2,3].includes(colorType))return false;
       if(colorType===3&&(!seenPalette||!length||length>paletteEntries))return false;
-      if(colorType===0&&length!==2)return false;
-      if(colorType===2&&length!==6)return false;
+      // PNG tRNS stores grayscale/RGB keys in 16-bit fields. For 1/2/4/8-bit
+      // images the transparent sample must fit the declared sample depth.
+      // Otherwise a CRC-valid PNG can still carry an invalid transparency key.
+      if(colorType===0&&(length!==2||bytes.readUInt16BE(offset+8)>=2**bitDepth))return false;
+      if(colorType===2&&(length!==6||(bitDepth<16&&[0,2,4].some(i=>bytes.readUInt16BE(offset+8+i)>=2**bitDepth))))return false;
       seenTransparency=true;
     }
     if(type==='IDAT'){
