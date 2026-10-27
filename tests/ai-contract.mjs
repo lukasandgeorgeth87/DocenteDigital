@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
+import {crc32} from 'node:zlib';
 
 const require=createRequire(import.meta.url);
 const ai=require('../api/ai.js');
@@ -423,7 +424,23 @@ try{
   const validPng='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
   const damagedPng=Buffer.from(validPng,'base64');
   damagedPng[45]^=1;
+  // A valid CRC alone does not prove the IDAT zlib stream can be decoded.
+  const forgedZlibPng=Buffer.from(validPng,'base64');
+  const idatAt=forgedZlibPng.indexOf(Buffer.from('IDAT'));
+  assert.ok(idatAt>0);
+  const idatLength=forgedZlibPng.readUInt32BE(idatAt-4);
+  forgedZlibPng[idatAt+4]^=0xff;
+  forgedZlibPng.writeUInt32BE(
+    crc32(forgedZlibPng.subarray(idatAt,idatAt+4+idatLength)),
+    idatAt+4+idatLength
+  );
+  const oversizedPng=Buffer.from(validPng,'base64');
+  const ihdrAt=oversizedPng.indexOf(Buffer.from('IHDR'));
+  oversizedPng.writeUInt32BE(8193,ihdrAt+4);
+  oversizedPng.writeUInt32BE(crc32(oversizedPng.subarray(ihdrAt,ihdrAt+17)),ihdrAt+17);
   for(const invalid of [
+    forgedZlibPng.toString('base64'),
+    oversizedPng.toString('base64'),
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9f4NvK0AAAAASUVORK5CYII=',
     'iVBORw0KGgoAAAANSUhEUgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
     damagedPng.toString('base64'),

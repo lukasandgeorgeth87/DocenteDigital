@@ -1,4 +1,4 @@
-const {crc32}=require('node:zlib');
+const {crc32,inflateSync}=require('node:zlib');
 const {reserveQuota}=require('./_ai-quota');
 const {checkBetaAccess}=require('./_beta-access');
 const {betaEnvironmentAllowed}=require('./_ai-beta-environment');
@@ -7,13 +7,15 @@ const IMAGE_URL='https://api.openai.com/v1/images/generations';
 function send(res,status,data){res.statusCode=status;res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(data));}
 function clean(v,max=5000){return String(v??'').replace(/\u0000/g,'').trim().slice(0,max);}
 // The image endpoint requests PNG. A nonempty base64 string is not proof of an image.
-// Validate the PNG signature and IHDR before reporting a successful generation.
+// Validate chunk CRC, bounded zlib decoding and scanline structure before success.
 function validPngBase64(value){
   if(typeof value!=='string'||value.length<64||value.length>40*1024*1024||value.length%4!==0)return false;
   if(!/^[A-Za-z0-9+/]+={0,2}$/.test(value))return false;
   const bytes=Buffer.from(value,'base64');
   if(bytes.length<57||!bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))return false;
-  let offset=8,seenHeader=false,seenData=false;
+  let offset=8,seenHeader=false,seenData=false,afterData=false;
+  let width=0,height=0,bitDepth=0,colorType=0,interlace=0,idatBytes=0;
+  const idat=[];
   while(offset+12<=bytes.length){
     const length=bytes.readUInt32BE(offset);
     const end=offset+12+length;
@@ -21,11 +23,42 @@ function validPngBase64(value){
     const type=bytes.toString('ascii',offset+4,offset+8);
     if(crc32(bytes.subarray(offset+4,offset+8+length))!==bytes.readUInt32BE(offset+8+length))return false;
     if(!seenHeader){
-      if(type!=='IHDR'||length!==13||!bytes.readUInt32BE(offset+8)||!bytes.readUInt32BE(offset+12))return false;
+      if(type!=='IHDR'||length!==13)return false;
+      width=bytes.readUInt32BE(offset+8);
+      height=bytes.readUInt32BE(offset+12);
+      bitDepth=bytes[offset+16];
+      colorType=bytes[offset+17];
+      interlace=bytes[offset+20];
+      const depths={0:[1,2,4,8,16],2:[8,16],3:[1,2,4,8],4:[8,16],6:[8,16]};
+      if(!width||!height||width>8192||height>8192||width*height>16777216)return false;
+      if(!depths[colorType]?.includes(bitDepth)||bytes[offset+18]!==0||bytes[offset+19]!==0||interlace>1)return false;
       seenHeader=true;
     }else if(type==='IHDR')return false;
-    if(type==='IDAT')seenData=true;
-    if(type==='IEND')return length===0&&seenData&&end===bytes.length;
+    if(type==='IDAT'){
+      if(afterData)return false;
+      idatBytes+=length;
+      if(idatBytes>40*1024*1024)return false;
+      idat.push(bytes.subarray(offset+8,offset+8+length));
+      seenData=true;
+    }else if(seenData&&type!=='IEND')afterData=true;
+    if(type==='IEND'){
+      if(length!==0||!seenData||end!==bytes.length)return false;
+      try{
+        // A CRC-valid IDAT can still contain a corrupt or decompression-bomb
+        // zlib stream. Bound inflation before delivering teacher materials.
+        const raw=inflateSync(Buffer.concat(idat),{maxOutputLength:64*1024*1024});
+        if(!raw.length)return false;
+        if(interlace===0){
+          const channels={0:1,2:3,3:1,4:2,6:4}[colorType];
+          const rowBytes=Math.ceil(width*channels*bitDepth/8);
+          if(raw.length!==(rowBytes+1)*height)return false;
+          for(let row=0;row<height;row++){
+            if(raw[row*(rowBytes+1)]>4)return false;
+          }
+        }
+        return true;
+      }catch(_error){return false;}
+    }
     offset=end;
   }
   return false;
