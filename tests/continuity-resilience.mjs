@@ -126,8 +126,9 @@ try{
     return {retained};
   });
   assert(draftClickRegression.retained,'Una unidad anterior con igual contexto borró el borrador sin crear otra');
-  // The actual planning form uses an inline createUnitDemo() handler rather
-  // than #ddBuildUnit. Simulate its persistence synchronously during click.
+  // The live createUnitDemo() opens the situation/product chooser. Only
+  // confirming both steps invokes the underlying persistence handler.
+  // A click on "Crear propuesta completa" alone must retain the draft.
   const liveButtonRegression=await page.evaluate(async()=>{
     const key='docenteDigitalBetaDraftUnit',stateKey='docenteDigitalPrototype';
     const savedState=localStorage.getItem(stateKey);
@@ -138,20 +139,39 @@ try{
     localStorage.setItem(key,JSON.stringify({
       title:draftTitle,situation:draftSituation,savedAt:new Date().toISOString()
     }));
-    // Exercise the actual production handler, not a mock that bypasses save().
+    // Step 1: the real button opens choices; it does NOT persist a unit yet.
     const button=document.querySelector('#unitPanel button[onclick="createUnitDemo()"]');
     if(!button)throw new Error('No se encontró el botón real de creación');
     button.click();
+    const afterOpening=localStorage.getItem(key)!==null;
+    // Step 2: select an actual situation from the production chooser.
+    const situationChoice=document.querySelector('#ddProposalChooser input[name="ddSituation"]');
+    if(!situationChoice)throw new Error('No apareció el selector real de situaciones');
+    situationChoice.click();
+    const continueButton=document.getElementById('ddContinueProducts');
+    if(!continueButton)throw new Error('Falta el botón real para continuar al producto');
+    continueButton.click();
+    const afterSituation=localStorage.getItem(key)!==null;
+    // Step 3: select a real product and confirm construction/persistence.
+    const productChoice=document.querySelector('#ddProposalChooser input[name="ddProduct"]');
+    if(!productChoice)throw new Error('No apareció el selector real de productos');
+    productChoice.click();
+    const buildButton=document.getElementById('ddBuildUnit');
+    if(!buildButton)throw new Error('Falta el botón real para construir la unidad');
+    buildButton.click();
     await new Promise(resolve=>setTimeout(resolve,650));
     const persisted=JSON.parse(localStorage.getItem(stateKey)||'{}');
     const created=persisted.units?.some(u=>u.title===draftTitle&&u.situationBrief===draftSituation);
-    const cleared=created&&localStorage.getItem(key)===null;
+    const cleared=localStorage.getItem(key)===null;
     title.value=oldTitle;situation.value=oldSituation;
     if(savedState===null)localStorage.removeItem(stateKey);
     else localStorage.setItem(stateKey,savedState);
-    return cleared;
+    return {afterOpening,afterSituation,created:!!created,cleared};
   });
-  assert(liveButtonRegression,'El botón real createUnitDemo() no limpió el borrador tras crear unidad');
+  assert(liveButtonRegression.afterOpening&&liveButtonRegression.afterSituation,
+    'Se perdió el borrador antes de confirmar la unidad: '+JSON.stringify(liveButtonRegression));
+  assert(liveButtonRegression.created&&liveButtonRegression.cleared,
+    'El flujo real situación→producto→guardar no persistió y limpió el borrador: '+JSON.stringify(liveButtonRegression));
 
 
 
