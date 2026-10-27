@@ -1,6 +1,7 @@
 // Explicit, private Preview-only write probe for the GPT quota Redis backend.
 // Writes ONLY to an expiring synthetic key, never to the daily paid quota key.
 // Never contacts OpenAI or enables the paid GPT feature flag.
+const {randomUUID}=require('node:crypto');
 const {quotaConfig}=require('./_ai-quota');
 const {checkBetaAccess}=require('./_beta-access');
 const {betaEnvironmentAllowed}=require('./_ai-beta-environment');
@@ -32,7 +33,9 @@ module.exports=async function handler(req,res){
     const response=await fetch(cfg.url,{
       method:'POST',
       headers:{Authorization:'Bearer '+cfg.token,'Content-Type':'application/json'},
-      body:JSON.stringify(['EVAL',SCRIPT,'1','dd:beta:quota-preflight:synthetic']),
+      // A unique ephemeral key avoids interference between simultaneous testers.
+      // This namespace never overlaps with dd:beta:ai-quota:*.
+      body:JSON.stringify(['EVAL',SCRIPT,'1','dd:beta:quota-preflight:synthetic:'+randomUUID()]),
       signal:controller.signal
     });
     if(!response.ok)return send(res,503,{ok:false,error:'ai_quota_write_unavailable'});
