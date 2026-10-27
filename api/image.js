@@ -48,13 +48,29 @@ function validPngBase64(value){
         // zlib stream. Bound inflation before delivering teacher materials.
         const raw=inflateSync(Buffer.concat(idat),{maxOutputLength:64*1024*1024});
         if(!raw.length)return false;
+        const channels={0:1,2:3,3:1,4:2,6:4}[colorType];
         if(interlace===0){
-          const channels={0:1,2:3,3:1,4:2,6:4}[colorType];
           const rowBytes=Math.ceil(width*channels*bitDepth/8);
           if(raw.length!==(rowBytes+1)*height)return false;
           for(let row=0;row<height;row++){
             if(raw[row*(rowBytes+1)]>4)return false;
           }
+        }else{
+          // Adam7 images also contain filtered scanlines. A valid zlib stream
+          // alone does not prove that any of the seven passes can be decoded.
+          const passes=[[0,0,8,8],[4,0,8,8],[0,4,4,8],[2,0,4,4],[0,2,2,4],[1,0,2,2],[0,1,1,2]];
+          let cursor=0;
+          for(const [x,y,dx,dy] of passes){
+            if(width<=x||height<=y)continue;
+            const passWidth=Math.ceil((width-x)/dx);
+            const passHeight=Math.ceil((height-y)/dy);
+            const rowBytes=Math.ceil(passWidth*channels*bitDepth/8);
+            for(let row=0;row<passHeight;row++){
+              if(cursor+rowBytes+1>raw.length||raw[cursor]>4)return false;
+              cursor+=rowBytes+1;
+            }
+          }
+          if(cursor!==raw.length)return false;
         }
         return true;
       }catch(_error){return false;}
