@@ -366,7 +366,7 @@ try{
   assert.equal(res.statusCode,402,'Image credits require explicit confirmation');
   globalThis.fetch=async(url,options)=>{
     captured={url,options};
-    return {ok:true,status:200,json:async()=>({data:[{b64_json:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9f4NvK0AAAAASUVORK5CYII='}]})};
+    return {ok:true,status:200,json:async()=>({data:[{b64_json:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg=='}]})};
   };
   res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true,size:'1024x1536',quality:'medium'});
   assert.equal(res.statusCode,200);
@@ -417,6 +417,23 @@ try{
   globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:'iVBORw0KGgo='}]})});
   res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
   assert.equal(res.statusCode,502,'Truncated PNG must not be accepted');
+  // The old 1x1 fixture had a corrupt IDAT CRC; a valid PNG must pass,
+  // while an IHDR-looking payload, corrupt CRC or missing IEND must fail.
+  // These previously slipped past the signature-only validator.
+  const validPng='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
+  const damagedPng=Buffer.from(validPng,'base64');
+  damagedPng[45]^=1;
+  for(const invalid of [
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9f4NvK0AAAAASUVORK5CYII=',
+    'iVBORw0KGgoAAAANSUhEUgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+    damagedPng.toString('base64'),
+    Buffer.from(validPng,'base64').subarray(0,-12).toString('base64')
+  ]){
+    globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:invalid}]})});
+    res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
+    assert.equal(res.statusCode,502,'Malformed PNG must never be delivered as a valid worksheet image');
+    assert.equal(res.body.error,'invalid_image_output');
+  }
   // Provider HTTP 200 without an image must not be shown as a completed generation.
   globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{}]})});
   res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
