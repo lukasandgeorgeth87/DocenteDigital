@@ -26,6 +26,9 @@ jobs:
 
       - name: Validate protected non-billable Redis preflight
         run: node tests/ai-preflight.mjs
+
+      - name: Validate explicit synthetic Redis quota write preflight
+        run: node tests/ai-quota-write-preflight.mjs
       - name: Validate offline fallback
         run: node tests/ai-local-fallback.mjs
       - name: Validate context isolation and private beta token
