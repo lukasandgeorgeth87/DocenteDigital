@@ -64,7 +64,7 @@ try{
   assert.equal(res.body.paid_call,false);
   assert.equal(res.body.beta_enabled,false);
   assert.equal(res.headers['cache-control'],'no-store');
-  assert.deepEqual(requestBody.slice(0,2),['EVAL',requestBody[1]]);
+  assert.equal(requestBody[0],'EVAL');
   assert.equal(requestBody[2],'1');
   assert.equal(requestBody[3],'dd:beta:quota-preflight:synthetic');
   assert.match(requestBody[1],/INCRBY/);
