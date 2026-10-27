@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url);
 const preflight=require('../api/ai-preflight.js');
-const keys=['VERCEL_ENV','DD_AI_BETA_TOKEN','UPSTASH_REDIS_REST_URL','UPSTASH_REDIS_REST_TOKEN','DD_AI_DAILY_MAX_UNITS','OPENAI_API_KEY','DD_AI_BETA_ENABLED'];
+const keys=['VERCEL_ENV','VERCEL_GIT_COMMIT_REF','DD_AI_BETA_TOKEN','UPSTASH_REDIS_REST_URL','UPSTASH_REDIS_REST_TOKEN','DD_AI_DAILY_MAX_UNITS','OPENAI_API_KEY','DD_AI_BETA_ENABLED'];
 const old=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
 const oldFetch=globalThis.fetch;
 const token='local-preflight-test-token-at-least-32-chars';
@@ -14,6 +14,7 @@ async function request(method='GET',headers={'x-dd-beta-token':token}){
 }
 try{
   process.env.VERCEL_ENV='preview';
+  process.env.VERCEL_GIT_COMMIT_REF='audit/v5-continuity-offline-diagnostic';
   process.env.DD_AI_BETA_TOKEN=token;
   delete process.env.UPSTASH_REDIS_REST_URL;
   delete process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -35,6 +36,15 @@ try{
   assert.equal(res.statusCode,403);
   assert.equal(calls,0,'Unauthorized and production requests must not contact Redis');
   process.env.VERCEL_ENV='preview';
+  process.env.VERCEL_GIT_COMMIT_REF='another-preview-branch';
+  res=await request();
+  assert.equal(res.statusCode,403,'Another Preview branch must not access Redis preflight');
+  assert.equal(calls,0,'Wrong-branch requests must not contact Redis');
+  delete process.env.VERCEL_GIT_COMMIT_REF;
+  res=await request();
+  assert.equal(res.statusCode,403,'Missing branch metadata must fail closed');
+  assert.equal(calls,0,'Missing-branch requests must not contact Redis');
+  process.env.VERCEL_GIT_COMMIT_REF='audit/v5-continuity-offline-diagnostic';
   process.env.UPSTASH_REDIS_REST_URL='https://quota.example.test';
   process.env.UPSTASH_REDIS_REST_TOKEN='redis-test-only-token';
   process.env.DD_AI_DAILY_MAX_UNITS='10';
@@ -71,7 +81,7 @@ try{
   globalThis.fetch=async()=>{throw Error('offline');};
   res=await request();
   assert.equal(res.statusCode,503,'Network errors must fail closed');
-  console.log('AI_PREFLIGHT_PASS: Preview-only, private token, read-only Redis EVAL, no provider billing, fail closed');
+  console.log('AI_PREFLIGHT_PASS: authorized Preview branch, private token, read-only Redis EVAL, no provider billing, fail closed');
 }finally{
   globalThis.fetch=oldFetch;
   for(const key of keys){if(old[key]===undefined)delete process.env[key];else process.env[key]=old[key];}
