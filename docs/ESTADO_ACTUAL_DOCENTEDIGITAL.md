@@ -1,3 +1,9 @@
+## Verificación posterior — 27/10/2026 (Perú) — bit reservado PNG, CI integral PASS
+
+- **SHA de código exacto:** [`733da0d`](https://github.com/lukasandgeorgeth87/DocenteDigital/commit/733da0d4b238090d550e2fe932b1dc2608b53e07); [GitHub Actions `40593554139`](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40593554139) **SUCCESS**. Jobs `ai-context-fast` **PASS** y `browser-e2e` **PASS**. El contrato `tests/ai-contract.mjs` ejecutó aceptación de chunk auxiliar `abCa` y rechazo del nombre `abca` (tercera letra minúscula reservada), junto con el resto de contratos API. El navegador completó beta docente, materiales EIB, regresiones semánticas, privacidad de red, continuidad, DOCX y accesibilidad del workflow.
+- **Preview Vercel:** estado **READY** reportado para el SHA exacto en https://docente-digital-muheysvdc-jorgeluispalma87-7403.vercel.app; READY solo acredita estado del despliegue, **no** acceso humano privado ni generación real.
+- **Alcance real:** pruebas CI con proveedor OpenAI/Redis **simulados**, servidor estático y navegador automatizado. No se verificaron OpenAI pagado, Redis/Upstash real, autenticación multiusuario, acceso humano privado ni datos reales. `main`, producción y secretos intactos. Se registra con `[skip ci]` para no atribuir el PASS al commit documental. Riesgos S1–S4 e indicadores históricos sin cambios.
+
 ## Actualización — 27/10/2026 (Perú) — validación del bit reservado en chunks PNG
 
 - **Hallazgo y corrección:** el validador de `api/image.js` admitía nombres de chunks PNG con la tercera letra minúscula, aunque esa posición está reservada por el formato. Se restringió la tercera letra a mayúscula, sin bloquear chunks auxiliares desconocidos bien formados.
