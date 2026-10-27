@@ -26,6 +26,9 @@ const document={
 };
 const window={state:{}};
 let captured=null, imageCaptured=null, imageCalls=0;
+const samplePng='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
+let imageResponse={ok:true,image_base64:samplePng,image_url:null};
+const alerts=[];
 const fetch=async(url,options={})=>{
   if(url==='/api/ai-status')return {ok:true,json:async()=>({
     ok:true,configured:true,enabled:true,access_configured:true,
@@ -35,7 +38,7 @@ const fetch=async(url,options={})=>{
     imageCalls++;
     imageCaptured=options;
     return {ok:true,status:200,json:async()=>({
-      ok:true,image_url:'https://example.test/safe-educational-image.png'
+      ...imageResponse
     })};
   }
   if(url==='/api/ai'){
@@ -48,7 +51,7 @@ const fetch=async(url,options={})=>{
   throw Error('Unexpected URL '+url);
 };
 class MutationObserver{observe(){}}
-runInNewContext(source,{window,document,fetch,localStorage,MutationObserver,setTimeout,clearTimeout,AbortController,console});
+runInNewContext(source,{window,document,fetch,localStorage,MutationObserver,setTimeout,clearTimeout,AbortController,console,alert:message=>alerts.push(String(message))});
 assert.equal(typeof nodes.ddAiBetaSave.onclick,'function','Private beta token control must be installed');
 nodes.ddAiBetaSave.onclick();
 assert.equal(tokenInput.value,'','The token must be removed from the input field after loading');
@@ -152,7 +155,22 @@ assert.match(JSON.parse(imageCaptured.body).prompt,/Hortalizas del nuevo proyect
 assert.doesNotMatch(JSON.parse(imageCaptured.body).prompt,/Minerales de otro proyecto/,
   'A stale session must not contaminate a paid image prompt');
 assert.match(imagePanel.innerHTML,/Imagen educativa generada/);
+assert.match(imagePanel.innerHTML,/src="data:image\/png;base64,iVBORw0KGgo/,
+  'A server-validated PNG must render as an inline data URI, never a provider URL');
+// A future API regression returning only an HTTPS URL must not make the
+// teacher browser contact an external provider or display unverified bytes.
+imagePanel=null;
+imageResponse={ok:true,image_url:'https://untrusted.example.test/teacher-image.png'};
+await window.DDOpenAI.generatePremiumImage();
+assert.equal(imageCalls,2);
+assert.equal(imagePanel,null,'URL-only image responses must not render');
+assert.match(alerts.at(-1)||'',/La imagen no llegó correctamente/);
+imageResponse={ok:true,image_base64:'bm90IGEgcG5n',image_url:'https://untrusted.example.test/teacher-image.png'};
+await window.DDOpenAI.generatePremiumImage();
+assert.equal(imageCalls,3);
+assert.equal(imagePanel,null,'Malformed base64 with URL fallback must not render');
+assert.match(alerts.at(-1)||'',/La imagen no llegó correctamente/);
 imageConsent=false;
 await window.DDOpenAI.generatePremiumImage();
-assert.equal(imageCalls,1,'A later image request must ask consent again');
-console.log('AI_IMAGE_CONSENT_PASS: per-image confirmation, quota notice, stale-session isolation');
+assert.equal(imageCalls,3,'A later image request must ask consent again');
+console.log('AI_IMAGE_CONSENT_PASS: per-image confirmation, quota notice, stale-session isolation, PNG-only rendering, URL-only rejection');

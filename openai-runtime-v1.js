@@ -338,8 +338,14 @@
       const r=await fetch('/api/image',{method:'POST',headers:{'Content-Type':'application/json',...betaHeaders()},body:JSON.stringify({prompt,confirmedCredit:true,size:'1024x1536',quality:'medium'})});
       const data=await r.json();
       if(!r.ok||!data.ok)throw new Error(friendlyError(data.error));
-      const src=data.image_base64?'data:image/png;base64,'+data.image_base64:data.image_url;
-      if(!src)throw new Error('La imagen no llegó correctamente.');
+      const png=typeof data.image_base64==='string'?data.image_base64:'';
+      // The API only returns server-validated PNG bytes. Never load provider
+      // URLs in the teacher browser, even if a future response regresses.
+      if(png.length<64||png.length>40*1024*1024||png.length%4!==0||
+        !/^iVBORw0KGgo[A-Za-z0-9+/]+={0,2}$/.test(png)){
+        throw new Error('La imagen no llegó correctamente.');
+      }
+      const src='data:image/png;base64,'+png;
       const panel=document.createElement('div');panel.className='dd-panel';panel.innerHTML=`<span class="pill">Imagen nueva</span><h3>Generada con IA</h3><img src="${esc(src)}" alt="Imagen educativa generada" style="max-width:100%;max-height:520px;object-fit:contain;border-radius:12px"><div class="actions topgap"><button class="btn alt" type="button" id="ddUseGeneratedImage">Usar en esta sesión</button></div>`;
       const target=$('ddSessionSuggestions')||$('materialOutput')||$('aihub');target?.prepend(panel);
       $('ddUseGeneratedImage')?.addEventListener('click',()=>{
