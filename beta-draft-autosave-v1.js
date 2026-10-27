@@ -48,6 +48,12 @@
   function clearIfPersisted(unit){
     if(!unit?.id)return false;
     const draft=read();if(!draft)return false;
+    // Never accept a previously saved unit as proof of a new creation.
+    // The real createUnitDemo() stamps createdAt immediately before save().
+    const createdAt=Date.parse(unit.createdAt||'');
+    const draftedAt=Date.parse(draft.savedAt||'');
+    if(!Number.isFinite(createdAt)||!Number.isFinite(draftedAt)||
+       createdAt<draftedAt-5000||createdAt>Date.now()+5*60*1000)return false;
     const same=(left,right)=>String(left||'').trim()===String(right||'').trim();
     if((draft.title&&!same(draft.title,unit.title))||
        (draft.situation&&!same(draft.situation,unit.situationBrief)))return false;
