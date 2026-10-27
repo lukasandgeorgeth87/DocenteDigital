@@ -1,3 +1,14 @@
+## Actualización — 26/10/2026, noche (Perú) — protección del borrador durante el selector de propuesta
+
+- **Rama:** `audit/v5-continuity-offline-diagnostic`. **Último commit funcional:** `9f50c43cf87a3b99818d401990838c0672fc921d`; esta nota documental se publica en un SHA posterior, consultable en HEAD. Producción y datos reales intactos.
+- **Cambio de código:** `beta-draft-autosave-v1.js` ya no ejecuta `saveDraft()` en el clic inicial `createUnitDemo()` que abre el selector; reserva el vaciado previo del autosave para el botón final `#ddBuildUnit`. Se evita sobrescribir el borrador local con valores intermedios de la interfaz.
+- **Pruebas/evidencia:** se consultó el log real de `browser-e2e` de [GitHub Actions 40426202465](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40426202465): **FAIL** en continuidad («El botón real createUnitDemo() no limpió el borrador tras crear unidad»), mientras `ai-context-fast` **PASS** en esa ejecución anterior. **Pruebas del nuevo commit: PENDIENTES**, no declarar PASS. No se ejecutó un navegador local en esta intervención.
+- **Vercel:** último Preview consultado de la rama, `9ce8303e084d329412a09842761d50cc7350e052`, **READY** en https://docente-digital-k9th1zwpx-jorgeluispalma87-7403.vercel.app ; HTTP del nuevo commit **no verificado**, Preview del nuevo SHA pendiente.
+- **Módulos:** runtime/CI rápidos probados anteriormente; continuidad E2E **FAIL anterior / pendiente nuevo**; UX, cadena docente, materiales, evaluación, Director, plantillas y exportación **parciales**; GPT real, piloto privado humano y app PC **no disponibles/no verificados**.
+- **Bloqueantes:** S0 ninguno nuevo confirmado; S1 E2E continuidad, Redis/cuota atómica, autenticación y prueba GPT ficticia; S2 validación curricular, Director y exportaciones; S3 accesibilidad/móvil; S4 futura app PC. **Siguiente paso:** ejecutar E2E del nuevo SHA, corregir cualquier fallo, verificar Preview HTTP y avanzar en piloto privado sin tocar producción.
+- **Decisiones:** GPT principal solo tras controles de acceso y cuota; plantillas como respaldo identificado; app PC futura. Indicadores sin cambios: **75 % histórico estimado** y **21/100 cierre V5 histórico**. Matriz: runtime 10, UX 10, IA 15, flujo docente 15, materiales 10, evaluación 10, director 10, persistencia/exportación 8, CI/CD 7, seguridad/piloto 5.
+- **Bitácora:** `9f50c43` modifica `beta-draft-autosave-v1.js`; esta actualización modifica exclusivamente el estado canónico tras cambio funcional.
+
 ## Actualización — 26/10/2026, ~20:17 (Perú) — desbloqueo del E2E con el flujo docente auténtico
 
 - **Repositorio y rama exclusiva:** `lukasandgeorgeth87/DocenteDigital` / `audit/v5-continuity-offline-diagnostic`. **SHA funcional/de prueba más reciente antes de esta nota:** `43c951c160b563dcd23fa65776e552149b76a040`. El SHA definitivo de esta nota es HEAD de la rama. Sin cambios en producción ni datos reales.
