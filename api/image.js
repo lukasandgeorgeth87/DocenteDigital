@@ -1,3 +1,4 @@
+const {crc32}=require('node:zlib');
 const {reserveQuota}=require('./_ai-quota');
 const {checkBetaAccess}=require('./_beta-access');
 const {betaEnvironmentAllowed}=require('./_ai-beta-environment');
@@ -10,9 +11,24 @@ function clean(v,max=5000){return String(v??'').replace(/\u0000/g,'').trim().sli
 function validPngBase64(value){
   if(typeof value!=='string'||value.length<64||value.length>40*1024*1024||value.length%4!==0)return false;
   if(!/^[A-Za-z0-9+/]+={0,2}$/.test(value))return false;
-  const header=Buffer.from(value.slice(0,32),'base64');
-  return header.length>=16 && header.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))
-    && header.readUInt32BE(8)===13 && header.toString('ascii',12,16)==='IHDR';
+  const bytes=Buffer.from(value,'base64');
+  if(bytes.length<57||!bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))return false;
+  let offset=8,seenHeader=false,seenData=false;
+  while(offset+12<=bytes.length){
+    const length=bytes.readUInt32BE(offset);
+    const end=offset+12+length;
+    if(end>bytes.length)return false;
+    const type=bytes.toString('ascii',offset+4,offset+8);
+    if(crc32(bytes.subarray(offset+4,offset+8+length))!==bytes.readUInt32BE(offset+8+length))return false;
+    if(!seenHeader){
+      if(type!=='IHDR'||length!==13||!bytes.readUInt32BE(offset+8)||!bytes.readUInt32BE(offset+12))return false;
+      seenHeader=true;
+    }else if(type==='IHDR')return false;
+    if(type==='IDAT')seenData=true;
+    if(type==='IEND')return length===0&&seenData&&end===bytes.length;
+    offset=end;
+  }
+  return false;
 }
 module.exports=async function handler(req,res){
   if(req.method!=='POST')return send(res,405,{ok:false,error:'method_not_allowed'});
