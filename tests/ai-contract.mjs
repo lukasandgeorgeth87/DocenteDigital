@@ -370,7 +370,7 @@ try{
   };
   res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true,size:'1024x1536',quality:'medium'});
   assert.equal(res.statusCode,200);
-  assert.equal(res.body.image_base64,'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9f4NvK0AAAAASUVORK5CYII=');
+  assert.equal(res.body.image_base64,'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==');
   assert.equal(res.headers['cache-control'],'no-store');
   assert.equal(captured.url,'https://api.openai.com/v1/images/generations');
   const imagePayload=JSON.parse(captured.options.body);
