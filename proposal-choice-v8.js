@@ -47,6 +47,41 @@
     if(tidy(m.goal))pieces.push(`La experiencia busca ${tidy(m.goal)}.`);
     return pieces.join(' ');
   }
+  // Cultural theme explicitly supplied by the teacher, not inferred local customs.
+  function isAllSaintsContext(raw){
+    const normalized=tidy(raw).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    return /\b(?:todos\s+los\s+santos|dia\s+de\s+(?:los\s+)?difuntos)\b/.test(normalized);
+  }
+  function allSaintsSituationOptions(raw,meaning,grades,level){
+    const normalized=tidy(raw).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const dated=/\b(?:1\s*(?:y|,|-)\s*2|2\s*(?:y|,|-)\s*1)\s+de\s+noviembre\b/.test(normalized);
+    const period=dated?'el 1 y 2 de noviembre':'durante Todos los Santos';
+    const reto='¿Qué sentido tienen estas fechas para distintas familias y cómo compartimos lo aprendido con respeto?';
+    let situations=[];
+    if(level==='Inicial'){
+      situations=[
+        {key:'A',title:'Historias y tradiciones: escuchamos y representamos',
+         text:'A partir de '+period+', las niñas y los niños de '+grades+' conocerán relatos, imágenes y expresiones culturales sobre Todos los Santos seleccionados por la docente. Conversarán, dibujarán, jugarán y expresarán qué les llamó la atención. Respetarán distintas creencias y no se pedirá compartir recuerdos personales de una pérdida. El reto será representar algunas maneras de recordar estas fechas con respeto.'},
+        {key:'B',title:'Conocemos distintas maneras de recordar',
+         text:'Las niñas y los niños de '+grades+' explorarán la conmemoración de Todos los Santos mediante cuentos, imágenes autorizadas y relatos culturales. Compararán detalles, harán preguntas y compartirán sus descubrimientos con dibujos y expresiones orales. La participación familiar será voluntaria y no se asumirá que todas las familias celebran de la misma manera.'}
+      ];
+    }else if(level==='Secundaria'){
+      situations=[
+        {key:'A',title:'Memoria e identidad: analizamos Todos los Santos',
+         text:'En '+period+', los estudiantes de '+grades+' analizarán el sentido social y cultural de Todos los Santos mediante fuentes pertinentes y testimonios voluntarios. Diferenciarán hechos, interpretaciones y creencias, compararán formas de recordar y respetarán la diversidad familiar. El reto será explicar la relación entre memoria e identidad sin generalizar costumbres locales no documentadas.'},
+        {key:'B',title:'Diversidad cultural: investigamos y comunicamos',
+         text:'Los estudiantes de '+grades+' formularán preguntas sobre Todos los Santos, contrastarán textos, registros y testimonios obtenidos con consentimiento y organizarán hallazgos verificables. Prepararán una exposición o recurso de divulgación que explique los significados culturales de las fechas, cite las fuentes utilizadas y respete las decisiones y prácticas de cada familia.'}
+      ];
+    }else{
+      situations=[
+        {key:'A',title:'Tradiciones y recuerdos: escuchamos y comprendemos',
+         text:'En '+period+', los estudiantes de '+grades+' conocerán el significado de Todos los Santos para distintas familias. Leerán textos breves, observarán imágenes y escucharán relatos aportados voluntariamente. Compararán costumbres, plantearán preguntas y elaborarán dibujos, textos o explicaciones según su grado. El reto será compartir lo aprendido sin asumir que todas las familias conmemoran de la misma forma.'},
+        {key:'B',title:'Preguntamos, contrastamos y compartimos tradiciones',
+         text:'Los estudiantes de '+grades+' investigarán las expresiones culturales vinculadas a Todos los Santos mediante lecturas, imágenes y entrevistas voluntarias con consentimiento. Diferenciarán lo que conocían, lo que dicen las fuentes y lo que falta comprobar. Organizarán una muestra escolar de hallazgos con referencias, explicaciones diferenciadas por grado y respeto por las diversas creencias.'}
+      ];
+    }
+    return {meaning,focus:'las tradiciones y la memoria de Todos los Santos',reto,situations};
+  }
   function situationOptions(raw){
     const m=meaningFor(raw),focus=shortFocus(m,raw),grades=(state.grades||[]).join(', ')||'los grados/edades seleccionados',place=placeFor(m),reto=challengeFor(m,focus),facts=naturalEvidence(m);
     const level=state.level||'Primaria';
@@ -60,6 +95,8 @@
     const heritage=/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueologic|sitios?\s+arqueologic|patrimonio\s+arqueologic/.test(combinedHeritage.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
     const titlePlaceMatch=typedTitle.match(/\ben\s+([\p{L}][\p{L}'’ -]{2,80}(?:\s+y\s+[\p{L}][\p{L}'’ -]{2,50})?)\s*$/iu);
     const titlePlace=titlePlaceMatch?tidy(titlePlaceMatch[1]):'';
+
+    if(isAllSaintsContext(raw))return allSaintsSituationOptions(raw,m,grades,level);
 
     if(heritage){
       const hasArchaeology=/restos?\s+arqueol[oó]gic|sitios?\s+arqueol[oó]gic|patrimonio\s+arqueol[oó]gic/i.test(combinedHeritage);
@@ -112,6 +149,24 @@
     const m=pack.meaning,focus=pack.focus,level=state.level||'Primaria';
     const low=tidy(focus).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const animal=/animal/.test(low),seed=/semill|siembr|planta|biohuerto/.test(low),water=/agua/.test(low);
+    if(isAllSaintsContext(raw)){
+      if(level==='Inicial')return [
+        {key:'1',title:'Álbum colectivo: tradiciones de Todos los Santos',text:'Dibujos libres con explicaciones dictadas a la docente sobre relatos e imágenes compartidos en clase, sin pedir vivencias familiares íntimas.'},
+        {key:'2',title:'Galería de historias y recuerdos culturales',text:'Muestra de imágenes y creaciones artísticas para dialogar con respeto sobre distintas maneras de recordar estas fechas.'},
+        {key:'3',title:'Rincón de preguntas y descubrimientos',text:'Espacio lúdico con cuentos, preguntas y producciones que los niños explican con sus propias palabras.'}
+      ];
+      if(level==='Secundaria')return [
+        {key:'1',title:'Dossier de fuentes sobre Todos los Santos',text:'Preguntas, fuentes contrastadas, significados culturales y conclusiones que distinguen evidencia e interpretación.'},
+        {key:'2',title:'Exposición: memoria cultural y diversidad',text:'Paneles o presentación con manifestaciones documentadas y mensajes de respeto por las distintas prácticas familiares.'},
+        {key:'3',title:'Podcast escolar sobre tradiciones y memoria',text:'Guion y audio con información comprobada y testimonios autorizados y voluntarios, sin divulgar datos personales.'}
+      ];
+      return [
+        {key:'1',title:'Mural ilustrado: tradiciones de Todos los Santos',text:'Textos breves, dibujos y fuentes consultadas para explicar el sentido de estas fechas para distintas familias.'},
+        {key:'2',title:'Álbum de saberes y recuerdos culturales',text:'Preguntas, lecturas, ilustraciones y relatos aportados voluntariamente, distinguiendo lo conocido y lo investigado.'},
+        {key:'3',title:'Muestra escolar: distintas formas de recordar',text:'Exposición por estaciones con producciones diferenciadas por grado y referencias a las fuentes utilizadas.'}
+      ];
+    }
+
     const heritage=/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueologic|sitios?\s+arqueologic|patrimonio\s+arqueologic/.test((tidy(raw)+' '+low).normalize('NFD').replace(/[\u0300-\u036f]/g,''));
     if(heritage){
       if(level==='Inicial')return [
@@ -238,8 +293,9 @@
       brief=title||'una experiencia cercana y significativa para los estudiantes';
       if(byId('unitSituation'))byId('unitSituation').value=brief;
     }
-    const analysisBrief=[title,brief].filter(Boolean).join('. ');
-    showSituations(analysisBrief,type);
+    // The generated title is an output, not additional user context.
+    // Combining it with the brief leaked repetitive phrases into situations and products.
+    showSituations(brief,type);
   };
   const css=document.createElement('style');css.textContent=`.dd-proposal-chooser{border-top:2px dashed #8a9a90;padding-top:18px;margin-top:18px}.dd-choice-intro{background:#f5faf7;border:1px solid #d6e4dc;border-radius:14px;padding:14px 16px;margin-bottom:12px}.dd-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.dd-product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.dd-choice-card{display:block;border:2px solid #d8dfdb;border-radius:14px;padding:14px;background:#fff;cursor:pointer}.dd-choice-card.selected{border-color:#2f7e5a;background:#ebf7f0}.dd-choice-card h3{margin:8px 0}.dd-choice-card p{line-height:1.45}.dd-pick{display:block;margin-top:10px;color:#286c4e}.dd-own{display:block;margin-top:14px}.dd-own textarea{width:100%;min-height:95px;margin-top:7px}.dd-proposal-chooser .actions{margin-top:14px}.dd-product-side-panel{position:fixed;top:0;right:0;z-index:999;width:min(460px,94vw);height:100vh;background:#fff;border-left:1px solid #d8e1dc;box-shadow:-18px 0 46px rgba(20,40,55,.18);padding:18px;overflow:auto;transform:translateX(104%);transition:transform .22s ease}.dd-product-side-panel.open{transform:translateX(0)}.dd-product-assistant-list{display:grid;gap:9px;margin-top:12px}.dd-product-assistant-option{display:block;width:100%;text-align:left;border:1px solid #d8e1dc;border-radius:13px;background:#fff;padding:12px;cursor:pointer}.dd-product-assistant-option:hover{border-color:#2f7e5a;background:#eff8f3}.dd-product-assistant-option b,.dd-product-assistant-option span{display:block}.dd-product-assistant-option span{margin-top:5px;color:#53645c;line-height:1.4}@media(max-width:850px){.dd-product-grid,.dd-choice-grid{grid-template-columns:1fr}}`;document.head.appendChild(css);
 })();
