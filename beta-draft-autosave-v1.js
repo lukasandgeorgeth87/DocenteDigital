@@ -104,9 +104,12 @@
     if(!button)return;
     const isBuild=button.id==='ddBuildUnit'||/\bcreateUnitDemo\s*\(/.test(button.getAttribute('onclick')||'');
     if(!isBuild)return;
-    // Flush the pending autosave before the creation handler changes the form.
-    // A previous unit with identical context is NOT proof this draft was saved.
+    // Only the final Build action may flush the draft. The first
+    // createUnitDemo() click opens a chooser and must not replace the
+    // teacher's existing draft with intermediate form values.
+    if(button.id!=='ddBuildUnit')return;
     saveDraft();
+    // A draft is only cleared by clearIfPersisted after actual persistence.
     const before=read();
     let existingIds=[];
     try{
