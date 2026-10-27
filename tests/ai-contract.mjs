@@ -556,6 +556,7 @@ try{
     pngWithChunks(3,8,[redPalette,transparency,transparency]), // Duplicate tRNS.
     pngWithChunks(0,8,[transparency]), // Grayscale tRNS must contain exactly 2 bytes.
     pngWithChunks(2,8,[pngChunk('tRNS',Buffer.alloc(5))]), // RGB tRNS must contain exactly 6 bytes.
+    pngWithChunks(2,8,[pngChunk('tRNS',Buffer.alloc(6)),redPalette]), // Optional RGB palette cannot follow tRNS.
     pngWithChunks(3,8,[redPalette],Buffer.alloc(0),[transparency]) // tRNS after IDAT.
   ];
   for(const invalid of invalidPalettePngs){
