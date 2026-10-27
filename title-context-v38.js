@@ -108,7 +108,7 @@
     if(!rawClean)return title;
     // Auto-generated/selected titles are outputs, never additional evidence.
     // Feeding them into the next repaint made proposals grow repeatedly.
-    if(!title||input?.dataset.autoTitle==='true'||window.state?._ddTitleWasProvided)return rawClean;
+    if(!title||input?.dataset.autoTitle==='true'||input?.dataset.ddSuggestedTitle==='true'||window.state?._ddTitleWasProvided)return rawClean;
     if(low(title)===low(rawClean)||low(rawClean).includes(low(title)))return rawClean;
     return tidy(rawClean+' '+title);
   }
