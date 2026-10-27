@@ -43,6 +43,24 @@
     catch(error){console.warn('DocenteDigital: no se pudo guardar el borrador.',error);}
   }
   function schedule(){clearTimeout(timer);timer=setTimeout(saveDraft,300);}
+  // Called by the real createUnitDemo() only AFTER save(). A click or an
+  // older unit with matching text is not evidence that a new unit persisted.
+  function clearIfPersisted(unit){
+    if(!unit?.id)return false;
+    const draft=read();if(!draft)return false;
+    const same=(left,right)=>String(left||'').trim()===String(right||'').trim();
+    if((draft.title&&!same(draft.title,unit.title))||
+       (draft.situation&&!same(draft.situation,unit.situationBrief)))return false;
+    try{
+      const state=JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'{}');
+      const stored=Array.isArray(state.units)&&state.units.find(u=>String(u?.id||'')===String(unit.id));
+      if(!stored||!same(stored.title,unit.title)||!same(stored.situationBrief,unit.situationBrief))return false;
+      clearTimeout(timer);timer=null;
+      localStorage.removeItem(KEY);
+      updateStatus('Unidad/Proyecto construido; borrador temporal limpiado.');
+      return true;
+    }catch(_e){return false;}
+  }
   function updateStatus(text){
     const el=document.getElementById('ddDraftStatus');if(el)el.textContent=text;
   }
@@ -99,15 +117,15 @@
       if(!before)return;
       try{
         const state=JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'{}');
-        const saved=Array.isArray(state.units)&&state.units.some(u=>
+        const saved=Array.isArray(state.units)&&state.units.find(u=>
           u?.id&&!existingIds.includes(String(u.id))&&
           (!before.situation||String(u.situationBrief||'').trim()===String(before.situation).trim())&&
           (!before.title||String(u.title||'').trim()===String(before.title).trim()));
-        if(saved){localStorage.removeItem(KEY);updateStatus('Unidad/Proyecto construido; borrador temporal limpiado.');}
+        if(saved)clearIfPersisted(saved);
       }catch(_e){}
     },500);
   },true);
   function init(){attach();const oldGo=window.go;if(typeof oldGo==='function'&&!oldGo.__ddDraftWrapped){const wrapped=function(id){const r=oldGo.apply(this,arguments);if(id==='plan')setTimeout(attach,0);return r;};wrapped.__ddDraftWrapped=true;window.go=wrapped;}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
-  window.ddBetaDraftAutosave={read,saveDraft,restore,clear:()=>localStorage.removeItem(KEY)};
+  window.ddBetaDraftAutosave={read,saveDraft,restore,clearIfPersisted,clear:()=>{clearTimeout(timer);timer=null;localStorage.removeItem(KEY);}};
 })();
