@@ -102,11 +102,37 @@
     return['Descubrimos los cambios que trae la primavera a nuestro entorno','¿Qué cambia en nuestro entorno cuando llega la primavera?','Conocemos y cuidamos la vida que florece durante la primavera'];
   }
   function titleContextText(raw){
-    const title=tidy(document.getElementById('unitTitle')?.value||'');
-    if(!title)return tidy(raw);
+    const input=document.getElementById('unitTitle');
+    const title=tidy(input?.value||'');
     const rawClean=tidy(raw);
-    if(low(title)===low(rawClean))return rawClean;
+    if(!rawClean)return title;
+    // Auto-generated/selected titles are outputs, never additional evidence.
+    // Feeding them into the next repaint made proposals grow repeatedly.
+    if(!title||input?.dataset.autoTitle==='true'||window.state?._ddTitleWasProvided)return rawClean;
+    if(low(title)===low(rawClean)||low(rawClean).includes(low(title)))return rawClean;
     return tidy(rawClean+' '+title);
+  }
+
+  function remembranceTitles(raw,level){
+    const s=low(raw);
+    if(!/\b(?:todos\s+los\s+santos|dia\s+de\s+(?:los\s+)?difuntos)\b/.test(s))return null;
+    const dates=/\b(?:1\s*(?:y|,|-)\s*2|2\s*(?:y|,|-)\s*1)\s+de\s+noviembre\b/.test(s);
+    const when=dates?' del 1 y 2 de noviembre':'';
+    if(level==='Inicial')return [
+      'Recordamos Todos los Santos: compartimos historias y recuerdos',
+      'Conocemos cómo viven las familias Todos los Santos',
+      'Tradiciones y recuerdos: conversamos y aprendemos juntos'
+    ];
+    if(level==='Secundaria')return [
+      'Todos los Santos: analizamos tradiciones, memoria e identidad'+when,
+      'Diversas formas de recordar: comprendemos el sentido de Todos los Santos',
+      'Memoria y cultura: dialogamos sobre Todos los Santos y sus tradiciones'
+    ];
+    return [
+      'Todos los Santos: conocemos tradiciones y recuerdos'+when,
+      '¿Cómo recordamos Todos los Santos? Escuchamos historias y compartimos saberes',
+      'Memorias y costumbres: descubrimos el significado de Todos los Santos'
+    ];
   }
 
   function heritagePlace(raw){
@@ -232,6 +258,8 @@
     const enriched=titleContextText(raw),u=mci(enriched,type),baseTheme=tidy(u.theme)||'esta experiencia',kind=u.intentKind||'exploración/comprensión',goal=tidy(u.finality),project=/proyecto/i.test(type||u.document||''),level=titleLevel();
     const issue=semanticIssue(enriched,baseTheme);
     if(issue)return issueTitles(issue,type,level);
+    const remembrance=remembranceTitles(enriched,level);
+    if(remembrance)return remembrance;
 
     const theme=baseTheme;
     const school=returnToSchool(enriched);if(school)return school;
