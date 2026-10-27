@@ -13,7 +13,7 @@ function validPngBase64(value){
   if(!/^[A-Za-z0-9+/]+={0,2}$/.test(value))return false;
   const bytes=Buffer.from(value,'base64');
   if(bytes.length<57||!bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))return false;
-  let offset=8,seenHeader=false,seenData=false,afterData=false,seenPalette=false;
+  let offset=8,seenHeader=false,seenData=false,afterData=false,seenPalette=false,seenTransparency=false,paletteEntries=0;
   let width=0,height=0,bitDepth=0,colorType=0,interlace=0,idatBytes=0;
   const idat=[];
   while(offset+12<=bytes.length){
@@ -42,6 +42,17 @@ function validPngBase64(value){
       // Grayscale PNGs forbid PLTE; a duplicate or late palette is invalid.
       if(seenData||seenPalette||colorType===0||colorType===4||!length||length>768||length%3!==0||(colorType===3&&length/3>2**bitDepth))return false;
       seenPalette=true;
+      paletteEntries=length/3;
+    }
+    if(type==='tRNS'){
+      // PNG transparency is allowed only before IDAT. For indexed PNG it
+      // follows PLTE and cannot contain more alpha entries than colors.
+      // Grayscale and truecolor use fixed-size transparent color samples.
+      if(seenData||seenTransparency||![0,2,3].includes(colorType))return false;
+      if(colorType===3&&(!seenPalette||!length||length>paletteEntries))return false;
+      if(colorType===0&&length!==2)return false;
+      if(colorType===2&&length!==6)return false;
+      seenTransparency=true;
     }
     if(type==='IDAT'){
       if(afterData||(colorType===3&&!seenPalette))return false;
