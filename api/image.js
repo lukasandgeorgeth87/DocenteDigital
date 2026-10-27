@@ -13,7 +13,7 @@ function validPngBase64(value){
   if(!/^[A-Za-z0-9+/]+={0,2}$/.test(value))return false;
   const bytes=Buffer.from(value,'base64');
   if(bytes.length<57||!bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))return false;
-  let offset=8,seenHeader=false,seenData=false,afterData=false;
+  let offset=8,seenHeader=false,seenData=false,afterData=false,seenPalette=false;
   let width=0,height=0,bitDepth=0,colorType=0,interlace=0,idatBytes=0;
   const idat=[];
   while(offset+12<=bytes.length){
@@ -21,6 +21,9 @@ function validPngBase64(value){
     const end=offset+12+length;
     if(end>bytes.length)return false;
     const type=bytes.toString('ascii',offset+4,offset+8);
+    if(!/^[A-Za-z]{4}$/.test(type))return false;
+    // Unknown critical chunks must not be silently treated as valid PNG data.
+    if(type[0]===type[0].toUpperCase()&&!['IHDR','PLTE','IDAT','IEND'].includes(type))return false;
     if(crc32(bytes.subarray(offset+4,offset+8+length))!==bytes.readUInt32BE(offset+8+length))return false;
     if(!seenHeader){
       if(type!=='IHDR'||length!==13)return false;
@@ -34,8 +37,14 @@ function validPngBase64(value){
       if(!depths[colorType]?.includes(bitDepth)||bytes[offset+18]!==0||bytes[offset+19]!==0||interlace>1)return false;
       seenHeader=true;
     }else if(type==='IHDR')return false;
+    if(type==='PLTE'){
+      // Indexed images require a well-formed palette before the first IDAT.
+      // Grayscale PNGs forbid PLTE; a duplicate or late palette is invalid.
+      if(seenData||seenPalette||colorType===0||colorType===4||!length||length>768||length%3!==0||(colorType===3&&length/3>2**bitDepth))return false;
+      seenPalette=true;
+    }
     if(type==='IDAT'){
-      if(afterData)return false;
+      if(afterData||(colorType===3&&!seenPalette))return false;
       idatBytes+=length;
       if(idatBytes>40*1024*1024)return false;
       idat.push(bytes.subarray(offset+8,offset+8+length));

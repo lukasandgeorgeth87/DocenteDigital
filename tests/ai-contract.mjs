@@ -483,6 +483,42 @@ try{
       pngChunk('IEND',Buffer.alloc(0))
     ]).toString('base64');
   };
+  // PNG palette and critical-chunk regressions: CRC and zlib alone do not
+  // prove a decoder can display an indexed image.
+  const pngWithChunks=(colorType,bitDepth,beforeIdat=[])=>{
+    const header=Buffer.alloc(13);
+    header.writeUInt32BE(1,0);
+    header.writeUInt32BE(1,4);
+    header[8]=bitDepth;header[9]=colorType;
+    const raw=colorType===6?[0,255,0,0,255]:[0,0];
+    return Buffer.concat([
+      Buffer.from([137,80,78,71,13,10,26,10]),
+      pngChunk('IHDR',header),
+      ...beforeIdat,
+      pngChunk('IDAT',deflateSync(Buffer.from(raw))),
+      pngChunk('IEND',Buffer.alloc(0))
+    ]).toString('base64');
+  };
+  const redPalette=pngChunk('PLTE',Buffer.from([255,0,0]));
+  const validIndexed=pngWithChunks(3,8,[redPalette]);
+  globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:validIndexed}]})});
+  res=await call(image,'POST',{prompt:'Paleta escolar',confirmedCredit:true});
+  assert.equal(res.statusCode,200,'A valid indexed PNG with PLTE must remain supported');
+  assert.equal(res.body.image_base64,validIndexed);
+  const invalidPalettePngs=[
+    pngWithChunks(3,8), // Missing required PLTE.
+    pngWithChunks(3,8,[pngChunk('PLTE',Buffer.from([255,0]))]), // Partial RGB triplet.
+    pngWithChunks(3,1,[pngChunk('PLTE',Buffer.from([255,0,0,0,255,0,0,0,255]))]), // More colors than 1-bit allows.
+    pngWithChunks(3,8,[redPalette,redPalette]), // Duplicate palette.
+    pngWithChunks(0,8,[redPalette]), // Grayscale forbids PLTE.
+    pngWithChunks(6,8,[pngChunk('ABCD',Buffer.from([1]))]) // Unknown critical chunk.
+  ];
+  for(const invalid of invalidPalettePngs){
+    globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:invalid}]})});
+    res=await call(image,'POST',{prompt:'Paleta escolar',confirmedCredit:true});
+    assert.equal(res.statusCode,502,'Malformed PNG palette or unknown critical chunk must be rejected');
+    assert.equal(res.body.error,'invalid_image_output');
+  }
   const validAdam7=interlacedPng([0,255,0,0,255]);
   globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:validAdam7}]})});
   res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
