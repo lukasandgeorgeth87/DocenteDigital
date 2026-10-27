@@ -409,7 +409,10 @@ function refreshUnitTitleSuggestions(){
     if(box)box.innerHTML='<small>Puedes escribir una idea o dejar que DocenteDigital proponga un punto de partida.</small>';
     return;
   }
-  const options=proposeUnitTitleOptions(effectiveBrief,type);
+  // Reuse the semantic titles displayed in the intent panel, including cultural contexts.
+  // Keep the original local generator as an offline fallback if the semantic module is absent.
+  const contextual=typeof window.ddNaturalPlanningTitles==='function'?window.ddNaturalPlanningTitles(effectiveBrief,type):[];
+  const options=contextual.length===3?contextual:proposeUnitTitleOptions(effectiveBrief,type);
   if(input&&(!input.value.trim()||input.dataset.autoTitle==='true')){
     input.value=options[0]||'';
     input.dataset.autoTitle='true';
