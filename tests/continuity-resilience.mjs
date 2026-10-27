@@ -126,51 +126,85 @@ try{
     const saved={
       situation:situation.value,title:title.value,
       auto:title.dataset.autoTitle,selected:title.dataset.ddSuggestedTitle,
-      type:type.value,level:state.level,pending:state.pendingUnitChoice
+      type:type.value,pending:state.pendingUnitChoice
     };
     const teacherText='el 1 y 2 de noviembre recordamos la fiesta de todos los santos';
-    const results={};
     try{
       situation.value=teacherText;
       title.value='Aprendemos desde nuestro contexto: Aprendemos desde nuestro contexto';
       title.dataset.autoTitle='true';
       type.value='Unidad de aprendizaje';
-      for(const level of ['Inicial','Primaria','Secundaria']){
-        state.level=level;
-        window.createUnitDemo(); // actual planning flow (also wrapped by safety guards)
-        const choice=state.pendingUnitChoice||{};
-        results[level]={
-          brief:choice.brief,
-          situations:(choice.situations||[]).map(x=>({title:x.title,text:x.text})),
-          products:(choice.products||[]).map(x=>({title:x.title,text:x.text})),
-          challenge:choice.reto||''
-        };
-      }
+      window.createUnitDemo(); // Actual teacher flow, with all runtime guards.
+      const choice=state.pendingUnitChoice||{};
+      return {
+        brief:choice.brief,
+        situations:(choice.situations||[]).map(x=>({title:x.title,text:x.text})),
+        products:(choice.products||[]).map(x=>({title:x.title,text:x.text})),
+        rendered:document.getElementById('ddProposalChooser')?.textContent||''
+      };
     }finally{
       situation.value=saved.situation;
       title.value=saved.title;
       if(saved.auto===undefined)delete title.dataset.autoTitle;else title.dataset.autoTitle=saved.auto;
       if(saved.selected===undefined)delete title.dataset.ddSuggestedTitle;else title.dataset.ddSuggestedTitle=saved.selected;
       type.value=saved.type;
-      state.level=saved.level;
       state.pendingUnitChoice=saved.pending;
       document.getElementById('ddProposalChooser')?.classList.add('hidden');
       if(typeof window.save==='function')window.save();
     }
-    return results;
   });
-  for(const [level,pack] of Object.entries(situationRegression)){
-    assert(pack.brief==='el 1 y 2 de noviembre recordamos la fiesta de todos los santos',level+': original teacher context changed');
-    assert(pack.situations.length===2,level+': expected two significant situations');
-    assert(pack.products.length===3,level+': expected three contextual products');
-    const combined=pack.situations.map(x=>x.title+' '+x.text).join(' ')+pack.products.map(x=>x.title+' '+x.text).join(' ');
-    assert(!/Aprendemos desde nuestro contexto|aprendemos · nuestro · contexto/i.test(combined),level+': generated-title content leaked into proposals');
-    assert(pack.situations.every(x=>/Todos los Santos/.test(x.text)),level+': teacher cultural topic missing');
-    assert(pack.products.some(x=>/Todos los Santos/.test(x.title)),level+': contextual products missing');
-    assert(pack.situations.every(x=>x.text.length>250),level+': situation too superficial to guide a session');
-    assert(!pack.situations.some(x=>/todas las familias celebran igual/i.test(x.text)),level+': false family generalization');
+  assert(situationRegression.brief==='el 1 y 2 de noviembre recordamos la fiesta de todos los santos','El contexto auténtico cambió');
+  assert(situationRegression.situations.length===2,'Se esperaban dos situaciones culturales');
+  assert(situationRegression.products.length===3,'Se esperaban tres productos culturales');
+  const combined=situationRegression.situations.map(x=>x.title+' '+x.text).join(' ')+situationRegression.products.map(x=>x.title+' '+x.text).join(' ');
+  assert(!/Aprendemos desde nuestro contexto|aprendemos · nuestro · contexto/i.test(combined),'El título autogenerado contaminó las propuestas');
+  assert(!/Aprendemos desde nuestro contexto|aprendemos · nuestro · contexto/i.test(situationRegression.rendered),'El HTML visible conserva el texto repetitivo');
+  assert(situationRegression.situations.every(x=>/Todos los Santos/.test(x.text)),'La festividad indicada desapareció');
+  assert(situationRegression.products.some(x=>/Todos los Santos/.test(x.title)),'Los productos no son contextuales');
+  assert(situationRegression.situations.every(x=>x.text.length>250),'Situación insuficiente para orientar sesiones');
+  console.log('SITUATION_CONTEXT_TODOS_LOS_SANTOS_PASS',JSON.stringify({situations:situationRegression.situations.map(x=>x.title),products:situationRegression.products.map(x=>x.title)}));
+
+  console.log('MATERIAL_CULTURAL: fichas y lecturas graduadas en la cadena docente');
+  await page.waitForFunction(()=>typeof window.DDMaterials?.create==='function',null,{timeout:10000});
+  const materialRegression=await page.evaluate(()=>{
+    const ids=['materialSource','materialType','materialTopic','materialGrade','materialArea','materialLanguage'];
+    const fields=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)]));
+    const original=Object.fromEntries(ids.map(id=>[id,fields[id]?.value]));
+    const oldMaterials=state.materials;
+    const oldLast=state.lastMaterial;
+    const records=[];
+    try{
+      fields.materialSource.value='free';
+      fields.materialTopic.value='Todos los Santos: tradiciones del 1 y 2 de noviembre';
+      fields.materialArea.value='Comunicación';
+      fields.materialLanguage.value='Castellano';
+      for(const grade of ['1.º','3.º','5.º']){
+        fields.materialGrade.value=grade;
+        for(const materialType of ['Lectura','Ficha de trabajo']){
+          fields.materialType.value=materialType;
+          window.DDMaterials.create();
+          const item=state.lastMaterial||{};
+          records.push({grade,type:materialType,topic:item.topic||'',html:item.html||'',visible:(document.getElementById('materialOutput')?.textContent||'').slice(0,1500)});
+        }
+      }
+      return records;
+    }finally{
+      ids.forEach(id=>{if(fields[id]&&original[id]!==undefined)fields[id].value=original[id];});
+      state.materials=oldMaterials;state.lastMaterial=oldLast;
+      if(typeof window.save==='function')window.save();
+      window.DDMaterials.renderHistory();
+      document.getElementById('materialOutput')?.classList.add('hidden');
+    }
+  });
+  assert(materialRegression.length===6,'Se esperaban seis materiales (lecturas y fichas para tres grados)');
+  for(const m of materialRegression){
+    assert(/Todos los Santos|1 de noviembre/i.test(m.html),m.grade+'/'+m.type+': falta el contexto cultural');
+    assert(!/Aprendemos desde nuestro contexto/.test(m.html),m.grade+'/'+m.type+': plantilla repetitiva');
+    assert(/familias|respeto|diferentes/i.test(m.html),m.grade+'/'+m.type+': falta el enfoque de diversidad');
+    if(m.type==='Ficha de trabajo')assert((m.html.match(/dd-answer-lines/g)||[]).length>=5,m.grade+': ficha sin actividades utilizables');
+    if(m.grade==='5.º'&&m.type==='Ficha de trabajo')assert(/fuentes|evidencia/i.test(m.html),'5.º: falta demanda de análisis de fuentes');
   }
-  console.log('SITUATION_CONTEXT_TODOS_LOS_SANTOS_PASS',JSON.stringify(Object.fromEntries(Object.entries(situationRegression).map(([level,pack])=>[level,{titles:pack.situations.map(x=>x.title),products:pack.products.map(x=>x.title)}]))));
+  console.log('MATERIAL_CULTURAL_TODOS_LOS_SANTOS_PASS',JSON.stringify(materialRegression.map(m=>({grade:m.grade,type:m.type,chars:m.html.length}))));
   const draftText='Borrador rural de prueba que debe sobrevivir a una recarga antes de crear la unidad.';
   await page.locator('#unitSituation').fill(draftText);
   await page.waitForTimeout(700);
