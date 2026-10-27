@@ -65,6 +65,52 @@ try{
   await waitPlanningRuntime();
   await page.waitForFunction(()=>!!window.ddBetaDraftAutosave,null,{timeout:10000});
   await openUnitDraft();
+  // Regression from teacher screenshot: do not treat generated titles as new context.
+  console.log('TITLE_CONTEXT: Todos los Santos / no recursive title feedback');
+  await page.waitForFunction(()=>typeof window.ddNaturalPlanningTitles==='function'&&typeof window.refreshUnitTitleSuggestions==='function',null,{timeout:10000});
+  const titleRegression=await page.evaluate(()=>{
+    const input=document.getElementById('unitTitle'),brief=document.getElementById('unitSituation');
+    const saved={title:input.value,auto:input.dataset.autoTitle,situation:brief.value,level:state.level};
+    const text='el 1 y 2 de noviembre recordamos la fiesta de todos los santos';
+    try{
+      input.value='Aprendemos desde nuestro contexto: '+text+' Aprendemos desde nuestro contexto';
+      input.dataset.autoTitle='true';
+      brief.value=text;
+      const byLevel={};
+      for(const level of ['Inicial','Primaria','Secundaria']){
+        state.level=level;
+        byLevel[level]=window.ddNaturalPlanningTitles(text,'Unidad de aprendizaje');
+      }
+      state.level='Primaria';
+      window.refreshUnitTitleSuggestions();
+      const first={
+        title:input.value,
+        options:[...document.querySelectorAll('#unitTitleSuggestions .dd-title-option')].map(b=>b.textContent.trim())
+      };
+      window.refreshUnitTitleSuggestions();
+      const second={
+        title:input.value,
+        options:[...document.querySelectorAll('#unitTitleSuggestions .dd-title-option')].map(b=>b.textContent.trim())
+      };
+      return {byLevel,first,second};
+    }finally{
+      input.value=saved.title;
+      if(saved.auto===undefined)delete input.dataset.autoTitle;else input.dataset.autoTitle=saved.auto;
+      brief.value=saved.situation;
+      state.level=saved.level;
+    }
+  });
+  for(const [level,titles] of Object.entries(titleRegression.byLevel)){
+    assert(titles.length===3,level+': no se propusieron tres títulos');
+    assert(new Set(titles).size===3,level+': títulos duplicados');
+    assert(titles.filter(t=>/Todos los Santos/i.test(t)).length>=2,level+': se perdió la festividad expresada');
+    assert(titles.every(t=>t.length<120&&!/Aprendemos desde nuestro contexto/i.test(t)),level+': títulos repetitivos o demasiado extensos');
+  }
+  assert(titleRegression.first.title===titleRegression.second.title,'El título creció al recalcularlo');
+  assert(JSON.stringify(titleRegression.first.options)===JSON.stringify(titleRegression.second.options),'Las propuestas cambiaron sin que cambiara el contexto');
+  assert(titleRegression.second.options.length===3,'El formulario principal no ofrece tres títulos');
+  assert(titleRegression.second.options.every(t=>/Todos los Santos/i.test(t)),'El formulario principal no usa los títulos contextuales');
+  console.log('TITLE_CONTEXT_TODOS_LOS_SANTOS_PASS',JSON.stringify(titleRegression.second));
   const draftText='Borrador rural de prueba que debe sobrevivir a una recarga antes de crear la unidad.';
   await page.locator('#unitSituation').fill(draftText);
   await page.waitForTimeout(700);
