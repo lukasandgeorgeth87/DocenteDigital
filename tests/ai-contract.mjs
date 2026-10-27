@@ -504,7 +504,7 @@ try{
   };
   // PNG palette and critical-chunk regressions: CRC and zlib alone do not
   // prove a decoder can display an indexed image.
-  const pngWithChunks=(colorType,bitDepth,beforeIdat=[])=>{
+  const pngWithChunks=(colorType,bitDepth,beforeIdat=[],idatTail=Buffer.alloc(0))=>{
     const header=Buffer.alloc(13);
     header.writeUInt32BE(1,0);
     header.writeUInt32BE(1,4);
@@ -514,7 +514,7 @@ try{
       Buffer.from([137,80,78,71,13,10,26,10]),
       pngChunk('IHDR',header),
       ...beforeIdat,
-      pngChunk('IDAT',deflateSync(Buffer.from(raw))),
+      pngChunk('IDAT',Buffer.concat([deflateSync(Buffer.from(raw)),idatTail])),
       pngChunk('IEND',Buffer.alloc(0))
     ]).toString('base64');
   };
@@ -525,6 +525,9 @@ try{
   assert.equal(res.statusCode,200,'A valid indexed PNG with PLTE must remain supported');
   assert.equal(res.body.image_base64,validIndexed);
   const invalidPalettePngs=[
+    // CRC-correct IDAT with junk after a complete zlib stream must fail.
+    // inflateSync without info:true silently accepts this malformed PNG.
+    pngWithChunks(6,8,[],Buffer.from([0xde,0xad,0xbe,0xef])),
     pngWithChunks(3,8), // Missing required PLTE.
     pngWithChunks(3,8,[pngChunk('PLTE',Buffer.from([255,0]))]), // Partial RGB triplet.
     pngWithChunks(3,1,[pngChunk('PLTE',Buffer.from([255,0,0,0,255,0,0,0,255]))]), // More colors than 1-bit allows.

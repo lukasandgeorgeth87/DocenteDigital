@@ -55,7 +55,12 @@ function validPngBase64(value){
       try{
         // A CRC-valid IDAT can still contain a corrupt or decompression-bomb
         // zlib stream. Bound inflation before delivering teacher materials.
-        const raw=inflateSync(Buffer.concat(idat),{maxOutputLength:64*1024*1024});
+        const compressed=Buffer.concat(idat);
+        const inflated=inflateSync(compressed,{maxOutputLength:64*1024*1024,info:true});
+        // zlib accepts trailing bytes after a valid stream by default.
+        // PNG IDAT must contain exactly one complete compressed image stream.
+        if(inflated.engine.bytesWritten!==compressed.length)return false;
+        const raw=inflated.buffer;
         if(!raw.length)return false;
         const channels={0:1,2:3,3:1,4:2,6:4}[colorType];
         if(interlace===0){
