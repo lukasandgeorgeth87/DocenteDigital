@@ -245,7 +245,12 @@
           'Para conocer una tradición se pueden consultar lecturas, imágenes con fuente y testimonios ofrecidos voluntariamente. Antes de afirmar que algo ocurre en nuestra localidad, debemos comprobarlo.',
           'Aprender sobre estas conmemoraciones es una oportunidad para escuchar a otros, distinguir hechos y opiniones y valorar las diferencias con respeto.'
         ];
-        questions=n<=2?[
+        questions=level==='Secundaria'?[
+          '¿Qué información comprobable del texto puedes contrastar con una fuente adicional?',
+          '¿Cómo distinguirías una práctica documentada de una interpretación cultural?',
+          'Propón dos preguntas de investigación sobre diversidad y memoria cultural sin pedir datos personales.',
+          'Elabora una conclusión sustentada y plantea los límites de la evidencia disponible.'
+        ]:n<=2?[
           '¿Qué se recuerda el 1 y el 2 de noviembre según el texto?',
           '¿Todas las familias celebran de la misma manera? Explica tu respuesta.',
           'Dibuja una idea del texto y cuéntala con tus palabras.'
@@ -337,6 +342,13 @@
         'Representa con dibujos o modelado algo que aprendiste del relato, sin compartir recuerdos íntimos.',
         'Escucha a tus compañeros: ¿qué ideas parecidas y distintas encontramos?',
         'Explica cómo mostramos respeto cuando las familias tienen creencias diferentes.'
+      ];
+      if(level==='Secundaria')return [
+        'Contrasta dos fuentes sobre Todos los Santos: registra procedencia, propósito, credibilidad y hallazgos.',
+        'Identifica hechos documentados, opiniones y prácticas descritas desde distintas perspectivas culturales.',
+        'Argumenta por qué no se puede generalizar una costumbre observada a todas las familias peruanas.',
+        'Crea una pieza de divulgación con dos evidencias citadas y un mensaje de respeto cultural.',
+        'Evalúa qué información falta antes de afirmar que una tradición es común en tu localidad.'
       ];
       if(n<=2)return [
         'Lee o escucha el texto sobre el 1 y 2 de noviembre y señala a qué corresponde cada fecha.',
