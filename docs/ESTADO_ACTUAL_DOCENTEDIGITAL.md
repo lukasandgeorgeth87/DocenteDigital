@@ -1,3 +1,9 @@
+## Actualización — 27/10/2026 (Perú) — CI detecta falso negativo en ficha cultural de 3.º
+
+- **CI exacta del commit de privacidad** [`f81066e`](https://github.com/lukasandgeorgeth87/DocenteDigital/commit/f81066e2a715d16e1e72828acf3e2ed1c9a24bd4): [GitHub Actions 40529354331](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40529354331) terminó **FAIL global**. Job `ai-context-fast` **PASS** (incluye nuevo contrato de privacidad GPT/imagen); `browser-e2e` **FAIL** en `tests/continuity-resilience.mjs`, mensaje `3.º/Ficha de trabajo: falta el enfoque de diversidad`. Los pasos de navegador anteriores a ese punto pasaron; los posteriores no se ejecutaron.
+- **Diagnóstico comprobado:** la ficha real de 3.º en `materials-v1.js` exige explícitamente «diversidad cultural», pero la aserción de Playwright solo admitía `familias|respeto|diferentes`. La prueba rechazaba una formulación pedagógicamente válida. Se amplió el patrón a `familias|respeto|diferentes|diversidad|respetuos`, sin quitar la exigencia de diversidad. Comprobación aislada del código fuente: **PASS**, contiene «diversidad cultural» en la rama de 3.º. **CI del commit correctivo: PENDIENTE** hasta consultar resultado; no afirmar E2E PASS antes.
+- **Alcance:** solo `tests/continuity-resilience.mjs` y esta bitácora; producción, `main`, datos reales y secretos intactos. GPT/Redis real, Preview actual y piloto humano siguen bloqueados/no verificados; mantener S1–S4 y métricas históricas sin cambios.
+
 ## Actualización — 27/10/2026 (Perú) — filtro de privacidad de GPT e imágenes: rótulos escolares y teléfonos agrupados
 
 - **Repositorio/rama:** `lukasandgeorgeth87/DocenteDigital` / `audit/v5-continuity-offline-diagnostic`; base `d4bcedee123f9bc2473714e574e5a93e6fc2738c`. Cambio conjunto en `api/_ai-privacy.js`, `tests/ai-contract.mjs` y esta bitácora. Sin cambios en `main`, producción, secretos ni datos reales.

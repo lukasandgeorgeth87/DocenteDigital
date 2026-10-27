@@ -201,7 +201,9 @@ try{
   for(const m of materialRegression){
     assert(/Todos los Santos|1 de noviembre/i.test(m.html),m.grade+'/'+m.type+': falta el contexto cultural');
     assert(!/Aprendemos desde nuestro contexto/.test(m.html),m.grade+'/'+m.type+': plantilla repetitiva');
-    assert(/familias|respeto|diferentes/i.test(m.html),m.grade+'/'+m.type+': falta el enfoque de diversidad');
+    // "diversidad cultural" is a valid explicit inclusion criterion; the old
+    // regex incorrectly rejected the 3.º worksheet despite that exact wording.
+    assert(/familias|respeto|diferentes|diversidad|respetuos/i.test(m.html),m.grade+'/'+m.type+': falta el enfoque de diversidad');
     if(m.type==='Ficha de trabajo')assert((m.html.match(/dd-answer-lines/g)||[]).length>=5,m.grade+': ficha sin actividades utilizables');
     if(m.grade==='5.º'&&m.type==='Ficha de trabajo')assert(/fuentes|evidencia/i.test(m.html),'5.º: falta demanda de análisis de fuentes');
   }
