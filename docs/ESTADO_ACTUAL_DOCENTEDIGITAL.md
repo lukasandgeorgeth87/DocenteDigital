@@ -1,3 +1,10 @@
+## Actualización — 27/10/2026 (Perú) — validación del bit reservado en chunks PNG
+
+- **Hallazgo y corrección:** el validador de `api/image.js` admitía nombres de chunks PNG con la tercera letra minúscula, aunque esa posición está reservada por el formato. Se restringió la tercera letra a mayúscula, sin bloquear chunks auxiliares desconocidos bien formados.
+- **Contratos añadidos:** `tests/ai-contract.mjs` comprueba un PNG con chunk auxiliar `abCa` (válido, HTTP 200) y uno con `abca` (bit reservado inválido, HTTP 502 `invalid_image_output`), ambos con CRC y datos zlib correctos. Las respuestas del proveedor son simuladas.
+- **Evidencia:** CI del commit de código **PENDIENTE** hasta obtener el resultado del SHA exacto. El commit previo `ace72bd` tenía [run 40585118217](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40585118217) **SUCCESS**, pero esa ejecución no cubre la nueva regresión.
+- **Alcance y bloqueantes:** verificación estructural PNG, no decodificación integral ni generación pagada real. Sin prueba de GPT/Redis reales, piloto privado humano o autenticación multiusuario. No se alteraron `main`, producción, datos reales ni secretos. Riesgos S1–S4 y métricas históricas 75 % estimado / cierre V5 21/100 sin cambio.
+
 ## Actualización — 27/10/2026 (Perú) — PNG tRNS: muestras fuera del rango de profundidad
 
 - **Hallazgo por inspección:** `api/image.js` exigía longitudes y orden válidos del chunk `tRNS`, pero no verificaba que las muestras de transparencia de PNG escala de grises y RGB cupieran en la profundidad de bits declarada. Por ejemplo, una clave 256 en PNG RGB de 8 bits podía superar el control estructural pese a CRC correcto.

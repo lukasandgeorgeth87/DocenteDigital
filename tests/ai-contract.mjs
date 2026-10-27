@@ -528,6 +528,12 @@ try{
   assert.equal(res.body.image_base64,validIndexed);
   // Valid transparency remains supported for indexed, grayscale and RGB PNG.
   const transparency=pngChunk('tRNS',Buffer.from([128]));
+  // Unknown ancillary chunks with an uppercase third letter are allowed.
+  // PNG reserves the third type letter: lowercase is invalid even with valid CRC.
+  const validAncillary=pngWithChunks(6,8,[pngChunk('abCa',Buffer.from([1,2]))]);
+  globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:validAncillary}]})});
+  res=await call(image,'POST',{prompt:'Material con metadatos PNG',confirmedCredit:true});
+  assert.equal(res.statusCode,200,'Well-formed unknown ancillary PNG chunk must remain accepted');
   const validTransparencyPngs=[
     pngWithChunks(3,8,[redPalette,transparency]),
     pngWithChunks(0,8,[pngChunk('tRNS',Buffer.from([0,0]))]),
@@ -554,6 +560,7 @@ try{
     pngWithChunks(3,8,[redPalette,redPalette]), // Duplicate palette.
     pngWithChunks(0,8,[redPalette]), // Grayscale forbids PLTE.
     pngWithChunks(6,8,[pngChunk('ABCD',Buffer.from([1]))]), // Unknown critical chunk.
+    pngWithChunks(6,8,[pngChunk('abca',Buffer.from([1,2]))]), // Invalid PNG reserved bit (third lowercase type letter).
     pngWithChunks(6,8,[transparency]), // RGBA already has alpha; tRNS forbidden.
     pngWithChunks(3,8,[transparency,redPalette]), // Indexed tRNS before PLTE.
     pngWithChunks(3,8,[redPalette,pngChunk('tRNS',Buffer.alloc(0))]), // Empty alpha table.

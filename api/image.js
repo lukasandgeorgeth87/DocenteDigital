@@ -21,7 +21,7 @@ function validPngBase64(value){
     const end=offset+12+length;
     if(end>bytes.length)return false;
     const type=bytes.toString('ascii',offset+4,offset+8);
-    if(!/^[A-Za-z]{4}$/.test(type))return false;
+    if(!/^[A-Za-z]{2}[A-Z][A-Za-z]$/.test(type))return false; // PNG third-letter reserved bit must be uppercase.
     // Unknown critical chunks must not be silently treated as valid PNG data.
     if(type[0]===type[0].toUpperCase()&&!['IHDR','PLTE','IDAT','IEND'].includes(type))return false;
     if(crc32(bytes.subarray(offset+4,offset+8+length))!==bytes.readUInt32BE(offset+8+length))return false;
