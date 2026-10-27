@@ -292,6 +292,19 @@ try{
   for(const safe of ['[nombre omitido]','fracciones equivalentes','Actividad de mercado'])
     assert.ok(uppercaseRosterPayload.includes(safe),'Roster privacy removed teaching context: '+safe);
 
+  // Privacy regression: common school labels and parenthesized/slash-formatted
+  // Peruvian mobile numbers must be removed from the actual GPT payload.
+  res=await call(ai,'POST',{task:'material',
+    prompt:'Niña: Rosa Quispe. Alumno/a: Ana María Pérez. WhatsApp (+51) 987/654/321. Aprendemos fracciones.',
+    context:{sourceText:'Niño: José Luis de la Cruz. Alumno(a): Pedro Huamán. Escolar: Lucía Ramos. Celular (51) 912-345-678. Registro de semillas.'}
+  });
+  assert.equal(res.statusCode,200);
+  const aliasPrivacyPayload=JSON.stringify(JSON.parse(captured.options.body));
+  for(const leak of ['Rosa Quispe','Ana María Pérez','José Luis de la Cruz','Pedro Huamán','Lucía Ramos','987/654/321','912-345-678','(+51)','(51)'])
+    assert.equal(aliasPrivacyPayload.includes(leak),false,'School alias or phone leaked to GPT: '+leak);
+  for(const safe of ['[nombre omitido]','[teléfono omitido]','Aprendemos fracciones','Registro de semillas'])
+    assert.ok(aliasPrivacyPayload.includes(safe),'Privacy redaction removed the learning task: '+safe);
+
   res=await call(ai,'POST',{task:'material',prompt:'Ficha de hortalizas',context:{
     purpose:'Aprender a sembrar hortalizas',product:'Biohuerto escolar',
     criterion:'Justifica la selección de semillas',evidence:'Registro de siembra'
@@ -383,6 +396,16 @@ try{
   for(const leak of ['María Quispe','87654321','912 345 678'])
     assert.equal(privateImagePrompt.includes(leak),false,'Image API received personal data: '+leak);
   assert.match(privateImagePrompt,/Dibuja semillas/,'Image safety must not erase the learning topic');
+  res=await call(image,'POST',{
+    prompt:'Ilustra semillas. Niña: Rosa Quispe. WhatsApp (+51) 987/654/321.',confirmedCredit:true
+  });
+  assert.equal(res.statusCode,200);
+  const aliasImagePrompt=JSON.parse(captured.options.body).prompt;
+  for(const leak of ['Rosa Quispe','987/654/321','(+51)'])
+    assert.equal(aliasImagePrompt.includes(leak),false,'Image provider received school PII: '+leak);
+  assert.match(aliasImagePrompt,/Ilustra semillas/);
+  assert.match(aliasImagePrompt,/\[nombre omitido\]/);
+  assert.match(aliasImagePrompt,/\[teléfono omitido\]/);
   res=await call(image,'POST',{prompt:'Dibuja hortalizas, DNI N° 1122.3344',confirmedCredit:true});
   assert.equal(res.statusCode,200);
   const groupedDniImagePrompt=JSON.parse(captured.options.body).prompt;
