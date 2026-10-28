@@ -86,4 +86,36 @@ for(const [input,expected] of [
     'No se redactó un nombre antes de un verbo escolar: '+input);
 }
 
-console.log('AI_PRIVACY_PEDAGOGY_PASS: 17 classroom instructions and 12 labeled names');
+
+// Common worksheet directions are actions, not pupil names. These must
+// survive both the label and its separator before the AI provider call.
+for(const sentence of [
+  'Estudiante: Responde las preguntas.',
+  'Alumna - Subraya las palabras importantes.',
+  'Escolar = Encierra en un círculo los objetos.',
+  'Niña: Relaciona con flechas las imágenes.',
+  'Alumno: Selecciona la respuesta correcta.',
+  'Estudiante: Describe las características.',
+  'Niño - Justifica con ejemplos tu respuesta.',
+  'Alumna: Argumenta sobre el cuidado del agua.'
+]){
+  assert.equal(redactPersonalData(sentence),sentence,
+    'Se borró una consigna de ficha escolar: '+sentence);
+}
+
+// Expanding the instructional verbs must not let names through.
+for(const [input,expected] of [
+  ['Estudiante: Rosa Quispe responde las preguntas.',
+    'Estudiante: [nombre omitido] responde las preguntas.'],
+  ['Alumna - ana flores subraya las palabras.',
+    'Alumna: [nombre omitido] subraya las palabras.'],
+  ['Niña: María Flores describe las características.',
+    'Niña: [nombre omitido] describe las características.'],
+  ['Alumno: juan perez argumenta sobre el agua.',
+    'Alumno: [nombre omitido] argumenta sobre el agua.']
+]){
+  assert.equal(redactPersonalData(input),expected,
+    'Se conservó un nombre antes de una consigna: '+input);
+}
+
+console.log('AI_PRIVACY_PEDAGOGY_PASS: 25 classroom instructions and 16 labeled names');
