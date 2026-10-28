@@ -14,7 +14,7 @@ function redactPersonalData(value){
       const name=match.slice(match.indexOf(':')+1).trim();
       const tail=input.slice(offset+match.length);
       if(/^(?:aprende|practica|realiza|cultiva|resuelve|escribe|lee|siembra)$/i.test(name)
-        && /^\\s+(?:a|el|la|los|las|un|una|sobre|en|con|de|por)\\b/i.test(tail))return match;
+        && /^\s+(?:a|el|la|los|las|un|una|sobre|en|con|de|por)\b/i.test(tail))return match;
       return label+': [nombre omitido]';
     })
     // Explicitly labeled lower-case names (2–6 tokens), including compound
