@@ -321,6 +321,26 @@ try {
     'El DOCX filtró registros de otra unidad o grado');
   console.log('EVALUATION_CONCLUSIONS_PASS');
 
+  // A CSV cell beginning with invisible formatting marks and a formula
+  // must be exported as literal text, not a spreadsheet instruction.
+  // Exercise the actual register -> CSV download flow with synthetic data.
+  await page.evaluate(() => window.DDEvaluation.openRegister());
+  await page.locator('#ddEvalGrade').selectOption({label:assessedGrade});
+  await page.locator('.dd-eval-note').first().fill('\u200B=1+1');
+  await page.locator('.dd-eval-next').first().fill('\u2060@SUM(1,2)');
+  const csvDownloadPromise=page.waitForEvent('download',{timeout:15000});
+  await page.locator('#ddEvalCsv').click();
+  const csvDownload=await csvDownloadPromise;
+  const csvText=await fs.readFile(await csvDownload.path(),'utf8');
+  assert(csvDownload.suggestedFilename().endsWith('.csv'), 'El registro no exportó CSV');
+  assert(csvText.includes('"EST-TEST-01"'), 'El CSV perdió el código sintético del estudiante');
+  assert(csvText.includes("\"'\u200B=1+1\""), 'CSV: no se protegió fórmula tras espacio de ancho cero');
+  assert(csvText.includes("\"'\u2060@SUM(1,2)\""), 'CSV: no se protegió fórmula tras word joiner');
+  assert(!csvText.includes('"\u200B=1+1"')&&!csvText.includes('"\u2060@SUM(1,2)"'),
+    'CSV conserva una fórmula sin prefijo de texto');
+  console.log('EVALUATION_CSV_FORMULA_PASS');
+
+
 
   await page.evaluate(() => window.go('director'));
   assert(await page.locator('#director').isVisible(), 'Director no quedó visible tras navegar desde Evaluación');
