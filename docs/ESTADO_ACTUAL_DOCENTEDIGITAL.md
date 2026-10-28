@@ -1,3 +1,10 @@
+## Actualización — 28/10/2026 (Perú) — preservar ocho consignas frecuentes en fichas escolares antes de GPT/imagen
+
+- **Cambio de código:** [commit `ebe34fc`](https://github.com/lukasandgeorgeth87/DocenteDigital/commit/ebe34fc21af82b86dd15b4cc56b51bba46dbec14) amplía el filtro heurístico `api/_ai-privacy.js` para conservar las consignas `responde`, `subraya`, `encierra`, `relaciona`, `selecciona`, `describe`, `justifica` y `argumenta` cuando siguen complementos pedagógicos tras una etiqueta de alumno. No cambia el acceso a GPT, las cuotas ni el contrato de imágenes.
+- **Pruebas añadidas:** `tests/ai-privacy-pedagogy.mjs` incluye ocho instrucciones sintéticas y cuatro nombres etiquetados adicionales, para verificar tanto conservación de actividades como ocultamiento de nombres. Total de esta suite: **25 instrucciones y 16 nombres etiquetados**.
+- **Evidencia CI del SHA exacto:** [GitHub Actions `40678456315`](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40678456315): job `ai-context-fast` **PASS** (incluye el nuevo test, contratos de IA, privacidad, Redis simulado y token); job `browser-e2e` **EN CURSO** al registrar. No se declara PASS integral ni se atribuye la prueba al commit documental `[skip ci]`.
+- **Límites y bloqueantes:** la redacción de PII sigue siendo heurística y requiere revisión docente; no se probaron proveedor OpenAI pagado, Upstash real, autenticación multiusuario, piloto humano ni móvil físico. `main`, producción, datos reales y secretos no modificados. Se mantienen los bloqueantes S1–S4 y los indicadores históricos 75 % estimado / cierre V5 21/100, sin elevarlos por estas pruebas sintéticas.
+
 ## Actualización — 28/10/2026 (Perú) — verbos de trabajo escolar conservados antes de GPT/imagen
 
 - **Fallo reproducido:** el filtro `api/_ai-privacy.js` transformaba `Estudiante: Dibuja un árbol.` en `Estudiante: [nombre omitido] un árbol.`; también eliminaba `Calcula` y `Colorea` tras etiquetas escolares. Era pérdida de contenido pedagógico, no evidencia de fuga de nombres.
