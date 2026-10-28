@@ -27,6 +27,9 @@ jobs:
       - name: Validate school instruction privacy
         run: node tests/ai-privacy-pedagogy.mjs
 
+      - name: Validate draft SQL profile privilege isolation (static)
+        run: node tests/sql-profile-privilege-guard.mjs
+
       - name: Validate DOCX XML character safety (offline)
         run: node tests/docx-xml-safety.mjs
 
