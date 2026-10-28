@@ -470,7 +470,7 @@
       return (scope?scope+': ':'')+evidence+' (nivel registrado: '+r.level+')';
     });
     var steps=[...new Set(valid.map(function(r){
-      return String(r.nextStep||'').trim().replace(/\s+/g,' ');
+      return String(r.nextStep||'').trim().replace(/\s+/g,' ').replace(/[.!?]+$/,'');
     }).filter(Boolean))];
     return 'Borrador para '+student+'. Evidencias consignadas por el docente: '+details.join('; ')+'. '+
       (steps.length?'Siguientes pasos registrados: '+steps.join('; ')+'. ':'Siguiente paso pendiente de definir por el docente. ')+

@@ -332,8 +332,20 @@ try{
 
 
   console.log('CONTINUITY 2/5 Exportación e importación de respaldo JSON');
-  await page.evaluate(data=>localStorage.setItem('docenteDigitalPrototype',JSON.stringify(data)),fixture());
+  // A pending autosave from the previous page can overwrite localStorage
+  // between the test's setItem and reload. Seed on the NEW document before
+  // app.js initializes, and only once so later restore/reload checks are real.
+  await page.addInitScript(data=>{
+    const marker='ddContinuityBackupSeededV1';
+    if(sessionStorage.getItem(marker)==='1')return;
+    sessionStorage.setItem(marker,'1');
+    localStorage.setItem('docenteDigitalPrototype',JSON.stringify(data));
+  },fixture());
   await page.reload({waitUntil:'domcontentloaded'});
+  await waitPlanningRuntime();
+  const beforeExport=await page.evaluate(()=>JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'{}'));
+  assert(beforeExport.units?.some(u=>u.id==='u-continuity'),
+    'La unidad de prueba no sobrevivió la carga previa al respaldo: '+JSON.stringify(beforeExport.units?.map(u=>u.id)));
   await page.waitForSelector('#ddBetaBanner',{timeout:10000});
   await page.evaluate(()=>window.go('settings'));
   await page.waitForSelector('#ddBetaBackupCard',{timeout:10000});

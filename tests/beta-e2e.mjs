@@ -302,6 +302,7 @@ try {
     'La conclusión omitió evidencias de criterios distintos');
   assert(grounded.includes('nivel registrado: A')&&grounded.includes('nivel registrado: B'),
     'La conclusión promedió o perdió los niveles originales');
+  assert(!grounded.includes('..'),'La conclusión duplicó puntuación de los siguientes pasos');
   assert(!/mayoría|autonomía|transfiere|desempeño destacado/i.test(grounded),
     'La conclusión inventó desempeños no observados');
   assert(!grounded.includes('NO_MOSTRAR_UNIDAD')&&!grounded.includes('NO_MOSTRAR_GRADO'),
