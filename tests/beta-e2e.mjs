@@ -266,6 +266,61 @@ try {
   assert(savedAssessment?.evidenceNote?.includes('evidencia observable'), 'La evaluación real no guardó la evidencia ficticia');
   assert(savedAssessment?.unitId === s.activeUnitId, 'La evaluación perdió su vínculo con la unidad');
 
+  // An AD/A/B/C count is not a pedagogical average. Draft conclusions must
+  // retain evidence per criterion and never invent autonomy or transfer.
+  console.log('EVALUATION_CONCLUSIONS: evidence, isolation and DOCX');
+  const conclusionCards=await page.evaluate(grade=>{
+    const before=state.evaluationRecords.slice();
+    const base=before.find(r=>r.student==='EST-TEST-01'&&r.grade===grade);
+    if(!base)return {error:'Falta el registro real de la prueba'};
+    try{
+      state.evaluationRecords.push(
+        {...base,area:'Comunicación',criterion:'Contrasta fuentes',level:'B',
+          evidenceNote:'PRUEBA_B: comparó dos fuentes con apoyo.',nextStep:'Revisar cómo compara las fuentes.'},
+        {...base,unitId:'u-ajena',criterion:'Criterio de otra unidad',level:'AD',
+          evidenceNote:'NO_MOSTRAR_UNIDAD'},
+        {...base,grade:grade==='1.º'?'3.º':'1.º',criterion:'Criterio de otro grado',level:'AD',
+          evidenceNote:'NO_MOSTRAR_GRADO'},
+        {...base,student:'EST-TEST-02',criterion:'Criterio sin evidencia',level:'AD',
+          evidenceNote:'',nextStep:''}
+      );
+      save();
+      window.DDEvaluation.openConclusions(grade);
+      return [...document.querySelectorAll('#ddConBody article')].map(el=>({
+        student:el.querySelector('h3')?.textContent,
+        text:el.querySelector('textarea')?.value
+      }));
+    }finally{
+      state.evaluationRecords=before;
+      save();
+    }
+  },assessedGrade);
+  assert(Array.isArray(conclusionCards),'No se construyeron conclusiones: '+JSON.stringify(conclusionCards));
+  const grounded=conclusionCards.find(c=>c.student==='EST-TEST-01')?.text||'';
+  const withoutEvidence=conclusionCards.find(c=>c.student==='EST-TEST-02')?.text||'';
+  assert(grounded.includes('evidencia observable')&&grounded.includes('PRUEBA_B'),
+    'La conclusión omitió evidencias de criterios distintos');
+  assert(grounded.includes('nivel registrado: A')&&grounded.includes('nivel registrado: B'),
+    'La conclusión promedió o perdió los niveles originales');
+  assert(!/mayoría|autonomía|transfiere|desempeño destacado/i.test(grounded),
+    'La conclusión inventó desempeños no observados');
+  assert(!grounded.includes('NO_MOSTRAR_UNIDAD')&&!grounded.includes('NO_MOSTRAR_GRADO'),
+    'La conclusión mezcló datos de otra unidad o grado');
+  assert(withoutEvidence.includes('Falta registrar una evidencia observada'),
+    'Un nivel AD sin evidencia produjo una conclusión inventada');
+  const conclusionsDownloadPromise=page.waitForEvent('download',{timeout:15000});
+  await page.locator('#ddConWord').click();
+  const conclusionsDownload=await conclusionsDownloadPromise;
+  assert(conclusionsDownload.suggestedFilename().endsWith('.docx'),
+    'Las conclusiones no se exportaron como DOCX');
+  const conclusionsXml=docxDocumentXml(await fs.readFile(await conclusionsDownload.path()));
+  assert(conclusionsXml.includes('PRUEBA_B')&&conclusionsXml.includes('nivel registrado: B'),
+    'El DOCX de conclusiones perdió la evidencia y el nivel');
+  assert(!conclusionsXml.includes('NO_MOSTRAR_UNIDAD')&&!conclusionsXml.includes('NO_MOSTRAR_GRADO'),
+    'El DOCX filtró registros de otra unidad o grado');
+  console.log('EVALUATION_CONCLUSIONS_PASS');
+
+
   await page.evaluate(() => window.go('director'));
   assert(await page.locator('#director').isVisible(), 'Director no quedó visible tras navegar desde Evaluación');
   const enabledDirectorButtons = await page.locator('#director button:not([disabled])').count();

@@ -457,20 +457,24 @@
   }
 
   function conclusion(student,recs){
-    var valid=recs.filter(function(r){return r.level&&String(r.evidenceNote||'').trim();});
-    // A selected achievement level alone is not an observable learning trace.
-    // Do not claim that a student demonstrated learning without recorded evidence.
+    var valid=recs.filter(function(r){
+      return ['C','B','A','AD'].includes(r.level)&&String(r.evidenceNote||'').trim();
+    });
+    // Achievement levels are ordinal teacher judgments, not numeric scores.
+    // Do not infer a dominant level, autonomy, transfer or achievements from
+    // a majority vote: preserve each criterion and the observed evidence.
     if(!valid.length)return 'Falta registrar una evidencia observada junto con el nivel de logro. No se puede redactar una conclusión descriptiva sustentada todavía.';
-    var counts={C:0,B:0,A:0,AD:0};valid.forEach(function(r){counts[r.level]=(counts[r.level]||0)+1;});
-    var dominant=['AD','A','B','C'].sort(function(a,b){return counts[b]-counts[a];})[0];
-    var good=valid.find(function(r){return r.level==='AD'||r.level==='A';})||valid[0];
-    var need=valid.find(function(r){return r.level==='C'||r.level==='B';})||valid[valid.length-1];
-    var ev=good.evidenceNote?' Se observó que '+good.evidenceNote.charAt(0).toLowerCase()+good.evidenceNote.slice(1)+'.':'';
-    var next=need.nextStep||'continuar aplicando lo aprendido en situaciones nuevas y explicar con mayor precisión las evidencias que sustentan sus respuestas';
-    if(dominant==='AD')return student+' demuestra un desempeño destacado en los criterios trabajados: actúa con autonomía, sustenta sus decisiones y transfiere lo aprendido a nuevas situaciones.'+ev+' Como siguiente desafío, conviene profundizar la argumentación y asumir retos de mayor complejidad.';
-    if(dominant==='A')return student+' evidencia los aprendizajes esperados en la mayoría de los criterios trabajados y explica sus decisiones de manera pertinente.'+ev+' Para seguir avanzando, se recomienda '+next+'.';
-    if(dominant==='B')return student+' se encuentra en proceso de consolidar los aprendizajes previstos. Muestra avances, pero todavía requiere apoyo para sostener sus explicaciones, procedimientos o producciones con mayor autonomía.'+ev+' El siguiente paso es '+next+'.';
-    return student+' requiere apoyo para evidenciar de manera consistente los aprendizajes previstos. Necesita experiencias más guiadas, ejemplos, recursos concretos o preguntas graduadas.'+ev+' Se recomienda '+next+'.';
+    var details=valid.map(function(r){
+      var scope=[String(r.area||'').trim(),String(r.criterion||'').trim()].filter(Boolean).join(' · ');
+      var evidence=String(r.evidenceNote).trim().replace(/\s+/g,' ');
+      return (scope?scope+': ':'')+evidence+' (nivel registrado: '+r.level+')';
+    });
+    var steps=[...new Set(valid.map(function(r){
+      return String(r.nextStep||'').trim().replace(/\s+/g,' ');
+    }).filter(Boolean))];
+    return 'Borrador para '+student+'. Evidencias consignadas por el docente: '+details.join('; ')+'. '+
+      (steps.length?'Siguientes pasos registrados: '+steps.join('; ')+'. ':'Siguiente paso pendiente de definir por el docente. ')+
+      'Revisar por competencia y validar antes de usar.';
   }
 
   function openConclusions(forcedGrade){
