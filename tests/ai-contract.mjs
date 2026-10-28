@@ -504,7 +504,7 @@ try{
     assert.equal(aliasLowercaseImagePrompt.includes(leak),false,
       'Lower-case pupil name leaked to image provider: '+leak);
   assert.match(aliasLowercaseImagePrompt,/practica el cultivo/);
-  assert.match(aliasLowercaseImagePrompt,/\\[nombre omitido\\]/);
+  assert.ok(aliasLowercaseImagePrompt.includes('[nombre omitido]'));
 
   // Provider HTTP 200 with a nonempty base64 string that is not PNG must fail.
   globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:'ZmFrZS1wbmc='}]})});
