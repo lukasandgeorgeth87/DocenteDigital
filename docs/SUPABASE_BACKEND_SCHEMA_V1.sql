@@ -179,7 +179,13 @@ alter table public.ai_usage enable row level security;
 alter table public.user_quotas enable row level security;
 
 create policy "profiles_self_select" on public.profiles for select using (auth.uid() = user_id);
-create policy "profiles_self_update" on public.profiles for update using (auth.uid() = user_id);
+-- Los cambios de role/plan_code y la creación de perfiles son EXCLUSIVAMENTE
+-- operaciones de backend confiable (service role), nunca de clientes autenticados.
+-- No crear política INSERT/UPDATE/DELETE/ALL sobre profiles para authenticated:
+-- la RLS SELECT no basta para proteger columnas privilegiadas ante UPDATE.
+-- La edición de full_name debe implementarse mediante una API verificada que
+-- actualice SOLO esa columna, o mediante permisos de columna revisados.
+
 
 create policy "members_self_select" on public.institution_members for select using (auth.uid() = user_id);
 
