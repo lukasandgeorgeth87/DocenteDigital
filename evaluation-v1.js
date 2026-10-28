@@ -152,7 +152,9 @@
     // to be interpreted as literal text when opened in Excel/Sheets.
     function safeCsvCell(value){
       var cell=String(value==null?'':value);
-      // Guard invisible leading marks too: spreadsheet importers may discard them\n      // before interpreting an untrusted cell as a formula.\n      if(/^[\s\uFEFF\u200B-\u200F\u202A-\u202E\u2060-\u2069]*[=+\-@]/.test(cell)||/^[\t\r\n]/.test(cell))cell="'"+cell;
+      // Guard invisible leading marks too: spreadsheet importers may discard them
+      // before interpreting an untrusted cell as a formula.
+      if(/^[\s\uFEFF\u200B-\u200F\u202A-\u202E\u2060-\u2069]*[=+\-@]/.test(cell)||/^[\t\r\n]/.test(cell))cell="'"+cell;
       return '"'+cell.replace(/"/g,'""')+'"';
     }
     var csv=all.map(function(row){return row.map(safeCsvCell).join(',');}).join('\n');
