@@ -325,6 +325,19 @@ try{
   assert.ok(JSON.stringify(JSON.parse(captured.options.body)).includes('Estudiante: aprende a sembrar hortalizas'),
     'Unlabeled teaching activity must not be mistaken for a lower-case pupil name');
 
+  // Compound lower-case names in labeled school rosters must be removed
+  // from the actual text-provider request without swallowing the learning verb.
+  res=await call(ai,'POST',{task:'material',
+    prompt:'Estudiante: ana maría de la cruz aprende a sembrar hortalizas.',
+    context:{sourceText:'Alumno: josé luis quispe huamán. Nombres y apellidos: rosa maría de la cruz; registro de semillas.'}
+  });
+  assert.equal(res.statusCode,200);
+  const compoundLowercasePayload=JSON.stringify(JSON.parse(captured.options.body));
+  for(const leak of ['ana maría de la cruz','josé luis quispe huamán','rosa maría de la cruz'])
+    assert.equal(compoundLowercasePayload.includes(leak),false,'Compound lower-case pupil name leaked to GPT: '+leak);
+  for(const preserved of ['aprende a sembrar hortalizas','registro de semillas','[nombre omitido]'])
+    assert.ok(compoundLowercasePayload.includes(preserved),'Compound lower-case redaction removed teaching context: '+preserved);
+
   res=await call(ai,'POST',{task:'material',prompt:'Ficha de hortalizas',context:{
     purpose:'Aprender a sembrar hortalizas',product:'Biohuerto escolar',
     criterion:'Justifica la selección de semillas',evidence:'Registro de siembra'
@@ -451,6 +464,18 @@ try{
   const rosterImagePrompt=JSON.parse(captured.options.body).prompt;
   assert.equal(rosterImagePrompt.includes('Ana María Pérez'),false,'School roster name leaked to image provider');
   assert.match(rosterImagePrompt,/Ficha de fracciones/);
+
+  // The same compound lower-case privacy rule must apply to image prompts.
+  res=await call(image,'POST',{
+    prompt:'Ilustra la siembra. Estudiante: ana maría de la cruz practica el cultivo de hortalizas.',
+    confirmedCredit:true
+  });
+  assert.equal(res.statusCode,200);
+  const lowercaseImagePrompt=JSON.parse(captured.options.body).prompt;
+  assert.equal(lowercaseImagePrompt.includes('ana maría de la cruz'),false,
+    'Compound lower-case name leaked to image provider');
+  assert.match(lowercaseImagePrompt,/practica el cultivo de hortalizas/);
+  assert.match(lowercaseImagePrompt,/\[nombre omitido\]/);
 
   // Provider HTTP 200 with a nonempty base64 string that is not PNG must fail.
   globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:'ZmFrZS1wbmc='}]})});
