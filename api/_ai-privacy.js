@@ -9,7 +9,8 @@ function redactPersonalData(value){
     // School roster labels (including uppercase headings), niño/a, escolar,
     // and alumno/a aliases with = / - separators are PII.
     .replace(/\b([Ee][Ss][Tt][Uu][Dd][Ii][Aa][Nn][Tt][Ee]|[Aa][Ll][Uu][Mm][Nn][AaOo](?:\/[AaOo]|\([AaOo]\))?|[Nn][Ii][Ññ][OoAa](?:\/[AaOo]|\([AaOo]\))?|[Ee][Ss][Cc][Oo][Ll][Aa][Rr]|(?:[Nn]ombres?|NOMBRES?)(?:\s+[Yy]\s+(?:[Aa]pellidos?|APELLIDOS?)|\s+(?:[Cc]ompletos?|COMPLETOS?)|\s+(?:[Dd]el?|DEL?)\s+(?:[Ee]studiante|ESTUDIANTE|[Aa]lumno|ALUMNO|[Aa]lumna|ALUMNA))?|(?:[Aa]pellidos?|APELLIDOS?)(?:\s+[Yy]\s+(?:[Nn]ombres?|NOMBRES?))?)\s*[:=–—-]\s*[A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*)*(?:\s+(?:(?:de|del|la|las|los|y)\s+){0,3}[A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*)*){0,5}/g,(match,label,offset,input)=>{
-      // Sentence-case teaching instructions are not pupil names, including\n      // observation and comparison verbs used in classroom activities.
+      // Sentence-case teaching instructions are not pupil names, including
+      // observation and comparison verbs used in classroom activities.
       // Keep a labeled "Aprende a ..." / "Realiza la ..." activity intact.
       // Extract the name after ANY supported separator (:, =, hyphen, dash).
       // indexOf(':') returned -1 for '='/'-', erasing sentence-case instructions.
