@@ -1,3 +1,11 @@
+## Actualización — 28/10/2026 (Perú) — cuota Redis rechaza operaciones desconocidas antes de facturación
+
+- **Fallo de contrato identificado por inspección:** `reserveQuota(kind)` cobraba una unidad para cualquier valor diferente de `image`, incluyendo valores desconocidos. Aunque los dos llamadores actuales pasan literales `text` e `image`, una integración futura mal tipada podría contabilizar una imagen al costo de texto. No se afirma explotación ni cargo real.
+- **Corrección de código:** [`23acafd`](https://github.com/lukasandgeorgeth87/DocenteDigital/commit/23acafdd5c3bd0ae53a8bfd9c3cb02ab534436f7) hace *fail closed* para tipos distintos de `text`/`image`, devolviendo HTTP lógico 400/`ai_quota_invalid_kind` antes de consultar Redis. Mantiene costo 1 para texto y 5 para imagen.
+- **Regresión sintética:** [`fe9fa36`](https://github.com/lukasandgeorgeth87/DocenteDigital/commit/fe9fa361f1ab4709ba16af96bc932ec35f082644) añade `tests/ai-quota-kind.mjs`: diez valores inválidos, cero accesos de red para tipos inválidos, contabilidad 1+5 y rechazo 429 por cuota agotada con Redis simulado. [`60f9c16`](https://github.com/lukasandgeorgeth87/DocenteDigital/commit/60f9c16946882f5b9abe4ca59425984c25a0f0fd) incorpora la prueba al job `ai-context-fast`.
+- **CI SHA exacto:** [GitHub Actions `40686462385`](https://github.com/lukasandgeorgeth87/DocenteDigital/actions/runs/40686462385) **EN CURSO** al primer registro; PASS/FAIL pendiente de lectura de jobs. No se declara prueba exitosa sin resultado.
+- **Límites:** pruebas con Redis simulado; sin OpenAI/Upstash pagados ni piloto humano. GPT pagado no habilitado. `main`, producción, datos reales y secretos intactos. Bloqueantes S1–S4 e indicadores históricos sin cambio.
+
 ## Actualización — 28/10/2026 (Perú) — preservar ocho consignas frecuentes en fichas escolares antes de GPT/imagen
 
 - **Cambio de código:** [commit `ebe34fc`](https://github.com/lukasandgeorgeth87/DocenteDigital/commit/ebe34fc21af82b86dd15b4cc56b51bba46dbec14) amplía el filtro heurístico `api/_ai-privacy.js` para conservar las consignas `responde`, `subraya`, `encierra`, `relaciona`, `selecciona`, `describe`, `justifica` y `argumenta` cuando siguen complementos pedagógicos tras una etiqueta de alumno. No cambia el acceso a GPT, las cuotas ni el contrato de imágenes.
