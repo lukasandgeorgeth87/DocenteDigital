@@ -325,6 +325,21 @@ try{
   assert.ok(JSON.stringify(JSON.parse(captured.options.body)).includes('Estudiante: aprende a sembrar hortalizas'),
     'Unlabeled teaching activity must not be mistaken for a lower-case pupil name');
 
+  // Mixed slash/parenthesis pupil labels are common in school rosters. Their
+  // lower-case names must be removed before GPT, not just capitalized names.
+  res=await call(ai,'POST',{task:'material',
+    prompt:'Alumno/a: carlos huamán aprende a sembrar hortalizas.',
+    context:{sourceText:'Niño/a: josé luis quispe. Alumno(a): rosa maría perez; registro de semillas.'}
+  });
+  assert.equal(res.statusCode,200);
+  const aliasLowercasePayload=JSON.stringify(JSON.parse(captured.options.body));
+  for(const leak of ['carlos huamán','josé luis quispe','rosa maría perez'])
+    assert.equal(aliasLowercasePayload.includes(leak),false,
+      'Lower-case pupil name leaked under slash/parenthesis label: '+leak);
+  for(const preserved of ['aprende a sembrar hortalizas','registro de semillas','[nombre omitido]'])
+    assert.ok(aliasLowercasePayload.includes(preserved),
+      'Alias name redaction erased learning context: '+preserved);
+
   // Compound lower-case names in labeled school rosters must be removed
   // from the actual text-provider request without swallowing the learning verb.
   res=await call(ai,'POST',{task:'material',
