@@ -8,7 +8,15 @@ function redactPersonalData(value){
     // Permit particles (de la / del) and uppercase names common in school lists.
     // School roster labels (including uppercase headings), niño/a, escolar,
     // and alumno/a aliases with = / - separators are PII.
-    .replace(/\b([Ee][Ss][Tt][Uu][Dd][Ii][Aa][Nn][Tt][Ee]|[Aa][Ll][Uu][Mm][Nn][AaOo](?:\/[AaOo]|\([AaOo]\))?|[Nn][Ii][Ññ][OoAa](?:\/[AaOo]|\([AaOo]\))?|[Ee][Ss][Cc][Oo][Ll][Aa][Rr]|(?:[Nn]ombres?|NOMBRES?)(?:\s+[Yy]\s+(?:[Aa]pellidos?|APELLIDOS?)|\s+(?:[Cc]ompletos?|COMPLETOS?)|\s+(?:[Dd]el?|DEL?)\s+(?:[Ee]studiante|ESTUDIANTE|[Aa]lumno|ALUMNO|[Aa]lumna|ALUMNA))?|(?:[Aa]pellidos?|APELLIDOS?)(?:\s+[Yy]\s+(?:[Nn]ombres?|NOMBRES?))?)\s*[:=–—-]\s*[A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*)*(?:\s+(?:(?:de|del|la|las|los|y)\s+){0,3}[A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*)*){0,5}/g,'$1: [nombre omitido]')
+    .replace(/\b([Ee][Ss][Tt][Uu][Dd][Ii][Aa][Nn][Tt][Ee]|[Aa][Ll][Uu][Mm][Nn][AaOo](?:\/[AaOo]|\([AaOo]\))?|[Nn][Ii][Ññ][OoAa](?:\/[AaOo]|\([AaOo]\))?|[Ee][Ss][Cc][Oo][Ll][Aa][Rr]|(?:[Nn]ombres?|NOMBRES?)(?:\s+[Yy]\s+(?:[Aa]pellidos?|APELLIDOS?)|\s+(?:[Cc]ompletos?|COMPLETOS?)|\s+(?:[Dd]el?|DEL?)\s+(?:[Ee]studiante|ESTUDIANTE|[Aa]lumno|ALUMNO|[Aa]lumna|ALUMNA))?|(?:[Aa]pellidos?|APELLIDOS?)(?:\s+[Yy]\s+(?:[Nn]ombres?|NOMBRES?))?)\s*[:=–—-]\s*[A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*)*(?:\s+(?:(?:de|del|la|las|los|y)\s+){0,3}[A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*)*){0,5}/g,(match,label,offset,input)=>{
+      // Sentence-case teaching instructions are not pupil names.
+      // Keep a labeled "Aprende a ..." / "Realiza la ..." activity intact.
+      const name=match.slice(match.indexOf(':')+1).trim();
+      const tail=input.slice(offset+match.length);
+      if(/^(?:aprende|practica|realiza|cultiva|resuelve|escribe|lee|siembra)$/i.test(name)
+        && /^\\s+(?:a|el|la|los|las|un|una|sobre|en|con|de|por)\\b/i.test(tail))return match;
+      return label+': [nombre omitido]';
+    })
     // Explicitly labeled lower-case names (2–6 tokens), including compound
     // surnames such as "de la cruz". Preserve following teaching verbs.
     // Include 'Nombre del estudiante' / 'Nombre de la alumna' with lower-case names.
