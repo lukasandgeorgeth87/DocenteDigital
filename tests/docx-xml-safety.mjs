@@ -37,8 +37,8 @@ assert.doesNotMatch(xml,/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/,
   'El DOCX contiene caracteres ilegales de XML 1.0');
 assert.ok(xml.includes('Semillas &amp; agua &lt;cuidado&gt;'),
   'Se perdieron caracteres escapados del contenido pedagógico');
-assert.ok(xml.includes('Docente  Ejemplo'),'Se perdió el texto del docente');
-assert.ok(xml.includes('I.E.  Ejemplo'),'Se perdió el nombre de la IE');
+assert.match(xml,/Docente\s+Ejemplo/,'Se perdió el texto del docente');
+assert.match(xml,/I\.E\.\s+Ejemplo/,'Se perdió el nombre de la IE');
 assert.ok(![...invalid].some(c=>xml.includes(c)),
   'Se conservó un carácter de control prohibido');
 console.log('DOCX_XML_SAFETY_PASS: OOXML text escapes and invalid code points sanitized (offline)');
