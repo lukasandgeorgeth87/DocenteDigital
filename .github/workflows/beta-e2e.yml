@@ -27,6 +27,9 @@ jobs:
       - name: Validate school instruction privacy
         run: node tests/ai-privacy-pedagogy.mjs
 
+      - name: Validate Redis quota operation kinds and accounting (mock)
+        run: node tests/ai-quota-kind.mjs
+
       - name: Validate protected non-billable Redis preflight
         run: node tests/ai-preflight.mjs
 
