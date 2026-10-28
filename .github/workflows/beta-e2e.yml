@@ -24,7 +24,7 @@ jobs:
       - name: Validate GPT API safety contract
         run: node tests/ai-contract.mjs
 
-      - name: Validate protected non-billable Redis preflight
+      - name: Validate school instruction privacy\n        run: node tests/ai-privacy-pedagogy.mjs\n\n      - name: Validate protected non-billable Redis preflight
         run: node tests/ai-preflight.mjs
 
       - name: Validate explicit synthetic Redis quota write preflight
