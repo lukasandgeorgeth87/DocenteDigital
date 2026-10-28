@@ -548,6 +548,18 @@ try{
   assert.match(aliasLowercaseImagePrompt,/practica el cultivo/);
   assert.ok(aliasLowercaseImagePrompt.includes('[nombre omitido]'));
 
+  // Image prompts share the same privacy filter as text requests.
+  res=await call(image,'POST',{
+    prompt:'Ilustra semillas. Estudiante: Aprende a sembrar hortalizas. Alumna: Rosa Quispe.',
+    confirmedCredit:true
+  });
+  assert.equal(res.statusCode,200);
+  const capitalizedActivityImagePrompt=JSON.parse(captured.options.body).prompt;
+  assert.ok(capitalizedActivityImagePrompt.includes('Estudiante: Aprende a sembrar hortalizas'),
+    'Image privacy filter erased a sentence-case teaching instruction');
+  assert.equal(capitalizedActivityImagePrompt.includes('Rosa Quispe'),false,
+    'Image provider received a labeled pupil name');
+
   // Provider HTTP 200 with a nonempty base64 string that is not PNG must fail.
   globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:'ZmFrZS1wbmc='}]})});
   res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
