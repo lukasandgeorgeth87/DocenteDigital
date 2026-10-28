@@ -492,6 +492,20 @@ try{
   assert.match(lowercaseImagePrompt,/practica el cultivo de hortalizas/);
   assert.match(lowercaseImagePrompt,/\[nombre omitido\]/);
 
+  // Image generation uses the same server-side privacy filter. Lower-case
+  // roster names under combined labels must not be sent to the paid provider.
+  res=await call(image,'POST',{
+    prompt:'Dibuja semillas. Alumno/a: carlos huamán practica el cultivo. Niño(a): josé quispe.',
+    confirmedCredit:true
+  });
+  assert.equal(res.statusCode,200);
+  const aliasLowercaseImagePrompt=JSON.parse(captured.options.body).prompt;
+  for(const leak of ['carlos huamán','josé quispe'])
+    assert.equal(aliasLowercaseImagePrompt.includes(leak),false,
+      'Lower-case pupil name leaked to image provider: '+leak);
+  assert.match(aliasLowercaseImagePrompt,/practica el cultivo/);
+  assert.match(aliasLowercaseImagePrompt,/\\[nombre omitido\\]/);
+
   // Provider HTTP 200 with a nonempty base64 string that is not PNG must fail.
   globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:'ZmFrZS1wbmc='}]})});
   res=await call(image,'POST',{prompt:'Imagen escolar',confirmedCredit:true});
