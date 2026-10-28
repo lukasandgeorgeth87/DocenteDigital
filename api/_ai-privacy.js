@@ -9,6 +9,10 @@ function redactPersonalData(value){
     // School roster labels (including uppercase headings), niño/a, escolar,
     // and alumno/a aliases with = / - separators are PII.
     .replace(/\b([Ee][Ss][Tt][Uu][Dd][Ii][Aa][Nn][Tt][Ee]|[Aa][Ll][Uu][Mm][Nn][AaOo](?:\/[AaOo]|\([AaOo]\))?|[Nn][Ii][Ññ][OoAa](?:\/[AaOo]|\([AaOo]\))?|[Ee][Ss][Cc][Oo][Ll][Aa][Rr]|(?:[Nn]ombres?|NOMBRES?)(?:\s+[Yy]\s+(?:[Aa]pellidos?|APELLIDOS?)|\s+(?:[Cc]ompletos?|COMPLETOS?)|\s+(?:[Dd]el?|DEL?)\s+(?:[Ee]studiante|ESTUDIANTE|[Aa]lumno|ALUMNO|[Aa]lumna|ALUMNA))?|(?:[Aa]pellidos?|APELLIDOS?)(?:\s+[Yy]\s+(?:[Nn]ombres?|NOMBRES?))?)\s*[:=–—-]\s*[A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*)*(?:\s+(?:(?:de|del|la|las|los|y)\s+){0,3}[A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*)*){0,5}/g,'$1: [nombre omitido]')
+    // Explicitly labeled, lower-case two-word pupil names are common in pasted
+    // rosters. Keep the following teaching verb (e.g. "aprende a sembrar").
+    // This is a limited safety net, not full named-entity anonymization.
+    .replace(/\b(estudiante|alumno|alumna|niño|niña|escolar|nombres y apellidos|nombre completo|apellidos y nombres)\s*[:=–—-]\s*([a-záéíóúñ]{2,}(?:[-'][a-záéíóúñ]{2,})?\s+[a-záéíóúñ]{2,}(?:[-'][a-záéíóúñ]{2,})?)(?=\s*(?:[.,;:\n]|$|\s+(?:aprende|practica|realiza|cultiva|resuelve|escribe|lee|siembra)\b))/gi,'$1: [nombre omitido]')
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,'[correo omitido]')
     // Also redact labeled DNI with grouped digits and Peruvian N.º / N.° / Nro. / No. prefixes.
     .replace(/\b(?:DNI|D\.N\.I\.?|documento(?: nacional)? de identidad)\s*[:#-]?\s*(?:N(?:\.\s*[°º]|[°º.]|ro\.?|o\.?|úmero)?\s*)?[:#-]?\s*\d(?:[\s.\/-]?\d){7}(?!\d)/gi,'DNI [omitido]')
