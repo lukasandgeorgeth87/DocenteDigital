@@ -3,7 +3,9 @@
 */
 (function(){
   if(window.__ddDocxExportV29)return; window.__ddDocxExportV29=true;
-  const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+  // XML 1.0 forbids C0 control characters except TAB, LF and CR, and U+FFFE/U+FFFF.
+  // Replace invalid code points with spaces so pasted teacher text cannot corrupt OOXML.
+  const E=v=>String(v??'').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g,' ').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
   const enc=new TextEncoder();
   let lastDownloadName='';
   let lastDownloadContentKey='';
