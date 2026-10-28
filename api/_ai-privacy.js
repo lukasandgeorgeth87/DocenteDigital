@@ -12,7 +12,7 @@ function redactPersonalData(value){
     // Explicitly labeled lower-case names (2–6 tokens), including compound
     // surnames such as "de la cruz". Preserve following teaching verbs.
     // This is a limited safety net, not full named-entity anonymization.
-    .replace(/\b(estudiante|alumno|alumna|niño|niña|escolar|nombres y apellidos|nombre completo|apellidos y nombres)\s*[:=–—-]\s*((?!(?:aprende|practica|realiza|cultiva|resuelve|escribe|lee|siembra)\b)[a-záéíóúñ]{2,}(?:[-'][a-záéíóúñ]{2,})?(?:\s+(?!(?:aprende|practica|realiza|cultiva|resuelve|escribe|lee|siembra)\b)[a-záéíóúñ]{2,}(?:[-'][a-záéíóúñ]{2,})?){1,5})(?=\s*(?:[.,;:\n]|$|\s+(?:aprende|practica|realiza|cultiva|resuelve|escribe|lee|siembra)\b))/gi,'$1: [nombre omitido]')
+    .replace(/\b(estudiante|alumn[oa](?:\/[oa]|\([oa]\))?|niñ[oa](?:\/[oa]|\([oa]\))?|escolar|nombres y apellidos|nombre completo|apellidos y nombres)\s*[:=–—-]\s*((?!(?:aprende|practica|realiza|cultiva|resuelve|escribe|lee|siembra)\b)[a-záéíóúñ]{2,}(?:[-'][a-záéíóúñ]{2,})?(?:\s+(?!(?:aprende|practica|realiza|cultiva|resuelve|escribe|lee|siembra)\b)[a-záéíóúñ]{2,}(?:[-'][a-záéíóúñ]{2,})?){1,5})(?=\s*(?:[.,;:\n]|$|\s+(?:aprende|practica|realiza|cultiva|resuelve|escribe|lee|siembra)\b))/gi,'$1: [nombre omitido]')
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,'[correo omitido]')
     // Also redact labeled DNI with grouped digits and Peruvian N.º / N.° / Nro. / No. prefixes.
     .replace(/\b(?:DNI|D\.N\.I\.?|documento(?: nacional)? de identidad)\s*[:#-]?\s*(?:N(?:\.\s*[°º]|[°º.]|ro\.?|o\.?|úmero)?\s*)?[:#-]?\s*\d(?:[\s.\/-]?\d){7}(?!\d)/gi,'DNI [omitido]')
