@@ -58,4 +58,32 @@ for(const sentence of [
     'Se borró una instrucción tras etiqueta escolar: '+sentence);
 }
 
-console.log('AI_PRIVACY_PEDAGOGY_PASS: 10 classroom instructions and 9 labeled names');
+// Primary-school actions must survive a roster-style label (previously
+// 'Dibuja'/'Calcula'/'Colorea' were mistaken for pupils' names).
+for(const sentence of [
+  'Estudiante: Dibuja un árbol.',
+  'Alumno - Calcula el resultado.',
+  'Niña: Colorea las figuras.',
+  'Escolar: Mide la longitud.',
+  'Alumna: Completa la tabla.',
+  'Alumno = Ordena los números.',
+  'Niño: Recorta las figuras.'
+]){
+  assert.equal(redactPersonalData(sentence),sentence,
+    'Se borró un verbo de trabajo escolar: '+sentence);
+}
+
+// Preserving teaching actions must not reintroduce labeled pupil names.
+for(const [input,expected] of [
+  ['Estudiante: Rosa Quispe dibuja un árbol.',
+    'Estudiante: [nombre omitido] dibuja un árbol.'],
+  ['Alumno - ana flores calcula el resultado.',
+    'Alumno: [nombre omitido] calcula el resultado.'],
+  ['Niña: María Flores colorea las figuras.',
+    'Niña: [nombre omitido] colorea las figuras.']
+]){
+  assert.equal(redactPersonalData(input),expected,
+    'No se redactó un nombre antes de un verbo escolar: '+input);
+}
+
+console.log('AI_PRIVACY_PEDAGOGY_PASS: 17 classroom instructions and 12 labeled names');
