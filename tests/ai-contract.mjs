@@ -305,6 +305,26 @@ try{
   for(const safe of ['[nombre omitido]','[teléfono omitido]','Aprendemos fracciones','Registro de semillas'])
     assert.ok(aliasPrivacyPayload.includes(safe),'Privacy redaction removed the learning task: '+safe);
 
+  // Lower-case roster names with explicit labels must not reach GPT.
+  // The following learning verb must remain in the provider prompt.
+  res=await call(ai,'POST',{task:'material',
+    prompt:'Estudiante: juan perez. Actividad: fracciones equivalentes.',
+    context:{sourceText:'Alumna: maría quispe aprende a sembrar hortalizas. Nombres y apellidos: luis huamán; registro de semillas.'}
+  });
+  assert.equal(res.statusCode,200);
+  const lowercaseRosterPayload=JSON.stringify(JSON.parse(captured.options.body));
+  for(const leak of ['juan perez','maría quispe','luis huamán'])
+    assert.equal(lowercaseRosterPayload.includes(leak),false,'Lower-case labeled pupil name leaked to GPT: '+leak);
+  for(const preserved of ['[nombre omitido]','fracciones equivalentes','aprende a sembrar hortalizas','registro de semillas'])
+    assert.ok(lowercaseRosterPayload.includes(preserved),'Lower-case name redaction lost teaching content: '+preserved);
+  res=await call(ai,'POST',{task:'material',
+    prompt:'Estudiante: aprende a sembrar hortalizas.',
+    context:{sourceText:'Explica el proceso de germinación.'}
+  });
+  assert.equal(res.statusCode,200);
+  assert.ok(JSON.stringify(JSON.parse(captured.options.body)).includes('Estudiante: aprende a sembrar hortalizas'),
+    'Unlabeled teaching activity must not be mistaken for a lower-case pupil name');
+
   res=await call(ai,'POST',{task:'material',prompt:'Ficha de hortalizas',context:{
     purpose:'Aprender a sembrar hortalizas',product:'Biohuerto escolar',
     criterion:'Justifica la selección de semillas',evidence:'Registro de siembra'
