@@ -21,6 +21,9 @@ function quotaConfig(){
 }
 
 async function reserveQuota(kind){
+  // Unknown operation types must never silently receive the cheaper text rate.
+  // Check before Redis or provider access; callers must opt into a known cost.
+  if(kind!=='text'&&kind!=='image')return {status:400,error:'ai_quota_invalid_kind'};
   const cfg=quotaConfig();
   if(!cfg)return {status:503,error:'ai_quota_not_configured'};
   const cost=kind==='image'?5:1;
