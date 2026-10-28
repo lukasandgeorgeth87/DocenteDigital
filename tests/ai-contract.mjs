@@ -341,6 +341,23 @@ try{
     'An actual labeled pupil name must still be removed');
   assert.ok(capitalizedActivityPayload.includes('[nombre omitido]'));
 
+  // Regression: '=' and dash separators are accepted in roster labels.
+  // The old colon-only extraction misclassified capitalized teaching verbs
+  // as student names, erasing the first word from real GPT prompts.
+  res=await call(ai,'POST',{task:'material',
+    prompt:'Estudiante = Aprende a sembrar hortalizas. Alumna - Rosa Quispe.',
+    context:{sourceText:'Alumno - Realiza la observación de semillas.'}
+  });
+  assert.equal(res.statusCode,200);
+  const alternateSeparatorPayload=JSON.stringify(JSON.parse(captured.options.body));
+  for(const activity of ['Estudiante = Aprende a sembrar hortalizas',
+    'Alumno - Realiza la observación de semillas'])
+    assert.ok(alternateSeparatorPayload.includes(activity),
+      'Alternate separator erased a sentence-case learning activity: '+activity);
+  assert.equal(alternateSeparatorPayload.includes('Rosa Quispe'),false,
+    'A real pupil name with a dash separator must still be redacted');
+  assert.ok(alternateSeparatorPayload.includes('[nombre omitido]'));
+
   // Mixed slash/parenthesis pupil labels are common in school rosters. Their
   // lower-case names must be removed before GPT, not just capitalized names.
   res=await call(ai,'POST',{task:'material',
@@ -559,6 +576,20 @@ try{
     'Image privacy filter erased a sentence-case teaching instruction');
   assert.equal(capitalizedActivityImagePrompt.includes('Rosa Quispe'),false,
     'Image provider received a labeled pupil name');
+
+  // The image endpoint shares the same separator-safe redaction.
+  res=await call(image,'POST',{
+    prompt:'Ilustra semillas. Estudiante = Aprende a sembrar hortalizas. Alumno - Realiza la observación. Alumna - Rosa Quispe.',
+    confirmedCredit:true
+  });
+  assert.equal(res.statusCode,200);
+  const alternateSeparatorImagePrompt=JSON.parse(captured.options.body).prompt;
+  for(const activity of ['Estudiante = Aprende a sembrar hortalizas',
+    'Alumno - Realiza la observación'])
+    assert.ok(alternateSeparatorImagePrompt.includes(activity),
+      'Image prompt lost an activity after alternate separator: '+activity);
+  assert.equal(alternateSeparatorImagePrompt.includes('Rosa Quispe'),false,
+    'Image prompt leaked a pupil name after dash separator');
 
   // Provider HTTP 200 with a nonempty base64 string that is not PNG must fail.
   globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({data:[{b64_json:'ZmFrZS1wbmc='}]})});
