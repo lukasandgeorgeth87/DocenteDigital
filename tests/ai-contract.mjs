@@ -340,6 +340,20 @@ try{
     assert.ok(aliasLowercasePayload.includes(preserved),
       'Alias name redaction erased learning context: '+preserved);
 
+  // School forms also use "Nombre del estudiante", "Nombre de la alumna"
+  // and "Nombres del alumno" with fully lower-case names.
+  // Verify the outgoing GPT request, including sourceText, not only the helper.
+  res=await call(ai,'POST',{task:'material',
+    prompt:'Nombre del estudiante: maria fernanda quispe aprende a sembrar hortalizas.',
+    context:{sourceText:'Nombre de la alumna: rosa huamán; Nombres del alumno: luis perez. Registro de semillas.'}
+  });
+  assert.equal(res.statusCode,200);
+  const extendedRosterPayload=JSON.stringify(JSON.parse(captured.options.body));
+  for(const leak of ['maria fernanda quispe','rosa huamán','luis perez'])
+    assert.equal(extendedRosterPayload.includes(leak),false,'Lower-case full school label leaked to GPT: '+leak);
+  for(const safe of ['aprende a sembrar hortalizas','Registro de semillas','[nombre omitido]'])
+    assert.ok(extendedRosterPayload.includes(safe),'School label redaction removed teaching content: '+safe);
+
   // Compound lower-case names in labeled school rosters must be removed
   // from the actual text-provider request without swallowing the learning verb.
   res=await call(ai,'POST',{task:'material',
@@ -454,6 +468,18 @@ try{
   assert.match(aliasImagePrompt,/Ilustra semillas/);
   assert.match(aliasImagePrompt,/\[nombre omitido\]/);
   assert.match(aliasImagePrompt,/\[teléfono omitido\]/);
+  // The same lower-case full-name labels must be scrubbed from image requests.
+  res=await call(image,'POST',{
+    prompt:'Ilustra semillas. Nombre de la estudiante: ana maria perez aprende a sembrar hortalizas.',
+    confirmedCredit:true
+  });
+  assert.equal(res.statusCode,200);
+  const extendedRosterImagePrompt=JSON.parse(captured.options.body).prompt;
+  assert.equal(extendedRosterImagePrompt.includes('ana maria perez'),false,
+    'Lower-case full-name school label leaked to image provider');
+  assert.ok(extendedRosterImagePrompt.includes('[nombre omitido]'));
+  assert.ok(extendedRosterImagePrompt.includes('aprende a sembrar hortalizas'));
+
   res=await call(image,'POST',{prompt:'Dibuja hortalizas, DNI N° 1122.3344',confirmedCredit:true});
   assert.equal(res.statusCode,200);
   const groupedDniImagePrompt=JSON.parse(captured.options.body).prompt;
