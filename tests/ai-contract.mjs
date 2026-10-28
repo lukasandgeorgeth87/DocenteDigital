@@ -325,6 +325,22 @@ try{
   assert.ok(JSON.stringify(JSON.parse(captured.options.body)).includes('Estudiante: aprende a sembrar hortalizas'),
     'Unlabeled teaching activity must not be mistaken for a lower-case pupil name');
 
+  // Sentence-case learning instructions must survive server-side privacy
+  // scrubbing even when a teacher uses a school-style label.
+  res=await call(ai,'POST',{task:'material',
+    prompt:'Estudiante: Aprende a sembrar hortalizas. Alumna: Rosa Quispe.',
+    context:{sourceText:'Alumno: Realiza la observación de semillas.'}
+  });
+  assert.equal(res.statusCode,200);
+  const capitalizedActivityPayload=JSON.stringify(JSON.parse(captured.options.body));
+  for(const activity of ['Estudiante: Aprende a sembrar hortalizas',
+    'Alumno: Realiza la observación de semillas'])
+    assert.ok(capitalizedActivityPayload.includes(activity),
+      'Sentence-case learning activity was redacted as a pupil name: '+activity);
+  assert.equal(capitalizedActivityPayload.includes('Rosa Quispe'),false,
+    'An actual labeled pupil name must still be removed');
+  assert.ok(capitalizedActivityPayload.includes('[nombre omitido]'));
+
   // Mixed slash/parenthesis pupil labels are common in school rosters. Their
   // lower-case names must be removed before GPT, not just capitalized names.
   res=await call(ai,'POST',{task:'material',
