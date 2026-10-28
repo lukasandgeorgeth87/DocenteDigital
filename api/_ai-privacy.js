@@ -11,7 +11,9 @@ function redactPersonalData(value){
     .replace(/\b([Ee][Ss][Tt][Uu][Dd][Ii][Aa][Nn][Tt][Ee]|[Aa][Ll][Uu][Mm][Nn][AaOo](?:\/[AaOo]|\([AaOo]\))?|[Nn][Ii][Ññ][OoAa](?:\/[AaOo]|\([AaOo]\))?|[Ee][Ss][Cc][Oo][Ll][Aa][Rr]|(?:[Nn]ombres?|NOMBRES?)(?:\s+[Yy]\s+(?:[Aa]pellidos?|APELLIDOS?)|\s+(?:[Cc]ompletos?|COMPLETOS?)|\s+(?:[Dd]el?|DEL?)\s+(?:[Ee]studiante|ESTUDIANTE|[Aa]lumno|ALUMNO|[Aa]lumna|ALUMNA))?|(?:[Aa]pellidos?|APELLIDOS?)(?:\s+[Yy]\s+(?:[Nn]ombres?|NOMBRES?))?)\s*[:=–—-]\s*[A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*)*(?:\s+(?:(?:de|del|la|las|los|y)\s+){0,3}[A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*(?:[-'][A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ]*)*){0,5}/g,(match,label,offset,input)=>{
       // Sentence-case teaching instructions are not pupil names.
       // Keep a labeled "Aprende a ..." / "Realiza la ..." activity intact.
-      const name=match.slice(match.indexOf(':')+1).trim();
+      // Extract the name after ANY supported separator (:, =, hyphen, dash).
+      // indexOf(':') returned -1 for '='/'-', erasing sentence-case instructions.
+      const name=match.slice(label.length).replace(/^\s*[:=–—-]\s*/, '').trim();
       const tail=input.slice(offset+match.length);
       if(/^(?:aprende|practica|realiza|cultiva|resuelve|escribe|lee|siembra)$/i.test(name)
         && /^\s+(?:a|el|la|los|las|un|una|sobre|en|con|de|por)\b/i.test(tail))return match;
