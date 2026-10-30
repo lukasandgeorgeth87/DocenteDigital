@@ -132,6 +132,21 @@
     alert('Revisión pedagógica de la unidad\n\n'+checks.map(x=>`${icon(x[1])} ${x[0]}${detail(x)}`).join('\n')+'\n\nEsta revisión comprueba solo datos visibles de la unidad. La revisión avanzada con IA, fuentes curriculares, instrumentos y registro auxiliar permanece pendiente hasta contar con evidencia funcional.');
   };
 
+  // Priorizar la petición principal, no una mención secundaria a "sesiones".
+  function ddQuickRequestKind(input){
+    const text=String(input||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    const choices=[
+      ['plan',/\b(?:unidad(?:es)?|proyecto(?:s)?)(?:\s+de\s+aprendizaje)?\b/],
+      ['session',/\bsesion(?:es)?\b/],
+      ['evaluation',/\b(?:evaluacion(?:es)?|rubricas?)\b/],
+      ['director',/\b(?:oficio|resolucion|rd|pat|pei|pci|reglamento interno|informe|acta|conei|comite|ugel|dre|gre|director|gestion escolar)\b/]
+    ];
+    const found=choices.map(([kind,pattern])=>({kind,index:text.search(pattern)})).filter(x=>x.index>=0);
+    found.sort((a,b)=>a.index-b.index);
+    return found[0]?.kind||'plan';
+  }
+  window.ddQuickRequestKind=ddQuickRequestKind;
+
   // Entrada conversacional simple, inspirada en flujos públicos de asistentes docentes; no simula IA.
   const homeGrid=byId('home')?.querySelector('.grid');
   if(homeGrid&&!byId('ddQuickBox')){
@@ -141,14 +156,26 @@
     byId('ddQuickGo').onclick=()=>{
       const t=(byId('ddQuickInput').value||'').trim();
       if(!t)return;
-      if(/\b(oficio|resoluci[oó]n|\brd\b|pat|pei|pci|reglamento interno|\bri\b|informe|acta|conei|comit[eé]|ugel|dre|gre|director|gesti[oó]n escolar)\b/i.test(t)){
+      const kind=ddQuickRequestKind(t);
+      if(kind==='director'){
         if(typeof go==='function')go('director');
         alert('Carpeta Director: esta función todavía está en construcción. Tu solicitud no se convertirá en una Unidad/Proyecto.');
         return;
       }
-      if(/sesión|sesion/i.test(t)){go('session');return;}
-      if(/evaluación|evaluacion|rúbrica|rubrica/i.test(t)){go('evaluation');return;}
-      go('plan');showUnit();byId('unitSituation').value=t.replace(/^(quiero|crear|preparar|hazme|necesito)\s+/i,'');ddSuggestTitles();
+      if(kind==='session'){go('session');return;}
+      if(kind==='evaluation'){go('evaluation');return;}
+      go('plan');
+      showUnit();
+      const type=byId('unitType');
+      if(type)type.value=/\bproyectos?(?:\s+de\s+aprendizaje)?\b/i.test(t)?'Proyecto de aprendizaje':'Unidad de aprendizaje';
+      const duration=byId('unitDuration');
+      const weeks=t.match(/\b([1-6])\s*semanas?\b/i);
+      if(duration&&weeks&&[...duration.options].some(o=>o.value===weeks[1]+' semana'+(weeks[1]==='1'?'':'s'))){
+        duration.value=weeks[1]+' semana'+(weeks[1]==='1'?'':'s');
+      }
+      const situation=byId('unitSituation');
+      if(situation)situation.value=t.replace(/^(quiero|crear|preparar|hazme|necesito)\s+/i,'');
+      if(typeof window.ddSuggestTitles==='function')window.ddSuggestTitles();
     };
   }
 
