@@ -52,7 +52,9 @@
     const wrap=$('gradeChoices');if(!wrap||!window.state)return;
     const multi=window.state.ieType==='Multigrado'||window.state.ieType==='Unidocente';
     const help=$('gradeHelp');
-    if(help)help.textContent=multi?'Puedes seleccionar varios grados o edades para una planificación común y diferenciada.':'Selecciona el grado con el que trabajarás.';
+    if(help)help.textContent=window.state.level==='Primaria'
+      ?`${multi?'Marca cualquier combinación de grados que enseñas.':'Selecciona el grado con el que trabajarás.'} Ciclo III: 1.º-2.º; IV: 3.º-4.º; V: 5.º-6.º.`
+      :multi?'Puedes seleccionar varios grados o edades para una planificación común y diferenciada.':'Selecciona el grado con el que trabajarás.';
     wrap.innerHTML='';
     gradeOptionsSafe().forEach(g=>{
       const b=document.createElement('button');

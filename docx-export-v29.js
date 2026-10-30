@@ -79,13 +79,18 @@
     }
     walk(doc.body);return out.join('');
   }
-  function docxBlob(title,html,landscape=false){
+  function docxBlob(title,html,landscape=false,documentContext=null){
     const body=htmlToWordXml(html);
     const pgSz=landscape?'<w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>':'<w:pgSz w:w="11906" w:h="16838"/>';
-    const ieName=state.institutionMaster?.ieName||state.ieName||state.schoolName||'';
-    const identity=[state.teacherName,ieName].map(v=>String(v||'').trim()).filter(Boolean).join(' · ');
+    // Para documentos históricos, usar SOLO el snapshot del documento; nunca
+    // completar la identidad con la Ficha Maestra que esté activa hoy.
+    const context=documentContext&&typeof documentContext==='object'?documentContext:null;
+    const ieName=context?context.institution:(state.institutionMaster?.ieName||state.ieName||state.schoolName||'');
+    const teacher=context?context.teacher:state.teacherName;
+    const identity=[teacher,ieName].map(v=>String(v||'').trim()).filter(Boolean).join(' · ');
     const identityXml=identity?`<w:p>${runXml(identity,false,18)}</w:p>`:'';
-    const documentXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}${identityXml}<w:sectPr>${pgSz}<w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="360" w:footer="360" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+    const verificationXml=context?.historicalIdentityUnverified?pXml('Identidad histórica por verificar antes de emitir este documento.',{bold:true}):'';
+    const documentXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}${identityXml}${verificationXml}<w:sectPr>${pgSz}<w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="360" w:footer="360" w:gutter="0"/></w:sectPr></w:body></w:document>`;
     const contentTypes=`<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`;
     const rels=`<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`;
     const bytes=zip([{name:'[Content_Types].xml',data:contentTypes},{name:'_rels/.rels',data:rels},{name:'word/document.xml',data:documentXml}]);
@@ -118,21 +123,26 @@
     }
   }
 
+  function savedIdentity(document){
+    return document?.documentContextSnapshot&&typeof document.documentContextSnapshot==='object'
+      ?document.documentContextSnapshot:{historicalIdentityUnverified:true};
+  }
+
   window.downloadUnitWord=function(id){
     const unit=(state.units||[]).find(u=>u.id===id);if(!unit)return;
-    const blob=docxBlob(unit.title,unitWordHtml(unit),true);downloadDocx(blob,fileName(unit.title));
+    const blob=docxBlob(unit.title,unitWordHtml(unit),true,savedIdentity(unit));downloadDocx(blob,fileName(unit.title));
   };
   window.shareUnit=function(id){
     const unit=(state.units||[]).find(u=>u.id===id);if(!unit)return;
-    const blob=docxBlob(unit.title,unitWordHtml(unit),true);shareDocx(blob,fileName(unit.title),unit.title);
+    const blob=docxBlob(unit.title,unitWordHtml(unit),true,savedIdentity(unit));shareDocx(blob,fileName(unit.title),unit.title);
   };
   window.downloadSessionWord=function(){
     const s=state.lastSession;if(!s)return alert('Primero crea una sesión.');
-    const blob=docxBlob(s.title,sessionHtml(s,true),false);downloadDocx(blob,fileName(s.title));
+    const blob=docxBlob(s.title,sessionHtml(s,true),false,savedIdentity(s));downloadDocx(blob,fileName(s.title));
   };
   window.shareSession=function(){
     const s=state.lastSession;if(!s)return alert('Primero crea una sesión.');
-    const blob=docxBlob(s.title,sessionHtml(s,true),false);shareDocx(blob,fileName(s.title),s.title);
+    const blob=docxBlob(s.title,sessionHtml(s,true),false,savedIdentity(s));shareDocx(blob,fileName(s.title),s.title);
   };
   window.DDWordExport={
     downloadHtml:function(title,html,landscape=false,customName=''){

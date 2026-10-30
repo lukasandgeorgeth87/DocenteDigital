@@ -115,12 +115,18 @@
     'significant-situation-core-v53.js',
     'session-learning-core-v54.js',
     'session-curriculum-safety-v67.js',
+    'primary-communication-source-pages-v6.js',
+    'primary-mathematics-source-pages-v7.js',
+    'primary-science-source-pages-v8.js',
+    'primary-personal-social-source-pages-v9.js',
+    'session-teaching-sequence-v3.js',
     'easy-surface-simplicity-v55.js',
     'easy-audit-surface-v66.js',
     'planning-archive-simplicity-v56.js',
     'diagnostic-integrity-v59.js',
     'territorial-generation-guard-v61.js',
-    'master-audit-v57.js'
+    'master-audit-v57.js',
+    'planning-chain-integrity-v10.js'
   ];
   const planningCritical=[
     'meaning-engine-v25.js',

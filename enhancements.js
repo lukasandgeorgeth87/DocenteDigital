@@ -79,8 +79,16 @@
     }
     return n<=2?`Participa y representa aprendizajes sobre ${ctx} mediante oralidad, imágenes o acciones.`:n<=4?`Organiza y explica una producción vinculada con ${ctx}.`:`Analiza, produce y sustenta una propuesta vinculada con ${ctx}.`;
   }
-  function ddCriterion(area,g,brief){
+  function ddCriterion(area,g,brief,level=''){
     const n=parseInt(g)||0; const ctx=brief||'el reto de la unidad';
+    if(level==='Inicial'||/\baños?\b/i.test(g)){
+      if(area==='Comunicación')return `Expresa ideas y preguntas sobre ${ctx} mediante conversación, dibujos, gestos o escrituras espontáneas, y escucha las expresiones de otros.`;
+      if(area==='Matemática')return `Agrupa, cuenta o compara objetos relacionados con ${ctx} usando material concreto y comunica lo que hizo con palabras o gestos.`;
+      if(area==='Ciencia y Tecnología')return `Explora, observa y compara materiales o cambios relacionados con ${ctx} y comunica sus hallazgos mediante dibujos, palabras o gestos.`;
+      if(area==='Arte y Cultura')return `Explora materiales y lenguajes artísticos para expresar una idea propia relacionada con ${ctx} y comparte cómo la creó.`;
+      if(area==='Psicomotriz')return `Explora movimientos y espacios con seguridad y autonomía y expresa cómo se sintió durante la actividad.`;
+      return `Participa, explora y comunica lo que descubrió sobre ${ctx} mediante juego, interacción y representaciones propias de su edad.`;
+    }
     if(area==='Comunicación') return n<=2?`Comunica una idea comprensible sobre ${ctx}, usando recursos orales, gráficos o escritos según su nivel.`:n<=4?`Organiza y comunica información pertinente sobre ${ctx}, considerando propósito y destinatario.`:`Sustenta y organiza información sobre ${ctx} con coherencia, adecuación al propósito y revisión de su producción.`;
     if(area==='Matemática') return n<=2?`Representa y resuelve una situación de ${ctx} con material, dibujo o números y explica qué hizo.`:n<=4?`Resuelve una situación problemática de ${ctx}, representa datos y explica su estrategia.`:`Modela, resuelve y justifica una situación problemática de ${ctx}, verificando la pertinencia de su estrategia.`;
     if(area==='Ciencia y Tecnología') return n<=2?`Observa y registra cambios relacionados con ${ctx} y comunica qué descubrió.`:n<=4?`Registra y compara evidencias sobre ${ctx} para formular una conclusión.`:`Contrasta hipótesis y utiliza evidencias sobre ${ctx} para sustentar una conclusión y reconocer limitaciones.`;
@@ -117,7 +125,7 @@
         officialCompetencies,
         evidence:base.evidence||'Producción o actuación observable vinculada al reto.',
         instrument:base.instrument||'Instrumento pertinente.',
-        criteria:unit.grades.map(g=>({grade:g,text:ddCriterion(area,g,brief)}))
+        criteria:unit.grades.map(g=>({grade:g,text:ddCriterion(area,g,brief,unit.level)}))
       };
     });
   }
@@ -185,7 +193,7 @@
     if(!brief&&typeof window.ddAssistPlanningContext==='function')brief=window.ddAssistPlanningContext(true)||'';
     if(!brief)brief=byId('unitTitle').value.trim()||'una experiencia cercana y significativa para los estudiantes';
     let title=byId('unitTitle').value.trim(); if(!title){title=proposeUnitTitle(brief,type);byId('unitTitle').value=title;}
-    const unit=ddEnrich({id:'u'+Date.now(),title,type,duration,situationBrief:brief,situation:expandSituation(brief),level:state.level,ieType:state.ieType,grades:[...state.grades],areas:[...state.areas],language:state.language,quechuaVar:state.quechuaVar,purpose:'Desarrollar competencias de manera articulada a partir de una situación real y retadora de la comunidad, integrando saberes locales y conocimientos escolares, con atención diferenciada según grado.',product:ddProduct(brief,type),activities:buildActivities(brief,duration),createdAt:new Date().toISOString()});
+    const unit=ddEnrich({id:'u'+Date.now(),title,type,duration,situationBrief:brief,situation:expandSituation(brief),level:state.level,ieType:state.ieType,grades:[...state.grades],areas:[...state.areas],language:state.language,quechuaVar:state.quechuaVar,documentContextSnapshot:documentContextFor(state.level,state.ieType,state.grades,state.language,state.quechuaVar),purpose:'Desarrollar competencias de manera articulada a partir de una situación real y retadora de la comunidad, integrando saberes locales y conocimientos escolares, con atención diferenciada según grado.',product:ddProduct(brief,type),activities:buildActivities(brief,duration),createdAt:new Date().toISOString()});
     state.units.unshift(unit);state.activeUnitId=unit.id;save();byId('unitReady').classList.remove('hidden');renderUnits();renderUnitOutput(unit);fillSessionUnits();byId('unitOutput').scrollIntoView({behavior:'smooth'});
   };
 
@@ -225,8 +233,11 @@
 
   renderUnitOutput=function(unit){
     unit=ddEnrich(unit);save(); const out=byId('unitOutput'); if(!out)return;
+    const identity=unit.documentContextSnapshot||{};
+    const institutionLabel=identity.institution||unit.teacherProfile?.institutionName||'Por verificar';
+    const teacherLabel=identity.teacher||unit.teacherProfile?.teacherName||'Por verificar';
     const summary=`<div class="dd-cover"><div><span class="pill">✓ Guardada</span><h1>${E(unit.title)}</h1><p><b>${E(unit.type)}</b> · ${E(unit.duration)}</p><p>${E(unit.level)} · ${E(unit.ieType)} · ${E(unit.grades.join(', '))}</p></div><div class="dd-cover-icon">🌱📚</div></div>
-      <div class="dd-info"><b>I.E.:</b> ${E(unit.teacherProfile?.institutionName||state.teacherContext?.institutionName||state.schoolName||'Por completar')} &nbsp; | &nbsp; <b>Docente:</b> ${E(unit.teacherProfile?.teacherName||state.teacherContext?.teacherName||state.teacherName||'Por completar')} &nbsp; | &nbsp; <b>Áreas:</b> ${E(unit.areas.join(', '))}<br><b>Ubicación:</b> ${E([
+      <div class="dd-info"><b>I.E.:</b> ${E(institutionLabel)} &nbsp; | &nbsp; <b>Docente:</b> ${E(teacherLabel)} &nbsp; | &nbsp; <b>Áreas:</b> ${E(unit.areas.join(', '))}<br><b>Ubicación:</b> ${E([
         unit.teacherProfile?.community?((unit.teacherProfile?.localityType||'Localidad')+' '+unit.teacherProfile.community):'',
         unit.teacherProfile?.district?('Distrito '+unit.teacherProfile.district):'',
         unit.teacherProfile?.province?('Provincia '+unit.teacherProfile.province):'',
@@ -241,7 +252,11 @@
 
   unitWordHtml=function(unit){
     unit=ddEnrich(unit);
-    return `<div class="word-border"><h1 style="text-align:center">UNIDAD DE APRENDIZAJE</h1><h2 style="text-align:center">“${E(unit.title)}”</h2><h2>I. DATOS GENERALES</h2><table><tr><td><b>I.E.</b></td><td>${E(unit.teacherProfile?.institutionName||state.teacherContext?.institutionName||state.schoolName||'')}</td><td><b>Docente</b></td><td>${E(unit.teacherProfile?.teacherName||state.teacherContext?.teacherName||state.teacherName||'')}</td></tr><tr><td><b>Ubicación</b></td><td colspan="3">${E([
+    const identity=unit.documentContextSnapshot||{};
+    const historicalInstitution=identity.institution||unit.teacherProfile?.institutionName||'';
+    const historicalTeacher=identity.teacher||unit.teacherProfile?.teacherName||'';
+    const heading=/proyecto/i.test(unit.type||'')?'PROYECTO DE APRENDIZAJE':'UNIDAD DE APRENDIZAJE';
+    return `<div class="word-border"><h1 style="text-align:center">${heading}</h1><h2 style="text-align:center">“${E(unit.title)}”</h2><h2>I. DATOS GENERALES</h2><table><tr><td><b>I.E.</b></td><td>${E(historicalInstitution)}</td><td><b>Docente</b></td><td>${E(historicalTeacher)}</td></tr><tr><td><b>Ubicación</b></td><td colspan="3">${E([
     unit.teacherProfile?.community?((unit.teacherProfile?.localityType||'Localidad')+' '+unit.teacherProfile.community):'',
     unit.teacherProfile?.district?('Distrito '+unit.teacherProfile.district):'',
     unit.teacherProfile?.province?('Provincia '+unit.teacherProfile.province):'',
@@ -249,9 +264,15 @@
   ].filter(Boolean).join(' · '))}</td></tr><tr><th>Categoría</th><th>Detalle</th></tr><tr><td>Institución educativa</td><td>Datos configurados en el perfil</td></tr><tr><td>Docente</td><td>Datos configurados en el perfil</td></tr><tr><td>Ciclo, grado y sección</td><td>${E(unit.grades.join(', '))} · ${E(unit.ieType)}</td></tr><tr><td>Duración</td><td>${E(unit.duration)}</td></tr></table><h2>II. SITUACIÓN SIGNIFICATIVA Y PRODUCTO</h2><p>${E(unitSituation(unit))}</p><p><b>RETO</b><br>${E(unit.reto)}</p><p><b>PRODUCTO</b><br>${E(unit.product)}</p><h2>III. PROPÓSITOS DE APRENDIZAJE</h2>${ddPurposesHtml(unit)}<h3>Enfoques transversales</h3>${ddEnfoquesHtml(unit)}<h3>Competencias transversales</h3>${ddTransversalHtml(unit)}<h2>IV. MATRIZ DE ARTICULACIÓN Y EVALUACIÓN</h2>${ddPurposesHtml(unit)}<h2>V. SECUENCIA DE SESIONES DE APRENDIZAJE</h2>${ddSequenceHtml(unit)}<h2>VI. INSTRUMENTOS DE EVALUACIÓN</h2>${ddInstrumentHtml(unit)}<h2>VII. REGISTRO AUXILIAR</h2>${ddRegisterHtml(unit)}</div>`;
   };
 
-  function ddSessionCriterion(session,g){return ddCriterion(session.area,g,session.brief);}
+  function ddSessionCriterion(session,g){return ddCriterion(session.area,g,session.brief,session.level);}
   function ddSessionCompetence(session){return ddPickOfficialCompetence(session.level,session.area,session.title);}
   function ddSessionProcesses(session){
+    if(session.level==='Inicial'){
+      if(session.area==='Comunicación')return ['Conversación y recuperación de experiencias','Exploración de relatos, imágenes o juegos comunicativos','Expresión mediante oralidad, gestos, dibujos o trazos'];
+      if(session.area==='Matemática')return ['Exploración del reto con objetos','Juego, agrupación, conteo o comparación con material concreto','Representación y comunicación de descubrimientos'];
+      if(session.area==='Ciencia y Tecnología')return ['Exploración y preguntas sobre lo observado','Observación y comparación con materiales seguros','Representación y comunicación de hallazgos'];
+      return ['Exploración del interés y experiencias previas','Juego, experimentación o creación guiada','Comunicación de lo vivido y descubierto'];
+    }
     if(session.area==='Comunicación')return ['Planificación o comprensión del propósito comunicativo','Textualización / interacción con el texto','Revisión, reflexión y uso social del producto'];
     if(session.area==='Matemática')return ['Comprender el problema','Planificar una estrategia','Ejecutar la estrategia','Verificar, formalizar y socializar'];
     if(session.area==='Ciencia y Tecnología')return ['Problematización de situaciones','Planteamiento de hipótesis','Diseño del plan de indagación','Generación y análisis de datos','Evaluación y comunicación'];

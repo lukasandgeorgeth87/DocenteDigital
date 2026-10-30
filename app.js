@@ -126,7 +126,9 @@ function renderGrades(){
   const wrap=byId('gradeChoices');if(!wrap)return;
   wrap.innerHTML='';
   const multi=state.ieType==='Multigrado'||state.ieType==='Unidocente';
-  byId('gradeHelp').textContent=multi?'Puedes seleccionar varios grados o edades para una planificación común y diferenciada.':'Selecciona el grado con el que trabajarás.';
+  byId('gradeHelp').textContent=state.level==='Primaria'
+    ?`${multi?'Marca cualquier combinación de grados que enseñas.':'Selecciona el grado con el que trabajarás.'} Ciclo III: 1.º-2.º; IV: 3.º-4.º; V: 5.º-6.º.`
+    :multi?'Puedes seleccionar varios grados o edades para una planificación común y diferenciada.':'Selecciona el grado con el que trabajarás.';
   gradeOptions().forEach(g=>{
     const b=document.createElement('button');
     b.className='choice'+(state.grades.includes(g)?' active':'');b.textContent=g;
@@ -472,8 +474,84 @@ function proposeProduct(brief,type){
   return type==='Proyecto de aprendizaje'?'Producto o acción final acordada con los estudiantes y vinculada directamente con el reto.':'Conjunto organizado de producciones y evidencias que muestran los aprendizajes logrados durante la unidad.';
 }
 
+function contextTopicFromBrief(brief){
+  // Un contexto es una oración, no siempre un sintagma nominal. Extraer el
+  // objeto expresado por el docente evita títulos como «Leemos sobre Los
+  // estudiantes observan...» sin introducir un tema o una localidad ajenos.
+  const raw=String(brief||'').replace(/\s+/g,' ').trim();
+  if(!raw)return 'la situación de nuestra comunidad';
+  const clause=raw.split(/\s+para\s+|\s+y\s+(?=(?:los|las|el|la|queremos|quieren|desean|se)\b)/i)[0].replace(/[.!?]+$/,'').trim();
+  const match=clause.match(/\b(?:aparecieron|aparece|encontramos|encontraron|observamos|observan|observó|vemos|vimos|medir|analizar|investigar|explorar|registrar|conocer|recoger|mejorar|comprender|aprender|trabajando\s+en)\s+(.+)$/i);
+  let topic=(match?.[1]||clause).replace(/^mejor\s+/i,'').trim();
+  if(/^c[oó]mo\s+/i.test(topic)){
+    const object=topic.match(/\b((?:el|la|los|las|algunas|algunos)\s+[^.!?,;]{4,90})/i);
+    if(object)topic=object[1].replace(/^algunas\s+/i,'las ').replace(/^algunos\s+/i,'los ')
+      .split(/\s+(?:ayudan|permiten|facilitan|mejoran)\b/i)[0].trim();
+  }
+  if(!match&&/^(?:queremos|estamos|los estudiantes|las niñas|los niños)\b/i.test(topic))topic='la experiencia descrita';
+  if(!/^(?:el|la|los|las|un|una|unos|unas)\s/i.test(topic)){
+    const first=topic.split(/\s+/)[0].toLowerCase();
+    const article=first==='agua'?'el':/^(?:cambio|sabere|residuo)/i.test(first)?'los':/^(?:consumo|uso|cuidado|crecimiento)/i.test(first)?'el':/as$/.test(first)?'las':/(?:os|es)$/.test(first)?'los':/a$/.test(first)?'la':'el';
+    topic=article+' '+topic;
+  }
+  const capped=topic.length>105?topic.slice(0,105).replace(/\s+\S*$/,''):topic;
+  return capped.toLowerCase();
+}
+window.ddContextTopic=contextTopicFromBrief;
+
 function activityVariants(area,brief){
-  const topic=brief||'la situación de nuestra comunidad';
+  const topic=state.pendingUnitChoice?.brief===brief&&state.pendingUnitChoice?.contextFocus
+    ?state.pendingUnitChoice.contextFocus:contextTopicFromBrief(brief);
+  // En Inicial (ciclo II), las actividades se basan en juego, exploración,
+  // oralidad, imágenes, trazos y representaciones. No presuponen lectura ni
+  // escritura convencional o producción de textos autónoma.
+  if(state.level==='Inicial'){
+    const initial={
+      'Comunicación':[
+        `Conversamos y expresamos lo que sabemos sobre ${topic}`,
+        `Escuchamos relatos y exploramos imágenes vinculadas con ${topic}`,
+        'Representamos nuestros descubrimientos con dibujos, trazos o dictados al docente',
+        'Jugamos a contar lo que observamos con palabras, gestos y dibujos',
+        'Compartimos nuestras preguntas y hallazgos con el grupo'
+      ],
+      'Matemática':[
+        `Agrupamos objetos y materiales relacionados con ${topic}`,
+        'Contamos y comparamos cantidades usando material concreto',
+        'Exploramos formas, tamaños y posiciones mediante juegos',
+        'Organizamos colecciones y mostramos cómo las agrupamos',
+        'Explicamos nuestras decisiones con objetos, gestos y palabras'
+      ],
+      'Ciencia y Tecnología':[
+        `Observamos y exploramos materiales seguros relacionados con ${topic}`,
+        'Formulamos preguntas sobre lo que observamos',
+        'Comparamos características y cambios mediante la exploración',
+        'Representamos nuestros hallazgos con dibujos y registros sencillos',
+        'Compartimos qué descubrimos y qué nuevas preguntas tenemos'
+      ],
+      'Personal Social':[
+        `Compartimos experiencias y saberes familiares sobre ${topic}`,
+        'Escuchamos a otros y expresamos nuestras ideas y emociones',
+        'Acordamos cómo cuidarnos y participar en las actividades',
+        'Jugamos a representar situaciones de nuestra vida cotidiana',
+        'Contamos cómo colaboramos y qué aprendimos juntos'
+      ],
+      'Psicomotriz':[
+        'Exploramos movimientos y espacios con seguridad',
+        'Jugamos a movernos, equilibrarnos y coordinarnos',
+        'Elegimos materiales y formas de movimiento según nuestras posibilidades',
+        'Expresamos lo vivido con el cuerpo y la palabra',
+        'Compartimos cómo nos sentimos y qué movimientos descubrimos'
+      ],
+      'Arte y Cultura':[
+        `Exploramos colores, formas, sonidos y materiales vinculados con ${topic}`,
+        'Jugamos y experimentamos con diversos lenguajes artísticos',
+        'Creamos dibujos, movimientos, sonidos o modelados propios',
+        'Mostramos y comentamos nuestras producciones',
+        'Valoramos las distintas formas de expresarnos'
+      ]
+    };
+    if(initial[area])return initial[area];
+  }
   const map={
     'Comunicación':[
       `Escuchamos y dialogamos sobre ${topic}`,
@@ -560,6 +638,31 @@ function buildActivities(brief,duration){
   });
 }
 
+function documentContextFor(level,ieType,grades,language,quechuaVar){
+  const master=state.institutionMaster||state.institutionProfile||{};
+  return {
+    institution:String(master.schoolName||master.ieName||state.ieName||state.schoolName||'').trim(),
+    teacher:String(master.teacherName||state.teacherName||'').trim(),
+    level,ieType,grades:[...grades],language,quechuaVar,
+    capturedAt:new Date().toISOString()
+  };
+}
+
+function sessionContextFromUnit(unit,level,ieType,grades,language,quechuaVar){
+  const approved=unit?.documentContextSnapshot;
+  if(approved&&typeof approved==='object')return {
+    ...approved,level,ieType,grades:[...grades],language,quechuaVar,
+    sourceUnitId:unit.id,capturedAt:new Date().toISOString()
+  };
+  // Una unidad histórica sin identidad versionada NO debe recibir en silencio
+  // los nombres del docente o institución que estén configurados hoy.
+  if(unit)return {
+    institution:'',teacher:'',level,ieType,grades:[...grades],language,quechuaVar,
+    sourceUnitId:unit.id,historicalIdentityUnverified:true,capturedAt:new Date().toISOString()
+  };
+  return documentContextFor(level,ieType,grades,language,quechuaVar);
+}
+
 function createUnitDemo(){
   const type=byId('unitType').value;
   const duration=byId('unitDuration').value;
@@ -573,6 +676,7 @@ function createUnitDemo(){
     id:'u'+Date.now(),title,type,duration,situationBrief:brief,situation,
     level:state.level,ieType:state.ieType,grades:[...state.grades],areas:[...state.areas],
     language:state.language,quechuaVar:state.quechuaVar,
+    documentContextSnapshot:documentContextFor(state.level,state.ieType,state.grades,state.language,state.quechuaVar),
     purpose:'Movilizar y desarrollar competencias de las áreas seleccionadas mediante retos auténticos del contexto, articulando saberes de la comunidad y conocimientos escolares, con atención diferenciada según el grado.',
     product:proposeProduct(brief,type),
     activities:buildActivities(brief,duration),createdAt:new Date().toISOString()
@@ -651,18 +755,19 @@ function selectedActivity(){
 
 function syncTitle(){
   const title=byId('sessionTitle'),activitySelect=byId('activity');if(!title||!activitySelect)return;
-  const {activity}=selectedActivity();
+  const {unit,activity}=selectedActivity();
+  const level=unit?.level||state.level;
   title.value=activity?.title||activitySelect.options[activitySelect.selectedIndex]?.textContent||'';
   title.readOnly=state.mode==='easy';
   const duration=byId('sessionDuration');
-  if(duration&&state.level==='Inicial'&&activity){
+  if(duration&&level==='Inicial'&&activity){
     const desired=activity.kind==='taller'?'40 minutos':'60 minutos';
     if([...duration.options].some(o=>o.value===desired||o.textContent===desired))duration.value=desired;
   }
   const heading=document.querySelector('#session h1');
   const primaryButton=[...document.querySelectorAll('#session button')].find(b=>(b.getAttribute('onclick')||'').includes('generateSession'));
   const activityLabel=byId('activity')?.closest('label');
-  if(state.level==='Inicial'){
+  if(level==='Inicial'){
     if(heading)heading.textContent='Crear actividad o taller';
     if(primaryButton)primaryButton.textContent='✨ PREPARAR ACTIVIDAD / TALLER';
     if(activityLabel&&activityLabel.firstChild?.nodeType===Node.TEXT_NODE)activityLabel.firstChild.nodeValue='Actividad / taller programado';
@@ -673,11 +778,11 @@ function syncTitle(){
   }
 }
 
-function competenceFor(area,title=''){
+function competenceFor(area,title='',level=state.level){
   const core=window.DD_OFFICIAL_CURRICULUM;
-  const official=core?.pickCompetence?.(state.level,area,title);
+  const official=core?.pickCompetence?.(level,area,title);
   if(!official){
-    throw new Error(`No se encontró una competencia oficial MINEDU para ${state.level} / ${area}`);
+    throw new Error(`No se encontró una competencia oficial MINEDU para ${level} / ${area}`);
   }
   return official.name;
 }
@@ -785,21 +890,31 @@ function ddSessionTopicSpec(area,title,brief,level){
 
 function buildSession(){
   const {unit,activity}=selectedActivity();
+  // Una sesión derivada conserva el contexto aprobado de su Unidad/Proyecto.
+  // Cambiar después la configuración general no debe reasignar sus grados o nivel.
+  const level=unit?.level||state.level;
+  const ieType=unit?.ieType||state.ieType;
+  const grades=Array.isArray(unit?.grades)&&unit.grades.length?[...unit.grades]:[...state.grades];
+  const language=unit?.language||state.language;
+  const quechuaVar=unit?.quechuaVar||state.quechuaVar;
   const duration=byId('sessionDuration')?.value||'45 minutos';
   const resources=byId('sessionResources')?.value||'Materiales básicos';
   const brief=unit?unitBrief(unit):'la situación de nuestra comunidad';
   const area=activity?.area||'Área';
   const title=byId('sessionTitle')?.value||activity?.title||'Sesión de aprendizaje';
   const times=sessionTimes(duration);
-  const topicSpec=ddSessionTopicSpec(area,title,brief,state.level);
+  const topicSpec=ddSessionTopicSpec(area,title,brief,level);
   const session={
     id:'s'+Date.now(),unitId:unit?.id||null,unitTitle:unit?.title||'Unidad de ejemplo',title,area,duration,resources,
+    activityIndex:unit&&activity?unit.activities.indexOf(activity):-1,
+    activitySnapshot:activity?{area:activity.area||'',title:activity.title||'',kind:activity.kind||'sesion',workshopType:activity.workshopType||''}:null,
     topicSpec,
-    activityKind:activity?.kind||'sesion',activityKindLabel:activity?.kindLabel||(state.level==='Inicial'?'Actividad de aprendizaje':'Sesión de aprendizaje'),workshopType:activity?.workshopType||'',
-    level:state.level,ieType:state.ieType,grades:[...state.grades],brief,
-    competence:competenceFor(area,title),criterion:criterionFor(area,brief),evidence:evidenceFor(area),instrument:instrumentFor(area),
+    activityKind:activity?.kind||'sesion',activityKindLabel:activity?.kindLabel||(level==='Inicial'?'Actividad de aprendizaje':'Sesión de aprendizaje'),workshopType:activity?.workshopType||'',
+    level,ieType,grades,language,quechuaVar,brief,
+    documentContextSnapshot:sessionContextFromUnit(unit,level,ieType,grades,language,quechuaVar),
+    competence:competenceFor(area,title,level),criterion:criterionFor(area,brief),evidence:evidenceFor(area),instrument:instrumentFor(area),
     challenge:challengeFor(area,brief),times,
-    purpose:state.level==='Inicial'
+    purpose:level==='Inicial'
       ? (activity?.kind==='taller'
           ? `Que las niñas y los niños participen en el taller de ${activity?.workshopType||'expresión'} explorando materiales, movimientos o lenguajes propios del taller, tomando decisiones y comunicando lo que hicieron y sintieron.`
           : topicSpec.purpose)
@@ -887,7 +1002,7 @@ function wordDocument(title,body){
   return `<!doctype html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>body{font-family:Arial,sans-serif;font-size:11pt;line-height:1.35;color:#111}h1{font-size:18pt}h2{font-size:15pt}h3{font-size:12pt}table{border-collapse:collapse;width:100%}th,td{border:1px solid #666;padding:6px;vertical-align:top}.box{border:1px solid #999;padding:10px;margin:8px 0}</style></head><body>${body}</body></html>`;
 }
 
-function wordBlob(title,body){return new Blob(['\ufeff',wordDocument(title,body)],{type:'application/msword;charset=utf-8'});}
+function wordBlob(title,body,documentContext=null){return new Blob(['\ufeff',wordDocument(title,body,documentContext)],{type:'application/msword;charset=utf-8'});}
 function downloadBlob(blob,fileName){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fileName;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1200)}
 
 function unitWordHtml(unit){
@@ -898,7 +1013,7 @@ function unitWordHtml(unit){
 
 function downloadUnitWord(id){
   const unit=state.units.find(u=>u.id===id);if(!unit)return;
-  downloadBlob(wordBlob(unit.title,unitWordHtml(unit)),cleanFileName(unit.title)+'.doc');
+  downloadBlob(wordBlob(unit.title,unitWordHtml(unit),unit.documentContextSnapshot||{historicalIdentityUnverified:true}),cleanFileName(unit.title)+'.doc');
 }
 
 async function shareFile(blob,fileName,title){
@@ -911,17 +1026,17 @@ async function shareFile(blob,fileName,title){
 
 function shareUnit(id){
   const unit=state.units.find(u=>u.id===id);if(!unit)return;
-  shareFile(wordBlob(unit.title,unitWordHtml(unit)),cleanFileName(unit.title)+'.doc',unit.title);
+  shareFile(wordBlob(unit.title,unitWordHtml(unit),unit.documentContextSnapshot||{historicalIdentityUnverified:true}),cleanFileName(unit.title)+'.doc',unit.title);
 }
 
 function downloadSessionWord(){
   const s=state.lastSession;if(!s)return alert('Primero crea una sesión.');
-  downloadBlob(wordBlob(s.title,sessionHtml(s,true)),cleanFileName(s.title)+'.doc');
+  downloadBlob(wordBlob(s.title,sessionHtml(s,true),s.documentContextSnapshot||{historicalIdentityUnverified:true}),cleanFileName(s.title)+'.doc');
 }
 
 function shareSession(){
   const s=state.lastSession;if(!s)return alert('Primero crea una sesión.');
-  shareFile(wordBlob(s.title,sessionHtml(s,true)),cleanFileName(s.title)+'.doc',s.title);
+  shareFile(wordBlob(s.title,sessionHtml(s,true),s.documentContextSnapshot||{historicalIdentityUnverified:true}),cleanFileName(s.title)+'.doc',s.title);
 }
 
 function generateMaterial(){

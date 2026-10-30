@@ -382,6 +382,90 @@
   function getTransversals(level){return MATRIX[level]?.transversals||[];}
   function sourceFor(level){return SOURCES[level]||null;}
 
+  // La primera acción de una actividad de Comunicación tiene prioridad.
+  // Si combina varias competencias sin una acción principal identificable,
+  // exigir confirmación docente en lugar de fingir una elección oficial.
+  function communicationModeFromTitle(title){
+    const t=String(title||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    if(/^(?:convers\w*|dialog\w*|escuch\w*|expon\w*|present\w*|entrevist\w*|debat\w*|narr\w*|contamos)\b/.test(t))return'oral';
+    if(/^(?:leem\w*|leer|lectur\w*|comprend\w*|interpret\w*|analiz\w*\s+(?:un|una|los|las|textos?))\b/.test(t))return'lectura';
+    if(/^(?:escrib\w*|redact\w*|produc\w*|revis\w*|elabor\w*\s+(?:un|una|los|las|textos?)|planific\w*\s+(?:un|una|los|las|textos?))\b/.test(t))return'escritura';
+    const matches=[
+      ['oral',/convers|dialog|escuch|expon|entrevist|debate|intercambio oral/],
+      ['lectura',/leem|leer|lectura|comprension lectora/],
+      ['escritura',/escrib|redact|produccion escrita|revisamos un texto/]
+    ].filter(([,re])=>re.test(t));
+    return matches.length===1?matches[0][0]:'indefinido';
+  }
+
+  // En Matemática no basta buscar una palabra aislada: «medimos la masa»
+  // corresponde a cantidad, mientras «medimos el perímetro» corresponde a
+  // forma. Los títulos dudosos quedan pendientes de confirmación docente.
+  function mathematicsModeFromTitle(title){
+    const t=String(title||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    if(/(?:gestion de datos|datos e incertidumbre|probabilidad y estadistica|problemas de datos)/.test(t))return'datos';
+    if(/(?:problemas de forma|movimiento y localizacion|formas geometricas)/.test(t))return'forma';
+    if(/(?:problemas de regularidad|equivalencia y cambio|patrones numericos)/.test(t))return'regularidad';
+    if(/(?:problemas de cantidad|operaciones con cantidades)/.test(t))return'cantidad';
+    const strong={
+      datos:/\b(?:encuest\w*|estadistic\w*|frecuenc\w*|probabil\w*|aleatori\w*|pictogram\w*|moda|promedi\w*|grafic\w*\s+de\s+barras?|grafic\w*\s+de\s+lineas|tabla\s+de\s+conteo|datos)\b/,
+      forma:/\b(?:perimetr\w*|geometr\w*|triangul\w*|cuadrilater\w*|poligon\w*|angul\w*|prismas?|circulos?|simetr\w*|plano\s+cartesiano|recorridos?|ubicacion|localiz\w*|longitud|superficie|areas?\s+de\s+figuras?)\b/,
+      regularidad:/\b(?:patron\w*|equivalenc\w*|igualdad\w*|ecuacion\w*|desigualdad\w*|proporcional\w*|sucesion\w*|secuencia\s+numerica|regla\s+de\s+formacion)\b/,
+      cantidad:/\b(?:cantidad\w*|sum\w*|rest\w*|adicion\w*|sustraccion\w*|multiplic\w*|division|divid\w*|fraccion\w*|decimal\w*|numer\w*|masa|pesos?|litros?|tiempo|dinero|compras?|repart\w*)\b/
+    };
+    const found=Object.entries(strong).filter(([,re])=>re.test(t)).map(([mode])=>mode);
+    return found.length===1?found[0]:'indefinido';
+  }
+
+
+  // Ciencia y Tecnología Primaria: una explicación no es necesariamente una
+  // indagación; construir una explicación no equivale a fabricar un prototipo.
+  // En títulos ambiguos no asignamos una competencia como «confirmada».
+  function scienceModeFromTitle(title){
+    const t=String(title||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    if(/(?:^|\b)(?:competencia\s+)?(?:indaga mediante metodos cientificos)/.test(t))return'indaga';
+    if(/(?:^|\b)(?:explica el mundo fisico)/.test(t))return'explica';
+    if(/(?:^|\b)(?:disena y construye soluciones tecnologicas)/.test(t))return'disena';
+    // Priorizar la acción didáctica principal al inicio de la actividad.
+    if(/^(?:indag\w*|investig\w*|experiment\w*|comprob\w*|observ\w*|registr\w*|formul\w*\s+(?:preguntas?|hipotesis))\b/.test(t))return'indaga';
+    if(/^(?:explic\w*|argument\w*|fundament\w*|interpret\w*\s+(?:conocimientos?|evidencias?))\b/.test(t))return'explica';
+    if(/^constru\w*\s+(?:un|una|la)\s+(?:explicacion|conclusion|modelo conceptual)\b/.test(t))return'explica';
+    if(/^(?:disen\w*|constru\w*|fabric\w*|prototip\w*|implement\w*|mejor\w*\s+(?:un|una|el|la)\s+(?:prototipo|solucion|dispositivo|filtro|sistema))\b/.test(t))return'disena';
+    // Si no hay verbo principal, solo aceptar un foco inequívoco.
+    const groups=[
+      ['indaga',/\b(?:indagacion|hipotesis|experimentos?|pregunta investigable|registro de observaciones)\b/],
+      ['explica',/\b(?:explicacion cientifica|ciclo del agua|cadena alimenticia|fotosintesis|propiedades de la materia|causas de un fenomeno)\b/],
+      ['disena',/\b(?:prototipos?|solucion tecnologica|sistema de riego|filtro de agua|horno solar)\b/]
+    ].filter(([,re])=>re.test(t));
+    return groups.length===1?groups[0][0]:'indefinido';
+  }
+
+  // Fase 9 — Personal Social Primaria. Una misma celebración familiar puede
+  // estudiarse desde identidad, ciudadanía, historia, espacio o economía.
+  // No elegir por una palabra genérica (familia, comunidad, costumbre).
+  function personalSocialModeFromTitle(title){
+    const t=String(title||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const express=[
+      ['identidad',/(?:construy\w* nuestra identidad|reconoc\w* nuestras emociones|identific\w* nuestros sentimientos|regul\w* nuestras emociones|valor\w* nuestras cualidades|autoestima|caracteristicas personales|quien soy|como soy)/],
+      ['convivencia',/(?:conviv\w* democraticamente|acord\w* normas|constru\w* normas|resolv\w* conflictos|deliber\w* sobre|particip\w* democraticamente|asamblea de aula|acuerdos de convivencia|bien comun|derechos y deberes)/],
+      ['historia',/(?:interpretaciones historicas|fuentes historicas|testimonios del pasado|cambios y permanencias|antes y ahora|origen historico|historia de nuestra localidad|linea de tiempo|procesos historicos|historia familiar)/],
+      ['ambiente',/(?:espacio y el ambiente|cuid\w* el ambiente|zonas de riesgo|mapas? de riesgo|croquis|contaminacion del rio|gestion de residuos|problemas ambientales|espacio geografic|preven\w* desastres|rutas? de evacuacion)/],
+      ['economia',/(?:recursos economicos|presupuest\w*|ahorr\w*|compar\w* precios|consumo responsable|gastos familiares|planific\w* compras|decisiones economicas|ingresos y gastos|sistema financiero)/]
+    ];
+    // Los nombres completos de las cinco competencias tienen prioridad cuando
+    // el docente los escribe explícitamente en la actividad.
+    const explicit=[
+      ['identidad',/^construye su identidad\b/],
+      ['convivencia',/^convive y participa democraticamente\b/],
+      ['historia',/^construye interpretaciones historicas\b/],
+      ['ambiente',/^gestiona responsablemente el espacio y el ambiente\b/],
+      ['economia',/^gestiona responsablemente los recursos economicos\b/]
+    ];
+    for(const [mode,re] of explicit)if(re.test(t))return mode;
+    const modes=express.filter(([,re])=>re.test(t)).map(([mode])=>mode);
+    return modes.length===1?modes[0]:'indefinido';
+  }
+
   function pickCompetence(level,area,title=''){
     const list=getArea(level,area);
     if(!list.length)return null;
@@ -402,22 +486,56 @@
     }
 
     if(['Comunicación','Castellano como Segunda Lengua','Inglés como Lengua Extranjera'].includes(a)){
+      if(level==='Primaria'&&a==='Comunicación'){
+        const mode=communicationModeFromTitle(title);
+        if(mode==='lectura')return find(/lee diversos tipos/)||list[0];
+        if(mode==='escritura')return find(/escribe diversos tipos/)||list[0];
+        if(mode==='oral')return find(/se comunica oralmente/)||list[0];
+        // Retornar la opción provisional preserva contratos históricos,
+        // pero su carácter pendiente debe quedar visible en la sesión.
+        return list[0];
+      }
       if(/lee|lectura|texto escrito|comprension lectora/.test(t))return find(/lee diversos tipos/)||list[0];
       if(/escrib|produc|redact|revis|texto/.test(t))return find(/escribe diversos tipos/)||list[0];
       return find(/se comunica oralmente/)||list[0];
     }
     if(a==='Matemática'){
+      if(level==='Primaria'){
+        const mode=mathematicsModeFromTitle(title);
+        if(mode==='datos')return find(/gestion de datos/)||list[0];
+        if(mode==='forma')return find(/forma, movimiento y localizacion/)||list[0];
+        if(mode==='regularidad')return find(/regularidad, equivalencia y cambio/)||list[0];
+        if(mode==='cantidad')return find(/cantidad/)||list[0];
+        return list[0]; // provisional, el documento mostrará confirmación pendiente
+      }
       if(/tabla|grafico|dato|estadistic|probabil|encuesta/.test(t))return find(/gestion de datos/)||list[0];
       if(/forma|geometr|ubic|espacio|medida|perimet|area|movimiento|localiz/.test(t))return find(/forma, movimiento y localizacion/)||list[0];
       if(/patron|regular|equival|igualdad|ecuacion|cambio/.test(t))return find(/regularidad, equivalencia y cambio/)||list[0];
       return find(/cantidad/)||list[0];
     }
     if(a==='Ciencia y Tecnología'){
+      if(level==='Primaria'){
+        const mode=scienceModeFromTitle(title);
+        if(mode==='indaga')return find(/indaga mediante/)||list[0];
+        if(mode==='explica')return find(/explica el mundo fisico/)||list[0];
+        if(mode==='disena')return find(/disena y construye/)||list[0];
+        return list[0]; // Provisional: mostrar advertencia en sesión.
+      }
+      // Conservar selección histórica en Inicial y Secundaria.
       if(/disen|constru|solucion|prototipo|tecnolog/.test(t))return find(/disena y construye/)||list[0];
       if(/indag|observ|pregunta|hipotes|exper|dato|resultado|germin/.test(t))return find(/indaga mediante/)||list[0];
       return find(/explica el mundo fisico/)||list[0];
     }
     if(a==='Personal Social'){
+      if(level==='Primaria'){
+        const mode=personalSocialModeFromTitle(title);
+        if(mode==='identidad')return find(/construye su identidad/)||list[0];
+        if(mode==='convivencia')return find(/convive y participa/)||list[0];
+        if(mode==='historia')return find(/interpretaciones historicas/)||list[0];
+        if(mode==='ambiente')return find(/espacio y el ambiente/)||list[0];
+        if(mode==='economia')return find(/recursos economicos/)||list[0];
+        return list[0]; // solo valor provisional, salida exige confirmación
+      }
       if(/histori|pasado|cambio|permanencia|fuente/.test(t))return find(/interpretaciones historicas/)||list[0];
       if(/ambiente|espacio|territorio|mapa|riesgo/.test(t))return find(/espacio y el ambiente/)||list[0];
       if(/econom|dinero|ahorro|recurso econom/.test(t))return find(/recursos economicos/)||list[0];
@@ -465,6 +583,10 @@
     sourceFor,
     sourceBadge,
     pickCompetence,
+    communicationModeFromTitle,
+    mathematicsModeFromTitle,
+    scienceModeFromTitle,
+    personalSocialModeFromTitle,
     canonicalArea
   };
 

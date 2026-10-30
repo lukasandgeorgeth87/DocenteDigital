@@ -72,12 +72,13 @@
   };
 
   // Word: Agency FB 11, títulos en negrita, borde entrecortado, unidades/proyectos en A4 horizontal y pie 9 cursiva.
-  wordDocument=function(title,body){
+  wordDocument=function(title,body,documentContext=null){
     const isLandscape=/UNIDAD DE APRENDIZAJE|PROYECTO DE APRENDIZAJE/.test(body);
     const page=isLandscape?'841.9pt 595.3pt':'595.3pt 841.9pt';
     const orientation=isLandscape?'mso-page-orientation:landscape;':'';
-    const teacher=esc(state.teacherName||'Docente');
-    const school=esc(state.schoolName||'Institución Educativa');
+    const historical=documentContext&&typeof documentContext==='object'?documentContext:null;
+    const teacher=esc(historical?(historical.teacher||'Docente por verificar'):(state.teacherName||'Docente'));
+    const school=esc(historical?(historical.institution||'I.E. por verificar'):(state.schoolName||'Institución Educativa'));
     return `<!doctype html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${esc(title)}</title><style>
       @page Section1{size:${page};${orientation}margin:34pt 38pt 40pt 38pt;mso-footer:f1;}
       div.Section1{page:Section1;}
@@ -102,9 +103,13 @@
       const type=document.createElement('div');type.className='dd-doc-type';type.textContent=(unit.type||'Unidad de aprendizaje').toUpperCase();
       first.querySelector('div')?.prepend(type);
     }
-    if(!out.querySelector('.dd-preview-footer')){
-      const f=document.createElement('div');f.className='dd-preview-footer';f.textContent=`${state.teacherName||'Docente'} · ${state.schoolName||'Institución Educativa'}`;out.appendChild(f);
-    }
+    // La vista previa pertenece a la unidad abierta, no al perfil activo.
+    const historical=unit.documentContextSnapshot||{};
+    const teacher=historical.teacher||unit.teacherProfile?.teacherName||'Docente por verificar';
+    const school=historical.institution||unit.teacherProfile?.institutionName||'I.E. por verificar';
+    let footer=out.querySelector('.dd-preview-footer');
+    if(!footer){footer=document.createElement('div');footer.className='dd-preview-footer';out.appendChild(footer);}
+    footer.textContent=`${teacher} · ${school}`;
     const actions=out.querySelector('.actions.topgap');
     if(actions&&!actions.querySelector('.dd-review-btn')){
       const b=document.createElement('button');b.className='btn ghost dd-review-btn';b.textContent='✅ Revisar coherencia';b.onclick=()=>ddReviewUnit(unit.id);actions.appendChild(b);
