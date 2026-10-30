@@ -79,8 +79,19 @@
     }
     return n<=2?`Participa y representa aprendizajes sobre ${ctx} mediante oralidad, imágenes o acciones.`:n<=4?`Organiza y explica una producción vinculada con ${ctx}.`:`Analiza, produce y sustenta una propuesta vinculada con ${ctx}.`;
   }
+  // Criterios observables: nunca copiar la situación significativa completa.
+  function ddConciseContext(value){
+    const raw=String(value||'').replace(/\s+/g,' ').trim();
+    if(!raw)return 'el reto de la unidad';
+    if(/todos los santos|día de los difuntos|dia de los difuntos/i.test(raw))return 'las costumbres de Todos los Santos';
+    if(/siembra|semilla|biohuerto/i.test(raw))return 'la siembra y el biohuerto';
+    if(/agua|yaku/i.test(raw))return 'el cuidado del agua';
+    if(/residuo|basura|contamin/i.test(raw))return 'el manejo de residuos';
+    const topic=raw.match(/\bsobre\s+([^.,;!?]{6,72})/i)?.[1]||raw.split(/[.;!?]/)[0];
+    return topic.slice(0,78).trim().replace(/[,:-]+$/,'')||'el reto de la unidad';
+  }
   function ddCriterion(area,g,brief,level=''){
-    const n=parseInt(g)||0; const ctx=brief||'el reto de la unidad';
+    const n=parseInt(g)||0; const ctx=level==='Primaria'?ddConciseContext(brief):(brief||'el reto de la unidad');
     if(level==='Inicial'||/\baños?\b/i.test(g)){
       if(area==='Comunicación')return `Expresa ideas y preguntas sobre ${ctx} mediante conversación, dibujos, gestos o escrituras espontáneas, y escucha las expresiones de otros.`;
       if(area==='Matemática')return `Agrupa, cuenta o compara objetos relacionados con ${ctx} usando material concreto y comunica lo que hizo con palabras o gestos.`;
@@ -89,10 +100,30 @@
       if(area==='Psicomotriz')return `Explora movimientos y espacios con seguridad y autonomía y expresa cómo se sintió durante la actividad.`;
       return `Participa, explora y comunica lo que descubrió sobre ${ctx} mediante juego, interacción y representaciones propias de su edad.`;
     }
-    if(area==='Comunicación') return n<=2?`Comunica una idea comprensible sobre ${ctx}, usando recursos orales, gráficos o escritos según su nivel.`:n<=4?`Organiza y comunica información pertinente sobre ${ctx}, considerando propósito y destinatario.`:`Sustenta y organiza información sobre ${ctx} con coherencia, adecuación al propósito y revisión de su producción.`;
-    if(area==='Matemática') return n<=2?`Representa y resuelve una situación de ${ctx} con material, dibujo o números y explica qué hizo.`:n<=4?`Resuelve una situación problemática de ${ctx}, representa datos y explica su estrategia.`:`Modela, resuelve y justifica una situación problemática de ${ctx}, verificando la pertinencia de su estrategia.`;
-    if(area==='Ciencia y Tecnología') return n<=2?`Observa y registra cambios relacionados con ${ctx} y comunica qué descubrió.`:n<=4?`Registra y compara evidencias sobre ${ctx} para formular una conclusión.`:`Contrasta hipótesis y utiliza evidencias sobre ${ctx} para sustentar una conclusión y reconocer limitaciones.`;
-    if(area==='Personal Social') return n<=2?`Expresa cómo participa en prácticas relacionadas con ${ctx} y respeta las experiencias de otros.`:n<=4?`Explica una práctica o problema de ${ctx} y propone una acción responsable.`:`Argumenta cómo las prácticas y decisiones vinculadas con ${ctx} afectan a la comunidad y propone acciones para el bien común.`;
+    // No alterar el comportamiento de Secundaria en esta fase centrada en Primaria.
+    if(level==='Secundaria'){
+      if(area==='Comunicación')return n<=2?`Comunica una idea comprensible sobre ${ctx}, usando recursos orales, gráficos o escritos según su nivel.`:n<=4?`Organiza y comunica información pertinente sobre ${ctx}, considerando propósito y destinatario.`:`Sustenta y organiza información sobre ${ctx} con coherencia, adecuación al propósito y revisión de su producción.`;
+      if(area==='Matemática')return n<=2?`Representa y resuelve una situación de ${ctx} con material, dibujo o números y explica qué hizo.`:n<=4?`Resuelve una situación problemática de ${ctx}, representa datos y explica su estrategia.`:`Modela, resuelve y justifica una situación problemática de ${ctx}, verificando la pertinencia de su estrategia.`;
+      if(area==='Ciencia y Tecnología')return n<=2?`Observa y registra cambios relacionados con ${ctx} y comunica qué descubrió.`:n<=4?`Registra y compara evidencias sobre ${ctx} para formular una conclusión.`:`Contrasta hipótesis y utiliza evidencias sobre ${ctx} para sustentar una conclusión y reconocer limitaciones.`;
+      if(area==='Personal Social')return n<=2?`Expresa cómo participa en prácticas relacionadas con ${ctx} y respeta las experiencias de otros.`:n<=4?`Explica una práctica o problema de ${ctx} y propone una acción responsable.`:`Argumenta cómo las prácticas y decisiones vinculadas con ${ctx} afectan a la comunidad y propone acciones para el bien común.`;
+      return `Elabora y explica una producción pertinente sobre ${ctx}, aplicando los aprendizajes del área.`;
+    }
+    if(area==='Comunicación') return n<=2
+      ?`Expresa una idea comprensible sobre ${ctx} y escucha a sus compañeros.`
+      :n<=4?`Organiza información relevante sobre ${ctx} y la comunica según propósito y destinatario.`
+      :`Contrasta información sobre ${ctx} y sustenta una conclusión con razones comprensibles.`;
+    if(area==='Matemática') return n<=2
+      ?`Representa una situación numérica con objetos o dibujos y explica cómo obtuvo el resultado.`
+      :n<=4?`Organiza datos, selecciona una estrategia de solución y comprueba el resultado.`
+      :`Modela una situación, compara estrategias y justifica el resultado con datos.`;
+    if(area==='Ciencia y Tecnología') return n<=2
+      ?`Registra una observación mediante dibujos o palabras y comunica lo que descubrió.`
+      :n<=4?`Registra información, compara observaciones y explica una conclusión sencilla.`
+      :`Compara evidencias de una indagación y sustenta una conclusión, señalando sus límites.`;
+    if(area==='Personal Social') return n<=2
+      ?`Reconoce una práctica de su entorno y escucha con respeto experiencias diferentes.`
+      :n<=4?`Compara testimonios o fuentes y explica una práctica o cambio observado.`
+      :`Contrasta fuentes y argumenta cambios y permanencias sin afirmar lo que no está comprobado.`;
     return `Elabora y explica una producción pertinente sobre ${ctx}, aplicando los aprendizajes del área.`;
   }
   function ddOfficialEntries(level,area){
@@ -253,8 +284,8 @@
   unitWordHtml=function(unit){
     unit=ddEnrich(unit);
     const identity=unit.documentContextSnapshot||{};
-    const historicalInstitution=identity.institution||unit.teacherProfile?.institutionName||'';
-    const historicalTeacher=identity.teacher||unit.teacherProfile?.teacherName||'';
+    const historicalInstitution=identity.institution||unit.teacherProfile?.institutionName||'Por completar';
+    const historicalTeacher=identity.teacher||unit.teacherProfile?.teacherName||'Por completar';
     const heading=/proyecto/i.test(unit.type||'')?'PROYECTO DE APRENDIZAJE':'UNIDAD DE APRENDIZAJE';
     return `<div class="word-border"><h1 style="text-align:center">${heading}</h1><h2 style="text-align:center">“${E(unit.title)}”</h2><h2>I. DATOS GENERALES</h2><table><tr><td><b>I.E.</b></td><td>${E(historicalInstitution)}</td><td><b>Docente</b></td><td>${E(historicalTeacher)}</td></tr><tr><td><b>Ubicación</b></td><td colspan="3">${E([
     unit.teacherProfile?.community?((unit.teacherProfile?.localityType||'Localidad')+' '+unit.teacherProfile.community):'',

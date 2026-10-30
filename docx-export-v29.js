@@ -42,10 +42,22 @@
     return cat([localBytes,centralBytes,end]);
   }
 
-  function textOf(node){return String(node?.textContent||'').replace(/\s+/g,' ').trim()}
+  function textOf(node){
+    const parts=[];
+    function visit(n){
+      if(n?.nodeType===3){parts.push(String(n.nodeValue||''));return;}
+      if(n?.nodeName==='BR'){parts.push('\n');return;}
+      if(n?.childNodes)for(const child of n.childNodes)visit(child);
+    }
+    visit(node);
+    return (parts.length?parts.join(''):String(node?.textContent||''))
+      .replace(/[ \t]+/g,' ').replace(/ *\n */g,'\n').trim();
+  }
   function runXml(text,bold=false,size=22){
     if(!text)return '';
-    return `<w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:sz w:val="${size}"/><w:szCs w:val="${size}"/>${bold?'<w:b/>':''}</w:rPr><w:t xml:space="preserve">${E(text)}</w:t></w:r>`;
+    const fragments=String(text).split('\n');
+    const content=fragments.map((line,i)=>`${i?'<w:br/>':''}<w:t xml:space="preserve">${E(line)}</w:t>`).join('');
+    return `<w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:sz w:val="${size}"/><w:szCs w:val="${size}"/>${bold?'<w:b/>':''}</w:rPr>${content}</w:r>`;
   }
   function pXml(text,{bold=false,size=22,center=false,after=80}={}){
     if(!text)return '<w:p/>';
@@ -54,11 +66,29 @@
   function tableXml(table){
     const rows=[...table.rows];
     if(!rows.length)return '';
+    const cellsOf=tr=>[...tr.children].filter(c=>/^(TD|TH)$/.test(c.tagName));
+    const span=c=>Math.max(1,Math.min(16,parseInt(c.getAttribute?.('colspan')||'1',10)||1));
+    const count=Math.max(1,...rows.map(tr=>cellsOf(tr).reduce((n,c)=>n+span(c),0)));
+    // Word necesita tblGrid explícito y anchos consistentes para evitar páginas
+    // vacías y columnas que se expanden al imprimir tablas largas.
+    const totalWidth=15000;
+    const declared=String(table.getAttribute?.('data-col-weights')||'').split(',').map(Number);
+    const valid=declared.length===count&&declared.every(n=>Number.isFinite(n)&&n>0);
+    const weights=valid?declared:Array(count).fill(1);
+    const sum=weights.reduce((a,b)=>a+b,0);
+    const widths=weights.map(n=>Math.max(550,Math.floor(totalWidth*n/sum)));
+    widths[count-1]+=totalWidth-widths.reduce((a,b)=>a+b,0);
+    const grid='<w:tblGrid>'+widths.map(width=>`<w:gridCol w:w="${width}"/>`).join('')+'</w:tblGrid>';
     const body=rows.map(tr=>{
-      const cells=[...tr.children].filter(c=>/^(TD|TH)$/.test(c.tagName));
-      return `<w:tr>${cells.map(c=>`<w:tc><w:tcPr><w:tcW w:w="0" w:type="auto"/><w:tcBorders><w:top w:val="single" w:sz="4" w:color="777777"/><w:left w:val="single" w:sz="4" w:color="777777"/><w:bottom w:val="single" w:sz="4" w:color="777777"/><w:right w:val="single" w:sz="4" w:color="777777"/></w:tcBorders></w:tcPr>${pXml(textOf(c),{bold:c.tagName==='TH',size:20,after:20})}</w:tc>`).join('')}</w:tr>`;
+      const cells=cellsOf(tr);
+      const head=cells.length&&cells.every(c=>c.tagName==='TH');
+      return `<w:tr><w:trPr><w:cantSplit/>${head?'<w:tblHeader w:val="true"/>':''}</w:trPr>${cells.map((c,i)=>{
+        const sp=span(c);
+        const cellW=widths.slice(i,i+sp).reduce((a,b)=>a+b,0);
+        return `<w:tc><w:tcPr><w:tcW w:w="${cellW}" w:type="dxa"/>${sp>1?`<w:gridSpan w:val="${sp}"/>`:''}${c.tagName==='TH'?'<w:shd w:fill="E7F1EA"/>':''}<w:tcMar><w:top w:w="95" w:type="dxa"/><w:left w:w="95" w:type="dxa"/><w:bottom w:w="95" w:type="dxa"/><w:right w:w="95" w:type="dxa"/></w:tcMar><w:tcBorders><w:top w:val="single" w:sz="4" w:color="A8B5AF"/><w:left w:val="single" w:sz="4" w:color="A8B5AF"/><w:bottom w:val="single" w:sz="4" w:color="A8B5AF"/><w:right w:val="single" w:sz="4" w:color="A8B5AF"/></w:tcBorders></w:tcPr>${pXml(textOf(c),{bold:c.tagName==='TH',size:18,after:22})}</w:tc>`;
+      }).join('')}</w:tr>`;
     }).join('');
-    return `<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblLayout w:type="autofit"/></w:tblPr>${body}</w:tbl>${pXml('',{})}`;
+    return `<w:tbl><w:tblPr><w:tblW w:w="${totalWidth}" w:type="dxa"/><w:tblLayout w:type="fixed"/></w:tblPr>${grid}${body}</w:tbl>${pXml('',{})}`;
   }
   function htmlToWordXml(html){
     const doc=new DOMParser().parseFromString(`<body>${html}</body>`,'text/html'),out=[];

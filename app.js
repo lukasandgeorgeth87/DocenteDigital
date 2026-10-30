@@ -689,7 +689,14 @@ function createUnitDemo(){
   byId('unitOutput').scrollIntoView({behavior:'smooth'});
 }
 
-function unitSituation(unit){return unit.situation&&unit.situation.length>180?unit.situation:expandSituation(unit.situationBrief||unit.situation||'')}
+function unitSituation(unit){
+  const authored=String(unit?.situationBrief||'').trim();
+  const saved=String(unit?.situation||'').trim();
+  // La redacción completa del docente tiene prioridad sobre una plantilla envolvente.
+  if(authored.length>=160&&/\b(los estudiantes|las familias|el reto|la comunidad)\b/i.test(authored)
+     &&(/Un hecho relacionado con [“\"]/.test(saved)||/un tema que todos reconocían/i.test(saved)))return authored;
+  return saved&&saved.length>180?saved:expandSituation(authored||saved);
+}
 function unitBrief(unit){return unit.situationBrief||unit.situation||''}
 
 function renderUnits(){

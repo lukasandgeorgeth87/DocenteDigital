@@ -71,9 +71,16 @@
     const intro=isProject(unit)
       ? 'El proyecto se organiza como una ruta flexible. Los estudiantes participan activamente en la comprensión del reto, la planificación, el desarrollo, la revisión y la comunicación del producto o respuesta.'
       : 'La unidad organiza una experiencia de aprendizaje articulada alrededor de una situación significativa y una secuencia intencionada de actividades.';
+    const activities=Array.isArray(unit.activities)?unit.activities:[];
+    const weeks=[...new Set(activities.map(a=>Number(a.week)||1))].sort((a,b)=>a-b);
+    const actualRoute=weeks.length?`<h3>Ruta real de actividades por semana</h3><div class="dd-actual-route">${weeks.map(week=>{
+      const items=activities.filter(a=>(Number(a.week)||1)===week);
+      return `<p><b>Semana ${week}:</b> ${items.length} actividades. ${items.slice(0,3).map(a=>E(a.area)+' — '+E(a.title)).join(' · ')}${items.length>3?' · ...':''}</p>`;
+    }).join('')}</div>`:'<p>La secuencia por semanas está pendiente de definir.</p>';
     return `<div class="dd-planning-route">
       <p>${E(intro)}</p>
       <div class="dd-stage-grid">${m.stages.map(s=>`<article><h4>${E(s.name)}</h4><p>${E(s.desc)}</p></article>`).join('')}</div>
+      ${actualRoute}
       <div class="dd-route-note"><b>Componentes que deben mantenerse articulados:</b> ${m.officialComponents.map(E).join(' · ')}.</div>
     </div>`;
   }

@@ -29,6 +29,20 @@
       if(!clean(a.title)||!clean(a.area))warnings.push(issues('activity-incomplete-'+i,`Actividad ${i+1}: falta título o área.`, 'secuencia'));
       else if(selected.length&&!hasArea(unit,a.area))warnings.push(issues('activity-area-'+i,`Actividad ${i+1} (${clean(a.title)}): el área ${clean(a.area)} no está entre las seleccionadas.`, 'secuencia'));
     });
+    const fullContext=norm(unit.situationBrief||unit.situation||'');
+    const purposes=Array.isArray(unit.purposes)?unit.purposes:[];
+    const problematic=purposes.some(p=>(p.criteria||[]).some(c=>{
+      const value=clean(c.text);return value.length>240||
+        (fullContext.length>110&&norm(value).includes(fullContext.slice(0,105)));
+    }));
+    if(problematic)warnings.push(issues('overlong-criteria','Hay criterios extensos o copiados de la situación significativa. Redactar actuaciones observables y diferenciadas por grado.','evaluación'));
+    const acts=Array.isArray(unit.activities)?unit.activities:[];
+    if(acts.length>=5&&unit.level!=='Inicial'&&acts.some(a=>!clean(a.time)))
+      warnings.push(issues('missing-hours','La secuencia contiene bloques sin horario definido. Confirmar el horario antes de usar el documento.','secuencia'));
+    const titleCounts=new Map();
+    acts.forEach(a=>{const title=norm(a.title);if(title)titleCounts.set(title,(titleCounts.get(title)||0)+1);});
+    if([...titleCounts.values()].some(v=>v>=4))
+      warnings.push(issues('repeat-sessions','Existen títulos de sesiones repetidos cuatro veces o más. Revisar la progresión didáctica.','secuencia'));
     return {ok:warnings.length===0,warnings,checks,selectedGrades:unique(unit.grades),activityCount:unit.activities?.length||0};
   }
   function getUnit(session){return (typeof state==='object'&&Array.isArray(state.units)?state.units:[]).find(u=>u.id===session?.unitId)||null;}
