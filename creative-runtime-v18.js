@@ -5,11 +5,46 @@
   const E=v=>escapeHtml(v);
 
   function pending(){return state.pendingUnitChoice||null;}
+  // Distinguir una orden administrativa de la situación vivida por los estudiantes.
+  function isPlanningInstruction(raw){
+    const s=String(raw||'').replace(/\s+/g,' ').trim();
+    return /^(?:por favor\s+)?(?:quiero|quisiera|necesito|deseo|solicito|crea|crear|elabora|prepara|hazme|haz)\b/i.test(s)
+      && /\b(?:unidad|proyecto|sesi[oó]n|planificaci[oó]n)\b/i.test(s.slice(0,180));
+  }
+  function cleanSituationOption(x,p){
+    const text=String(x?.text||'');
+    if(text&&!/\b(?:crear|crea|elaborar|elabora|preparar)\s+(?:una?|el|la)?\s*(?:unidad|proyecto|sesi[oó]n)\b/i.test(text))return x;
+    const focus=p.contextFocus||window.ddContextTopic?.(p.brief)||'el tema elegido';
+    const grades=(state.grades||[]).join(', ')||'los grados seleccionados';
+    return {...x,text:`Los estudiantes de ${grades} investigarán ${focus} a partir de preguntas sobre su entorno. Primero observarán situaciones verificables y recogerán información; luego contrastarán datos y fuentes y, finalmente, elaborarán explicaciones y una producción para compartir sus aprendizajes. No se presumirán problemas locales sin haberlos observado.`};
+  }
   function ensureCreativeData(){
     const p=pending();if(!p)return null;
-    if(!p._creativeData){p._creativeData=window.ddCreativeChoices(p.brief,p.type,{situations:p.situations,products:p.products});save();}
+    if(!p._creativeData){
+      const generated=window.ddCreativeChoices(p.brief,p.type,{situations:p.situations,products:p.products});
+      // Las propuestas pedagógicas originales ya separan tema y orden del docente.
+      // No dejar que el motor de variedad vuelva a insertar toda la orden en la situación.
+      if(isPlanningInstruction(p.brief)&&Array.isArray(p.situations)&&p.situations.length>=2){
+        p._creativeData={...generated,situations:p.situations.map(x=>cleanSituationOption(x,p))};
+      }else p._creativeData=generated;
+      save();
+    }
     return p._creativeData;
   }
+  // La propuesta automática de título no debe contener «° grado» ni instrucciones.
+  const priorTitles=window.ddCreativeTitleOptions;
+  if(typeof priorTitles==='function')window.ddCreativeTitleOptions=function(brief,type){
+    if(!isPlanningInstruction(brief))return priorTitles.apply(this,arguments);
+    const focus=String(window.ddContextTopic?.(brief)||'').trim();
+    if(!focus||/tema solicitado por el docente|crear una unidad|\bgrado\b/i.test(focus))return priorTitles.apply(this,arguments);
+    const goal=String(window.ddGoalAlignment?.extractGoal?.(brief)?.phrase||'').trim();
+    const topic=focus.charAt(0).toUpperCase()+focus.slice(1);
+    return [
+      `${topic}: observamos, investigamos y aprendemos`,
+      `Comprendemos ${focus} y comunicamos nuestros hallazgos`,
+      goal?`Aprendemos sobre ${focus} para ${goal}`:`De nuestras preguntas a la acción: descubrimos ${focus}`
+    ];
+  };
   function paintSituations(){
     const host=byId('ddProposalChooser'),p=pending(),d=ensureCreativeData();if(!host||!p||!d)return;
     if(!host.querySelector('input[name="ddSituation"]'))return;

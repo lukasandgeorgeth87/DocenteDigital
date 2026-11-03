@@ -310,7 +310,23 @@
       byId('ddOwnProduct').dataset.title='Producto final indicado por el docente';
     }
     byId('ddHelpProduct').onclick=()=>openProductAssistant(d);byId('ddBackSituation').onclick=()=>showSituations(state.pendingUnitChoice.brief,state.pendingUnitChoice.type);byId('ddBuildUnit').onclick=()=>{const own=(byId('ddOwnProduct')?.value||'').trim(),chosen=document.querySelector('input[name="ddProduct"]:checked')?.value;if(!own&&!chosen)return alert('Elige uno de los productos o escribe el tuyo.');const currentProducts=state.pendingUnitChoice?.products||d.products;const item=currentProducts.find(x=>String(x.key)===String(chosen));state.pendingUnitChoice.selectedProduct=own||item?.text;state.pendingUnitChoice.selectedProductTitle=own?(byId('ddOwnProduct')?.dataset.title||'Producto propuesto por el docente'):(item?.title||'Producto final');if(typeof save==='function')save();finalizeChoice(host);};host.scrollIntoView({behavior:'smooth',block:'start'});}
-  function finalizeChoice(host){const pending=state.pendingUnitChoice;if(!pending)return;const before=new Set((state.units||[]).map(u=>u.id));baseCreate();const unit=(state.units||[]).find(u=>!before.has(u.id))||state.units?.[0];if(!unit)return;unit.situation=pending.selectedSituation;unit.reto=pending.reto||unit.reto;unit.contextFocus=pending.contextFocus||unit.contextFocus;unit.planningMeaning=pending.meaning||unit.planningMeaning;unit.expertReasoning=pending.expertReasoning||null;unit.selectedSituationSource=pending.situations.find(x=>x.text===pending.selectedSituation)?.key||'Docente';unit.teacherProfile=pending.profileSnapshot||profileSnapshot();unit.situationOptions=pending.situations;unit.product=pending.selectedProduct;unit.productTitle=pending.selectedProductTitle;unit.productOptions=pending.products;unit.selectionApproved=true;if(typeof save==='function')save();renderUnits();renderUnitOutput(unit);fillSessionUnits();host.classList.add('hidden');byId('unitOutput')?.scrollIntoView({behavior:'smooth'});}
+  function explicitlyRequestedAreas(brief){
+    const raw=String(brief||'').replace(/\s+/g,' ');
+    const m=raw.match(/\b(?:incluye|trabajaremos|[aá]reas\s*(?:curriculares)?\s*[:=-])\s*([^.!?;\n]{5,240})/i);
+    if(!m)return [];
+    const norm=x=>String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const available=(state.areas||[]).filter(Boolean),clause=norm(m[1]);
+    return available.filter(area=>clause.includes(norm(area)));
+  }
+  function finalizeChoice(host){
+    const pending=state.pendingUnitChoice;if(!pending)return;
+    const before=new Set((state.units||[]).map(u=>u.id));
+    const originalAreas=state.areas;
+    const requestedAreas=explicitlyRequestedAreas(pending.brief);
+    // La selección explícita es específica de la unidad; el perfil del docente no cambia.
+    try{if(requestedAreas.length)state.areas=[...requestedAreas];baseCreate();}
+    finally{state.areas=originalAreas;if(typeof save==='function')save();}
+    const unit=(state.units||[]).find(u=>!before.has(u.id))||state.units?.[0];if(!unit)return;unit.situation=pending.selectedSituation;unit.reto=pending.reto||unit.reto;unit.contextFocus=pending.contextFocus||unit.contextFocus;unit.planningMeaning=pending.meaning||unit.planningMeaning;unit.expertReasoning=pending.expertReasoning||null;unit.selectedSituationSource=pending.situations.find(x=>x.text===pending.selectedSituation)?.key||'Docente';unit.teacherProfile=pending.profileSnapshot||profileSnapshot();unit.situationOptions=pending.situations;unit.product=pending.selectedProduct;unit.productTitle=pending.selectedProductTitle;unit.productOptions=pending.products;unit.selectionApproved=true;if(typeof save==='function')save();renderUnits();renderUnitOutput(unit);fillSessionUnits();host.classList.add('hidden');byId('unitOutput')?.scrollIntoView({behavior:'smooth'});}
   window.createUnitDemo=function(){
     const type=byId('unitType')?.value||'Unidad de aprendizaje';
     const title=byId('unitTitle')?.value.trim()||'';

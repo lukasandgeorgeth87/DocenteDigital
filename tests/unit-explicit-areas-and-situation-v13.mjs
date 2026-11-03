@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createContext,runInContext} from 'node:vm';
+const file=name=>readFileSync(new URL('../'+name,import.meta.url),'utf8');
+const request='Quiero crear una unidad de aprendizaje de tres semanas para 4.º grado de Primaria sobre el cuidado del agua en nuestra comunidad. Incluye Comunicación, Matemática, Personal Social y Ciencia y Tecnología. El producto final será una campaña escolar para promover el uso responsable del agua, con competencias, criterios, evidencias y actividades apropiadas para el grado.';
+const areas=['Comunicación','Matemática','Personal Social','Ciencia y Tecnología'];
+const allAreas=[...areas,'Arte y Cultura','Educación Física','Educación Religiosa'];
+const source=file('proposal-choice-v8.js');
+const start=source.indexOf('function explicitlyRequestedAreas(brief){');
+const end=source.indexOf('window.createUnitDemo=function(){',start);
+assert(start>=0&&end>start,'No se encontró la selección específica de áreas');
+const state={areas:[...allAreas],grades:['4.º'],units:[],level:'Primaria',pendingUnitChoice:{brief:request,selectedSituation:'Los estudiantes investigarán el cuidado del agua en su localidad y analizarán información comprobable.',reto:'¿Cómo podemos cuidar el agua?',contextFocus:'el cuidado del agua',situations:[],selectedProduct:'Campaña escolar para promover el uso responsable del agua',selectedProductTitle:'Campaña escolar',products:[]}};
+const host={classList:{add(){} }};
+let created=null;
+const baseCreate=()=>{created={id:'u1',level:'Primaria',grades:[...state.grades],areas:[...state.areas],activities:[{area:state.areas[0],title:'Investigamos el cuidado del agua'}]};state.units.unshift(created)};
+const c=createContext({state,baseCreate,save(){},renderUnits(){},renderUnitOutput(){},fillSessionUnits(){},byId(){return {scrollIntoView(){}}},window:{},profileSnapshot(){return{} }});
+runInContext(source.slice(start,end),c);
+const got=c.explicitlyRequestedAreas(request);
+assert.equal(JSON.stringify(got),JSON.stringify(areas),'La selección explícita no respeta 4 áreas');
+assert.equal(c.explicitlyRequestedAreas('Creamos un proyecto sobre el agua.').length,0,'No debe inventar un área de otra solicitud');
+c.finalizeChoice(host);
+assert(created,'No se creó la unidad');
+assert.equal(JSON.stringify(created.areas),JSON.stringify(areas),'La unidad guardada contiene áreas no solicitadas');
+assert.equal(JSON.stringify(state.areas),JSON.stringify(allAreas),'El perfil general fue alterado');
+assert.match(created.situation,/investigarán el cuidado del agua/);
+assert.doesNotMatch(created.situation,/crear una unidad de aprendizaje/i);
+assert.equal(created.product,'Campaña escolar para promover el uso responsable del agua');
+
+const rawApp=file('app.js'),a=rawApp.indexOf('function contextTopicFromBrief(brief){'),b=rawApp.indexOf('function activityVariants(area,brief){',a);
+const topicContext=createContext({window:{}});runInContext(rawApp.slice(a,b),topicContext);
+const titleContext=createContext({window:{ddCreativeChoices(){return{}},ddCreativeTitleOptions(){return['Aprendemos desde ° grado'];},ddContextTopic:topicContext.window.ddContextTopic,ddGoalAlignment:{extractGoal(){return {phrase:'promover el uso responsable del agua'}}}},state,document:{addEventListener(){},createElement(){return{style:{}}},head:{appendChild(){}}},save(){},escapeHtml:x=>String(x),byId(){return null}});
+runInContext(file('creative-runtime-v18.js'),titleContext);
+const titles=titleContext.window.ddCreativeTitleOptions(request,'Unidad de aprendizaje');
+assert.equal(titles.length,3);
+for(const title of titles){assert.doesNotMatch(title,/\bcrear una unidad\b|° grado|competencias, criterios/i)}
+assert.match(titles[0],/cuidado del agua/i);
+console.log('PASS: selección de áreas por unidad, persistencia de perfil, situación limpia y títulos sin grado vacío');
