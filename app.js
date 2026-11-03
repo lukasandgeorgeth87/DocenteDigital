@@ -480,6 +480,26 @@ function contextTopicFromBrief(brief){
   // estudiantes observan...» sin introducir un tema o una localidad ajenos.
   const raw=String(brief||'').replace(/\s+/g,' ').trim();
   if(!raw)return 'la situación de nuestra comunidad';
+  // Solicitudes estructuradas: recuperar el contenido pedagógico, no los
+  // encabezados administrativos que llegan desde Inicio o desde un borrador.
+  const plain=raw.replace(/\*\*/g,'').replace(/__+/g,'').replace(/[•]/g,' ');
+  const contextSection=plain.match(/(?:^|\n)\s*Contexto\s*:\s*([\s\S]*?)(?=\n\s*(?:Áreas?\s+curriculares?|Pregunta\s+retadora|Producto\s+final|Indicaciones?\s+pedagógicas?)\s*:|$)/i);
+  const source=contextSection?.[1]||plain;
+  const subjectMatch=source.match(/\b(?:sobre|acerca de|en torno a)\s+([^.!?;\n]{4,105})/i);
+  const namedTitle=plain.match(/\btitulad[ao]\s*[«“\"]([^»”\"]{5,110})[»”\"]/i);
+  const topicSource=subjectMatch?.[1]||source;
+  if(contextSection||namedTitle){
+    const strong=[
+      [/\bagua\b|\byaku\b/i,'el uso y cuidado del agua'],
+      [/\b(?:residuos?|basura|reciclaje)\b/i,'la gestión responsable de los residuos'],
+      [/\b(?:siembra|semillas?|biohuerto|cultivos?)\b/i,'la siembra y el cuidado de las plantas'],
+      [/\b(?:polinizadores?|abejas?)\b/i,'los polinizadores y su cuidado']
+    ];
+    const t=[namedTitle?.[1]||'',topicSource].join(' ');
+    for(const [pattern,subject] of strong)if(pattern.test(t))return subject;
+    if(namedTitle?.[1])return namedTitle[1].trim().toLowerCase();
+    if(subjectMatch?.[1])return subjectMatch[1].trim().toLowerCase();
+  }
   // Una instrucción sobre el documento ("crea una unidad de 3 semanas...") NO es el tema.
   // Extraer primero el objeto después de "sobre/acerca de"; conservar el relato
   // completo para situaciones narrativas escritas por el docente.

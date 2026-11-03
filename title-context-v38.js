@@ -148,7 +148,7 @@
 
   function semanticIssue(raw,theme){
     const s=low(titleContextText(raw)+' '+theme);
-    if(/\b(?:basura|residu|recicl|desperdicio)\b/.test(s)&&/\b(?:arrojan?|botan?|tiran?|dejan?|piso|suelo|acumulan?|contamin|manejo|separ|recicl)\b/.test(s)){
+    if(/\b(?:basura|residu|recicl)\b/.test(s)&&/\b(?:arrojan?|botan?|tiran?|dejan?|piso|suelo|acumulan?|contamin|manejo|separ|recicl)\b/.test(s)){
       return {key:'waste',theme:'la gestión responsable de los residuos y el cuidado de los espacios comunes'};
     }
     if(/\b(?:desperdici|malgast|derroch)\w*\s+(?:el\s+)?agua\b|\bagua\b.*\b(?:desperdici|malgast|derroch)\w*/.test(s)){

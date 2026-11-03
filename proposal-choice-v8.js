@@ -3,6 +3,29 @@
   if(window.__ddProposalChoiceV8)return;window.__ddProposalChoiceV8=true;
   const E=v=>escapeHtml(v), baseCreate=window.createUnitDemo; state.pendingUnitChoice=state.pendingUnitChoice||null;if(typeof save==='function')save();
   const tidy=s=>String(s||'').replace(/\s+/g,' ').trim();
+  // La entrada copiada desde ChatGPT puede contener Markdown; nunca se
+  // imprime literalmente ** en el título, el producto o el Word.
+  const plain=s=>String(s||'').replace(/\*\*/g,'').replace(/__+/g,'').replace(/^\s*[•*-]\s+/gm,'').trim();
+  function teacherContext(raw){
+    const m=plain(raw).match(/(?:^|\n)\s*Contexto\s*:\s*([\s\S]*?)(?=\n\s*(?:Áreas?\s+curriculares?|Pregunta\s+retadora|Producto\s+final|Indicaciones?\s+pedagógicas?)\s*:|$)/i);
+    return m?tidy(m[1]).replace(/\.{2,}/g,'.'):'';
+  }
+  function statedChallenge(raw){
+    const m=plain(raw).match(/(?:^|\n)\s*Pregunta\s+retadora\s*:\s*([^\n]{12,320})/i);
+    return m?tidy(m[1]):'';
+  }
+  function namedUnitTitle(raw){
+    const m=plain(raw).match(/\btitulad[ao]\s*[«“\"]([^»”\"]{5,110})[»”\"]/i);
+    return m?tidy(m[1]).replace(/^[“«]|[”»]$/g,''):'';
+  }
+  function topicClass(raw){
+    const s=plain(raw).toLowerCase();
+    if(/\bagua\b|\byaku\b/.test(s))return 'agua';
+    if(/\b(?:residuos?|basura|reciclaje)\b/.test(s))return 'residuos';
+    if(/\b(?:siembra|semillas?|biohuerto|cultivos?)\b/.test(s))return 'siembra';
+    if(/\b(?:polinizadores?|abejas?)\b/.test(s))return 'polinizadores';
+    return '';
+  }
   function meaningFor(raw){try{if(typeof window.ddUnderstandPlanningDescription==='function')return window.ddUnderstandPlanningDescription(raw)}catch(e){}return {raw,focus:raw||'la situación descrita',problem:'',cause:'',consequence:'',goal:'',opportunity:'',actors:[],place:'',confidence:0,status:'lectura preliminar',gaps:['falta precisar el sentido de la situación']};}
   function shortFocus(m,raw){const f=tidy(m?.focus||'');const fallback=typeof window.ddContextTopic==='function'?window.ddContextTopic(raw):tidy(raw).slice(0,110);const instrumental=/^(?:por favor\s+)?(?:quiero|quisiera|necesito|deseo|crea|crear|elabora|prepara|hazme)\b/i.test(tidy(raw))&&/\b(?:unidad|proyecto|sesión|sesion)\b/i.test(tidy(raw).slice(0,130));const base=instrumental?fallback:(f&&f!=='la realidad descrita'&&f.length<=105&&f!==tidy(raw)?f:fallback||'la situación descrita');const s=tidy(raw+' '+base).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueologic|sitios?\s+arqueologic|patrimonio\s+arqueologic/.test(s))return 'las pinturas rupestres y el patrimonio arqueológico local';return base;}
   function placeFor(m){
@@ -94,7 +117,7 @@
     return {meaning,focus:'las tradiciones y la memoria de Todos los Santos',reto,situations};
   }
   function situationOptions(raw){
-    const m=meaningFor(raw),focus=shortFocus(m,raw),grades=(state.grades||[]).join(', ')||'los grados/edades seleccionados',place=placeFor(m),reto=challengeFor(m,focus,raw),facts=naturalEvidence(m);
+    const m=meaningFor(raw),focus=shortFocus(m,raw),grades=(state.grades||[]).join(', ')||'los grados/edades seleccionados',place=placeFor(m),reto=statedChallenge(raw)||challengeFor(m,focus,raw),facts=teacherContext(raw)?'':naturalEvidence(m);
     const level=state.level||'Primaria';
     const low=tidy(focus).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const profile=profileSnapshot();
@@ -105,7 +128,7 @@
     // No copiar una orden instrumental ("crea una unidad de aprendizaje")
     // como si fuera un hecho real en la situación significativa.
     const instrumental=/^(?:por favor\s+)?(?:quiero|quisiera|necesito|deseo|crea|crear|elabora|prepara|hazme)\b/i.test(tidy(raw))&&/\b(?:unidad|proyecto|sesión|sesion)\b/i.test(tidy(raw).slice(0,130));
-    const contextSentence=instrumental?'':tidy(raw).replace(/[.!?]+$/,'')+'.';
+    const contextSentence=teacherContext(raw)||(!instrumental?tidy(raw).replace(/[.!?]+$/,'')+'.':'');
     const combinedHeritage=tidy(raw+' '+focus+' '+typedTitle);
     const heritage=/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueologic|sitios?\s+arqueologic|patrimonio\s+arqueologic/.test(combinedHeritage.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
     const titlePlaceMatch=typedTitle.match(/\ben\s+([\p{L}][\p{L}'’ -]{2,80}(?:\s+y\s+[\p{L}][\p{L}'’ -]{2,50})?)\s*$/iu);
@@ -153,7 +176,7 @@
       b=`En ${institution}, en ${locality}, ${focus} se convertirá en un desafío de aprendizaje que exija investigar y tomar decisiones. Los estudiantes de ${grades} identificarán qué información necesitan, seleccionarán fuentes pertinentes, contrastarán evidencias, reconocerán relaciones y posibles explicaciones y elaborarán una respuesta, producto o propuesta dirigida a un destinatario concreto. El trabajo culminará comunicando conclusiones sustentadas y explicando qué evidencias fueron decisivas para construirlas.`;
     }else{
       a=`${contextSentence} En ${institution}, los estudiantes de ${grades} partirán de esta experiencia cercana para investigar ${focus} mediante preguntas relacionadas con lo observado o vivido. Según las áreas involucradas, observarán, leerán, dialogarán, resolverán problemas, registrarán datos, compararán información, producirán textos o representaciones y contrastarán sus ideas con evidencias. ${facts||'El docente incorporará ejemplos y datos reales del contexto cuando estén disponibles, evitando presentarlos como hechos si todavía no han sido verificados.'} El reto será: ${reto}`;
-      b=`En ${institution}, en ${locality}, los estudiantes de ${grades} investigarán ${focus} a partir de una situación cercana y comprensible. Primero explicitarán qué saben y qué necesitan averiguar; después trabajarán con materiales, textos, datos, testimonios, problemas o experiencias pertinentes; finalmente organizarán sus hallazgos y comunicarán una respuesta o producto que muestre no solo el resultado, sino también las evidencias y estrategias que utilizaron para aprender.`;
+      b=`En ${institution}, en ${locality}, los estudiantes de ${grades} investigarán ${focus} a partir de una situación cercana y comprensible. ${contextSentence} Primero explicitarán qué saben y qué necesitan averiguar; después trabajarán con materiales, textos, datos, testimonios, problemas o experiencias pertinentes; finalmente organizarán sus hallazgos y comunicarán una respuesta o producto que muestre no solo el resultado, sino también las evidencias y estrategias que utilizaron para aprender.`;
     }
 
     return {meaning:m,focus,reto,situations:[
@@ -303,16 +326,16 @@
   }
 
   function showProducts(d,host){host.innerHTML=`<div class="dd-choice-intro"><span class="pill">PASO 3</span><h2>Elige el producto o evidencia integradora</h2><p>El producto debe responder al reto, ser útil o comunicable y permitir mostrar con claridad lo que los estudiantes aprendieron, investigaron, resolvieron o crearon.</p></div><div class="dd-product-grid">${d.products.map(productCard).join('')}</div><label class="dd-own"><b>✍️ O escribe tu propio producto</b><textarea id="ddOwnProduct" placeholder="Escribe un producto concreto, observable y conectado con el reto..."></textarea></label><div class="actions"><button class="btn alt" type="button" id="ddHelpProduct">✨ Ayúdame a crear un producto</button></div><div class="actions"><button class="btn" id="ddBuildUnit">✓ Construir la unidad/proyecto</button><button class="btn ghost" id="ddBackSituation">← Volver a situaciones</button></div>`;wireSelection('ddProduct');// Si el docente ya nombró un producto final, ofrecerlo precargado sin sustituirlo.
-    const originalRequest=String(state.pendingUnitChoice?.brief||'');
+    const originalRequest=plain(state.pendingUnitChoice?.brief||'');
     const named=originalRequest.match(/(?:producto final\s*(?:ser[aá]|es|consistir[aá] en|:)|como producto final\s*(?:elaboraremos|presentaremos))\s*((?:(?:una?|la|el)\s+)?[^.!?\n]{8,140})/i);
     if(named&&byId('ddOwnProduct')){
       byId('ddOwnProduct').value=named[1].trim().split(/,\s*(?:con|que|para)\b/i)[0].replace(/[,;:]\s*$/,'');
       byId('ddOwnProduct').dataset.title='Producto final indicado por el docente';
     }
-    byId('ddHelpProduct').onclick=()=>openProductAssistant(d);byId('ddBackSituation').onclick=()=>showSituations(state.pendingUnitChoice.brief,state.pendingUnitChoice.type);byId('ddBuildUnit').onclick=()=>{const own=(byId('ddOwnProduct')?.value||'').trim(),chosen=document.querySelector('input[name="ddProduct"]:checked')?.value;if(!own&&!chosen)return alert('Elige uno de los productos o escribe el tuyo.');const currentProducts=state.pendingUnitChoice?.products||d.products;const item=currentProducts.find(x=>String(x.key)===String(chosen));state.pendingUnitChoice.selectedProduct=own||item?.text;state.pendingUnitChoice.selectedProductTitle=own?(byId('ddOwnProduct')?.dataset.title||'Producto propuesto por el docente'):(item?.title||'Producto final');if(typeof save==='function')save();finalizeChoice(host);};host.scrollIntoView({behavior:'smooth',block:'start'});}
+    byId('ddHelpProduct').onclick=()=>openProductAssistant(d);byId('ddBackSituation').onclick=()=>showSituations(state.pendingUnitChoice.brief,state.pendingUnitChoice.type);byId('ddBuildUnit').onclick=()=>{const own=tidy(plain(byId('ddOwnProduct')?.value||'')),chosen=document.querySelector('input[name="ddProduct"]:checked')?.value;if(!own&&!chosen)return alert('Elige uno de los productos o escribe el tuyo.');const currentProducts=state.pendingUnitChoice?.products||d.products;const item=currentProducts.find(x=>String(x.key)===String(chosen));state.pendingUnitChoice.selectedProduct=own||item?.text;state.pendingUnitChoice.selectedProductTitle=own?(byId('ddOwnProduct')?.dataset.title||'Producto propuesto por el docente'):(item?.title||'Producto final');if(typeof save==='function')save();finalizeChoice(host);};host.scrollIntoView({behavior:'smooth',block:'start'});}
   function explicitlyRequestedAreas(brief){
-    const raw=String(brief||'').replace(/\s+/g,' ');
-    const m=raw.match(/\b(?:incluye|trabajaremos|[aá]reas\s*(?:curriculares)?\s*[:=-])\s*([^.!?;\n]{5,240})/i);
+    const raw=String(brief||'').replace(/\*\*/g,'').replace(/__+/g,'').replace(/\s+/g,' ');
+    const m=raw.match(/(?:^|[\s(])(?:incluye|trabajaremos|[aá]reas\s*(?:curriculares)?\s*[:=-]\s*)\s*([^.!?;\n]{5,240})/i);
     if(!m)return [];
     const norm=x=>String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const available=(state.areas||[]).filter(Boolean),clause=norm(m[1]);
@@ -338,8 +361,22 @@
       brief=title||'una experiencia cercana y significativa para los estudiantes';
       if(byId('unitSituation'))byId('unitSituation').value=brief;
     }
-    // The generated title is an output, not additional user context.
-    // Combining it with the brief leaked repetitive phrases into situations and products.
+    // El título explícito en la solicitud nueva tiene prioridad sobre un
+    // título recuperado de un borrador anterior (p. ej. agua vs siembra).
+    const requestedTitle=namedUnitTitle(brief),field=byId('unitTitle');
+    const subject=typeof window.ddContextTopic==='function'?window.ddContextTopic(brief):brief;
+    if(field&&requestedTitle&&topicClass(requestedTitle)===topicClass(subject)&&topicClass(subject)){
+      field.value=requestedTitle;
+      state._ddManualTitle=true;
+    }
+    if(field&&!requestedTitle){
+      const oldClass=topicClass(field.value),newClass=topicClass(subject);
+      if(oldClass&&newClass&&oldClass!==newClass){
+        alert('El título conserva otro tema de un borrador previo. Corrige el título de la unidad antes de generar la propuesta.');
+        field.focus();return;
+      }
+    }
+    // El título de la unidad no se añade como si fuera un hecho del contexto.
     showSituations(brief,type);
   };
   const css=document.createElement('style');css.textContent=`.dd-proposal-chooser{border-top:2px dashed #8a9a90;padding-top:18px;margin-top:18px}.dd-choice-intro{background:#f5faf7;border:1px solid #d6e4dc;border-radius:14px;padding:14px 16px;margin-bottom:12px}.dd-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.dd-product-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.dd-choice-card{display:block;border:2px solid #d8dfdb;border-radius:14px;padding:14px;background:#fff;cursor:pointer}.dd-choice-card.selected{border-color:#2f7e5a;background:#ebf7f0}.dd-choice-card h3{margin:8px 0}.dd-choice-card p{line-height:1.45}.dd-pick{display:block;margin-top:10px;color:#286c4e}.dd-own{display:block;margin-top:14px}.dd-own textarea{width:100%;min-height:95px;margin-top:7px}.dd-proposal-chooser .actions{margin-top:14px}.dd-product-side-panel{position:fixed;top:0;right:0;z-index:999;width:min(460px,94vw);height:100vh;background:#fff;border-left:1px solid #d8e1dc;box-shadow:-18px 0 46px rgba(20,40,55,.18);padding:18px;overflow:auto;transform:translateX(104%);transition:transform .22s ease}.dd-product-side-panel.open{transform:translateX(0)}.dd-product-assistant-list{display:grid;gap:9px;margin-top:12px}.dd-product-assistant-option{display:block;width:100%;text-align:left;border:1px solid #d8e1dc;border-radius:13px;background:#fff;padding:12px;cursor:pointer}.dd-product-assistant-option:hover{border-color:#2f7e5a;background:#eff8f3}.dd-product-assistant-option b,.dd-product-assistant-option span{display:block}.dd-product-assistant-option span{margin-top:5px;color:#53645c;line-height:1.4}@media(max-width:850px){.dd-product-grid,.dd-choice-grid{grid-template-columns:1fr}}`;document.head.appendChild(css);

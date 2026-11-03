@@ -3,6 +3,7 @@
   if(window.__ddCreativeRuntimeV18)return;window.__ddCreativeRuntimeV18=true;
   if(!window.ddCreativeChoices)return;
   const E=v=>escapeHtml(v);
+  const cleanInput=v=>String(v||'').replace(/\*\*/g,'').replace(/__+/g,'').trim();
 
   function pending(){return state.pendingUnitChoice||null;}
   // Distinguir una orden administrativa de la situación vivida por los estudiantes.
@@ -65,11 +66,11 @@
     if(!host.querySelector('.dd-new-ideas-note')){const n=document.createElement('div');n.className='dd-new-ideas-note';n.innerHTML='✨ <b>No repetición inmediata:</b> el motor recuerda productos usados y recorre otras alternativas antes de volver a ellos.';host.querySelector('.dd-choice-intro')?.appendChild(n);}
   }
   function creativeSituationSelected(){
-    const own=(byId('ddOwnSituation')?.value||'').trim();if(own)return own;
+    const own=cleanInput(byId('ddOwnSituation')?.value);if(own)return own;
     const key=document.querySelector('input[name="ddSituation"]:checked')?.value,d=ensureCreativeData();return d?.situations.find(x=>x.key===key)?.text||'';
   }
   function creativeProductSelected(){
-    const own=(byId('ddOwnProduct')?.value||'').trim();if(own)return{title:'Producto propuesto por el docente',text:own};
+    const own=cleanInput(byId('ddOwnProduct')?.value);if(own)return{title:'Producto propuesto por el docente',text:own};
     const key=document.querySelector('input[name="ddProduct"]:checked')?.value,d=ensureCreativeData(),x=d?.products.find(y=>y.key===key);return x?{title:x.title,text:x.text}:null;
   }
 
