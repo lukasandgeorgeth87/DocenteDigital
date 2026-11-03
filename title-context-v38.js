@@ -255,6 +255,20 @@
   }
 
   function titlesFromIntent(raw,type){
+    // Las solicitudes pegadas con encabezados (Título, Contexto, etc.) ya
+    // contienen una decisión del docente: jamás sustituirla por un tema genérico.
+    const labeled=String(raw||'').replace(/\*\*/g,'').replace(/__+/g,'')
+      .match(/(?:^|\n)\s*Título\s*:\s*([^\n]{5,130})/i);
+    if(labeled){
+      const explicit=tidy(labeled[1]).replace(/^[«“]|[»”]$/g,'').replace(/[.;]+$/,'');
+      if(explicit&&!BAD.test(explicit)){
+        const focus=String(window.ddContextTopic?.(raw)||'').trim();
+        const extra=focus&&!/tema solicitado por el docente|crear una unidad/i.test(focus)
+          ?[`Investigamos ${focus} y comunicamos lo aprendido`,`Comprendemos ${focus} y proponemos acciones responsables`]
+          :['Investigamos y comunicamos nuestros descubrimientos','Comprendemos y aplicamos lo aprendido'];
+        return [explicit,...extra];
+      }
+    }
     const enriched=titleContextText(raw),u=mci(enriched,type),baseTheme=tidy(u.theme)||'esta experiencia',kind=u.intentKind||'exploración/comprensión',goal=tidy(u.finality),project=/proyecto/i.test(type||u.document||''),level=titleLevel();
     const issue=semanticIssue(enriched,baseTheme);
     if(issue)return issueTitles(issue,type,level);

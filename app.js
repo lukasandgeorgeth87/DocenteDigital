@@ -478,7 +478,7 @@ function contextTopicFromBrief(brief){
   // Un contexto es una oración, no siempre un sintagma nominal. Extraer el
   // objeto expresado por el docente evita títulos como «Leemos sobre Los
   // estudiantes observan...» sin introducir un tema o una localidad ajenos.
-  const raw=String(brief||'').replace(/\s+/g,' ').trim();
+  const raw=String(brief||'').replace(/\r\n?/g,'\n').replace(/[ \t]+/g,' ').trim();
   if(!raw)return 'la situación de nuestra comunidad';
   // Solicitudes estructuradas: recuperar el contenido pedagógico, no los
   // encabezados administrativos que llegan desde Inicio o desde un borrador.
@@ -486,7 +486,7 @@ function contextTopicFromBrief(brief){
   const contextSection=plain.match(/(?:^|\n)\s*Contexto\s*:\s*([\s\S]*?)(?=\n\s*(?:Áreas?\s+curriculares?|Pregunta\s+retadora|Producto\s+final|Indicaciones?\s+pedagógicas?)\s*:|$)/i);
   const source=contextSection?.[1]||plain;
   const subjectMatch=source.match(/\b(?:sobre|acerca de|en torno a)\s+([^.!?;\n]{4,105})/i);
-  const namedTitle=plain.match(/\btitulad[ao]\s*[«“\"]([^»”\"]{5,110})[»”\"]/i);
+  const namedTitle=plain.match(/(?:^|\n)\s*Título\s*:\s*([^\n]{5,110})/i) || plain.match(/\btitulad[ao]\s*[«“\"]([^»”\"]{5,110})[»”\"]/i);
   const topicSource=subjectMatch?.[1]||source;
   if(contextSection||namedTitle){
     const strong=[

@@ -15,8 +15,10 @@
     return m?tidy(m[1]):'';
   }
   function namedUnitTitle(raw){
-    const m=plain(raw).match(/\btitulad[ao]\s*[«“\"]([^»”\"]{5,110})[»”\"]/i);
-    return m?tidy(m[1]).replace(/^[“«]|[”»]$/g,''):'';
+    const clean=plain(raw);
+    const m=clean.match(/(?:^|\n)\s*Título\s*:\s*([^\n]{5,130})/i)
+      || clean.match(/\btitulad[ao]\s*[«“\"]([^»”\"]{5,110})[»”\"]/i);
+    return m?tidy(m[1]).replace(/^[“«]|[”»]$/g,'').replace(/[.;\s]+$/,''):'';
   }
   function topicClass(raw){
     const s=plain(raw).toLowerCase();

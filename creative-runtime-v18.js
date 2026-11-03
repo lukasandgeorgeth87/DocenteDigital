@@ -25,8 +25,8 @@
       const generated=window.ddCreativeChoices(p.brief,p.type,{situations:p.situations,products:p.products});
       // Las propuestas pedagógicas originales ya separan tema y orden del docente.
       // No dejar que el motor de variedad vuelva a insertar toda la orden en la situación.
-      if(isPlanningInstruction(p.brief)&&Array.isArray(p.situations)&&p.situations.length>=2){
-        p._creativeData={...generated,situations:p.situations.map(x=>cleanSituationOption(x,p))};
+      if(isPlanningInstruction(p.brief)&&Array.isArray(p.situations)&&p.situations.length>=1){
+        p._creativeData={...generated,situations:p.situations.map(x=>cleanSituationOption(x,p)),products:Array.isArray(p.products)&&p.products.length?p.products:generated.products};
       }else p._creativeData=generated;
       save();
     }
