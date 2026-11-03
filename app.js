@@ -480,6 +480,29 @@ function contextTopicFromBrief(brief){
   // estudiantes observan...» sin introducir un tema o una localidad ajenos.
   const raw=String(brief||'').replace(/\s+/g,' ').trim();
   if(!raw)return 'la situación de nuestra comunidad';
+  // Una instrucción sobre el documento ("crea una unidad de 3 semanas...") NO es el tema.
+  // Extraer primero el objeto después de "sobre/acerca de"; conservar el relato
+  // completo para situaciones narrativas escritas por el docente.
+  const isInstruction=/^(?:(?:por favor|ahora)\s+)?(?:quiero|quisiera|necesito|deseo|solicito|crea|crear|elabora|elaborar|prepara|preparar|hazme|haz)\b/i.test(raw)
+      && /\b(?:unidad|proyecto|sesión|sesion|planificación|programación)\b/i.test(raw.slice(0,130));
+  if(isInstruction){
+    const about=raw.match(/\b(?:sobre|acerca de|referente a|tema(?: de)?:)\s+([^.!?;\n]+)/i);
+    if(about){
+      let focus=about[1].replace(/\s*,\s*(?:incluye|trabajaremos|con\s+(?:competencias|criterios|evidencias|actividades)|el producto final|producto final).*$/i,'')
+        .replace(/\s+\b(?:incluye|trabajaremos)\b.*$/i,'')
+        .replace(/\s+en\s+(?:nuestra|mi|la)\s+comunidad\s*$/i,'')
+        .replace(/[,:;\s]+$/,'').trim();
+      if(focus.length>=3&&focus.length<=150){
+        if(!/^(?:el|la|los|las|un|una|unos|unas)\s/i.test(focus)){
+          const first=focus.split(/\s+/)[0].toLowerCase();
+          const article=first==='agua'?'el':/as$/.test(first)?'las':/(?:os|es)$/.test(first)?'los':/a$/.test(first)?'la':'el';
+          focus=article+' '+focus;
+        }
+        return focus.toLowerCase();
+      }
+    }
+    return 'el tema solicitado por el docente';
+  }
   const clause=raw.split(/\s+para\s+|\s+y\s+(?=(?:los|las|el|la|queremos|quieren|desean|se)\b)/i)[0].replace(/[.!?]+$/,'').trim();
   const match=clause.match(/\b(?:aparecieron|aparece|encontramos|encontraron|observamos|observan|observó|vemos|vimos|medir|analizar|investigar|explorar|registrar|conocer|recoger|mejorar|comprender|aprender|trabajando\s+en)\s+(.+)$/i);
   let topic=(match?.[1]||clause).replace(/^mejor\s+/i,'').trim();

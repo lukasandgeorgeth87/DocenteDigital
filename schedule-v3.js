@@ -153,6 +153,42 @@
     return state.schedule||clone(DEFAULT_SCHEDULE);
   }
 
+  // Títulos progresivos para Primaria: la orden administrativa nunca es el tema.
+  // Semana inicial: reconocer y preguntar; semanas intermedias: investigar y analizar;
+  // tramo final: producir, comunicar y evaluar el producto integrador.
+  function primarySequenceTitle(area,brief,week,weeks,turn){
+    const topic=typeof window.ddContextTopic==='function'?window.ddContextTopic(brief):'el tema trabajado';
+    const raw=String(brief||'');
+    const product=(state.pendingUnitChoice?.selectedProduct||
+      (raw.match(/\bproducto\s+final\s+(?:será|sera|es|:)\s+([^.!?;,]+)/i)||[])[1]||'producto final')
+      .replace(/\s*,\s*(?:con\s+(?:competencias|criterios|evidencias|actividades)).*$/i,'').trim();
+    const stage=weeks===1?1:(week===1?0:week===weeks?2:1);
+    const sets={
+      'Comunicación':[
+        [`Dialogamos sobre ${topic} y formulamos preguntas`,`Leemos información para comprender ${topic}`,`Escuchamos explicaciones y registramos dudas sobre ${topic}`,`Explicamos con nuestras palabras lo que descubrimos sobre ${topic}`],
+        [`Contrastamos fuentes e ideas sobre ${topic}`,`Organizamos información útil sobre ${topic}`,`Escribimos borradores para comunicar nuestros hallazgos`, `Revisamos nuestros textos usando criterios acordados`],
+        [`Redactamos mensajes claros para el producto final`,`Revisamos y mejoramos los textos de ${product}`,`Ensayamos cómo comunicar nuestros hallazgos`,`Presentamos y evaluamos los mensajes de ${product}`]
+      ],
+      'Matemática':[
+        [`Planteamos preguntas que podemos responder con datos sobre ${topic}`,`Recogemos y registramos datos relacionados con ${topic}`,`Contamos y comparamos cantidades de situaciones relacionadas con ${topic}`,`Seleccionamos estrategias para organizar nuestros datos`],
+        [`Construimos tablas y gráficos con los datos recogidos`, `Interpretamos gráficos y explicamos qué información muestran`, `Resolvemos problemas con los datos del contexto`, `Comprobamos cálculos y justificamos decisiones`],
+        [`Elegimos datos y gráficos para informar a la comunidad`, `Revisamos que las representaciones sean correctas`, `Sustentamos decisiones usando nuestros datos`, `Evaluamos qué muestran los resultados de nuestros registros`]
+      ],
+      'Personal Social':[
+        [`Conversamos sobre prácticas y decisiones de las personas relacionadas con ${topic}`,`Reconocemos diferentes responsabilidades en nuestra comunidad`, `Recogemos opiniones sin asumir que todas las familias piensan igual`, `Identificamos necesidades que podemos investigar`],
+        [`Analizamos decisiones y acuerdos que favorecen el bien común`, `Comparamos puntos de vista y argumentamos con respeto`, `Proponemos acuerdos para actuar responsablemente`, `Explicamos por qué nuestras propuestas pueden ayudar a la comunidad`],
+        [`Organizamos compromisos y acuerdos para el producto final`, `Justificamos recomendaciones para el bien común`, `Participamos en la comunicación de los acuerdos`, `Evaluamos nuestras propuestas de mejora`]
+      ],
+      'Ciencia y Tecnología':[
+        [`Formulamos preguntas investigables sobre ${topic}`, `Hacemos predicciones antes de observar`, `Planificamos cómo recoger evidencias de forma segura`, `Registramos observaciones pertinentes al tema`],
+        [`Comparamos los datos obtenidos con nuestras predicciones`, `Contrastamos observaciones con fuentes confiables`, `Analizamos resultados y buscamos explicaciones`, `Explicamos qué conclusiones podemos sostener`],
+        [`Seleccionamos evidencias científicas para nuestras recomendaciones`, `Elaboramos explicaciones sustentadas para el producto final`, `Revisamos si nuestros mensajes corresponden a las evidencias`, `Comunicamos resultados y preguntas pendientes`]
+      ]
+    };
+    const variants=sets[area]?.[stage];
+    return variants?variants[(turn-1)%variants.length]:null;
+  }
+
   buildActivities=function(brief,duration){
     const weeks=Math.max(1,parseInt(duration)||3);
     if(state.level==='Inicial'){
@@ -168,7 +204,9 @@
           if(state.areas&&state.areas.length&&!state.areas.includes(area))return;
           const variants=activityVariants(area,brief);
           counters[area]=(counters[area]||0)+1;
-          const title=variants[(counters[area]-1)%variants.length];
+          const title=(state.level==='Primaria'
+            ?primarySequenceTitle(area,brief,week,weeks,counters[area]):null)
+            ||variants[(counters[area]-1)%variants.length];
           activities.push({kind:'sesion',kindLabel:'Sesión de aprendizaje',area,title,week,day,block:slot.block||idx+1,time:slot.time||'',order:++order});
         });
       });

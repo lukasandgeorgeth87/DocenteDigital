@@ -4,7 +4,7 @@
   const E=v=>escapeHtml(v), baseCreate=window.createUnitDemo; state.pendingUnitChoice=state.pendingUnitChoice||null;if(typeof save==='function')save();
   const tidy=s=>String(s||'').replace(/\s+/g,' ').trim();
   function meaningFor(raw){try{if(typeof window.ddUnderstandPlanningDescription==='function')return window.ddUnderstandPlanningDescription(raw)}catch(e){}return {raw,focus:raw||'la situación descrita',problem:'',cause:'',consequence:'',goal:'',opportunity:'',actors:[],place:'',confidence:0,status:'lectura preliminar',gaps:['falta precisar el sentido de la situación']};}
-  function shortFocus(m,raw){const f=tidy(m?.focus||'');const fallback=typeof window.ddContextTopic==='function'?window.ddContextTopic(raw):tidy(raw).slice(0,110);const base=f&&f!=='la realidad descrita'&&f.length<=105&&f!==tidy(raw)?f:fallback||'la situación descrita';const s=tidy(raw+' '+base).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueologic|sitios?\s+arqueologic|patrimonio\s+arqueologic/.test(s))return 'las pinturas rupestres y el patrimonio arqueológico local';return base;}
+  function shortFocus(m,raw){const f=tidy(m?.focus||'');const fallback=typeof window.ddContextTopic==='function'?window.ddContextTopic(raw):tidy(raw).slice(0,110);const instrumental=/^(?:por favor\s+)?(?:quiero|quisiera|necesito|deseo|crea|crear|elabora|prepara|hazme)\b/i.test(tidy(raw))&&/\b(?:unidad|proyecto|sesión|sesion)\b/i.test(tidy(raw).slice(0,130));const base=instrumental?fallback:(f&&f!=='la realidad descrita'&&f.length<=105&&f!==tidy(raw)?f:fallback||'la situación descrita');const s=tidy(raw+' '+base).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueologic|sitios?\s+arqueologic|patrimonio\s+arqueologic/.test(s))return 'las pinturas rupestres y el patrimonio arqueológico local';return base;}
   function placeFor(m){
     if(tidy(m?.place))return tidy(m.place);
     const p=state.teacherContext||{};
@@ -102,7 +102,10 @@
     const locality=profile.community?((profile.localityType||'localidad')+' '+profile.community):place;
     let a='',b='';
     const typedTitle=tidy(byId('unitTitle')?.value||'');
-    const contextSentence=tidy(raw).replace(/[.!?]+$/,'')+'.';
+    // No copiar una orden instrumental ("crea una unidad de aprendizaje")
+    // como si fuera un hecho real en la situación significativa.
+    const instrumental=/^(?:por favor\s+)?(?:quiero|quisiera|necesito|deseo|crea|crear|elabora|prepara|hazme)\b/i.test(tidy(raw))&&/\b(?:unidad|proyecto|sesión|sesion)\b/i.test(tidy(raw).slice(0,130));
+    const contextSentence=instrumental?'':tidy(raw).replace(/[.!?]+$/,'')+'.';
     const combinedHeritage=tidy(raw+' '+focus+' '+typedTitle);
     const heritage=/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueologic|sitios?\s+arqueologic|patrimonio\s+arqueologic/.test(combinedHeritage.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
     const titlePlaceMatch=typedTitle.match(/\ben\s+([\p{L}][\p{L}'’ -]{2,80}(?:\s+y\s+[\p{L}][\p{L}'’ -]{2,50})?)\s*$/iu);

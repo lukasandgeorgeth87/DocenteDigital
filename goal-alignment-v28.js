@@ -22,9 +22,9 @@
     ];
     for(const re of patterns){const m=raw.match(re);if(m&&tidy(m[1]).length>=4)return{phrase:tidy(m[1]),source:m[0]};}
     const action='sembrar|cultivar|crear|construir|elaborar|implementar|organizar|producir|mejorar|recuperar|diseñar|realizar|desarrollar|instalar|preparar|poner|hacer|transformar|resolver|cuidar|promover|presentar|fabricar|registrar|investigar';
-    const re=new RegExp('\\b(?:para|con el fin de|con el propósito de|con el proposito de)\\s+((?:'+action+')\\b[^.!?]*)','ig');
+    const re=new RegExp('\\b(?:para|con el fin de|con el propósito de|con el proposito de)\\s+((?:'+action+')\\b[^.!?,;]*)','ig');
     const found=[...raw.matchAll(re)];
-    if(found.length){const m=found[found.length-1];const phrase=tidy(m[1]);if(phrase.length>=4)return{phrase,source:m[0]};}
+    if(found.length){const m=found[found.length-1];const phrase=tidy(m[1]).split(/,\s*(?:con\s+(?:competencias|criterios|evidencias|actividades)|incluye|trabajaremos|para\s+el\s+grado)\b/i)[0].trim();if(phrase.length>=4)return{phrase,source:m[0]};}
     return null;
   }
 
@@ -93,9 +93,8 @@
     const g=tidy(goal.phrase),challenge=challengeFor(brief,goal);
     const bridge=isBiohuerto(g)
       ?'La intención no es quedarse únicamente en conocer o explicar la siembra: los estudiantes utilizarán esos aprendizajes para planificar y realizar la siembra de hortalizas en el biohuerto, tomando decisiones sobre preparación, semillas, distribución, cuidado y seguimiento.'
-      :`La finalidad expresada por el docente es que estos aprendizajes se utilicen para ${g}. Por ello, la planificación deberá conducir de la comprensión a una aplicación concreta y verificable.`;
-    const lead=index===1?'Desde una mirada vivencial, ':'Desde una formulación clara, ';
-    return `${lead}${base} ${bridge} Reto: ${challenge}`;
+      :`Durante la unidad, los estudiantes utilizarán lo aprendido para ${g}. Organizarán sus resultados y comprobarán si la acción propuesta cumple su propósito.`;
+    return `${base} ${bridge} Reto: ${challenge}`.trim();
   }
 
   function goalProducts(brief,type,goal){
