@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout exact preview commit
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9eade9 # v4.2.2
+        uses: actions/checkout@v4
 
       - name: Check JavaScript syntax
         shell: bash
