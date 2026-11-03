@@ -2,7 +2,7 @@ name: Beta E2E Browser Gate
 
 on:
   push:
-    branches: [main, audit/v5-continuity-offline-diagnostic]
+    branches: [main, audit/v5-continuity-offline-diagnostic, preview/docentedigital-fase10-20261030]
   pull_request:
     branches: [main]
   workflow_dispatch:
