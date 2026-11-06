@@ -384,7 +384,22 @@
     // La selección explícita es específica de la unidad; el perfil del docente no cambia.
     try{if(requestedAreas.length)state.areas=[...requestedAreas];baseCreate();}
     finally{state.areas=originalAreas;if(typeof save==='function')save();}
-    const unit=(state.units||[]).find(u=>!before.has(u.id))||state.units?.[0];if(!unit)return;unit.situation=pending.selectedSituation;unit.reto=(typeof statedChallenge==='function'?statedChallenge(pending.brief):'')||pending.reto||unit.reto;const explicitTitle=typeof namedUnitTitle==='function'?namedUnitTitle(pending.brief):'';if(explicitTitle)unit.title=explicitTitle;unit.contextFocus=pending.contextFocus||unit.contextFocus;unit.planningMeaning=pending.meaning||unit.planningMeaning;unit.expertReasoning=pending.expertReasoning||null;unit.selectedSituationSource=pending.situations.find(x=>x.text===pending.selectedSituation)?.key||'Docente';unit.teacherProfile=pending.profileSnapshot||profileSnapshot();unit.situationOptions=pending.situations;unit.product=(typeof namedProductFinal==='function'?namedProductFinal(pending.brief):'')||pending.selectedProduct;unit.productTitle=pending.selectedProductTitle;unit.productOptions=pending.products;unit.selectionApproved=true;if(typeof save==='function')save();renderUnits();renderUnitOutput(unit);fillSessionUnits();host.classList.add('hidden');byId('unitOutput')?.scrollIntoView({behavior:'smooth'});}
+    const unit=(state.units||[]).find(u=>!before.has(u.id))||state.units?.[0];if(!unit)return;unit.situation=pending.selectedSituation;unit.reto=(typeof statedChallenge==='function'?statedChallenge(pending.brief):'')||pending.reto||unit.reto;
+    // Guardado real: otros módulos pueden haber interpretado la duración
+    // o la orden «crear una unidad» como finalidad pedagógica. No aceptarlas
+    // como pregunta retadora, incluso si una propuesta visual parece correcta.
+    const directQuestion=typeof statedChallenge==='function'?statedChallenge(pending.brief):'';
+    const rightsShortRequest=/\bsobre\s+los\s+derechos\s*[.!?]?\s*$/i.test(String(pending.brief||'').trim())
+      && String(pending.brief||'').trim().length<210;
+    const contaminatedQuestion=/\b(?:quiero\s+crear|crear\s+(?:una?\s+)?unidad|\d+\s+semanas\b)/i.test(unit.reto||'');
+    if(!directQuestion&&rightsShortRequest){
+      unit.reto='¿Cómo podemos reconocer nuestros derechos y responsabilidades y explicarlos con ejemplos respetuosos de la vida cotidiana?';
+    }else if(!directQuestion&&contaminatedQuestion){
+      const topic=typeof window.ddContextTopic==='function'?String(window.ddContextTopic(pending.brief)||'').trim():'el tema propuesto';
+      const safeTopic=/\b(?:quiero\s+crear|crear\s+una?\s+unidad|\d+\s+semanas)\b/i.test(topic)?'el tema propuesto':topic;
+      unit.reto='¿Qué necesitamos comprender sobre '+safeTopic+' y cómo podemos comunicar con evidencias lo que aprendimos?';
+    }
+    const explicitTitle=typeof namedUnitTitle==='function'?namedUnitTitle(pending.brief):'';if(explicitTitle)unit.title=explicitTitle;unit.contextFocus=pending.contextFocus||unit.contextFocus;unit.planningMeaning=pending.meaning||unit.planningMeaning;unit.expertReasoning=pending.expertReasoning||null;unit.selectedSituationSource=pending.situations.find(x=>x.text===pending.selectedSituation)?.key||'Docente';unit.teacherProfile=pending.profileSnapshot||profileSnapshot();unit.situationOptions=pending.situations;unit.product=(typeof namedProductFinal==='function'?namedProductFinal(pending.brief):'')||pending.selectedProduct;unit.productTitle=pending.selectedProductTitle;unit.productOptions=pending.products;unit.selectionApproved=true;if(typeof save==='function')save();renderUnits();renderUnitOutput(unit);fillSessionUnits();host.classList.add('hidden');byId('unitOutput')?.scrollIntoView({behavior:'smooth'});}
   window.createUnitDemo=function(){
     const type=byId('unitType')?.value||'Unidad de aprendizaje';
     const title=byId('unitTitle')?.value.trim()||'';
