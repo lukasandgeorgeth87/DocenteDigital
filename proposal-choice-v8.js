@@ -7,7 +7,9 @@
   // imprime literalmente ** en el título, el producto o el Word.
   const plain=s=>String(s||'').replace(/\*\*/g,'').replace(/__+/g,'').replace(/^\s*[•*-]\s+/gm,'').trim();
   function teacherContext(raw){
-    const m=plain(raw).match(/(?:^|\n)\s*Contexto\s*:\s*([\s\S]*?)(?=\n\s*(?:Áreas?\s+curriculares?|Pregunta\s+retadora|Producto\s+final|Indicaciones?\s+pedagógicas?)\s*:|$)/i);
+    const s=plain(raw);
+    const m=s.match(/(?:^|\n)\s*Contexto\s*:\s*([\s\S]*?)(?=\n\s*(?:Áreas?\s+curriculares?|Pregunta\s+(?:retadora|desafiante)|Producto\s+final|Indicaciones?\s+pedagógicas?)\s*:|$)/i)
+      ||s.replace(/\s+/g,' ').match(/\bContexto\s*:\s*([\s\S]*?)(?=\s+(?:Áreas?\s+curriculares?|Pregunta\s+(?:retadora|desafiante)|Producto\s+final|Indicaciones?\s+pedagógicas?)\s*:|$)/i);
     return m?tidy(m[1]).replace(/\.{2,}/g,'.'):'';
   }
   function statedChallenge(raw){
@@ -367,7 +369,7 @@
     // título recuperado de un borrador anterior (p. ej. agua vs siembra).
     const requestedTitle=namedUnitTitle(brief),field=byId('unitTitle');
     const subject=typeof window.ddContextTopic==='function'?window.ddContextTopic(brief):brief;
-    if(field&&requestedTitle&&topicClass(requestedTitle)===topicClass(subject)&&topicClass(subject)){
+    if(field&&requestedTitle&&(!topicClass(requestedTitle)||!topicClass(subject)||topicClass(requestedTitle)===topicClass(subject))){
       field.value=requestedTitle;
       state._ddManualTitle=true;
     }

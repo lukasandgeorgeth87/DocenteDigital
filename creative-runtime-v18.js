@@ -12,9 +12,19 @@
     return /^(?:por favor\s+)?(?:quiero|quisiera|necesito|deseo|solicito|crea|crear|elabora|prepara|hazme|haz)\b/i.test(s)
       && /\b(?:unidad|proyecto|sesi[oó]n|planificaci[oó]n)\b/i.test(s.slice(0,180));
   }
+  function cleanGenericOption(x,p){
+    const direct=String(window.ddContextTopic?.(p.brief)||'').trim();
+    const previous=String(p.contextFocus||'').trim();
+    const useful=s=>s&&!/tema solicitado por el docente|crear una unidad|crear un proyecto|\bgrado\s+de\b/i.test(s);
+    const focus=useful(direct)?direct:useful(previous)?previous:'';
+    if(!focus)return x;
+    const replace=s=>String(s||'').replace(/\bel tema solicitado por el docente\b/gi,focus)
+      .replace(/\btema solicitado por el docente\b/gi,focus);
+    return {...x,title:replace(x.title),text:replace(x.text)};
+  }
   function cleanSituationOption(x,p){
     const text=String(x?.text||'');
-    if(text&&!/\b(?:crear|crea|elaborar|elabora|preparar)\s+(?:una?|el|la)?\s*(?:unidad|proyecto|sesi[oó]n)\b/i.test(text))return x;
+    if(text&&!/\b(?:crear|crea|elaborar|elabora|preparar)\s+(?:una?|el|la)?\s*(?:unidad|proyecto|sesi[oó]n)\b/i.test(text))return cleanGenericOption(x,p);
     const focus=p.contextFocus||window.ddContextTopic?.(p.brief)||'el tema elegido';
     const grades=(state.grades||[]).join(', ')||'los grados seleccionados';
     return {...x,text:`Los estudiantes de ${grades} investigarán ${focus} a partir de preguntas sobre su entorno. Primero observarán situaciones verificables y recogerán información; luego contrastarán datos y fuentes y, finalmente, elaborarán explicaciones y una producción para compartir sus aprendizajes. No se presumirán problemas locales sin haberlos observado.`};
@@ -25,9 +35,12 @@
       const generated=window.ddCreativeChoices(p.brief,p.type,{situations:p.situations,products:p.products});
       // Las propuestas pedagógicas originales ya separan tema y orden del docente.
       // No dejar que el motor de variedad vuelva a insertar toda la orden en la situación.
-      if(isPlanningInstruction(p.brief)&&Array.isArray(p.situations)&&p.situations.length>=1){
-        p._creativeData={...generated,situations:p.situations.map(x=>cleanSituationOption(x,p)),products:Array.isArray(p.products)&&p.products.length?p.products:generated.products};
-      }else p._creativeData=generated;
+      const preferOriginal=isPlanningInstruction(p.brief)&&Array.isArray(p.situations)&&p.situations.length>=1;
+      const situations=preferOriginal?p.situations:(generated.situations||[]);
+      const products=preferOriginal&&Array.isArray(p.products)&&p.products.length?p.products:(generated.products||[]);
+      p._creativeData={...generated,
+        situations:situations.map(x=>cleanSituationOption(x,p)),
+        products:products.map(x=>cleanGenericOption(x,p))};
       save();
     }
     return p._creativeData;

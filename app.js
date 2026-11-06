@@ -483,6 +483,27 @@ function contextTopicFromBrief(brief){
   // Solicitudes estructuradas: recuperar el contenido pedagógico, no los
   // encabezados administrativos que llegan desde Inicio o desde un borrador.
   const plain=raw.replace(/\*\*/g,'').replace(/__+/g,'').replace(/[•]/g,' ');
+  // También llegan solicitudes de un solo párrafo, con encabezados Markdown.
+  // Buscar etiquetas sin exigir saltos de línea evita confundir la instrucción
+  // "crear una unidad" con el tema estudiado por niñas, niños y adolescentes.
+  const compact=plain.replace(/\s+/g,' ');
+  const markedTitle=(compact.match(/\bt[ií]tulo\s*:\s*([\s\S]*?)(?=\s+(?:duraci[oó]n|[aá]reas?\s+curriculares?|contexto|problema\s+del\s+contexto|pregunta\s+(?:retadora|desafiante)|producto\s+final|indicaciones?\s+pedag[oó]gicas?)\s*:|$)/i)||[])[1]||'';
+  const markedContext=(compact.match(/\b(?:contexto|problema\s+del\s+contexto)\s*:\s*([\s\S]*?)(?=\s+(?:pregunta\s+(?:retadora|desafiante)|producto\s+final|indicaciones?\s+pedag[oó]gicas?|organiza\s+(?:la\s+)?unidad)\s*:|$)/i)||[])[1]||'';
+  if(markedTitle||markedContext){
+    const described=markedContext||markedTitle;
+    const hints=[markedTitle,described].join(' ');
+    const domains=[
+      [/\b(?:agua|yaku)\b/i,'el uso y cuidado del agua'],
+      [/\b(?:residuos?|basura|reciclaje)\b/i,'la gestión responsable de los residuos'],
+      [/\b(?:siembra|semillas?|biohuerto|cultivos?)\b/i,'la siembra y el cuidado de las plantas'],
+      [/\b(?:abejas?|polinizadores?)\b/i,'los polinizadores y su cuidado']
+    ];
+    for(const [re,name] of domains)if(re.test(hints))return name;
+    const first=markedTitle.trim().replace(/^[«“]|[»”]$/g,'').replace(/[.!?]+$/,'');
+    if(first&&!/^(?:quiero|crear|crea|necesito)\b/i.test(first))return first.toLowerCase();
+    const observed=described.match(/\b(?:sobre|acerca\s+de|cuidado\s+de|investigar|estudiar)\s+([^.!?;]{4,90})/i);
+    if(observed)return observed[1].trim().toLowerCase();
+  }
   const contextSection=plain.match(/(?:^|\n)\s*Contexto\s*:\s*([\s\S]*?)(?=\n\s*(?:Áreas?\s+curriculares?|Pregunta\s+retadora|Producto\s+final|Indicaciones?\s+pedagógicas?)\s*:|$)/i);
   const source=contextSection?.[1]||plain;
   const subjectMatch=source.match(/\b(?:sobre|acerca de|en torno a)\s+([^.!?;\n]{4,105})/i);

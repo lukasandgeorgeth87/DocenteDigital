@@ -62,6 +62,21 @@
     if(situation&&product&&topicalLink(situation,product)==='contradiccion')
       result.push(issues('semantic-product','El producto final parece corresponder a otro tema y no al problema de la situación significativa. Revisa su pertinencia.','coherencia temática'));
     const acts=Array.isArray(unit.activities)?unit.activities:[];
+    // Detectar relleno genérico: la presencia de un campo NO garantiza su calidad.
+    // La solicitud original del docente puede contener instrucciones; no se evalúa aquí.
+    const placeholder=/tema solicitado por el docente|tema elegido por el docente|contribuya a descargarla en word|sobre el tema trabajado/i;
+    for(const [field,value] of [
+      ['título',unit.title],['situación significativa',unit.situation],
+      ['reto',unit.reto],['producto',unit.product]
+    ])if(placeholder.test(clean(value)))result.push(issues('placeholder-'+field,
+      field.charAt(0).toUpperCase()+field.slice(1)+': contiene una frase de relleno en lugar de un tema pedagógico concreto.','coherencia temática'));
+    const genericActivities=acts.map((a,i)=>({a,i})).filter(({a})=>placeholder.test(clean(a?.title)));
+    if(genericActivities.length)result.push(issues('placeholder-sessions',
+      'Hay '+genericActivities.length+' actividades con expresiones como «tema solicitado por el docente». Revisa su contexto y propósito.','secuencia'));
+    const authored=String(unit.situationBrief||'').replace(/\*\*/g,'').replace(/__+/g,'');
+    const requestedTitle=(authored.match(/(?:^|\n)\s*Título\s*:\s*([^\n]{5,120})/i)||[])[1]?.trim().replace(/[.;]+$/,'');
+    if(requestedTitle&&clean(unit.title)&&norm(requestedTitle)!==norm(unit.title))
+      result.push(issues('explicit-title-differs','El título generado no coincide con el título explícito que indicó el docente.','título'));
     const conflicts=acts.map((a,i)=>({a,i})).filter(({a})=>a&&a.title&&situation&&topicalLink(situation,a.title)==='contradiccion');
     conflicts.slice(0,3).forEach(({a,i})=>result.push(issues('semantic-activity-'+i,
       `Actividad ${i+1} (${clean(a.title)}): parece abordar un tema distinto al de la situación significativa.`,'secuencia')));
