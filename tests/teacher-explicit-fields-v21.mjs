@@ -32,7 +32,7 @@ assert.equal(official.DD_OFFICIAL_CURRICULUM.scienceModeFromTitle('Hacemos predi
 const w={unitWordHtml:()=>'',DD_OFFICIAL_CURRICULUM:official.DD_OFFICIAL_CURRICULUM};
 runInNewContext(read('unit-export-quality-v11.js'),{window:w});
 const quality=w.DD_UNIT_EXPORT_QUALITY_V11;
-const original={title:'Título antiguo',situationBrief:brief,product:expectedProduct+'. Organización de actividades',reto:challenge,level:'Primaria',type:'Unidad de aprendizaje',duration:'3 semanas',ieType:'Polidocente',grades:['6.º'],areas:['Ciencia y Tecnología'],activities:[],documentContextSnapshot:{institution:'',teacher:''}};
+const original={title:'Título antiguo',situationBrief:brief,situation:'En nuestra comunidad desperdician agua y los estudiantes investigan cómo cuidarla.',product:expectedProduct+'. Organización de actividades',reto:challenge,level:'Primaria',type:'Unidad de aprendizaje',duration:'3 semanas',ieType:'Polidocente',grades:['6.º'],areas:['Ciencia y Tecnología'],activities:[],documentContextSnapshot:{institution:'',teacher:''}};
 assert.equal(quality.teacherTitle(original),expectedTitle);
 assert.equal(quality.cleanProduct(original),expectedProduct);
 const output=quality.word(original);
