@@ -20,7 +20,7 @@ assert(!/semanas/i.test(reto),'La duración no puede ser la finalidad del reto')
 assert.match(reto,/derechos/);
 const sc=proposal.indexOf('  function situationOptions(raw){'),ec=proposal.indexOf('  function productOptions(raw,pack){',sc);
 assert(sc>=0&&ec>sc);
-const rights={state:{level:'Primaria',grades:['2.º'],teacherContext:{}},window:{ddContextTopic:()=> 'los derechos'},meaningFor:()=>({focus:'los derechos',confidence:45}),shortFocus:()=> 'los derechos',placeFor:()=> 'la escuela',profileSnapshot:()=>({}),teacherContext:()=>'',isAllSaintsContext:()=>false,statedChallenge:()=>'',challengeFor:()=>reto,naturalEvidence:()=>'',tidy:s=>String(s||'').replace(/\\s+/g,' ').trim()};
+const rights={byId:()=>null,state:{level:'Primaria',grades:['2.º'],teacherContext:{}},window:{ddContextTopic:()=> 'los derechos'},meaningFor:()=>({focus:'los derechos',confidence:45}),shortFocus:()=> 'los derechos',placeFor:()=> 'la escuela',profileSnapshot:()=>({}),teacherContext:()=>'',isAllSaintsContext:()=>false,statedChallenge:()=>'',challengeFor:()=>reto,naturalEvidence:()=>'',tidy:s=>String(s||'').replace(/\\s+/g,' ').trim()};
 runInNewContext(proposal.slice(sc,ec)+'\nthis.make=situationOptions;',rights);
 const options=rights.make(brief);
 assert.equal(options.situations.length,2);
