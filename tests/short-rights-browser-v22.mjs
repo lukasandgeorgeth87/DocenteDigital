@@ -35,6 +35,9 @@ try{
  await page.waitForFunction(()=>window.__ddPlanningRuntimeReady===true,null,{timeout:20000});
  await page.evaluate(()=>window.go('plan'));
  await page.locator('button[onclick="showUnit()"]',{hasText:'Crear nueva'}).click();
+ const unitKind=page.locator('#ddPlanningKindChooser [data-kind="Unidad de aprendizaje"]');
+ if(await unitKind.count())await unitKind.click();
+ await page.locator('#unitDuration').selectOption({label:'3 semanas'});
  await page.locator('#unitSituation').fill(brief);
  await page.waitForFunction(()=>{const t=[...document.querySelectorAll('#ddIntentBox .dd-title-suggestions button')].map(x=>x.textContent.trim());return t.length===3&&t.every(x=>/derechos/i.test(x)&&!/crear una unidad|3 semanas/i.test(x))},null,{timeout:15000});
  const titles=await page.locator('#ddIntentBox .dd-title-suggestions button').allTextContents();
