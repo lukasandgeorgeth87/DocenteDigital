@@ -56,7 +56,7 @@
       }
       if(s==='escritura'&&/redact|escrib|borrador|produc/.test(lower(title))){
         return n<=2?'Escribe un mensaje breve con apoyo para comunicar una idea relevante.'
-          :n<=4?'Redacta un texto organizado y adecuado al destinatario utilizando información pertinente.'
+          :n<=4?'Organiza y escribe un texto adecuado al destinatario utilizando información pertinente.'
           :'Redacta mensajes coherentes y argumentados, adecuados al destinatario y respaldados por fuentes verificadas.';
       }
       if(s==='lectura')return n<=2?'Identifica información explícita con imágenes y explica oralmente una idea del texto.':n<=4?'Localiza información relevante y explica con sus palabras la idea principal del texto.':'Contrasta información del texto, infiere una idea y la sustenta con detalles leídos.';
