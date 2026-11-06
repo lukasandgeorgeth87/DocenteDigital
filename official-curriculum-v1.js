@@ -388,7 +388,7 @@
   function communicationModeFromTitle(title){
     const t=String(title||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     if(/^(?:convers\w*|dialog\w*|escuch\w*|expon\w*|present\w*|entrevist\w*|debat\w*|narr\w*|contamos)\b/.test(t))return'oral';
-    if(/^(?:leem\w*|leer|lectur\w*|comprend\w*|interpret\w*|analiz\w*\s+(?:un|una|los|las|textos?))\b/.test(t))return'lectura';
+    if(/^(?:leem\w*|leer|lectur\w*|comprend\w*|interpret\w*|analiz\w*\s+(?:un|una|los|las|textos?)|contrast\w*\s+fuentes|organiz\w*\s+informacion)\b/.test(t))return'lectura';
     if(/^(?:escrib\w*|redact\w*|produc\w*|revis\w*|elabor\w*\s+(?:un|una|los|las|textos?)|planific\w*\s+(?:un|una|los|las|textos?))\b/.test(t))return'escritura';
     const matches=[
       ['oral',/convers|dialog|escuch|expon|entrevist|debate|intercambio oral/],

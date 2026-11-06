@@ -19,7 +19,11 @@
       const quote=selected.match(/Un hecho relacionado con\s*[“"]([\s\S]*?)[”"]/);
       if(quote?.[1])return clean(quote[1]);
     }
-    return selected||authored||'Situación por completar y confirmar con el docente.';
+    const result=selected||authored||'Situación por completar y confirmar con el docente.';
+    // La pregunta retadora se muestra una sola vez, en su campo propio.
+    // No modifica la situación guardada por el docente.
+    if(clean(u?.reto))return result.replace(/\s+El reto\s+(?:será|es|central será)\s*:\s*¿[^?]{10,500}\?\s*$/i,'').trim()||result;
+    return result;
   }
   function competences(u,area,title){
     const core=window.DD_OFFICIAL_CURRICULUM;
@@ -28,7 +32,14 @@
   }
   function strand(area,title){
     const t=lower(title);
-    if(area==='Comunicación')return /escrib|produc|redact|planificamos un texto|rotulo|cartel/.test(t)?'escritura':/leer|leemos|lectura|texto|comprende|interpretamos|informacion/.test(t)?'lectura':'oralidad';
+    if(area==='Comunicación'){
+      // Primero identificar la ACCIÓN del estudiante. «Revisamos textos» es
+      // escritura, aunque el título contenga la palabra «textos».
+      if(/revis|mejor|corrig|reescrib|edit/.test(t)&&/texto|borrador|mensaje|afiche|escrit|producc|campana/.test(t))return 'escritura';
+      if(/escrib|produc|redact|planificamos un texto|rotulo|cartel|borrador/.test(t))return 'escritura';
+      if(/leer|leemos|lectura|texto|comprende|interpretamos|informacion|contrastamos fuentes|organizamos informacion/.test(t))return 'lectura';
+      return 'oralidad';
+    }
     if(area==='Matemática')return /dato|graf|encuesta|tabla|estad|probab/.test(t)?'datos':/perimetr|area|figura|mapa|croquis|forma|geometr/.test(t)?'forma':/patron|equiv|regular|sucesion/.test(t)?'regularidad':'cantidad';
     if(area==='Personal Social')return /antes|ahora|pasado|histori|cambio|permanencia|fuente|memoria|tradicion/.test(t)?'historia':/dinero|presupuesto|ahorro|consumo|compra/.test(t)?'economía':/espacio|ambiente|territor|croquis|riesgo/.test(t)?'ambiente':'convivencia';
     if(area==='Ciencia y Tecnología')return /diseñ|constru|prototipo|solucion tecnol/.test(t)?'diseña':/explica|causa|por que/.test(t)?'explica':'indaga';
@@ -38,11 +49,32 @@
     const n=gradeNum(grade),s=strand(area,title);
     if(!n)return 'Definir una actuación observable para la edad o grado seleccionado.';
     if(area==='Comunicación'){
+      if(s==='escritura'&&/revis|mejor|corrig|reescrib|edit/.test(lower(title))){
+        return n<=2?'Revisa con apoyo si su texto comunica la idea y realiza una mejora visible.'
+          :n<=4?'Revisa la claridad y organización del texto para su destinatario e incorpora mejoras.'
+          :'Revisa la coherencia, la adecuación al destinatario y el uso de fuentes; justifica las mejoras de su texto.';
+      }
+      if(s==='escritura'&&/redact|escrib|borrador|produc/.test(lower(title))){
+        return n<=2?'Escribe un mensaje breve con apoyo para comunicar una idea relevante.'
+          :n<=4?'Redacta un texto organizado y adecuado al destinatario utilizando información pertinente.'
+          :'Redacta mensajes coherentes y argumentados, adecuados al destinatario y respaldados por fuentes verificadas.';
+      }
       if(s==='lectura')return n<=2?'Identifica información explícita con imágenes y explica oralmente una idea del texto.':n<=4?'Localiza información relevante y explica con sus palabras la idea principal del texto.':'Contrasta información del texto, infiere una idea y la sustenta con detalles leídos.';
       if(s==='escritura')return n<=2?'Produce un rótulo o frase comprensible con apoyo y revisa si comunica su intención.':n<=4?'Organiza y escribe un texto breve para un destinatario y revisa su claridad.':'Planifica, redacta y revisa un texto coherente usando información de fuentes.';
       return n<=2?'Comunica una idea y escucha respetuosamente a sus compañeros.':n<=4?'Organiza un relato oral y responde preguntas relacionadas con el tema.':'Sustenta oralmente una explicación con razones y responde preguntas.';
     }
     if(area==='Matemática'){
+      const t=lower(title);
+      if(s==='datos'&&/planteamos preguntas|formulamos preguntas/.test(t))
+        return n<=2?'Plantea preguntas sencillas para recoger datos con apoyo.'
+          :n<=4?'Formula preguntas y determina qué datos debe recoger para responderlas.'
+          :'Formula preguntas de investigación estadística, identifica variables pertinentes y justifica los datos necesarios.';
+      if(s==='datos'&&/recogemos y registramos|registramos datos/.test(t))
+        return n<=2?'Registra conteos con material concreto y marcas sencillas.'
+          :n<=4?'Registra datos en tablas y comprueba que los conteos sean correctos.'
+          :'Registra y organiza datos de una investigación, verifica su consistencia y explica cómo se recogieron.';
+      if(s==='cantidad'&&/contamos y comparamos cantidades|comparamos cantidades/.test(t)&&n>=5)
+        return 'Estima, calcula y compara cantidades con unidades pertinentes al contexto, explicando y verificando procedimientos.';
       if(s==='datos')return n<=2?'Organiza conteos en un pictograma sencillo y comenta qué categoría tiene más.':n<=4?'Registra datos en una tabla y compara sus frecuencias con un gráfico.':'Representa datos, interpreta diferencias y sustenta una conclusión.';
       if(s==='forma')return n<=2?'Identifica y representa formas o recorridos con objetos y dibujos.':n<=4?'Elabora croquis o mide y compara longitudes explicando cómo lo hizo.':'Aplica medidas y representaciones espaciales para resolver y verificar un problema.';
       if(s==='regularidad')return n<=2?'Continúa un patrón con material concreto y explica su regla.':n<=4?'Identifica la regla de una secuencia y verifica sus resultados.':'Modela relaciones, compara procedimientos y justifica equivalencias.';
@@ -55,6 +87,23 @@
       return n<=2?'Escucha experiencias y propone un acuerdo sencillo de convivencia.':n<=4?'Explica un acuerdo y participa respetando opiniones distintas.':'Delibera con argumentos y propone acciones para el bien común.';
     }
     if(area==='Ciencia y Tecnología'){
+      const t=lower(title);
+      if(s==='indaga'&&/formulamos preguntas investigables|planteamos preguntas investigables/.test(t))
+        return n<=2?'Plantea con apoyo una pregunta sobre lo observado.'
+          :n<=4?'Formula una pregunta investigable e identifica qué necesita observar.'
+          :'Formula una pregunta investigable e identifica factores y variables relevantes para recoger evidencias.';
+      if(s==='indaga'&&/predicciones/.test(t)&&!/datos|resultados/.test(t))
+        return n<=2?'Expresa con apoyo lo que cree que ocurrirá antes de observar.'
+          :n<=4?'Formula una predicción vinculada con su pregunta y explica por qué la propone.'
+          :'Formula una hipótesis o predicción justificada y reconoce qué evidencias permitirían contrastarla.';
+      if(s==='indaga'&&/comparamos los datos|predicciones/.test(t)&&/datos/.test(t))
+        return n<=2?'Compara lo que observó con lo que había pensado.'
+          :n<=4?'Compara los datos registrados con su predicción y comunica diferencias.'
+          :'Analiza datos, los contrasta con sus predicciones y fundamenta una conclusión o nueva pregunta.';
+      if(s==='indaga'&&/seleccionamos evidencias|seleccionamos resultados/.test(t))
+        return n<=2?'Escoge observaciones que apoyen su explicación.'
+          :n<=4?'Selecciona registros pertinentes y explica qué muestran.'
+          :'Selecciona evidencias científicas pertinentes, justifica su confiabilidad y sustenta recomendaciones.';
       if(s==='diseña')return n<=2?'Representa una posible solución con un dibujo y prueba su funcionamiento.':n<=4?'Diseña un modelo, lo pone a prueba y registra una mejora.':'Justifica un diseño, evalúa pruebas y modifica el prototipo según evidencias.';
       if(s==='explica')return n<=2?'Describe el fenómeno observado con ejemplos y palabras propias.':n<=4?'Relaciona causas y efectos utilizando observaciones y fuentes.':'Elabora una explicación sustentada en conocimientos y evidencias.';
       return n<=2?'Plantea una pregunta, observa y registra mediante dibujos lo que encontró.':n<=4?'Formula una predicción, registra datos y los compara con lo esperado.':'Define variables pertinentes, analiza datos y sustenta una conclusión.';
@@ -62,7 +111,23 @@
     return n<=2?'Participa y comunica mediante una representación sencilla lo que aprendió.':n<=4?'Elabora una producción y explica las decisiones tomadas.':'Desarrolla una producción y argumenta sus decisiones con evidencias.';
   }
   function evidence(area,title){
-    const s=strand(area,title);
+    const s=strand(area,title),t=lower(title);
+    if(area==='Comunicación'&&s==='escritura'&&/revis|mejor|corrig|reescrib|edit/.test(t))
+      return 'Borrador con correcciones justificadas y versión mejorada';
+    if(area==='Comunicación'&&s==='escritura'&&/redact|escrib|borrador|produc/.test(t))
+      return 'Borrador de texto o mensaje dirigido a un destinatario';
+    if(area==='Matemática'&&s==='datos'&&/planteamos preguntas|formulamos preguntas/.test(t))
+      return 'Preguntas estadísticas y variables por registrar';
+    if(area==='Matemática'&&s==='datos'&&/recogemos y registramos|registramos datos/.test(t))
+      return 'Registro de datos verificado';
+    if(area==='Ciencia y Tecnología'&&s==='indaga'&&/formulamos preguntas investigables|planteamos preguntas investigables/.test(t))
+      return 'Pregunta investigable y variables propuestas';
+    if(area==='Ciencia y Tecnología'&&s==='indaga'&&/predicciones/.test(t)&&!/datos/.test(t))
+      return 'Predicción sustentada y plan para contrastarla';
+    if(area==='Ciencia y Tecnología'&&s==='indaga'&&/comparamos los datos/.test(t))
+      return 'Comparación de resultados y predicciones';
+    if(area==='Ciencia y Tecnología'&&s==='indaga'&&/seleccionamos evidencias/.test(t))
+      return 'Selección justificada de evidencias para recomendaciones';
     if(area==='Comunicación')return s==='lectura'?'Respuestas y organizador de lectura':s==='escritura'?'Borrador revisado y texto final':'Intervención oral registrada';
     if(area==='Matemática')return s==='datos'?'Tabla y gráfico interpretados':'Resolución con representación y explicación';
     if(area==='Personal Social')return s==='historia'?'Comparación de fuentes y línea de tiempo':'Organizador o acuerdo argumentado';
@@ -83,12 +148,23 @@
     }),[17,25,40,18]);
   }
   function purposeTable(unit){
-    const rows=(unit.areas||[]).map(area=>{
-      const acts=(unit.activities||[]).filter(a=>a.area===area),title=acts[0]?.title||'';
-      const comps=[...new Set(acts.map(a=>competences(unit,area,a.title)))].slice(0,3);
-      return `<tr><td><b>${esc(area)}</b><br>${comps.map(esc).join('<br>')}<br><i>Competencia(s) para cotejo docente</i></td><td>${gradeRows(unit,area,title)}</td><td>${esc(evidence(area,title))}</td></tr>`;
-    });
-    return table(['Área y competencias propuestas','Criterios orientadores por grado','Evidencia'],rows,[31,47,22]);
+    // Cada competencia debe compartir fila con su propio criterio y evidencia:
+    // una única fila por área podía mezclar lectura, escritura y oralidad.
+    const rows=[];
+    for(const area of unit.areas||[]){
+      const acts=(unit.activities||[]).filter(a=>a.area===area);
+      const representatives=[],seen=new Set();
+      for(const a of acts){
+        const name=competences(unit,area,a.title);
+        const key=name+'|'+strand(area,a.title);
+        if(!seen.has(key)){seen.add(key);representatives.push({name,title:a.title});}
+      }
+      if(!representatives.length)representatives.push({name:'Competencia por identificar y confirmar',title:''});
+      for(const item of representatives){
+        rows.push(`<tr><td><b>${esc(area)}</b><br>${esc(item.name)}<br><i>Competencia para cotejo docente</i></td><td>${gradeRows(unit,area,item.title)}</td><td>${esc(evidence(area,item.title))}</td></tr>`);
+      }
+    }
+    return table(['Área y competencia propuesta','Criterios orientadores por grado','Evidencia'],rows,[31,47,22]);
   }
   function qualityFlags(unit){
     const notes=[];
