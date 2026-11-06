@@ -51,6 +51,7 @@ jobs:
           set -euo pipefail
           node tests/unit-export-quality-phase11.mjs
           node tests/planning-chain-integrity.mjs
+          node tests/planning-semantic-coherence-v16.mjs
           node tests/docx-xml-safety.mjs
           node tests/context-topic-golden.mjs
           node tests/three-level-pedagogy.mjs

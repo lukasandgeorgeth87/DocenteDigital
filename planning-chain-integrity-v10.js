@@ -13,6 +13,75 @@
   const issues=(id,message,field='coherencia')=>({id,message,field});
   const hasArea=(unit,area)=>unique(unit.areas).some(a=>norm(a)===norm(area));
 
+  // Revisión temática orientativa v16. Nunca declara validez curricular automática.
+  // Únicamente advierte inconsistencias evidentes; no bloquea ediciones del docente.
+  const semanticGroups=[
+    ['agua',/\b(?:agua|aguas|h[íi]dric\w*|gota\w*|ca[ñn]o\w*|grif\w*|rio\w*|lluvia\w*|consumo\s+de\s+agua)\b/],
+    ['siembra',/\b(?:siembr\w*|semill\w*|cultiv\w*|huert\w*|cosech\w*|hortaliz\w*|germin\w*)\b/],
+    ['residuos',/\b(?:residu\w*|basura\w*|recicl\w*|desech\w*|plastico\w*)\b/],
+    ['futbol',/\b(?:futbol\w*|balon\w*|campeonato\w*|partido\s+de\s+futbol)\b/],
+    ['volcanes',/\b(?:volcan\w*|erupci\w*|lava|magma)\b/],
+    ['astronomia',/\b(?:estrella\w*|planet\w*|galaxia\w*|constelaci\w*|astronomi\w*)\b/],
+    ['minerales',/\b(?:mineral\w*|roca\w*|geolog\w*)\b/],
+    ['alimentacion',/\b(?:aliment\w*|nutrici\w*|recet\w*|comida\w*|frut\w*)\b/],
+    ['patrimonio',/\b(?:patrimoni\w*|festiv\w*|difunt\w*|todos\s+los\s+santos|tradici\w*|costumbr\w*)\b/],
+    ['fauna',/\b(?:hormig\w*|abeja\w*|animal\w*|insect\w*|poliniz\w*)\b/]
+  ];
+  const semanticDomain=s=>new Set(semanticGroups.filter(([,pattern])=>pattern.test(norm(s))).map(([key])=>key));
+  const semanticCommon=new Set(('estudiantes docente escuela escolar institucion educativa comunidad familia familias '
+    +'problema situacion significativa reto producto final actividad actividades semana semanas '
+    +'aprendizaje aprendemos conocimientos competencias capacidades criterios evidencias '
+    +'trabajo trabajo realizar realizamos elaboramos presentamos observamos comprendemos '
+    +'investigamos investigar analizar analisis datos informacion explica explicamos '
+    +'cuidar cuidado promover responsabilidad responsable acciones accion proponemos '
+    +'generar crear organizar organizamos propuestas valores objetivo proyecto unidad '
+    +'texto textos escribir leemos comunicacion matematica ciencia tecnologia social '
+    +'desarrollar mediante desde sobre para como entre donde nuestra nuestro nosotros '
+    +'este esta estos estas unos unas hacia estan tambien otras otros porque ellos '
+    +'cada todos todas primer grado aula hoy local localmente aprender sabemos '
+    +'revisamos resultados evaluacion aprendizaje estudiantil').split(/\s+/));
+  const semanticTerms=s=>new Set((norm(s).match(/[a-zñ]{4,}/g)||[])
+    .map(x=>x.replace(/(?:ciones|cion|mente|ados|adas|ando|iendo|es|s)$/,'').slice(0,8))
+    .filter(x=>x.length>=4&&!semanticCommon.has(x)));
+  function topicalLink(base,other){
+    const left=semanticDomain(base),right=semanticDomain(other);
+    if(left.size&&right.size)return [...left].some(x=>right.has(x))?'coherente':'contradiccion';
+    // Sin vocabulario temático reconocido, evitar afirmar contradicción semántica.
+    // La superposición es solo una señal de apoyo, no una aprobación curricular.
+    const a=semanticTerms(base),b=semanticTerms(other);
+    if(a.size&&b.size&&[...a].some(t=>b.has(t)))return 'coherente';
+    return 'no-determinable';
+  }
+  function semanticWarnings(unit){
+    const result=[];
+    if(!unit||typeof unit!=='object')return result;
+    const situation=clean(unit.situation||unit.situationBrief);
+    const challenge=clean(unit.reto),product=clean(unit.product);
+    if(situation&&challenge&&topicalLink(situation,challenge)==='contradiccion')
+      result.push(issues('semantic-challenge','El reto parece abordar un tema distinto al de la situación significativa. Revisa su relación antes de aplicar la planificación.','coherencia temática'));
+    if(situation&&product&&topicalLink(situation,product)==='contradiccion')
+      result.push(issues('semantic-product','El producto final parece corresponder a otro tema y no al problema de la situación significativa. Revisa su pertinencia.','coherencia temática'));
+    const acts=Array.isArray(unit.activities)?unit.activities:[];
+    const conflicts=acts.map((a,i)=>({a,i})).filter(({a})=>a&&a.title&&situation&&topicalLink(situation,a.title)==='contradiccion');
+    conflicts.slice(0,3).forEach(({a,i})=>result.push(issues('semantic-activity-'+i,
+      `Actividad ${i+1} (${clean(a.title)}): parece abordar un tema distinto al de la situación significativa.`,'secuencia')));
+    if(conflicts.length>3)result.push(issues('semantic-activity-more',
+      `Hay ${conflicts.length-3} actividades adicionales con posibles contradicciones temáticas. Revisar la secuencia completa.`,'secuencia'));
+    if(/proyecto/i.test(clean(unit.type))&&acts.length>=5){
+      const titles=norm(acts.map(a=>a.title||'').join(' '));
+      const projectSteps=[
+        ['participación estudiantil en la planificación',/planific\w*|acord\w*|organiza\w*|propon\w*|decid\w*/],
+        ['investigación del desafío',/investig\w*|indag\w*|explor\w*|recog\w*|observ\w*|entrevist\w*|busca\w*|fuentes?/],
+        ['elaboración del producto',/elabor\w*|crea\w*|constru\w*|diseñ\w*|redact\w*|produc\w*/],
+        ['revisión o mejora del producto',/revis\w*|mejor\w*|prob\w*|retroaliment\w*|ajust\w*/],
+        ['comunicación del producto',/socializ\w*|present\w*|comunic\w*|compart\w*|difund\w*|expon\w*/]
+      ];
+      projectSteps.filter(([,re])=>!re.test(titles)).forEach(([step])=>result.push(issues('project-'+step,
+        `Proyecto: no se identifica en los títulos de actividades una fase de ${step}. Comprueba que los estudiantes participen efectivamente.`,'ruta del proyecto')));
+    }
+    return result;
+  }
+
   function auditUnit(unit){
     const warnings=[];
     if(!unit||typeof unit!=='object')return {ok:false,warnings:[issues('not-unit','Unidad o proyecto no disponible.')],checks:[]};
@@ -43,6 +112,7 @@
     acts.forEach(a=>{const title=norm(a.title);if(title)titleCounts.set(title,(titleCounts.get(title)||0)+1);});
     if([...titleCounts.values()].some(v=>v>=4))
       warnings.push(issues('repeat-sessions','Existen títulos de sesiones repetidos cuatro veces o más. Revisar la progresión didáctica.','secuencia'));
+    warnings.push(...semanticWarnings(unit));
     return {ok:warnings.length===0,warnings,checks,selectedGrades:unique(unit.grades),activityCount:unit.activities?.length||0};
   }
   function getUnit(session){return (typeof state==='object'&&Array.isArray(state.units)?state.units:[]).find(u=>u.id===session?.unitId)||null;}
@@ -85,7 +155,7 @@
   function unitPanel(unit){
     const a=auditUnit(unit);
     const summary=a.checks.map(c=>`<tr><td>${E(c.name)}</td><td>${c.present?'Presente':'Por revisar'}</td></tr>`).join('');
-    return `<section class="dd-phase10-audit" aria-label="Revisión de coherencia de unidad o proyecto"><h2>VERIFICACIÓN DE COHERENCIA (FASE 10)</h2><p>Comprobación estructural automática; una sesión o producto no se considera curricularmente validado solo por superar esta lista.</p><table><tr><th>Componente</th><th>Estado</th></tr>${summary}</table>${warningList(a.warnings)}</section>`;
+    return `<section class="dd-phase10-audit" aria-label="Revisión de coherencia de unidad o proyecto"><h2>VERIFICACIÓN DE COHERENCIA (FASE 16)</h2><p>Revisión estructural y alerta temática orientativa. No certifica pertinencia pedagógica ni desempeños MINEDU; el docente debe revisar los vínculos entre situación, reto, producto, actividades y evaluación.</p><table><tr><th>Componente</th><th>Estado</th></tr>${summary}</table>${warningList(a.warnings)}</section>`;
   }
   function sessionPanel(session){
     const a=auditSession(session),c=a.context;
@@ -122,5 +192,5 @@
     }
     return r;
   };
-  window.DD_PLANNING_CHAIN_V10={auditUnit,auditSession,snapshot,unitPanel,sessionPanel,version:'10.0'};
+  window.DD_PLANNING_CHAIN_V10={auditUnit,auditSession,snapshot,unitPanel,sessionPanel,semanticWarnings,version:'10.0',semanticVersion:'16.0'};
 })();
