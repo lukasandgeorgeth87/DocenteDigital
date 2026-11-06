@@ -43,3 +43,11 @@ La prueba de inventario también retiene unit-export-quality-phase11, planning-c
 - Prevención: tests/teacher-explicit-fields-v21.mjs valida los extractores, el exportador y el auditor cargado. tests/sixth-grade-browser-regression-v21.mjs valida el recorrido del navegador y el DOCX descargado.
 - Registro vinculante: ambas pruebas se ejecutan en CI y el inventario del contrato de regresiones comprueba que sigan allí. Si alguna prueba falla, la fase no se considera aprobada.
 - La revisión de la pertinencia curricular y los desempeños sigue siendo necesaria; ningún resultado de CI certifica por sí solo el documento para uso en aula.
+
+## Fase 22 — Prueba libre de 2.º grado: derechos (6 de noviembre de 2026)
+
+- **Solicitud original:** «quiero crear una unidad para 3 semanas sobre los derechos»; el docente no proporcionó un título, problema de contexto ni producto obligatorio.
+- **Fallos reproducidos:** títulos que incorporan la orden «crear una unidad», reto que trata «3 semanas» como objetivo educativo y sesiones que reemplazan el nombre de la «Expo interactiva» elegida por la descripción extensa «Muestra por estaciones»; las sesiones científicas también deben tener una justificación disciplinar.
+- **Correcciones:** extracción del tema después de «sobre» en órdenes breves; descarte de la duración como finalidad educativa; situaciones sobre derechos basadas en relatos ficticios, sin atribuir vulneraciones a estudiantes reales; uso de selectedProductTitle en títulos de sesiones; advertencia de pertinencia de Ciencia y Tecnología para temas exclusivamente sociales.
+- **Regresiones obligatorias:** tests/short-rights-unit-v22.mjs y tests/short-rights-browser-v22.mjs; no se sustituyen las pruebas 11–21.
+- **Pendiente pedagógico:** el docente debe seleccionar áreas pertinentes y revisar criterios CNEB, especialmente si el perfil tenía las siete áreas por defecto. El horario sin registrar requiere confirmación, no asignación inventada.

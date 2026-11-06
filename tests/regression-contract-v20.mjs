@@ -26,11 +26,14 @@ const cases=[
  ['Ciencia oficial','tests/primary-science-curriculum.mjs'],
  ['Personal Social oficial','tests/primary-personal-social-curriculum.mjs'],
  ['Inventario permanente','tests/regression-contract-v20.mjs'],
- ['Solicitud real sexto y exportación','tests/teacher-explicit-fields-v21.mjs']
+ ['Solicitud real sexto y exportación','tests/teacher-explicit-fields-v21.mjs'],
+ ['Petición breve sobre derechos y producto elegido','tests/short-rights-unit-v22.mjs']
 ];
 assert.match(workflow,/branches:\s*\n\s+- preview\/docentedigital-fase10-20261030/);
 assert(browserWorkflow.includes('node tests/sixth-grade-browser-regression-v21.mjs'),'Prueba de navegador de sexto omitida en CI');
 assert(existsSync(new URL('tests/sixth-grade-browser-regression-v21.mjs',root)),'Prueba de navegador de sexto eliminada');
+assert(browserWorkflow.includes('node tests/short-rights-browser-v22.mjs'),'Prueba de navegador sobre derechos omitida en CI');
+assert(existsSync(new URL('tests/short-rights-browser-v22.mjs',root)),'Prueba de navegador sobre derechos eliminada');
 assert(!/\bvercel\s+(?:promote|rollback|--prod)\b/.test(workflow));
 for(const [label,path] of cases){
  assert(existsSync(new URL(path,root)),'Prueba histórica eliminada: '+label+' ('+path+')');

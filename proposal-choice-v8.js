@@ -83,7 +83,11 @@
     return match?tidy(match[1]):'';
   }
   function challengeFor(m,focus,raw=''){
-    const problem=tidy(m?.problem),goal=tidy(m?.goal)||explicitGoal(raw);
+    const problem=tidy(m?.problem),unfilteredGoal=tidy(m?.goal)||explicitGoal(raw);
+    // La duración de un documento no constituye una finalidad pedagógica.
+    const goal=/^(?:(?:para|en|durante)\s+)?\d+\s*(?:semanas?|d[ií]as?|sesiones?)\b/i.test(unfilteredGoal)
+      || /\b(?:crear|elaborar|preparar)\s+(?:una?\s+)?(?:unidad|proyecto|sesi[oó]n)\b/i.test(unfilteredGoal)
+      ?'':unfilteredGoal;
     if(state.level==='Inicial')return `¿Qué podemos observar y descubrir sobre ${focus} y cómo lo mostraremos o contaremos?`;
     if(problem&&goal)return `¿Cómo podemos comprender ${focus}, analizar la situación planteada y construir una respuesta sustentada que contribuya a ${goal}?`;
     if(problem)return `¿Qué necesitamos investigar y explicar sobre ${focus} para comprender mejor la situación y sustentar una respuesta pertinente con evidencias?`;
@@ -153,6 +157,18 @@
     const titlePlace=titlePlaceMatch?tidy(titlePlaceMatch[1]):'';
 
     if(isAllSaintsContext(raw))return allSaintsSituationOptions(raw,m,grades,level);
+    // Para temas transversales amplios sin un problema local aportado por el
+    // docente, proponer una situación verificable, NO atribuir vulneraciones.
+    if(/\b(?:los derechos|derechos de la niñez|derechos de los niños)\b/i.test(low)
+      && !teacherContext(raw)&&!/(?:vulneraci[oó]n|discriminaci[oó]n|acoso|violencia)\b/i.test(raw)){
+      const retoDerechos='¿Cómo podemos reconocer nuestros derechos y responsabilidades y explicarlos con ejemplos respetuosos de la vida cotidiana?';
+      return {meaning:m,focus:'los derechos de la niñez',reto:retoDerechos,situations:[
+        {key:'A',title:'Situaciones cotidianas: derechos y responsabilidades',
+          text:`Los estudiantes de ${grades} analizarán cuentos, ilustraciones y situaciones ficticias sobre el derecho a aprender, jugar, recibir buen trato y ser escuchados. Conversarán sobre lo que saben y lo que quieren averiguar, distinguirán derechos de responsabilidades y construirán explicaciones sencillas para compartir en una exposición. El reto será: ${retoDerechos}`},
+        {key:'B',title:'Aprendemos a reconocer y compartir nuestros derechos',
+          text:`A partir de historias ilustradas y ejemplos próximos a la vida escolar, los estudiantes de ${grades} explorarán cuáles son sus derechos y cómo respetar los de las demás personas. Leerán, escucharán, dialogarán y organizarán información para presentar sus aprendizajes; no se asumirán experiencias personales de vulneración ni se solicitarán datos privados. Responderán: ${retoDerechos}`}
+      ]};
+    }
 
     if(heritage){
       const hasArchaeology=/restos?\s+arqueol[oó]gic|sitios?\s+arqueol[oó]gic|patrimonio\s+arqueol[oó]gic/i.test(combinedHeritage);

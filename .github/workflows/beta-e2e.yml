@@ -111,6 +111,19 @@ jobs:
           path: /tmp/dd-sixth-regression/*.png
           if-no-files-found: ignore
 
+      - name: Test natural short rights request, expo product and second-grade DOCX
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/short-rights-browser-v22.mjs
+
+      - name: Upload rights regression failure screenshot
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rights-regression-failure
+          path: /tmp/dd-rights-regression/*.png
+          if-no-files-found: ignore
+
       - name: Verify EIB multigrade materials, truthful language warning and DOCX
         env:
           BASE_URL: http://127.0.0.1:4173

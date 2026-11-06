@@ -269,6 +269,28 @@
         return [explicit,...extra];
       }
     }
+    // Una solicitud corta describe el documento y después el TEMA.
+    // La instrucción «crear una unidad para 3 semanas» no puede contaminar
+    // los títulos de una unidad acerca de los derechos (u otro asunto).
+    const cleanRaw=String(raw||'').replace(/\*\*/g,'').replace(/\s+/g,' ').trim();
+    const quick=/^(?:quiero|quisiera|necesito|deseo|crea|crear|hazme|prepara|elabora)\b/i.test(cleanRaw)
+      && /\b(?:unidad|proyecto|sesi[oó]n)\b/i.test(cleanRaw.slice(0,110));
+    const about=quick&&cleanRaw.match(/\b(?:sobre|acerca de|en torno a|referente a|tema de)\s+([^.!?;\n]{3,130})/i);
+    if(about){
+      const focus=tidy(about[1].replace(/\s+para\s+\d+\s*(?:semanas?|d[ií]as?|sesiones?)\b.*$/i,'')
+        .replace(/\s+(?:de|para)\s+(?:primero|segundo|tercero|cuarto|quinto|sexto|[1-6]\.?(?:º|°|er|do|to)?|grado)\s+grado\b.*$/i,'')
+        .replace(/\s+(?:con|incluye|trabajaremos|producto final)\b.*$/i,''));
+      if(focus&&!BAD.test(focus)&&focus.length>=3&&focus.length<95){
+        if(/\b(?:los\s+derechos|derechos\s+de\s+(?:los\s+)?ni[nñ]os|derechos\s+de\s+la\s+ni[nñ]ez)\b/i.test(focus))return [
+          'Conocemos nuestros derechos y aprendemos a respetarlos',
+          'Nuestros derechos y responsabilidades en la vida cotidiana',
+          'Aprendemos a reconocer y explicar los derechos de la niñez'
+        ];
+        return [`Descubrimos y comprendemos ${focus}`,
+          `Aprendemos sobre ${focus} con preguntas y experiencias`,
+          `Compartimos lo aprendido acerca de ${focus}`];
+      }
+    }
     const enriched=titleContextText(raw),u=mci(enriched,type),baseTheme=tidy(u.theme)||'esta experiencia',kind=u.intentKind||'exploración/comprensión',goal=tidy(u.finality),project=/proyecto/i.test(type||u.document||''),level=titleLevel();
     const issue=semanticIssue(enriched,baseTheme);
     if(issue)return issueTitles(issue,type,level);

@@ -159,7 +159,7 @@
   function primarySequenceTitle(area,brief,week,weeks,turn){
     const topic=typeof window.ddContextTopic==='function'?window.ddContextTopic(brief):'el tema trabajado';
     const raw=String(brief||'');
-    const product=(state.pendingUnitChoice?.selectedProduct||
+    const product=(state.pendingUnitChoice?.selectedProductTitle||state.pendingUnitChoice?.selectedProduct||
       (raw.match(/\bproducto\s+final\s+(?:será|sera|es|:)\s+([^.!?;\n]+)/i)||[])[1]||'producto final')
       .replace(/\s*,\s*(?:con\s+(?:competencias|criterios|evidencias|actividades)).*$/i,'').trim();
     // Conservar el producto completo en la unidad; abreviar solo los títulos de sesión.

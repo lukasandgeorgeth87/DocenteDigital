@@ -200,6 +200,13 @@
     if(acts.some(a=>!a.time))notes.push('Horarios sin registrar: verificar bloques antes de aplicar.');
     if(!unit.documentContextSnapshot?.institution)notes.push('Institución educativa por completar.');
     if(!unit.documentContextSnapshot?.teacher)notes.push('Nombre del docente por completar.');
+    // No declarar pertinencia científica si una unidad de derechos solamente
+    // enumera todas las áreas del perfil sin problema científico identificable.
+    const textForAreas=lower((unit.situationBrief||'')+' '+(unit.situation||''));
+    if(/\b(?:los derechos|derechos de la niñez|derechos de los niños)\b/.test(textForAreas)
+      && (unit.areas||[]).includes('Ciencia y Tecnología')
+      && !/\b(?:salud|cuerpo|ambiente|agua|alimentaci[oó]n|higiene|seres vivos|experimento|hip[oó]tesis|fen[oó]meno)\b/.test(textForAreas))
+      notes.push('Ciencia y Tecnología: verificar que exista una pregunta investigable sobre fenómenos naturales; no indagar los derechos como si fueran un fenómeno científico.');
     if(teacherTitle(unit)&&lower(unit.title)!==lower(teacherTitle(unit)))
       notes.push('El título guardado no coincide con el título indicado por el docente; se recuperó la versión original para Word.');
     if(cleanProduct(unit)!==clean(unit.product))
