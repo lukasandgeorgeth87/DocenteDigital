@@ -70,7 +70,7 @@
           :n<=4?'Formula preguntas y determina qué datos debe recoger para responderlas.'
           :'Formula preguntas de investigación estadística, identifica variables pertinentes y justifica los datos necesarios.';
       if(s==='datos'&&/recogemos y registramos|registramos datos/.test(t))
-        return n<=2?'Registra conteos con material concreto y marcas sencillas.'
+        return n<=2?'Registra conteos en un pictograma sencillo con dibujos o marcas de apoyo.'
           :n<=4?'Registra datos en tablas y comprueba que los conteos sean correctos.'
           :'Registra y organiza datos de una investigación, verifica su consistencia y explica cómo se recogieron.';
       if(s==='cantidad'&&/contamos y comparamos cantidades|comparamos cantidades/.test(t)&&n>=5)
