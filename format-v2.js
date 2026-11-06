@@ -7,6 +7,11 @@
 
   const esc=v=>escapeHtml(v);
   const titleOptions=(brief,type)=>{
+    // La propuesta explícita del docente debe tener prioridad sobre
+    // opciones antiguas producidas por el generador genérico.
+    const contextual=typeof window.ddNaturalPlanningTitles==='function'
+      ?window.ddNaturalPlanningTitles(brief,type):[];
+    if(Array.isArray(contextual)&&contextual.length)return contextual;
     if(typeof window.proposeUnitTitleOptions==='function'){
       return window.proposeUnitTitleOptions(brief,type);
     }

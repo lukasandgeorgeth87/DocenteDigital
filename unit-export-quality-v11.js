@@ -41,6 +41,15 @@
     const c=core?.pickCompetence?.(u.level,area,title);
     return c?.name||'Competencia por identificar y confirmar';
   }
+  function teacherTitle(u){
+    const raw=String(u?.situationBrief||'').replace(/\*\*/g,'').replace(/__+/g,'');
+    const m=raw.match(/\bT[ií]tulo\s*:\s*([\s\S]{5,240}?)(?=\s+(?:Nivel|Grado|Duraci[oó]n|[AÁ]reas?\s+curriculares?|Contexto|Pregunta\s+(?:retadora|desafiante)|Producto\s+final)\s*:|\n|$)/i);
+    return m?clean(m[1]).replace(/[.;\s]+$/,''):'';
+  }
+  function cleanProduct(u){
+    const product=clean(u?.product)||'Por confirmar con el docente';
+    return product.replace(/(?:\.|\s)\s*Organizaci[oó]n\s+de\s+actividades\s*:?[\s\S]*$/i,'').replace(/[.;\s]+$/,'')||product;
+  }
   function teacherChallenge(u){
     const raw=String(u?.situationBrief||'').replace(/\*\*/g,'').replace(/__+/g,'');
     const match=raw.match(/\bPregunta\s+(?:retadora|desafiante)\s*:\s*(¿[^?\n]{12,500}\?)/i);
@@ -191,6 +200,10 @@
     if(acts.some(a=>!a.time))notes.push('Horarios sin registrar: verificar bloques antes de aplicar.');
     if(!unit.documentContextSnapshot?.institution)notes.push('Institución educativa por completar.');
     if(!unit.documentContextSnapshot?.teacher)notes.push('Nombre del docente por completar.');
+    if(teacherTitle(unit)&&lower(unit.title)!==lower(teacherTitle(unit)))
+      notes.push('El título guardado no coincide con el título indicado por el docente; se recuperó la versión original para Word.');
+    if(cleanProduct(unit)!==clean(unit.product))
+      notes.push('El producto guardado contenía texto de instrucciones administrativas; se excluyó de Word.');
     if(teacherChallenge(unit)&&unit.reto&&lower(teacherChallenge(unit))!==lower(unit.reto))
       notes.push('El reto almacenado difiere del indicado por el docente: el Word utiliza la pregunta original y requiere revisión en la plataforma.');
     if((unit.areas||[]).some(a=>!acts.some(x=>x.area===a)))notes.push('Hay áreas sin sesiones asignadas. Revisar la programación.');
@@ -218,10 +231,10 @@
     ],[14,35,17,34]);
     const notes=qualityFlags(unit);
     const sequence=weeks.map(week=>`<h3>Semana ${week} — actividades programadas</h3>${scheduleTable(unit,week)}`).join('');
-    return `<div class="dd-word-v11"><h1>${esc(title)}</h1><h2>“${esc(unit.title)}”</h2>
+    return `<div class="dd-word-v11"><h1>${esc(title)}</h1><h2>“${esc(teacherTitle(unit)||unit.title)}”</h2>
       <h2>I. DATOS GENERALES</h2>${general}
       <h2>II. SITUACIÓN SIGNIFICATIVA, RETO Y PRODUCTO</h2><p>${esc(situation(unit))}</p>
-      <p><b>Pregunta retadora:</b> ${esc(challenge(unit))}</p><p><b>Producto integrador:</b> ${esc(unit.product||'Por confirmar con el docente')}</p>
+      <p><b>Pregunta retadora:</b> ${esc(challenge(unit))}</p><p><b>Producto integrador:</b> ${esc(cleanProduct(unit))}</p>
       <h2>III. PROPÓSITOS Y CRITERIOS ORIENTADORES</h2><p>Competencias y criterios sugeridos para revisar con el programa curricular MINEDU. Estos criterios no son desempeños oficiales literales.</p>${purposeTable(unit)}
       <h2>IV. RUTA PEDAGÓGICA DE LA UNIDAD</h2><p><b>Explorar y preguntar → Investigar y registrar → Organizar y crear → Comunicar y evaluar.</b> La secuencia detallada figura en las sesiones de cada semana.</p>
       <h2>V. SECUENCIA DE SESIONES</h2>${sequence}
@@ -248,5 +261,5 @@
     }
     return result;
   };
-  window.DD_UNIT_EXPORT_QUALITY_V11={situation,gradeAction,scheduleTable,word,qualityFlags,preview,competences,teacherChallenge,challenge};
+  window.DD_UNIT_EXPORT_QUALITY_V11={situation,gradeAction,scheduleTable,word,qualityFlags,preview,competences,teacherTitle,cleanProduct,teacherChallenge,challenge};
 })();

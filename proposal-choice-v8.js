@@ -21,15 +21,20 @@
   }
   function namedUnitTitle(raw){
     const text=plain(raw);
-    const m=text.match(/\bT[ií]tulo\s*:\s*([^\n]{5,190}?)(?=\s+(?:Nivel|Grado|Duraci[oó]n|[AÁ]reas?\s+curriculares?|Contexto|Pregunta\s+(?:retadora|desafiante))\s*:|\n|$)/i)
+    const m=text.match(/\bT[ií]tulo\s*:\s*([\s\S]{5,240}?)(?=\s+(?:Nivel|Grado|Duraci[oó]n|[AÁ]reas?\s+curriculares?|Contexto|Pregunta\s+(?:retadora|desafiante)|Producto\s+final|Organizaci[oó]n\s+de\s+actividades)\s*:|\n|$)/i)
       ||text.match(/\btitulad[ao]\s*[«“"]([^»”"]{5,140})[»”"]/i);
-    return m?tidy(m[1]).replace(/^[“«]|[”»]$/g,'').replace(/[.;\s]+$/,''):'';
+    const candidate=m?tidy(m[1]).replace(/^[“«]|[”»]$/g,'').replace(/[.;\s]+$/,''):'';
+    return /^(?:crear|crea|quiero|necesito)\s+(?:una?|el|la)?\s*(?:unidad|proyecto|sesi[oó]n)/i.test(candidate)?'':candidate;
   }
   function namedProductFinal(raw){
     const text=plain(raw).replace(/\r\n?/g,'\n');
-    const m=text.match(/\bProducto\s+final\s*:\s*([\s\S]*?)(?=(?:\n|\s)\s*(?:Organizaci[oó]n(?:\s+de\s+las\s+tres\s+semanas)?|Indicaciones?\s+pedag[oó]gicas?|Semana\s+1|Requisitos?\s+pedag[oó]gicos?)\s*:|$)/i);
-    if(!m)return '';
-    return tidy(m[1]).replace(/[.;\s]+$/,'');
+    const tail=(text.match(/\bProducto\s+final\s*:\s*([\s\S]*)/i)||[])[1]||'';
+    if(!tail)return '';
+    // Cortar en encabezados administrativos, aun cuando lleguen en la
+    // misma línea, sin dos puntos o tras el punto final del producto.
+    const next=/(?:\n|\s)(?:Organizaci[oó]n\s+(?:de\s+actividades|de\s+las\s+tres\s+semanas)|Indicaciones?\s+pedag[oó]gicas?|Requisitos?\s+pedag[oó]gicos?|Semana\s+[123]\s*:|Actividades\s+por\s+semana|Criterios?\s+pedag[oó]gicos?)\s*:?/i;
+    const cut=tail.search(next);
+    return tidy(cut>=0?tail.slice(0,cut):tail).replace(/[.;\s]+$/,'');
   }
   function topicClass(raw){
     const s=plain(raw).toLowerCase();
@@ -363,7 +368,7 @@
     // La selección explícita es específica de la unidad; el perfil del docente no cambia.
     try{if(requestedAreas.length)state.areas=[...requestedAreas];baseCreate();}
     finally{state.areas=originalAreas;if(typeof save==='function')save();}
-    const unit=(state.units||[]).find(u=>!before.has(u.id))||state.units?.[0];if(!unit)return;unit.situation=pending.selectedSituation;unit.reto=(typeof statedChallenge==='function'?statedChallenge(pending.brief):'')||pending.reto||unit.reto;const explicitTitle=typeof namedUnitTitle==='function'?namedUnitTitle(pending.brief):'';if(explicitTitle)unit.title=explicitTitle;unit.contextFocus=pending.contextFocus||unit.contextFocus;unit.planningMeaning=pending.meaning||unit.planningMeaning;unit.expertReasoning=pending.expertReasoning||null;unit.selectedSituationSource=pending.situations.find(x=>x.text===pending.selectedSituation)?.key||'Docente';unit.teacherProfile=pending.profileSnapshot||profileSnapshot();unit.situationOptions=pending.situations;unit.product=pending.selectedProduct;unit.productTitle=pending.selectedProductTitle;unit.productOptions=pending.products;unit.selectionApproved=true;if(typeof save==='function')save();renderUnits();renderUnitOutput(unit);fillSessionUnits();host.classList.add('hidden');byId('unitOutput')?.scrollIntoView({behavior:'smooth'});}
+    const unit=(state.units||[]).find(u=>!before.has(u.id))||state.units?.[0];if(!unit)return;unit.situation=pending.selectedSituation;unit.reto=(typeof statedChallenge==='function'?statedChallenge(pending.brief):'')||pending.reto||unit.reto;const explicitTitle=typeof namedUnitTitle==='function'?namedUnitTitle(pending.brief):'';if(explicitTitle)unit.title=explicitTitle;unit.contextFocus=pending.contextFocus||unit.contextFocus;unit.planningMeaning=pending.meaning||unit.planningMeaning;unit.expertReasoning=pending.expertReasoning||null;unit.selectedSituationSource=pending.situations.find(x=>x.text===pending.selectedSituation)?.key||'Docente';unit.teacherProfile=pending.profileSnapshot||profileSnapshot();unit.situationOptions=pending.situations;unit.product=namedProductFinal(pending.brief)||pending.selectedProduct;unit.productTitle=pending.selectedProductTitle;unit.productOptions=pending.products;unit.selectionApproved=true;if(typeof save==='function')save();renderUnits();renderUnitOutput(unit);fillSessionUnits();host.classList.add('hidden');byId('unitOutput')?.scrollIntoView({behavior:'smooth'});}
   window.createUnitDemo=function(){
     const type=byId('unitType')?.value||'Unidad de aprendizaje';
     const title=byId('unitTitle')?.value.trim()||'';

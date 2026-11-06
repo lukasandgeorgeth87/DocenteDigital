@@ -427,7 +427,7 @@
     if(/(?:^|\b)(?:explica el mundo fisico)/.test(t))return'explica';
     if(/(?:^|\b)(?:disena y construye soluciones tecnologicas)/.test(t))return'disena';
     // Priorizar la acción didáctica principal al inicio de la actividad.
-    if(/^(?:indag\w*|investig\w*|experiment\w*|comprob\w*|observ\w*|registr\w*|formul\w*\s+(?:preguntas?|hipotesis))\b/.test(t))return'indaga';
+    if(/^(?:indag\w*|investig\w*|experiment\w*|comprob\w*|observ\w*|registr\w*|formul\w*\s+(?:preguntas?|hipotesis)|hacemos?\s+predicciones?|formulamos?\s+predicciones?)\b/.test(t))return'indaga';
     if(/^(?:explic\w*|argument\w*|fundament\w*|interpret\w*\s+(?:conocimientos?|evidencias?))\b/.test(t))return'explica';
     if(/^(?:elabor\w*|constru\w*)\s+(?:una?\s+)?(?:explicacion(?:es)?|argumentos?\s+cientificos?)\b/.test(t))return'explica';
     if(/^constru\w*\s+(?:un|una|la)\s+(?:explicacion|conclusion|modelo conceptual)\b/.test(t))return'explica';

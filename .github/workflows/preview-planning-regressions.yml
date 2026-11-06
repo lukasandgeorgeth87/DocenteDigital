@@ -54,6 +54,7 @@ jobs:
           node tests/unit-export-quality-phase11.mjs
           node tests/primary-activity-criteria-v19.mjs
           node tests/unit-topic-curriculum-coherence-v20.mjs
+          node tests/teacher-explicit-fields-v21.mjs
           node tests/regression-contract-v20.mjs
           node tests/planning-chain-integrity.mjs
           node tests/planning-semantic-coherence-v16.mjs

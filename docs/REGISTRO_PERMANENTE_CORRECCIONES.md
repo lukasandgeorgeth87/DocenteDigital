@@ -35,3 +35,11 @@ La prueba de inventario también retiene unit-export-quality-phase11, planning-c
 - Cuando afecte contenido pedagógico, comprobar además un Word nuevo.
 
 **Estado de la fase 20:** lista para ejecutar CI. No aprobar hasta comprobar resultados completos y nueva exportación real.
+
+## Fase 21 — Captura y Word reales de 6.º grado (6 de noviembre de 2026)
+
+- Fallo reproducido: el formulario propone títulos que incorporan «crear una UNIDAD DE APRENDIZAJE», el título final se sustituye por otro y el producto agrega «Organización de actividades».
+- Regla de fuente de verdad: los campos explícitos Título, Pregunta retadora y Producto final expresados por el docente deben conservarse en la unidad guardada y en el Word; las sugerencias no pueden prevalecer sobre esos campos.
+- Prevención: tests/teacher-explicit-fields-v21.mjs valida los extractores, el exportador y el auditor cargado. tests/sixth-grade-browser-regression-v21.mjs valida el recorrido del navegador y el DOCX descargado.
+- Registro vinculante: ambas pruebas se ejecutan en CI y el inventario del contrato de regresiones comprueba que sigan allí. Si alguna prueba falla, la fase no se considera aprobada.
+- La revisión de la pertinencia curricular y los desempeños sigue siendo necesaria; ningún resultado de CI certifica por sí solo el documento para uso en aula.

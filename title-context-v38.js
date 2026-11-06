@@ -258,7 +258,7 @@
     // Las solicitudes pegadas con encabezados (Título, Contexto, etc.) ya
     // contienen una decisión del docente: jamás sustituirla por un tema genérico.
     const normalized=String(raw||'').replace(/\*\*/g,'').replace(/__+/g,'');
-    const labeled=normalized.match(/\bT[ií]tulo\s*:\s*([\s\S]{5,190}?)(?=\s+(?:Nivel|Grado|Duraci[oó]n|[AÁ]reas?\s+curriculares?|Contexto|Pregunta\s+(?:retadora|desafiante)|Producto\s+final)\s*:|\n|$)/i);
+    const labeled=normalized.match(/\bT[ií]tulo\s*:\s*([\s\S]{5,240}?)(?=\s+(?:Nivel|Grado|Duraci[oó]n|[AÁ]reas?\s+curriculares?|Contexto|Pregunta\s+(?:retadora|desafiante)|Producto\s+final|Organizaci[oó]n\s+de\s+actividades)\s*:|\n|$)/i);
     if(labeled){
       const explicit=tidy(labeled[1]).replace(/^[«“]|[»”]$/g,'').replace(/[.;]+$/,'');
       if(explicit&&!BAD.test(explicit)){

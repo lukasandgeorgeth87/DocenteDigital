@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync, existsSync} from 'node:fs';
 const root=new URL('../',import.meta.url);
 const workflow=readFileSync(new URL('.github/workflows/preview-planning-regressions.yml',root),'utf8');
+const browserWorkflow=readFileSync(new URL('.github/workflows/beta-e2e.yml',root),'utf8');
 const cases=[
  ['Grados y rutas','tests/quick-request-routing-phase11.mjs'],
  ['Instrucciones del docente vs tema','tests/teacher-intent-boundary-v12.mjs'],
@@ -24,9 +25,12 @@ const cases=[
  ['Matemática oficial','tests/primary-mathematics-curriculum.mjs'],
  ['Ciencia oficial','tests/primary-science-curriculum.mjs'],
  ['Personal Social oficial','tests/primary-personal-social-curriculum.mjs'],
- ['Inventario permanente','tests/regression-contract-v20.mjs']
+ ['Inventario permanente','tests/regression-contract-v20.mjs'],
+ ['Solicitud real sexto y exportación','tests/teacher-explicit-fields-v21.mjs']
 ];
 assert.match(workflow,/branches:\s*\n\s+- preview\/docentedigital-fase10-20261030/);
+assert(browserWorkflow.includes('node tests/sixth-grade-browser-regression-v21.mjs'),'Prueba de navegador de sexto omitida en CI');
+assert(existsSync(new URL('tests/sixth-grade-browser-regression-v21.mjs',root)),'Prueba de navegador de sexto eliminada');
 assert(!/\bvercel\s+(?:promote|rollback|--prod)\b/.test(workflow));
 for(const [label,path] of cases){
  assert(existsSync(new URL(path,root)),'Prueba histórica eliminada: '+label+' ('+path+')');

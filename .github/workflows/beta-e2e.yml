@@ -98,6 +98,19 @@ jobs:
           BASE_URL: http://127.0.0.1:4173
         run: node tests/beta-e2e.mjs
 
+      - name: Verify 6th grade teacher intent survives browser and Word (permanent regression)
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/sixth-grade-browser-regression-v21.mjs
+
+      - name: Upload sixth-grade regression failure screenshot
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sixth-grade-regression-failure
+          path: /tmp/dd-sixth-regression/*.png
+          if-no-files-found: ignore
+
       - name: Verify EIB multigrade materials, truthful language warning and DOCX
         env:
           BASE_URL: http://127.0.0.1:4173
