@@ -174,7 +174,7 @@
       'Matemática':[
         [`Planteamos preguntas que podemos responder con datos sobre ${topic}`,`Recogemos y registramos datos relacionados con ${topic}`,`Contamos y comparamos cantidades de situaciones relacionadas con ${topic}`,`Seleccionamos estrategias para organizar nuestros datos`],
         [`Construimos tablas y gráficos con los datos recogidos`, `Interpretamos gráficos y explicamos qué información muestran`, `Resolvemos problemas con los datos del contexto`, `Comprobamos cálculos y justificamos decisiones`],
-        [`Elegimos datos y gráficos para informar a la comunidad`, `Revisamos que las representaciones sean correctas`, `Sustentamos decisiones usando nuestros datos`, `Evaluamos qué muestran los resultados de nuestros registros`]
+        [`Elegimos datos y gráficos para informar a la comunidad`, `Revisamos que los gráficos representen correctamente los datos recogidos`, `Sustentamos decisiones usando nuestros datos`, `Evaluamos qué muestran los resultados de nuestros registros`]
       ],
       'Personal Social':[
         [`Conversamos sobre prácticas y decisiones de las personas relacionadas con ${topic}`,`Reconocemos diferentes responsabilidades en nuestra comunidad`, `Recogemos opiniones sin asumir que todas las familias piensan igual`, `Identificamos necesidades que podemos investigar`],

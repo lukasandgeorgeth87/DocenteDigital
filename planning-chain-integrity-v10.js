@@ -78,6 +78,9 @@
     if(genericActivities.length)result.push(issues('placeholder-sessions',
       'Hay '+genericActivities.length+' actividades con expresiones como «tema solicitado por el docente». Revisa su contexto y propósito.','secuencia'));
     const authored=String(unit.situationBrief||'').replace(/\*\*/g,'').replace(/__+/g,'');
+    const statedChallenge=(authored.match(/\bPregunta\s+(?:retadora|desafiante)\s*:\s*(¿[^?\n]{12,500}\?)/i)||[])[1]||'';
+    if(statedChallenge&&clean(unit.reto)&&norm(statedChallenge)!==norm(unit.reto))
+      result.push(issues('explicit-challenge-differs','La pregunta retadora generada no coincide con la pregunta original del docente.','reto'));
     const requestedTitle=(authored.match(/(?:^|\n)\s*Título\s*:\s*([^\n]{5,120})/i)||[])[1]?.trim().replace(/[.;]+$/,'');
     if(requestedTitle&&clean(unit.title)&&norm(requestedTitle)!==norm(unit.title))
       result.push(issues('explicit-title-differs','El título generado no coincide con el título explícito que indicó el docente.','título'));

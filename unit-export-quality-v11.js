@@ -27,8 +27,27 @@
   }
   function competences(u,area,title){
     const core=window.DD_OFFICIAL_CURRICULUM;
+    // No presentar la primera competencia de una lista como si fuera
+    // una selección curricular comprobada cuando el título es ambiguo.
+    if(u.level==='Primaria'){
+      const classifier=area==='Matemática'?'mathematicsModeFromTitle'
+        :area==='Personal Social'?'personalSocialModeFromTitle'
+        :area==='Ciencia y Tecnología'?'scienceModeFromTitle'
+        :area==='Comunicación'?'communicationModeFromTitle':null;
+      if(classifier&&typeof core?.[classifier]==='function'
+         &&core[classifier](title)==='indefinido')
+        return 'Competencia por seleccionar y confirmar con el CNEB';
+    }
     const c=core?.pickCompetence?.(u.level,area,title);
     return c?.name||'Competencia por identificar y confirmar';
+  }
+  function teacherChallenge(u){
+    const raw=String(u?.situationBrief||'').replace(/\*\*/g,'').replace(/__+/g,'');
+    const match=raw.match(/\bPregunta\s+(?:retadora|desafiante)\s*:\s*(¿[^?\n]{12,500}\?)/i);
+    return match?clean(match[1]):'';
+  }
+  function challenge(u){
+    return teacherChallenge(u)||clean(u?.reto)||'Por confirmar con el docente';
   }
   function strand(area,title){
     const t=lower(title);
@@ -172,6 +191,8 @@
     if(acts.some(a=>!a.time))notes.push('Horarios sin registrar: verificar bloques antes de aplicar.');
     if(!unit.documentContextSnapshot?.institution)notes.push('Institución educativa por completar.');
     if(!unit.documentContextSnapshot?.teacher)notes.push('Nombre del docente por completar.');
+    if(teacherChallenge(unit)&&unit.reto&&lower(teacherChallenge(unit))!==lower(unit.reto))
+      notes.push('El reto almacenado difiere del indicado por el docente: el Word utiliza la pregunta original y requiere revisión en la plataforma.');
     if((unit.areas||[]).some(a=>!acts.some(x=>x.area===a)))notes.push('Hay áreas sin sesiones asignadas. Revisar la programación.');
     const clause=clean(unit.situationBrief||'').match(/(?:incluye|trabajaremos|[aá]reas:)([^.!?]{8,180})/i)?.[1]||'';
     const available=['Comunicación','Matemática','Personal Social','Ciencia y Tecnología','Arte y Cultura','Educación Física','Educación Religiosa'];
@@ -200,7 +221,7 @@
     return `<div class="dd-word-v11"><h1>${esc(title)}</h1><h2>“${esc(unit.title)}”</h2>
       <h2>I. DATOS GENERALES</h2>${general}
       <h2>II. SITUACIÓN SIGNIFICATIVA, RETO Y PRODUCTO</h2><p>${esc(situation(unit))}</p>
-      <p><b>Pregunta retadora:</b> ${esc(unit.reto||'Por confirmar con el docente')}</p><p><b>Producto integrador:</b> ${esc(unit.product||'Por confirmar con el docente')}</p>
+      <p><b>Pregunta retadora:</b> ${esc(challenge(unit))}</p><p><b>Producto integrador:</b> ${esc(unit.product||'Por confirmar con el docente')}</p>
       <h2>III. PROPÓSITOS Y CRITERIOS ORIENTADORES</h2><p>Competencias y criterios sugeridos para revisar con el programa curricular MINEDU. Estos criterios no son desempeños oficiales literales.</p>${purposeTable(unit)}
       <h2>IV. RUTA PEDAGÓGICA DE LA UNIDAD</h2><p><b>Explorar y preguntar → Investigar y registrar → Organizar y crear → Comunicar y evaluar.</b> La secuencia detallada figura en las sesiones de cada semana.</p>
       <h2>V. SECUENCIA DE SESIONES</h2>${sequence}
@@ -227,5 +248,5 @@
     }
     return result;
   };
-  window.DD_UNIT_EXPORT_QUALITY_V11={situation,gradeAction,scheduleTable,word,qualityFlags,preview};
+  window.DD_UNIT_EXPORT_QUALITY_V11={situation,gradeAction,scheduleTable,word,qualityFlags,preview,competences,teacherChallenge,challenge};
 })();

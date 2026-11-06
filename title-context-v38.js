@@ -10,7 +10,7 @@
   const low=s=>tidy(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   const cap=s=>{s=tidy(s);return s?s.charAt(0).toUpperCase()+s.slice(1):s;};
   const E=s=>typeof window.escapeHtml==='function'?window.escapeHtml(String(s||'')):String(s||'');
-  const BAD=/\b(?:unidad|proyecto|sesión|sesion)\s+(?:sobre|de|acerca de)\b|\bquiero enseñar\b|\bquiero trabajar\b|\bnecesito una?\b/i;
+  const BAD=/\b(?:unidad|proyecto|sesión|sesion)\s+(?:sobre|de|acerca de)\b|\b(?:quiero\s+)?crear\s+(?:una?\s+)?(?:unidad|proyecto|sesi[oó]n)(?:\s+de\s+aprendizaje)?\b|\bquiero enseñar\b|\bquiero trabajar\b|\bnecesito una?\b/i;
   const INTEREST_PREFIX=/^(?:quiero|queremos|quieren|deseo|deseamos|desean)?\s*(?:saber|conocer|aprender|descubrir)\s+(?:más\s+)?(?:sobre|acerca de|de)\s+/i;
   const OBSERVATION_PREFIX=/^(?:(?:los|las)\s+estudiantes\s+|(?:los|las)\s+niñ(?:os|as)\s+)?(?:ven|vemos|veo|vimos|vieron|observan|observamos|observo|observaron|encuentran|encontramos|encontraron|aparece|aparecen|apareció|aparecio|aparecieron)\s+/i;
   const OBSERVATION_QUANTITY=/^(?:bastantes?|much[oa]s?|varios?|varias|algunos?|algunas|unos|unas)\s+/i;
@@ -257,8 +257,8 @@
   function titlesFromIntent(raw,type){
     // Las solicitudes pegadas con encabezados (Título, Contexto, etc.) ya
     // contienen una decisión del docente: jamás sustituirla por un tema genérico.
-    const labeled=String(raw||'').replace(/\*\*/g,'').replace(/__+/g,'')
-      .match(/(?:^|\n)\s*Título\s*:\s*([^\n]{5,130})/i);
+    const normalized=String(raw||'').replace(/\*\*/g,'').replace(/__+/g,'');
+    const labeled=normalized.match(/\bT[ií]tulo\s*:\s*([\s\S]{5,190}?)(?=\s+(?:Nivel|Grado|Duraci[oó]n|[AÁ]reas?\s+curriculares?|Contexto|Pregunta\s+(?:retadora|desafiante)|Producto\s+final)\s*:|\n|$)/i);
     if(labeled){
       const explicit=tidy(labeled[1]).replace(/^[«“]|[»”]$/g,'').replace(/[.;]+$/,'');
       if(explicit&&!BAD.test(explicit)){

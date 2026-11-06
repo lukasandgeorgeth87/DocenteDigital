@@ -408,7 +408,7 @@
     if(/(?:problemas de regularidad|equivalencia y cambio|patrones numericos)/.test(t))return'regularidad';
     if(/(?:problemas de cantidad|operaciones con cantidades)/.test(t))return'cantidad';
     const strong={
-      datos:/\b(?:encuest\w*|estadistic\w*|frecuenc\w*|probabil\w*|aleatori\w*|pictogram\w*|moda|promedi\w*|grafic\w*\s+de\s+barras?|grafic\w*\s+de\s+lineas|tabla\s+de\s+conteo|datos)\b/,
+      datos:/\b(?:encuest\w*|estadistic\w*|frecuenc\w*|probabil\w*|aleatori\w*|pictogram\w*|moda|promedi\w*|grafic\w*|tabla\s+de\s+conteo|datos)\b/,
       forma:/\b(?:perimetr\w*|geometr\w*|triangul\w*|cuadrilater\w*|poligon\w*|angul\w*|prismas?|circulos?|simetr\w*|plano\s+cartesiano|recorridos?|ubicacion|localiz\w*|longitud|superficie|areas?\s+de\s+figuras?)\b/,
       regularidad:/\b(?:patron\w*|equivalenc\w*|igualdad\w*|ecuacion\w*|desigualdad\w*|proporcional\w*|sucesion\w*|secuencia\s+numerica|regla\s+de\s+formacion)\b/,
       cantidad:/\b(?:cantidad\w*|sum\w*|rest\w*|adicion\w*|sustraccion\w*|multiplic\w*|division|divid\w*|fraccion\w*|decimal\w*|numer\w*|masa|pesos?|litros?|tiempo|dinero|compras?|repart\w*)\b/
@@ -429,6 +429,7 @@
     // Priorizar la acción didáctica principal al inicio de la actividad.
     if(/^(?:indag\w*|investig\w*|experiment\w*|comprob\w*|observ\w*|registr\w*|formul\w*\s+(?:preguntas?|hipotesis))\b/.test(t))return'indaga';
     if(/^(?:explic\w*|argument\w*|fundament\w*|interpret\w*\s+(?:conocimientos?|evidencias?))\b/.test(t))return'explica';
+    if(/^(?:elabor\w*|constru\w*)\s+(?:una?\s+)?(?:explicacion(?:es)?|argumentos?\s+cientificos?)\b/.test(t))return'explica';
     if(/^constru\w*\s+(?:un|una|la)\s+(?:explicacion|conclusion|modelo conceptual)\b/.test(t))return'explica';
     if(/^(?:disen\w*|constru\w*|fabric\w*|prototip\w*|implement\w*|mejor\w*\s+(?:un|una|el|la)\s+(?:prototipo|solucion|dispositivo|filtro|sistema))\b/.test(t))return'disena';
     // Si no hay verbo principal, solo aceptar un foco inequívoco.
@@ -447,7 +448,7 @@
     const t=String(title||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const express=[
       ['identidad',/(?:construy\w* nuestra identidad|reconoc\w* nuestras emociones|identific\w* nuestros sentimientos|regul\w* nuestras emociones|valor\w* nuestras cualidades|autoestima|caracteristicas personales|quien soy|como soy)/],
-      ['convivencia',/(?:conviv\w* democraticamente|acord\w* normas|constru\w* normas|resolv\w* conflictos|deliber\w* sobre|particip\w* democraticamente|asamblea de aula|acuerdos de convivencia|bien comun|derechos y deberes)/],
+      ['convivencia',/(?:conviv\w* democraticamente|acord\w* normas|constru\w* normas|resolv\w* conflictos|deliber\w* sobre|particip\w* democraticamente|asamblea de aula|acuerdos de convivencia|bien comun|derechos y deberes|practicas? y decisiones|responsabilidades? en (?:nuestra|la) comunidad|decisiones? y acuerdos|comparamos? puntos? de vista|organizamos? compromisos)/],
       ['historia',/(?:interpretaciones historicas|fuentes historicas|testimonios del pasado|cambios y permanencias|antes y ahora|origen historico|historia de nuestra localidad|linea de tiempo|procesos historicos|historia familiar)/],
       ['ambiente',/(?:espacio y el ambiente|cuid\w* el ambiente|zonas de riesgo|mapas? de riesgo|croquis|contaminacion del rio|gestion de residuos|problemas ambientales|espacio geografic|preven\w* desastres|rutas? de evacuacion)/],
       ['economia',/(?:recursos economicos|presupuest\w*|ahorr\w*|compar\w* precios|consumo responsable|gastos familiares|planific\w* compras|decisiones economicas|ingresos y gastos|sistema financiero)/]
