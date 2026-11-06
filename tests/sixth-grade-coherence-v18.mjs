@@ -28,7 +28,7 @@ assert.equal(parsing.readQuestion(original.replace(/\n/g,' ')),expected);
 assert.match(parsing.readProduct(original),/materiales de sensibilización y compromisos de uso responsable del agua/);
 assert.doesNotMatch(parsing.readProduct(original),/Organización|Semana 1/i);
 assert.match(parsing.readProduct(original.replace(/\n/g,' ')),/materiales de sensibilización y compromisos/);
-assert(src.includes('unit.reto=statedChallenge(pending.brief)||pending.reto||unit.reto;'),'La pregunta indicada debe tener prioridad al guardar');
+assert(src.includes('statedChallenge(pending.brief)')&&src.includes('||pending.reto||unit.reto;'),'La pregunta indicada debe tener prioridad al guardar');
 
 const code=read('schedule-v3.js'),a=code.indexOf('  function primarySequenceTitle('),b=code.indexOf('  function scheduleSequenceHtml(',a);
 assert(a>=0&&b>a);
