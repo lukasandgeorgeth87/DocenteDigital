@@ -40,7 +40,7 @@
       const products=preferOriginal&&Array.isArray(p.products)&&p.products.length?p.products:(generated.products||[]);
       p._creativeData={...generated,
         situations:situations.map(x=>cleanSituationOption(x,p)),
-        products:products.map(x=>cleanGenericOption(x,p))};
+        products:products.map(x=>typeof cleanGenericOption==='function'?cleanGenericOption(x,p):x)};
       save();
     }
     return p._creativeData;
