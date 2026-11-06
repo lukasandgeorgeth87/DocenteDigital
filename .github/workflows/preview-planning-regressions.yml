@@ -45,6 +45,7 @@ jobs:
           node tests/planning-structured-request-v14.mjs
           node tests/structured-water-regression-v15.mjs
           node tests/planning-topic-realization-v17.mjs
+          node tests/sixth-grade-coherence-v18.mjs
 
       - name: Verify Word, progression and all-level curriculum constraints
         shell: bash

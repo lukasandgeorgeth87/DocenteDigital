@@ -13,14 +13,23 @@
     return m?tidy(m[1]).replace(/\.{2,}/g,'.'):'';
   }
   function statedChallenge(raw){
-    const m=plain(raw).match(/(?:^|\n)\s*Pregunta\s+retadora\s*:\s*([^\n]{12,320})/i);
-    return m?tidy(m[1]):'';
+    const text=plain(raw);
+    const question=text.match(/\bPregunta\s+(?:retadora|desafiante)\s*:\s*(¿[^\n?]{12,500}\?)/i);
+    if(question)return tidy(question[1]);
+    const plainQuestion=text.match(/\bPregunta\s+(?:retadora|desafiante)\s*:\s*([^\n]{12,500}?)(?=\s+(?:Producto\s+final|Organizaci[oó]n|Indicaciones?)\s*:|\n|$)/i);
+    return plainQuestion?tidy(plainQuestion[1]):'';
   }
   function namedUnitTitle(raw){
-    const clean=plain(raw);
-    const m=clean.match(/(?:^|\n)\s*Título\s*:\s*([^\n]{5,130})/i)
-      || clean.match(/\btitulad[ao]\s*[«“\"]([^»”\"]{5,110})[»”\"]/i);
+    const text=plain(raw);
+    const m=text.match(/\bT[ií]tulo\s*:\s*([^\n]{5,190}?)(?=\s+(?:Nivel|Grado|Duraci[oó]n|[AÁ]reas?\s+curriculares?|Contexto|Pregunta\s+(?:retadora|desafiante))\s*:|\n|$)/i)
+      ||text.match(/\btitulad[ao]\s*[«“"]([^»”"]{5,140})[»”"]/i);
     return m?tidy(m[1]).replace(/^[“«]|[”»]$/g,'').replace(/[.;\s]+$/,''):'';
+  }
+  function namedProductFinal(raw){
+    const text=plain(raw).replace(/\r\n?/g,'\n');
+    const m=text.match(/\bProducto\s+final\s*:\s*([\s\S]*?)(?=(?:\n|\s)\s*(?:Organizaci[oó]n(?:\s+de\s+las\s+tres\s+semanas)?|Indicaciones?\s+pedag[oó]gicas?|Semana\s+1|Requisitos?\s+pedag[oó]gicos?)\s*:|$)/i);
+    if(!m)return '';
+    return tidy(m[1]).replace(/[.;\s]+$/,'');
   }
   function topicClass(raw){
     const s=plain(raw).toLowerCase();
@@ -331,9 +340,10 @@
 
   function showProducts(d,host){host.innerHTML=`<div class="dd-choice-intro"><span class="pill">PASO 3</span><h2>Elige el producto o evidencia integradora</h2><p>El producto debe responder al reto, ser útil o comunicable y permitir mostrar con claridad lo que los estudiantes aprendieron, investigaron, resolvieron o crearon.</p></div><div class="dd-product-grid">${d.products.map(productCard).join('')}</div><label class="dd-own"><b>✍️ O escribe tu propio producto</b><textarea id="ddOwnProduct" placeholder="Escribe un producto concreto, observable y conectado con el reto..."></textarea></label><div class="actions"><button class="btn alt" type="button" id="ddHelpProduct">✨ Ayúdame a crear un producto</button></div><div class="actions"><button class="btn" id="ddBuildUnit">✓ Construir la unidad/proyecto</button><button class="btn ghost" id="ddBackSituation">← Volver a situaciones</button></div>`;wireSelection('ddProduct');// Si el docente ya nombró un producto final, ofrecerlo precargado sin sustituirlo.
     const originalRequest=plain(state.pendingUnitChoice?.brief||'');
-    const named=originalRequest.match(/(?:producto final\s*(?:ser[aá]|es|consistir[aá] en|:)|como producto final\s*(?:elaboraremos|presentaremos))\s*((?:(?:una?|la|el)\s+)?[^.!?\n]{8,140})/i);
+    const named=namedProductFinal(originalRequest)||
+      (originalRequest.match(/(?:producto final\s*(?:ser[aá]|es|consistir[aá] en)|como producto final\s*(?:elaboraremos|presentaremos))\s*([^.!?\n]{8,500})/i)||[])[1]||'';
     if(named&&byId('ddOwnProduct')){
-      byId('ddOwnProduct').value=named[1].trim().split(/,\s*(?:con|que|para)\b/i)[0].replace(/[,;:]\s*$/,'');
+      byId('ddOwnProduct').value=named.trim().replace(/[,;:]\s*$/,'');
       byId('ddOwnProduct').dataset.title='Producto final indicado por el docente';
     }
     byId('ddHelpProduct').onclick=()=>openProductAssistant(d);byId('ddBackSituation').onclick=()=>showSituations(state.pendingUnitChoice.brief,state.pendingUnitChoice.type);byId('ddBuildUnit').onclick=()=>{const own=tidy(plain(byId('ddOwnProduct')?.value||'')),chosen=document.querySelector('input[name="ddProduct"]:checked')?.value;if(!own&&!chosen)return alert('Elige uno de los productos o escribe el tuyo.');const currentProducts=state.pendingUnitChoice?.products||d.products;const item=currentProducts.find(x=>String(x.key)===String(chosen));state.pendingUnitChoice.selectedProduct=own||item?.text;state.pendingUnitChoice.selectedProductTitle=own?(byId('ddOwnProduct')?.dataset.title||'Producto propuesto por el docente'):(item?.title||'Producto final');if(typeof save==='function')save();finalizeChoice(host);};host.scrollIntoView({behavior:'smooth',block:'start'});}
@@ -353,7 +363,7 @@
     // La selección explícita es específica de la unidad; el perfil del docente no cambia.
     try{if(requestedAreas.length)state.areas=[...requestedAreas];baseCreate();}
     finally{state.areas=originalAreas;if(typeof save==='function')save();}
-    const unit=(state.units||[]).find(u=>!before.has(u.id))||state.units?.[0];if(!unit)return;unit.situation=pending.selectedSituation;unit.reto=pending.reto||unit.reto;unit.contextFocus=pending.contextFocus||unit.contextFocus;unit.planningMeaning=pending.meaning||unit.planningMeaning;unit.expertReasoning=pending.expertReasoning||null;unit.selectedSituationSource=pending.situations.find(x=>x.text===pending.selectedSituation)?.key||'Docente';unit.teacherProfile=pending.profileSnapshot||profileSnapshot();unit.situationOptions=pending.situations;unit.product=pending.selectedProduct;unit.productTitle=pending.selectedProductTitle;unit.productOptions=pending.products;unit.selectionApproved=true;if(typeof save==='function')save();renderUnits();renderUnitOutput(unit);fillSessionUnits();host.classList.add('hidden');byId('unitOutput')?.scrollIntoView({behavior:'smooth'});}
+    const unit=(state.units||[]).find(u=>!before.has(u.id))||state.units?.[0];if(!unit)return;unit.situation=pending.selectedSituation;unit.reto=statedChallenge(pending.brief)||pending.reto||unit.reto;const explicitTitle=namedUnitTitle(pending.brief);if(explicitTitle)unit.title=explicitTitle;unit.contextFocus=pending.contextFocus||unit.contextFocus;unit.planningMeaning=pending.meaning||unit.planningMeaning;unit.expertReasoning=pending.expertReasoning||null;unit.selectedSituationSource=pending.situations.find(x=>x.text===pending.selectedSituation)?.key||'Docente';unit.teacherProfile=pending.profileSnapshot||profileSnapshot();unit.situationOptions=pending.situations;unit.product=pending.selectedProduct;unit.productTitle=pending.selectedProductTitle;unit.productOptions=pending.products;unit.selectionApproved=true;if(typeof save==='function')save();renderUnits();renderUnitOutput(unit);fillSessionUnits();host.classList.add('hidden');byId('unitOutput')?.scrollIntoView({behavior:'smooth'});}
   window.createUnitDemo=function(){
     const type=byId('unitType')?.value||'Unidad de aprendizaje';
     const title=byId('unitTitle')?.value.trim()||'';

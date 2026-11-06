@@ -160,14 +160,16 @@
     const topic=typeof window.ddContextTopic==='function'?window.ddContextTopic(brief):'el tema trabajado';
     const raw=String(brief||'');
     const product=(state.pendingUnitChoice?.selectedProduct||
-      (raw.match(/\bproducto\s+final\s+(?:será|sera|es|:)\s+([^.!?;,]+)/i)||[])[1]||'producto final')
+      (raw.match(/\bproducto\s+final\s+(?:será|sera|es|:)\s+([^.!?;\n]+)/i)||[])[1]||'producto final')
       .replace(/\s*,\s*(?:con\s+(?:competencias|criterios|evidencias|actividades)).*$/i,'').trim();
+    // Conservar el producto completo en la unidad; abreviar solo los títulos de sesión.
+    const productName=product.split(/,\s*(?:integrad[ao]|compuest[ao]|que incluye|con\s+afiches)\b/i)[0].slice(0,105).trim();
     const stage=weeks===1?1:(week===1?0:week===weeks?2:1);
     const sets={
       'Comunicación':[
         [`Dialogamos sobre ${topic} y formulamos preguntas`,`Leemos información para comprender ${topic}`,`Escuchamos explicaciones y registramos dudas sobre ${topic}`,`Explicamos con nuestras palabras lo que descubrimos sobre ${topic}`],
         [`Contrastamos fuentes e ideas sobre ${topic}`,`Organizamos información útil sobre ${topic}`,`Escribimos borradores para comunicar nuestros hallazgos`, `Revisamos nuestros textos usando criterios acordados`],
-        [`Redactamos mensajes claros para el producto final`,`Revisamos y mejoramos los textos de ${product}`,`Ensayamos cómo comunicar nuestros hallazgos`,`Presentamos y evaluamos los mensajes de ${product}`]
+        [`Redactamos mensajes claros para ${productName}`,`Revisamos y mejoramos los textos de ${productName}`,`Presentamos y evaluamos los mensajes de ${productName}`,`Difundimos compromisos y valoramos el impacto de ${productName}`]
       ],
       'Matemática':[
         [`Planteamos preguntas que podemos responder con datos sobre ${topic}`,`Recogemos y registramos datos relacionados con ${topic}`,`Contamos y comparamos cantidades de situaciones relacionadas con ${topic}`,`Seleccionamos estrategias para organizar nuestros datos`],
@@ -195,7 +197,7 @@
       return initialDailyActivities(brief,weeks);
     }
     const schedule=effectiveSchedule();
-    const counters={}; const activities=[]; let order=0;
+    const counters={},phaseCounters={}; const activities=[]; let order=0;
     for(let week=1;week<=weeks;week++){
       DAYS.forEach(day=>{
         (schedule[day]||[]).forEach((slot,idx)=>{
@@ -204,8 +206,11 @@
           if(state.areas&&state.areas.length&&!state.areas.includes(area))return;
           const variants=activityVariants(area,brief);
           counters[area]=(counters[area]||0)+1;
+          const phase=weeks===1?1:(week===1?0:week===weeks?2:1);
+          const phaseKey=area+'|'+phase;
+          phaseCounters[phaseKey]=(phaseCounters[phaseKey]||0)+1;
           const title=(state.level==='Primaria'
-            ?primarySequenceTitle(area,brief,week,weeks,counters[area]):null)
+            ?primarySequenceTitle(area,brief,week,weeks,phaseCounters[phaseKey]):null)
             ||variants[(counters[area]-1)%variants.length];
           activities.push({kind:'sesion',kindLabel:'Sesión de aprendizaje',area,title,week,day,block:slot.block||idx+1,time:slot.time||'',order:++order});
         });

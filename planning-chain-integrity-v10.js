@@ -62,6 +62,10 @@
     if(situation&&product&&topicalLink(situation,product)==='contradiccion')
       result.push(issues('semantic-product','El producto final parece corresponder a otro tema y no al problema de la situación significativa. Revisa su pertinencia.','coherencia temática'));
     const acts=Array.isArray(unit.activities)?unit.activities:[];
+    if(/\b(?:contribuya|ayude|sirva)\s+a\s+(?:fuentes|datos|registros|evidencias)\b/i.test(challenge)
+      ||/para\s+fuentes\s+confiables\s+y\s+recogemos/i.test(challenge))
+      result.push(issues('challenge-malformed',
+        'La pregunta retadora contiene una finalidad gramaticalmente incoherente. Revisa el reto indicado por el docente.','reto'));
     // Detectar relleno genérico: la presencia de un campo NO garantiza su calidad.
     // La solicitud original del docente puede contener instrucciones; no se evalúa aquí.
     const placeholder=/tema solicitado por el docente|tema elegido por el docente|contribuya a descargarla en word|sobre el tema trabajado/i;
