@@ -33,6 +33,8 @@ const schedule={window:{ddContextTopic:()=> 'los derechos'},state:{pendingUnitCh
 runInNewContext(sch.slice(p,q)+'\nthis.sessionTitle=primarySequenceTitle;',schedule);
 const title=schedule.sessionTitle('Comunicación',brief,3,3,1);
 assert.match(title,/Expo interactiva: descubrimos los derechos/);
+assert(proposal.includes('unit.product=declaredProduct||(selectedCard?pending.selectedProductTitle:pending.selectedProduct)'), 'El producto canónico debe guardar el nombre elegido, no solo su descripción');
+assert(proposal.includes('return \'los derechos de la niñez\';return base;'), 'El contexto autogenerado sobre derechos no puede perder el tema');
 assert(!/Muestra por estaciones/.test(title),'La sesión debe nombrar el producto elegido, no la descripción extensa');
 const exportWin={unitWordHtml:()=>''};
 runInNewContext(read('unit-export-quality-v11.js'),{window:exportWin});

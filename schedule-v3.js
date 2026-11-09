@@ -157,7 +157,7 @@
   // Semana inicial: reconocer y preguntar; semanas intermedias: investigar y analizar;
   // tramo final: producir, comunicar y evaluar el producto integrador.
   function primarySequenceTitle(area,brief,week,weeks,turn){
-    const topic=typeof window.ddContextTopic==='function'?window.ddContextTopic(brief):'el tema trabajado';
+    const topic=state.pendingUnitChoice?.contextFocus||(typeof window.ddContextTopic==='function'?window.ddContextTopic(brief):'el tema trabajado');
     const raw=String(brief||'');
     const product=(state.pendingUnitChoice?.selectedProductTitle||state.pendingUnitChoice?.selectedProduct||
       (raw.match(/\bproducto\s+final\s+(?:será|sera|es|:)\s+([^.!?;\n]+)/i)||[])[1]||'producto final')

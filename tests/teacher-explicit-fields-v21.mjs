@@ -21,7 +21,7 @@ assert.equal(parsers.challenge(brief),challenge,'Pregunta retadora exacta');
 assert.equal(parsers.product(brief),expectedProduct,'El producto no debe incluir el encabezado Organización de actividades');
 assert.equal(parsers.product(brief.replace('Organización de actividades Semana 1:','Organización de actividades: Semana 1:')),expectedProduct);
 assert.equal(parsers.product(brief.replace('Organización de actividades Semana 1:','\nOrganización de actividades:\nSemana 1:')),expectedProduct);
-assert(src.includes('namedProductFinal(pending.brief)')&&src.includes('||pending.selectedProduct;'),'Guardado debe priorizar producto explícito');
+assert(src.includes('namedProductFinal(pending.brief)')&&src.includes('selectedCard?pending.selectedProductTitle:pending.selectedProduct'),'Guardado debe priorizar producto explícito y nombre de producto elegido');
 assert(src.includes('if(explicitTitle)unit.title=explicitTitle;'),'Guardado debe priorizar título explícito');
 const format=read('format-v2.js');
 assert(format.includes('window.ddNaturalPlanningTitles'),'Sugerencias deben usar el extractor corregido');
