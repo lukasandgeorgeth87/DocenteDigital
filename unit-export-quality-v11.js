@@ -189,10 +189,56 @@
       }
       if(!representatives.length)representatives.push({name:'Competencia por identificar y confirmar',title:''});
       for(const item of representatives){
-        rows.push(`<tr><td><b>${esc(area)}</b><br>${esc(item.name)}<br><i>Competencia para cotejo docente</i></td><td>${gradeRows(unit,area,item.title)}</td><td>${esc(evidence(area,item.title))}</td></tr>`);
+        const official=window.DD_OFFICIAL_CURRICULUM?.getArea?.(unit.level,area)?.find(x=>x.name===item.name);const capacities=Array.isArray(official?.capacities)?official.capacities.join('; '):'';rows.push(`<tr><td><b>${esc(area)}</b><br>${esc(item.name)}${capacities?`<br><small><b>Capacidades MINEDU:</b> ${esc(capacities)}</small>`:''}<br><i>Competencia para cotejo docente</i></td><td>${gradeRows(unit,area,item.title)}</td><td>${esc(evidence(area,item.title))}</td></tr>`);
       }
     }
     return table(['Área y competencia propuesta','Criterios orientadores por grado','Evidencia'],rows,[31,47,22]);
+  }
+
+  // Word conserva los componentes pedagógicos de la vista, sin trasladar
+  // datos personales ni confundir borradores con desempeños oficiales.
+  function assessmentSamples(unit){
+    const entries=[],seen=new Set();
+    for(const area of unit.areas||[]){
+      const activities=(unit.activities||[]).filter(a=>a.area===area);
+      for(const activity of activities){
+        const competence=competences(unit,area,activity.title);
+        const key=area+'|'+competence;
+        if(seen.has(key))continue;
+        seen.add(key);
+        const purpose=(unit.purposes||[]).find(p=>p.area===area);
+        entries.push({area,competence,activity:activity.title,
+          criterion:(unit.grades||[]).map(g=>g+': '+gradeAction(area,activity.title,g)).join(' / '),
+          evidence:evidence(area,activity.title),
+          instrument:purpose?.instrument||'Instrumento por revisar'});
+      }
+    }
+    return entries;
+  }
+  function approachesTable(unit){
+    const rows=(unit.enfoques||[]).map(x=>`<tr><td>${esc(x.name||'')}</td><td>${esc(x.value||'')}</td><td>${esc(x.action||'')}</td></tr>`);
+    return rows.length?table(['Enfoque transversal','Valor','Acciones observables'],rows,[26,20,54]):'<p>Enfoques por contextualizar y confirmar con el docente.</p>';
+  }
+  function transversalTable(unit){
+    const rows=(unit.transversals||[]).map(x=>`<tr><td><b>${esc(x.name||'')}</b><br>${esc((x.capacities||[]).join('; '))}</td><td>${esc(x.application||'')}</td></tr>`);
+    return rows.length?table(['Competencia transversal y capacidades','Aplicación contextualizada'],rows,[54,46]):'<p>Competencias transversales por contextualizar y confirmar.</p>';
+  }
+  function articulationTable(unit){
+    const rows=(unit.activities||[]).map(a=>{
+      const purpose=(unit.purposes||[]).find(p=>p.area===a.area);
+      const gradeCriteria=(unit.grades||[]).map(g=>g+': '+gradeAction(a.area,a.title,g)).join(' / ');
+      return `<tr><td><b>${esc(a.area)}</b><br>${esc(competences(unit,a.area,a.title))}</td><td>${esc(a.title)}<br><small><b>Criterio:</b> ${esc(gradeCriteria)}</small></td><td>${esc(evidence(a.area,a.title))}</td><td>${esc(purpose?.instrument||'Por definir')}</td></tr>`;
+    });
+    return rows.length?table(['Área y competencia','Actividad / criterio por grado','Evidencia','Instrumento'],rows,[23,42,21,14]):'<p>No existen actividades programadas.</p>';
+  }
+  function instrumentDrafts(unit){
+    const rows=assessmentSamples(unit).map(s=>`<tr><td><b>${esc(s.area)}</b><br>${esc(s.competence)}</td><td>${esc(s.criterion)}<br><small>Evidencia: ${esc(s.evidence)}</small></td><td><b>C – Inicio:</b> requiere ayuda para mostrar los elementos del criterio.<br><b>B – Proceso:</b> muestra algunos elementos con apoyo.<br><b>A – Logro esperado:</b> ${esc(s.criterion)}<br><b>AD – Destacado:</b> sustenta y transfiere lo logrado a otro caso con evidencias.</td></tr>`);
+    return rows.length?table(['Área / competencia','Criterio y evidencia','Borrador de niveles C, B, A y AD'],rows,[24,38,38]):'<p>Faltan actividades para construir instrumentos.</p>';
+  }
+  function registerTemplate(unit){
+    const grades=unit.grades||[];
+    const rows=assessmentSamples(unit).flatMap(s=>grades.map(g=>`<tr><td>${esc(g)}<br>${esc(s.area)}<br><small>${esc(s.competence)}</small></td><td>${esc(s.criterion)}<br><small>${esc(s.evidence)}</small></td><td>C ☐ B ☐ A ☐ AD ☐</td><td>Por registrar con evidencias observadas.</td></tr>`));
+    return rows.length?table(['Grado / competencia','Criterio y evidencia','Nivel','Observación / retroalimentación'],rows,[24,43,13,20]):'<p>Registro auxiliar por completar.</p>';
   }
   function qualityFlags(unit){
     const notes=[];
@@ -241,12 +287,17 @@
     return `<div class="dd-word-v11"><h1>${esc(title)}</h1><h2>“${esc(teacherTitle(unit)||unit.title)}”</h2>
       <h2>I. DATOS GENERALES</h2>${general}
       <h2>II. SITUACIÓN SIGNIFICATIVA, RETO Y PRODUCTO</h2><p>${esc(situation(unit))}</p>
-      <p><b>Pregunta retadora:</b> ${esc(challenge(unit))}</p><p><b>Producto integrador:</b> ${esc(cleanProduct(unit))}</p>
+      <p><b>Pregunta retadora:</b> ${esc(challenge(unit))}</p><p><b>Producto integrador:</b> ${esc(cleanProduct(unit))}</p>${clean(unit.productDescription)&&clean(unit.productDescription)!==cleanProduct(unit)?`<p><b>Descripción del producto:</b> ${esc(unit.productDescription)}</p>`:''}
       <h2>III. PROPÓSITOS Y CRITERIOS ORIENTADORES</h2><p>Competencias y criterios sugeridos para revisar con el programa curricular MINEDU. Estos criterios no son desempeños oficiales literales.</p>${purposeTable(unit)}
+      <h3>ENFOQUES TRANSVERSALES</h3>${approachesTable(unit)}
+      <h3>COMPETENCIAS TRANSVERSALES</h3>${transversalTable(unit)}
+      <h3>MATRIZ DE ARTICULACIÓN Y EVALUACIÓN</h3>${articulationTable(unit)}
       <h2>IV. RUTA PEDAGÓGICA DE LA UNIDAD</h2><p><b>Explorar y preguntar → Investigar y registrar → Organizar y crear → Comunicar y evaluar.</b> La secuencia detallada figura en las sesiones de cada semana.</p>
       <h2>V. SECUENCIA DE SESIONES</h2>${sequence}
       <h2>VI. EVALUACIÓN FORMATIVA</h2><p>Recoger evidencias durante el trabajo, compararlas con los criterios por grado, ofrecer retroalimentación y permitir mejoras del producto antes de su presentación.</p>
       ${table(['Grado','Evidencia de avance','Instrumento orientador'],(unit.grades||[]).map(g=>`<tr><td>${esc(g)}</td><td>Producción vinculada a la actividad del día</td><td>Lista de cotejo o rúbrica revisada por el docente</td></tr>`),[16,47,37])}
+      <h3>INSTRUMENTOS DE EVALUACIÓN — BORRADORES PARA VALIDAR</h3>${instrumentDrafts(unit)}
+      <h3>REGISTRO AUXILIAR POR COMPETENCIA</h3>${registerTemplate(unit)}
       <h2>VII. ASPECTOS POR COMPLETAR</h2>${notes.length?`<ul>${notes.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<p>Los campos esenciales se encuentran registrados. Cotejar competencias y desempeños antes de utilizar la planificación.</p>'}
       <p><i>Documento editable de apoyo. Verificar el CNEB, los desempeños por grado y la pertinencia didáctica antes de usar en aula.</i></p></div>`;
   }
