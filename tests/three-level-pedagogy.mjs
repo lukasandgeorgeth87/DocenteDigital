@@ -138,7 +138,8 @@ for(const item of cases){
   state.activeUnitId=unit.id;
   assert.equal(unit.selectionApproved,true);
   assert.equal(unit.situation,choice.situations[0].text);
-  assert.equal(unit.product,choice.products[0].text);
+  assert.equal(unit.product,choice.products[0].title,'Se guarda el nombre del producto que eligió el docente');
+  assert.equal(unit.productDescription,choice.products[0].text,'La descripción del producto se conserva separadamente');
   assert.equal(unit.contextFocus,choice.contextFocus);
   const audit=window.ddSignificantSituationCore.audit({
     context:item.brief,significantSituation:unit.situation,challenge:unit.reto,product:unit.product
