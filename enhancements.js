@@ -233,10 +233,28 @@
     return p.officialCompetencies.map(c=>`<div class="dd-official-competency"><b>${E(c.name)}</b><br><small><b>Capacidades:</b> ${c.capacities.map(E).join('; ')}</small></div>`).join('<hr>');
   }
   function ddPurposesHtml(unit){
-    const rows=unit.purposes.map(p=>`<tr><td><b>${E(p.area)}</b><br>${ddOfficialCompetenciesHtml(p)}</td><td>${p.criteria.map(x=>`<b>${E(x.grade)}:</b> ${E(x.text)}`).join('<br><br>')}</td><td>${E(p.evidence)}</td><td>${E(p.instrument)}</td></tr>`).join('');
-    return ddTable(rows,['Área / Competencias y capacidades MINEDU','Criterios contextualizados por grado','Evidencia','Instrumento']);
+    const rows=[];
+    const quality=window.DD_UNIT_EXPORT_QUALITY_V11;
+    for(const p of unit.purposes||[]){
+      const official=p.officialCompetencies?.length?p.officialCompetencies:[{name:'Competencia por confirmar',capacities:[]}];
+      for(const competence of official){
+        const related=(unit.activities||[]).find(a=>a.area===p.area&&ddPickOfficialCompetence(unit.level,p.area,a.title)?.name===competence.name)
+          ||(unit.activities||[]).find(a=>a.area===p.area);
+        const title=related?.title||'';
+        const criterion=(unit.grades||[]).map(g=>{
+          const value=unit.level==='Primaria'&&title&&typeof quality?.gradeAction==='function'
+            ?quality.gradeAction(p.area,title,g):ddCriterion(p.area,g,unit.situationBrief||unit.situation,unit.level);
+          return '<b>'+E(g)+':</b> '+E(value);
+        }).join('<br><br>');
+        const ev=unit.level==='Primaria'&&title&&typeof quality?.evidence==='function'
+          ?quality.evidence(p.area,title):p.evidence;
+        const detail='<b>'+E(competence.name)+'</b><br><small><b>Capacidades MINEDU:</b> '+(competence.capacities||[]).map(E).join('; ')+'</small>';
+        rows.push('<tr><td><b>'+E(p.area)+'</b><br>'+detail+'</td><td>'+criterion+'</td><td>'+E(ev||'Por verificar')+'</td><td>'+E(p.instrument||'Por definir')+'</td></tr>');
+      }
+    }
+    return ddTable(rows.join(''),['Área / Competencia y capacidades MINEDU','Criterios por competencia y grado','Evidencia','Instrumento']);
   }
-  function ddEnfoquesHtml(unit){return ddTable(unit.enfoques.map(x=>`<tr><td><b>${E(x.name)}</b></td><td>${E(x.value)}</td><td>${E(x.action)}</td></tr>`).join(''),['Enfoque transversal','Valor','Actitudes o acciones observables']);}
+    function ddEnfoquesHtml(unit){return ddTable(unit.enfoques.map(x=>`<tr><td><b>${E(x.name)}</b></td><td>${E(x.value)}</td><td>${E(x.action)}</td></tr>`).join(''),['Enfoque transversal','Valor','Actitudes o acciones observables']);}
   function ddTransversalHtml(unit){return ddTable(unit.transversals.map(x=>`<tr><td><b>${E(x.name)}</b><br><small><b>Capacidades MINEDU:</b> ${(x.capacities||[]).map(E).join('; ')}</small></td><td>${E(x.application||'')}</td></tr>`).join(''),['Competencia transversal y capacidades MINEDU','Aplicación contextualizada en la unidad']);}
   function ddSequenceHtml(unit){
     const days=['Lunes','Martes','Miércoles','Jueves','Viernes'];
@@ -249,16 +267,35 @@
     return ddTable(rows,['Semana / día','Área','Título de la sesión','Competencia priorizada MINEDU','Evidencia','Criterio contextualizado','Instrumento','Actividad principal']);
   }
   function ddRegisterHtml(unit){
-    const names=unit.grades.map((g,i)=>({g,name:['Estudiante 1','Estudiante 2','Estudiante 3','Estudiante 4','Estudiante 5','Estudiante 6'][i]||`Estudiante ${i+1}`}));
-    const core=unit.purposes.slice(0,Math.min(4,unit.purposes.length));
-    return ddTable(names.map(s=>`<tr><td><b>${E(s.name)}</b><br>${E(s.g)}</td>${core.map(()=>'<td class="dd-center">—</td>').join('')}<td></td></tr>`).join(''),['Estudiante / grado',...core.map(p=>p.area),'Conclusión descriptiva']);
+    const quality=window.DD_UNIT_EXPORT_QUALITY_V11;
+    return (unit.purposes||[]).map(p=>{
+      const competences=p.officialCompetencies||[];
+      const rows=(unit.grades||[]).map(g=>{
+        const criteria=competences.map(c=>{
+          const a=(unit.activities||[]).find(x=>x.area===p.area&&ddPickOfficialCompetence(unit.level,p.area,x.title)?.name===c.name)
+            ||(unit.activities||[]).find(x=>x.area===p.area);
+          const text=unit.level==='Primaria'&&a&&quality?.gradeAction?quality.gradeAction(p.area,a.title,g):ddCriterion(p.area,g,unit.situationBrief,unit.level);
+          return '<b>'+E(c.name)+':</b> '+E(text);
+        }).join('<br>');
+        return '<tr><td>Estudiante por registrar · '+E(g)+'</td><td>'+criteria+'</td><td>C ☐ B ☐ A ☐ AD ☐</td><td></td></tr>';
+      }).join('');
+      return '<h3>'+E(p.area)+'</h3>'+ddTable(rows,['Estudiante / grado','Criterios por competencia','Nivel','Conclusión descriptiva']);
+    }).join('');
   }
-  function ddInstrumentHtml(unit){
-    const p=unit.purposes[0]; if(!p)return '';
-    const criterion=p.criteria?.[p.criteria.length-1]?.text||'Criterio de la competencia';
-    return `<h3>Rúbrica analítica de ejemplo – ${E(p.area)}</h3>${ddTable(`<tr><td>${E(criterion)}</td><td>Requiere apoyo frecuente y aún no evidencia las actuaciones esperadas.</td><td>Evidencia parcialmente las actuaciones y necesita apoyo para sostenerlas.</td><td>Evidencia las actuaciones esperadas de manera pertinente y autónoma.</td><td>Supera lo esperado, sustenta sus decisiones y transfiere lo aprendido a nuevas situaciones.</td></tr>`,['Criterio','C – Inicio','B – Proceso','A – Logro esperado','AD – Destacado'])}`;
+    function ddInstrumentHtml(unit){
+    const q=window.DD_UNIT_EXPORT_QUALITY_V11;
+    const rows=[];
+    for(const p of unit.purposes||[]){
+      for(const c of p.officialCompetencies||[]){
+        const a=(unit.activities||[]).find(x=>x.area===p.area&&ddPickOfficialCompetence(unit.level,p.area,x.title)?.name===c.name)
+          ||(unit.activities||[]).find(x=>x.area===p.area);
+        const criterion=(unit.grades||[]).map(g=>g+': '+(unit.level==='Primaria'&&a&&q?.gradeAction?q.gradeAction(p.area,a.title,g):ddCriterion(p.area,g,unit.situationBrief,unit.level))).join(' / ');
+        rows.push('<tr><td><b>'+E(p.area)+'</b><br>'+E(c.name)+'</td><td>'+E(criterion)+'</td><td>Requiere apoyo para demostrar los elementos del criterio.</td><td>Muestra algunos elementos y necesita mediación.</td><td>Demuestra el criterio con evidencias pertinentes.</td><td>Además justifica y transfiere el aprendizaje.</td></tr>');
+      }
+    }
+    return '<p><small>Borradores editables: los niveles deben revisarse con el CNEB y las evidencias reales antes de aplicar.</small></p>'+ddTable(rows.join(''),['Área y competencia','Criterio por grado','C – Inicio','B – Proceso','A – Logro esperado','AD – Destacado']);
   }
-  function ddSection(id,title,body){return `<section class="dd-unit-section" id="${id}"><h2>${title}</h2>${body}</section>`}
+    function ddSection(id,title,body){return `<section class="dd-unit-section" id="${id}"><h2>${title}</h2>${body}</section>`}
   function ddTabs(unit){return `<div class="dd-tabs"><button onclick="ddShowTab('resumen')">Resumen</button><button onclick="ddShowTab('propositos')">Propósitos</button><button onclick="ddShowTab('matriz')">Matriz</button><button onclick="ddShowTab('sesiones')">Sesiones</button><button onclick="ddShowTab('instrumentos')">Instrumentos</button><button onclick="ddShowTab('registro')">Registro</button></div>`}
   window.ddShowTab=function(id){document.querySelectorAll('#unitOutput .dd-unit-section').forEach(x=>x.classList.toggle('dd-hidden',x.id!==`dd-${id}`));document.querySelectorAll('#unitOutput .dd-tabs button').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().startsWith(id.substring(0,4))));};
 
@@ -295,7 +332,7 @@
   ].filter(Boolean).join(' · '))}</td></tr><tr><th>Categoría</th><th>Detalle</th></tr><tr><td>Institución educativa</td><td>Datos configurados en el perfil</td></tr><tr><td>Docente</td><td>Datos configurados en el perfil</td></tr><tr><td>Ciclo, grado y sección</td><td>${E(unit.grades.join(', '))} · ${E(unit.ieType)}</td></tr><tr><td>Duración</td><td>${E(unit.duration)}</td></tr></table><h2>II. SITUACIÓN SIGNIFICATIVA Y PRODUCTO</h2><p>${E(unitSituation(unit))}</p><p><b>RETO</b><br>${E(unit.reto)}</p><p><b>PRODUCTO</b><br>${E(unit.product)}</p><h2>III. PROPÓSITOS DE APRENDIZAJE</h2>${ddPurposesHtml(unit)}<h3>Enfoques transversales</h3>${ddEnfoquesHtml(unit)}<h3>Competencias transversales</h3>${ddTransversalHtml(unit)}<h2>IV. MATRIZ DE ARTICULACIÓN Y EVALUACIÓN</h2>${ddPurposesHtml(unit)}<h2>V. SECUENCIA DE SESIONES DE APRENDIZAJE</h2>${ddSequenceHtml(unit)}<h2>VI. INSTRUMENTOS DE EVALUACIÓN</h2>${ddInstrumentHtml(unit)}<h2>VII. REGISTRO AUXILIAR</h2>${ddRegisterHtml(unit)}</div>`;
   };
 
-  function ddSessionCriterion(session,g){return ddCriterion(session.area,g,session.brief,session.level);}
+  function ddSessionCriterion(session,g){const q=window.DD_UNIT_EXPORT_QUALITY_V11;if(session.level==='Primaria'&&typeof q?.gradeAction==='function')return q.gradeAction(session.area,session.activityTitle||session.title,g);return ddCriterion(session.area,g,session.brief,session.level);}
   function ddSessionCompetence(session){return ddPickOfficialCompetence(session.level,session.area,session.title);}
   function ddSessionProcesses(session){
     if(session.level==='Inicial'){

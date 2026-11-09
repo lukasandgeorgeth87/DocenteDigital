@@ -69,7 +69,7 @@
       return 'oralidad';
     }
     if(area==='Matemática')return /dato|graf|encuesta|tabla|estad|probab/.test(t)?'datos':/perimetr|area|figura|mapa|croquis|forma|geometr/.test(t)?'forma':/patron|equiv|regular|sucesion/.test(t)?'regularidad':'cantidad';
-    if(area==='Personal Social')return /antes|ahora|pasado|histori|cambio|permanencia|fuente|memoria|tradicion/.test(t)?'historia':/dinero|presupuesto|ahorro|consumo|compra/.test(t)?'economía':/espacio|ambiente|territor|croquis|riesgo/.test(t)?'ambiente':'convivencia';
+    if(area==='Personal Social'){const mode=window.DD_OFFICIAL_CURRICULUM?.personalSocialModeFromTitle?.(title);if(mode&&mode!=='indefinido')return mode==='economia'?'economía':mode;return /antes|ahora|pasado|histori|cambio|permanencia|fuente|memoria|tradicion/.test(t)?'historia':/dinero|presupuesto|ahorro|consumo|compra/.test(t)?'economía':/espacio|ambiente|territor|croquis|riesgo/.test(t)?'ambiente':'convivencia';}
     if(area==='Ciencia y Tecnología')return /diseñ|constru|prototipo|solucion tecnol/.test(t)?'diseña':/explica|causa|por que/.test(t)?'explica':'indaga';
     return 'general';
   }
@@ -136,6 +136,13 @@
       if(s==='explica')return n<=2?'Describe el fenómeno observado con ejemplos y palabras propias.':n<=4?'Relaciona causas y efectos utilizando observaciones y fuentes.':'Elabora una explicación sustentada en conocimientos y evidencias.';
       return n<=2?'Plantea una pregunta, observa y registra mediante dibujos lo que encontró.':n<=4?'Formula una predicción, registra datos y los compara con lo esperado.':'Define variables pertinentes, analiza datos y sustenta una conclusión.';
     }
+    if(area==='Arte y Cultura'){
+      const appreciation=/exploramos manifestaciones|apreciamos|observamos manifestaciones|analizamos expresiones art[ií]sticas/.test(lower(title));
+      if(appreciation)return n<=2?'Describe con ejemplos lo que observa y siente ante una manifestación artística.':n<=4?'Describe elementos de una manifestación artística y explica qué ideas o emociones comunica.':'Interpreta manifestaciones artístico-culturales y sustenta su apreciación con elementos observables y contexto.';
+      return n<=2?'Explora materiales y crea una producción artística sencilla para expresar una idea.':n<=4?'Selecciona materiales y lenguajes artísticos y explica decisiones de su creación.':'Combina recursos artísticos para comunicar un mensaje y revisa su producción con criterios de expresión y destinatario.';
+    }
+    if(area==='Educación Física')return n<=2?'Ejecuta desplazamientos y movimientos básicos con equilibrio y cuidado de su cuerpo.':n<=4?'Coordina movimientos y ajusta sus acciones motrices según un reto y normas de seguridad.':'Controla y adapta movimientos en retos motrices, mostrando coordinación, autonomía y cuidado de su integridad.';
+    if(area==='Educación Religiosa')return n<=2?'Expresa con respeto una enseñanza de su fe vinculada al buen trato.':n<=4?'Explica una enseñanza de su fe y propone una acción respetuosa de convivencia.':'Argumenta una reflexión desde su fe sobre la dignidad humana y propone compromisos concretos de respeto y solidaridad.';
     return n<=2?'Participa y comunica mediante una representación sencilla lo que aprendió.':n<=4?'Elabora una producción y explica las decisiones tomadas.':'Desarrolla una producción y argumenta sus decisiones con evidencias.';
   }
   function evidence(area,title){
@@ -319,5 +326,5 @@
     }
     return result;
   };
-  window.DD_UNIT_EXPORT_QUALITY_V11={situation,gradeAction,scheduleTable,word,qualityFlags,preview,competences,teacherTitle,cleanProduct,teacherChallenge,challenge};
+  window.DD_UNIT_EXPORT_QUALITY_V11={situation,gradeAction,scheduleTable,word,qualityFlags,preview,competences,teacherTitle,cleanProduct,teacherChallenge,challenge,evidence};
 })();

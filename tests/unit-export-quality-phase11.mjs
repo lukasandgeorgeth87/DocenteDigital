@@ -64,6 +64,9 @@ assert.match(criteria.gradeAction('Comunicación','Leemos textos', '5.º'),/Cont
 assert.match(criteria.gradeAction('Matemática','Registramos datos en gráficos', '1.º'),/pictograma/);
 assert.match(criteria.gradeAction('Ciencia y Tecnología','Indagamos cambios de la masa','5.º'),/variables/);
 assert.match(criteria.gradeAction('Personal Social','Comparamos cambios y permanencias','3.º'),/hechos/);
+assert.match(criteria.gradeAction('Educación Física','Participamos en retos motrices','5.º'),/movimientos|motric/i);
+assert.match(criteria.gradeAction('Arte y Cultura','Exploramos manifestaciones artísticas','6.º'),/manifestaciones/);
+assert.match(criteria.gradeAction('Educación Religiosa','Reflexionamos sobre el respeto','6.º'),/dignidad|respeto|solidaridad/);
 window.renderUnitOutput(unit);
 assert.ok(rendered.includes('Semana 3'));
 assert.ok(rendered.includes('Criterio / acción por grado'));
