@@ -309,7 +309,40 @@
       {key:'3',title:`Guía práctica para comunicar lo aprendido sobre ${focus}`.slice(0,100),text:`Guía, mural o recurso digital que organiza los principales hallazgos, ejemplos, producciones y recomendaciones construidas por los estudiantes.`}
     ];
   }
-  function dataFor(brief){let pack=situationOptions((brief||'').trim());pack={...pack,products:productOptions(brief,pack)};const baseProducts=Array.isArray(pack.products)?pack.products:[];if(typeof window.ddApplyExpertReasoningToProposal==='function'){try{const expertPack=window.ddApplyExpertReasoningToProposal(brief,pack);if(expertPack&&typeof expertPack==='object')pack={...pack,...expertPack};}catch(error){console.warn('DocenteDigital: razonamiento experto no disponible; se conserva la propuesta base.',error);window.__ddExpertReasoningFallback=true;}}if(!Array.isArray(pack.products)||pack.products.length===0)pack.products=baseProducts;return pack;}
+  function dataFor(brief){
+    const raw=String(brief||'').trim();
+    let pack=situationOptions(raw);
+    pack={...pack,products:productOptions(raw,pack)};
+    // Guardar una copia de las propuestas específicas ANTES del razonamiento
+    // experto: ese complemento puede devolver texto genérico o mutar arrays.
+    const safe={
+      situations:Array.isArray(pack.situations)?pack.situations.map(x=>({...x})):[],
+      products:Array.isArray(pack.products)?pack.products.map(x=>({...x})):[],
+      reto:String(pack.reto||''),focus:String(pack.focus||'')
+    };
+    const simpleRights=raw.length<=160
+      &&safe.focus==='los derechos de la niñez'
+      &&/reconocer nuestros derechos y responsabilidades/i.test(safe.reto);
+    if(typeof window.ddApplyExpertReasoningToProposal==='function'){
+      try{
+        const expertPack=window.ddApplyExpertReasoningToProposal(raw,pack);
+        if(expertPack&&typeof expertPack==='object')pack={...pack,...expertPack};
+      }catch(error){
+        console.warn('DocenteDigital: razonamiento experto no disponible; se conserva la propuesta base.',error);
+        window.__ddExpertReasoningFallback=true;
+      }
+    }
+    // En peticiones breves sobre derechos, la propuesta segura ya está
+    // contextualizada con relatos ficticios y actividades verificables.
+    // No permitir que un paso posterior la sustituya por instrucciones
+    // como «en el entorno cercano» o «el docente podrá completar».
+    if(simpleRights&&safe.situations.length>=2&&safe.products.length>=3){
+      pack={...pack,situations:safe.situations,products:safe.products,reto:safe.reto,focus:safe.focus};
+    }else if(!Array.isArray(pack.products)||pack.products.length===0){
+      pack.products=safe.products;
+    }
+    return pack;
+  }
   function ensureHost(){let host=byId('ddProposalChooser');if(!host){host=document.createElement('div');host.id='ddProposalChooser';host.className='dd-proposal-chooser hidden topgap';byId('unitPanel')?.appendChild(host);}return host;}
   const situationCard=x=>`<label class="dd-choice-card"><input type="radio" name="ddSituation" value="${x.key}"><span class="pill">${E(x.key)}</span><h3>${E(x.title)}</h3><p>${E(x.text)}</p><b class="dd-pick">○ Elegir esta propuesta</b></label>`,productCard=x=>`<label class="dd-choice-card"><input type="radio" name="ddProduct" value="${x.key}"><span class="pill">Producto ${E(x.key)}</span><h3>${E(x.title)}</h3><p>${E(x.text)}</p><b class="dd-pick">○ Elegir este producto</b></label>`;
   function wireSelection(name){document.querySelectorAll(`input[name="${name}"]`).forEach(r=>r.addEventListener('change',()=>document.querySelectorAll(`input[name="${name}"]`).forEach(x=>x.closest('.dd-choice-card')?.classList.toggle('selected',x.checked))));}
