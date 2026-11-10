@@ -76,7 +76,7 @@ try{
   return window.DD_PLANNING_CHAIN_V10.auditUnit(state.units.find(u=>u.id===id));
  },unit.id);
  for(const id of ['situation-scaffold','challenge-scaffold','selected-product-mismatch','session-scaffold'])
-  assert(!audit.warnings.some(x=>x.id===id),'Error de coherencia: '+id);
+  assert(!audit.warnings.some(x=>x.id===id),'Error de coherencia: '+id+'; valores del producto='+JSON.stringify({product:unit.product,productTitle:unit.productTitle,selectionApproved:unit.selectionApproved,selectedProductKey:unit.selectedProductKey}));
  const html=await page.evaluate(id=>{
   const state=JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'{}');
   return window.unitWordHtml(state.units.find(u=>u.id===id));
