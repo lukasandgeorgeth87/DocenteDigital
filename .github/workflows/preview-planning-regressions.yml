@@ -61,6 +61,7 @@ jobs:
           node tests/unit-export-product-consistency-v24.mjs
           node tests/instrument-descriptors-v27.mjs
           node tests/instrument-ui-word-parity-v28.mjs
+          node tests/unit-persistence-draft-preservation-v29.mjs
           node tests/regression-contract-v20.mjs
           node tests/planning-chain-integrity.mjs
           node tests/unit-semantic-guardrails-v26.mjs

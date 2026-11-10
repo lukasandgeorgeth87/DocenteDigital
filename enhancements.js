@@ -188,7 +188,23 @@
     unit.reto=unit.reto||ddReto(ddContext(unit));
     unit.product=unit.product||ddProduct(ddContext(unit),unit.type);
     unit.activities=unit.activities&&unit.activities.length?unit.activities:buildActivities(ddContext(unit),unit.duration);
-    unit.purposes=ddBuildPurposes(unit);
+    // El renderizado no debe borrar correcciones guardadas por el docente.
+    // Reconstruir únicamente lo que falta; conservar criterios, evidencias,
+    // instrumentos y competencias ya existentes por área y grado.
+    const generatedPurposes=ddBuildPurposes(unit);
+    const savedPurposes=Array.isArray(unit.purposes)?unit.purposes:[];
+    unit.purposes=generatedPurposes.map(fresh=>{
+      const prior=savedPurposes.find(x=>x?.area===fresh.area);
+      if(!prior)return fresh;
+      const savedCriteria=Array.isArray(prior.criteria)?prior.criteria:[];
+      return {...fresh,...prior,area:fresh.area,
+        officialCompetencies:Array.isArray(prior.officialCompetencies)&&prior.officialCompetencies.length
+          ?prior.officialCompetencies:fresh.officialCompetencies,
+        criteria:(unit.grades||[]).map(grade=>
+          savedCriteria.find(c=>String(c.grade)===String(grade))
+          ||fresh.criteria.find(c=>String(c.grade)===String(grade))
+        ).filter(Boolean)};
+    });
     unit.curriculumCoreVersion=window.DD_OFFICIAL_CURRICULUM?.version||'missing';
     unit.curriculumSourceId=ddOfficialSource(unit.level)?.id||'missing';
     unit.enfoques=unit.enfoques||[
@@ -198,13 +214,18 @@
       {name:'Ambiental',value:'Respeto a toda forma de vida',action:'Relacionan el aprendizaje con acciones concretas de cuidado de la tierra, el agua, los seres vivos y los espacios comunes.'}
     ];
     const officialTransversals=window.DD_OFFICIAL_CURRICULUM?.getTransversals?.(unit.level)||[];
-    unit.transversals=officialTransversals.map(x=>({
-      name:x.name,
-      capacities:[...x.capacities],
-      application:x.name.includes('entornos virtuales')
+    const savedTransversals=Array.isArray(unit.transversals)?unit.transversals:[];
+    unit.transversals=officialTransversals.map(x=>{
+      const prior=savedTransversals.find(t=>t?.name===x.name);
+      const defaultApplication=x.name.includes('entornos virtuales')
         ? 'Se integra cuando aporta al propósito y existen recursos disponibles; no se fuerza su uso.'
-        : 'Se integra mediante metas, organización de acciones, monitoreo y ajustes durante el aprendizaje.'
-    }));
+        : 'Se integra mediante metas, organización de acciones, monitoreo y ajustes durante el aprendizaje.';
+      return {
+        name:x.name,
+        capacities:[...x.capacities],
+        application:typeof prior?.application==='string'?prior.application:defaultApplication
+      };
+    });
     return unit;
   }
 
