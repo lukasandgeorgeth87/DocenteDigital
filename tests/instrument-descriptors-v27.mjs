@@ -3,7 +3,13 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 const src=readFileSync(new URL('../unit-export-quality-v11.js',import.meta.url),'utf8');
-const env={window:{unitWordHtml:()=>'<p>anterior</p>'}};
+const env={window:{
+ unitWordHtml:()=>'<p>anterior</p>',
+ DD_OFFICIAL_CURRICULUM:{
+   pickCompetence(_level,area){return area==='Comunicación'?{name:'Se comunica oralmente en su lengua materna'}:null},
+   getArea(){return []}
+ }
+}};
 runInNewContext(src,env);
 const q=env.window.DD_UNIT_EXPORT_QUALITY_V11;
 const samples=[
