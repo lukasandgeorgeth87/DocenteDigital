@@ -243,8 +243,110 @@
     });
     return rows.length?table(['Área y competencia','Actividad / criterio por grado','Evidencia','Instrumento'],rows,[23,42,21,14]):'<p>No existen actividades programadas.</p>';
   }
+  // Descriptores orientadores de rúbrica, redactados según la actuación
+  // curricular. No son desempeños MINEDU literales ni calificaciones asignadas.
+  function instrumentLevels(s){
+    const area=clean(s?.area),competence=lower(s?.competence),task=lower(s?.activity);
+    if(area==='Comunicación'){
+      if(/se comunica oralmente/.test(competence))return {
+        C:'Comunica ideas aisladas y requiere preguntas de apoyo para expresar razones y escuchar a sus compañeros.',
+        B:'Presenta una idea y alguna razón, pero necesita ayuda para organizar su intervención o responder preguntas.',
+        A:'Organiza su intervención, sustenta sus ideas con razones pertinentes y responde preguntas respetuosamente.',
+        AD:'Contrasta argumentos con información pertinente y adapta sus explicaciones a preguntas nuevas con autonomía.'
+      };
+      if(/lee diversos tipos/.test(competence))return {
+        C:'Identifica información explícita con apoyo; todavía no explica una inferencia sustentada en el texto.',
+        B:'Reconoce información e infiere una idea con guía, pero necesita señalar detalles que la respalden.',
+        A:'Contrasta información del texto, formula inferencias y las sustenta con detalles de la lectura.',
+        AD:'Compara fuentes o perspectivas y justifica interpretaciones con evidencias textuales pertinentes.'
+      };
+      if(/escribe diversos tipos/.test(competence))return {
+        C:'Redacta ideas sueltas y necesita ayuda para organizar el mensaje y reconocer al destinatario.',
+        B:'Elabora un borrador comprensible y revisa algunos aspectos de coherencia con acompañamiento.',
+        A:'Redacta y revisa un texto coherente, adecuado a su destinatario, y fundamenta sus mensajes.',
+        AD:'Revisa con autonomía la eficacia del mensaje, justifica cambios e incorpora fuentes pertinentes.'
+      };
+    }
+    if(area==='Matemática'&&/gesti[oó]n de datos/.test(competence)){
+      if(/planteamos preguntas|formulamos preguntas/.test(task))return {
+        C:'Propone preguntas vagas y necesita ayuda para precisar qué datos permitirían responderlas.',
+        B:'Formula una pregunta que podría responderse con datos y reconoce alguna variable con orientación.',
+        A:'Formula preguntas estadísticas, identifica variables pertinentes y justifica los datos necesarios.',
+        AD:'Compara preguntas estadísticas alternativas y justifica la pertinencia de variables y formas de recojo.'
+      };
+      return {
+        C:'Registra o representa datos con apoyo y aún no puede explicar qué muestran.',
+        B:'Organiza datos y reconoce algunas diferencias, pero necesita ayuda para interpretar resultados.',
+        A:'Organiza y representa los datos pertinentes, interpreta diferencias y sustenta conclusiones.',
+        AD:'Compara representaciones y reconoce límites de los datos al argumentar conclusiones.'
+      };
+    }
+    if(area==='Personal Social'){
+      if(/convive y participa/.test(competence))return {
+        C:'Expresa una opinión sobre la convivencia sin relacionarla claramente con derechos o acuerdos.',
+        B:'Reconoce derechos o responsabilidades y ofrece algunas razones con acompañamiento.',
+        A:'Delibera con argumentos, escucha puntos de vista diferentes y propone acciones para el bien común.',
+        AD:'Contrasta perspectivas y justifica acuerdos viables que protegen derechos y favorecen el bien común.'
+      };
+      if(/interpretaciones hist[oó]ricas/.test(competence))return {
+        C:'Menciona hechos del pasado sin identificar la procedencia de la información.',
+        B:'Reconoce una fuente y señala cambios o permanencias con apoyo.',
+        A:'Contrasta fuentes e interpreta cambios y permanencias, diferenciando hechos y opiniones.',
+        AD:'Evalúa interpretaciones alternativas y justifica conclusiones mediante fuentes contrastadas.'
+      };
+    }
+    if(area==='Ciencia y Tecnología'){
+      if(/indaga mediante/.test(competence))return {
+        C:'Plantea una pregunta general y requiere orientación para reconocer qué puede investigarse.',
+        B:'Formula una pregunta investigable e identifica algunos factores o registros con ayuda.',
+        A:'Formula una pregunta investigable, reconoce variables pertinentes y explica cómo obtener evidencias.',
+        AD:'Justifica variables, controles y límites de su indagación, y plantea mejoras fundamentadas.'
+      };
+      if(/explica el mundo f[ií]sico/.test(competence))return {
+        C:'Describe un fenómeno con ideas iniciales, pero sin vincularlas con evidencias o conocimientos científicos.',
+        B:'Relaciona algunas observaciones con una explicación, aunque requiere apoyo para fundamentarla.',
+        A:'Explica el fenómeno mediante conocimientos científicos y evidencias pertinentes.',
+        AD:'Contrasta explicaciones y sustenta relaciones causales reconociendo límites de la evidencia.'
+      };
+    }
+    if(area==='Arte y Cultura'){
+      if(/aprecia de manera cr[ií]tica/.test(competence))return {
+        C:'Describe una manifestación artística sin identificar sus elementos expresivos.',
+        B:'Reconoce elementos observables y expresa una interpretación inicial con orientación.',
+        A:'Interpreta una manifestación artístico-cultural y fundamenta su apreciación con elementos y contexto.',
+        AD:'Contrasta interpretaciones y argumenta el sentido de la manifestación desde distintas perspectivas.'
+      };
+      if(/crea proyectos/.test(competence))return {
+        C:'Explora recursos artísticos, pero necesita ayuda para comunicar una intención.',
+        B:'Elabora una producción vinculada a una idea y explica algunas decisiones con apoyo.',
+        A:'Combina recursos artísticos para comunicar su mensaje y revisa su creación con criterios.',
+        AD:'Experimenta alternativas expresivas, justifica elecciones y mejora su obra para un destinatario.'
+      };
+    }
+    if(area==='Educación Física')return {
+      C:'Realiza movimientos del reto con apoyo y necesita recordar normas de seguridad.',
+      B:'Coordina algunos movimientos y ajusta su actuación con indicaciones del grupo o docente.',
+      A:'Adapta sus movimientos al reto, actúa con coordinación y cuida su integridad y la de los demás.',
+      AD:'Ajusta autónomamente estrategias motrices y explica decisiones que favorecen una práctica segura.'
+    };
+    if(area==='Educación Religiosa')return {
+      C:'Reconoce una enseñanza vinculada al respeto, pero aún no explica su relación con la dignidad humana.',
+      B:'Relaciona una enseñanza de su fe con un ejemplo de respeto y necesita apoyo para justificarlo.',
+      A:'Argumenta una reflexión desde su fe sobre la dignidad humana y propone compromisos de respeto.',
+      AD:'Contrasta situaciones de convivencia y fundamenta compromisos solidarios desde su reflexión.'
+    };
+    return {
+      C:'Requiere ayuda para mostrar una actuación observable vinculada al criterio previsto.',
+      B:'Muestra parte del criterio y señala con acompañamiento qué necesita mejorar.',
+      A:'Muestra la actuación prevista en el criterio y la sustenta mediante la evidencia solicitada.',
+      AD:'Justifica la actuación con evidencias adicionales y explica cómo aplicarla a otra situación.'
+    };
+  }
   function instrumentDrafts(unit){
-    const rows=assessmentSamples(unit).map(s=>`<tr><td><b>${esc(s.area)}</b><br>${esc(s.competence)}</td><td>${esc(s.criterion)}<br><small>Evidencia: ${esc(s.evidence)}</small></td><td><b>C – Inicio:</b> requiere ayuda para mostrar los elementos del criterio.<br><b>B – Proceso:</b> muestra algunos elementos con apoyo.<br><b>A – Logro esperado:</b> ${esc(s.criterion)}<br><b>AD – Destacado:</b> sustenta y transfiere lo logrado a otro caso con evidencias.</td></tr>`);
+    const rows=assessmentSamples(unit).map(s=>{
+      const levels=instrumentLevels(s);
+      return `<tr><td><b>${esc(s.area)}</b><br>${esc(s.competence)}</td><td>${esc(s.criterion)}<br><small>Evidencia: ${esc(s.evidence)}</small></td><td><b>C – Inicio:</b> ${esc(levels.C)}<br><b>B – Proceso:</b> ${esc(levels.B)}<br><b>A – Logro esperado:</b> ${esc(levels.A)}<br><b>AD – Destacado:</b> ${esc(levels.AD)}</td></tr>`;
+    });
     return rows.length?table(['Área / competencia','Criterio y evidencia','Borrador de niveles C, B, A y AD'],rows,[24,38,38]):'<p>Faltan actividades para construir instrumentos.</p>';
   }
   function registerTemplate(unit){
@@ -334,5 +436,5 @@
     }
     return result;
   };
-  window.DD_UNIT_EXPORT_QUALITY_V11={situation,gradeAction,scheduleTable,word,qualityFlags,preview,competences,teacherTitle,cleanProduct,teacherChallenge,challenge,evidence};
+  window.DD_UNIT_EXPORT_QUALITY_V11={situation,gradeAction,scheduleTable,word,qualityFlags,preview,competences,teacherTitle,cleanProduct,teacherChallenge,challenge,evidence,instrumentLevels};
 })();
