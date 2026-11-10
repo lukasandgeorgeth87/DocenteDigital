@@ -376,7 +376,14 @@ function ddAssistPlanningContext(apply=true){
   }else if(level==='Secundaria'){
     brief=`En ${where}, se propone abordar ${topic} mediante una situación retadora y cercana a la vida de los estudiantes de ${grades||'los grados configurados'}. A partir de información, casos, datos, fuentes o experiencias pertinentes, los estudiantes analizarán el tema, formularán preguntas, contrastarán evidencias y construirán una respuesta, explicación o propuesta. El docente podrá precisar actores, datos o una problemática real cuando cuente con esa información.`;
   }else{
-    brief=`En ${where}, se propone desarrollar ${topic} a partir de una situación cercana a la vida cotidiana de los estudiantes de ${grades||'los grados configurados'}. Mediante observación, preguntas, diálogo, lectura, resolución de problemas, indagación y producción según las áreas seleccionadas, los estudiantes construirán aprendizajes y los aplicarán en una tarea con sentido. El docente podrá completar luego intereses observados, prácticas locales o una necesidad específica para enriquecer la contextualización.`;
+    // Si el contexto no fue proporcionado, usar un caso didáctico ficticio,
+    // no afirmar un problema local ni incluir instrucciones administrativas.
+    const rights=/\b(?:derechos?|ni[nñ]ez)\b/i.test(title);
+    if(rights){
+      brief=`En una actividad de aula, los estudiantes de ${grades||'Primaria'} analizan historietas ficticias e ilustraciones sobre los derechos de las niñas y los niños: aprender, participar, jugar y recibir buen trato. Estas historias permiten formular preguntas sobre cómo reconocer sus derechos y respetar los de otras personas. Los estudiantes consultarán fuentes apropiadas, dialogarán, contrastarán ejemplos y organizarán explicaciones y compromisos para compartirlos con la comunidad educativa.`;
+    }else{
+      brief=`En una actividad de aula, los estudiantes de ${grades||'Primaria'} examinan relatos ficticios, imágenes o datos de ejemplo relacionados con el tema «${topic}». A partir de esos materiales plantearán preguntas, confrontarán sus primeras ideas con fuentes pertinentes y organizarán hallazgos para explicarlos con claridad. El grupo decidirá cómo comunicar lo aprendido mediante una producción vinculada con el tema.`;
+    }
   }
 
   if(apply&&ta){
