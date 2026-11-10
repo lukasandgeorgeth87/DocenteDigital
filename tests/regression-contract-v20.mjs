@@ -47,6 +47,6 @@ assert(existsSync(new URL('tests/short-rights-browser-v22.mjs',root)),'Prueba de
 assert(!/\bvercel\s+(?:promote|rollback|--prod)\b/.test(workflow));
 for(const [label,path] of cases){
  assert(existsSync(new URL(path,root)),'Prueba histórica eliminada: '+label+' ('+path+')');
- assert(workflow.includes('node '+path),'Prueba histórica omitida en CI: '+label+' ('+path+')');
+ assert(workflow.includes('node '+path)||browserWorkflow.includes('node '+path),'Prueba histórica omitida en CI: '+label+' ('+path+')');
 }
 console.log('REGRESSION_CONTRACT_V20_PASS: '+cases.length+' pruebas históricas retenidas');
