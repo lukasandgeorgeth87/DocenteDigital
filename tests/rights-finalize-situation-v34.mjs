@@ -42,13 +42,15 @@ const standard={
  selectedProductKey:'2',productChoiceSource:'card',
  reto:'¿Qué evidencias necesitamos reunir sobre En el entorno cercano de los estudiantes?'
 };
-const result=run(standard);
+const result=run({...standard,situations:standard.situations.map(s=>({...s}))});
 assert.equal(result.unit.situation,good.situations[1].text,'Conservar la elección B pedagógicamente válida');
 assert.equal(result.unit.reto,good.reto);
 assert.equal(result.unit.selectedSituationSource,'B');
 assert.equal(result.unit.product,'Expo interactiva');
-const manual=run({...standard,selectedSituation:'Mi situación original escrita por el docente sobre los derechos'});
+const manual=run({...standard,situations:standard.situations.map(s=>({...s})),selectedSituationKey:'Docente',selectedSituation:'Mi situación original escrita por el docente sobre los derechos'});
 assert.equal(manual.unit.situation,'Mi situación original escrita por el docente sobre los derechos','Nunca sustituir autoría manual');
-const rich=run({...standard,brief:'En mi comunidad observamos un caso de discriminación y los estudiantes van a analizar documentos y normas sobre los derechos.'});
+const rich=run({...standard,situations:standard.situations.map(s=>({...s})),brief:'En mi comunidad observamos un caso de discriminación y los estudiantes van a analizar documentos y normas sobre los derechos.'});
 assert.match(rich.unit.situation,/El docente podrá completar/i,'No convertir un contexto específico en otro por fuerza');
+const changed=run({...standard,situations:[{key:'A',text:'Una situación distinta ya fue cargada'},{key:'B',text:'Otro texto cargado'}],selectedSituationKey:'B'});
+assert.equal(changed.unit.situation,good.situations[1].text,'El identificador B debe proteger la situación ante cambios posteriores en las tarjetas');
 console.log('PASS v34: guardado final respeta opción de derechos y autoría manual');
