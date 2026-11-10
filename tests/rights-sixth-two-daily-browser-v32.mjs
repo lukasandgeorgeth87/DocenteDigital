@@ -52,23 +52,6 @@ try{
  await page.locator('input[name="ddSituation"]').nth(1).check();
  await page.locator('#ddContinueProducts').click();
  await page.waitForSelector('input[name="ddProduct"]',{timeout:15000});
- await page.evaluate(()=>{
-   window.__ddProductTrace=[];
-   const original=window.save;
-   if(typeof original==='function')window.save=function(...args){
-     try{
-       const u=typeof state==='object'?state.units?.[0]:null;
-       if(u){
-         window.__ddProductTrace.push({
-           product:u.product,productTitle:u.productTitle,
-           at:new Error().stack?.split('\n').slice(1,4).join(' | ')
-         });
-         if(window.__ddProductTrace.length>100)window.__ddProductTrace.shift();
-       }
-     }catch(_){}
-     return original.apply(this,args);
-   };
- });
  await page.locator('input[name="ddProduct"]').nth(1).check();
  await page.locator('#ddBuildUnit').click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'{}').units?.length>0,null,{timeout:15000});
@@ -93,8 +76,7 @@ try{
   const latest=state.units.find(u=>u.id===id);
   return {audit:window.DD_PLANNING_CHAIN_V10.auditUnit(latest),
     product:latest.product,productTitle:latest.productTitle,
-    selectionApproved:latest.selectionApproved,selectedProductKey:latest.selectedProductKey,
-    productTrace:(window.__ddProductTrace||[]).slice(-18)};
+    selectionApproved:latest.selectionApproved,selectedProductKey:latest.selectedProductKey};
  },unit.id);
  const audit=auditSnapshot.audit;
  for(const id of ['situation-scaffold','challenge-scaffold','selected-product-mismatch','session-scaffold'])

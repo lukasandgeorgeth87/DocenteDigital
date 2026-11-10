@@ -119,7 +119,11 @@ jobs:
       - name: Verify actual 6th-grade rights unit, 2 sessions per day, product and Word
         env:
           BASE_URL: http://127.0.0.1:4173
-        run: node tests/rights-sixth-two-daily-browser-v32.mjs
+        run: |
+          set -e
+          node tests/rights-sixth-two-daily-browser-v32.mjs
+          node tests/rights-sixth-two-daily-browser-v32.mjs
+          node tests/rights-sixth-two-daily-browser-v32.mjs
 
       - name: Upload sixth-grade rights failure screenshot
         if: failure()
