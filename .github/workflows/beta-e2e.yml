@@ -116,6 +116,19 @@ jobs:
           BASE_URL: http://127.0.0.1:4173
         run: node tests/short-rights-browser-v22.mjs
 
+      - name: Verify actual 6th-grade rights unit, 2 sessions per day, product and Word
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/rights-sixth-two-daily-browser-v32.mjs
+
+      - name: Upload sixth-grade rights failure screenshot
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rights-sixth-two-daily-failure
+          path: /tmp/dd-rights-sixth/*.png
+          if-no-files-found: ignore
+
       - name: Upload rights regression failure screenshot
         if: failure()
         uses: actions/upload-artifact@v4

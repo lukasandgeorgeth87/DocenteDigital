@@ -36,7 +36,8 @@ const cases=[
  ['Paridad rúbricas Chrome Word','tests/instrument-ui-word-parity-v28.mjs'],
  ['Ediciones de unidad sobreviven a renderizados','tests/unit-persistence-draft-preservation-v29.mjs'],
  ['Día real y criterio por sesión en la ruta','tests/unit-sequence-day-criteria-v30.mjs'],
- ['Derechos y Ciencia: fenómeno investigable real','tests/science-rights-inquiry-v31.mjs']
+ ['Derechos y Ciencia: fenómeno investigable real','tests/science-rights-inquiry-v31.mjs'],
+ ['Flujo real de 6.º sobre derechos con 2 sesiones diarias','tests/rights-sixth-two-daily-browser-v32.mjs']
 ];
 assert.match(workflow,/branches:\s*\n\s+- preview\/docentedigital-fase10-20261030/);
 assert(browserWorkflow.includes('node tests/sixth-grade-browser-regression-v21.mjs'),'Prueba de navegador de sexto omitida en CI');
