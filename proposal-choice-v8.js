@@ -392,6 +392,8 @@
     return available.filter(area=>clause.includes(norm(area)));
   }
   function finalizeChoice(host){
+    // Mantener este normalizador local: el flujo también se prueba de forma aislada.
+    const tidy=s=>String(s??'').replace(/\s+/g,' ').trim();
     const pending=state.pendingUnitChoice;if(!pending)return;
     const before=new Set((state.units||[]).map(u=>u.id));
     const originalAreas=state.areas;
