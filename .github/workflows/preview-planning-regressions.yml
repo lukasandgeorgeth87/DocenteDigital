@@ -59,6 +59,7 @@ jobs:
           node tests/assisted-context-grounding-v25.mjs
           node tests/product-selection-priority-v23.mjs
           node tests/product-canonical-contract-v36.mjs
+          node tests/approved-selection-storage-v37.mjs
           node tests/unit-export-product-consistency-v24.mjs
           node tests/instrument-descriptors-v27.mjs
           node tests/instrument-ui-word-parity-v28.mjs

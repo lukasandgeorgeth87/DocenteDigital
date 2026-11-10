@@ -20,8 +20,30 @@ state.units=Array.isArray(state.units)?state.units:[];
 state.activeUnitId=state.activeUnitId||null;
 state.lastSession=state.lastSession||null;
 
+// Invariante de persistencia: preservar lo que el docente eligió al
+// construir una unidad. Las versiones anteriores sin snapshot no cambian.
+function ddProtectApprovedSelections(){
+  const units=Array.isArray(state.units)?state.units:[];
+  const scaffold=/en el entorno cercano de los estudiantes|se propone desarrollar|el docente podr[aá] completar|interpretaci[oó]n preliminar/i;
+  for(const unit of units){
+    if(!unit||unit.selectionApproved!==true)continue;
+    const approved=unit.approvedSelectionSnapshot;
+    if(!approved||typeof approved!=='object')continue;
+    const title=String(approved.productTitle||'').trim();
+    if(title&&unit.productTitle!==title)unit.productTitle=title;
+    if(title&&unit.product!==title){
+      const obsolete=String(unit.product||'').trim();
+      if(obsolete&&!unit.productDescription)unit.productDescription=obsolete;
+      unit.product=title;
+    }
+    const situation=String(approved.situationText||'').trim();
+    if(situation&&scaffold.test(String(unit.situation||''))&&!scaffold.test(situation))
+      unit.situation=situation;
+  }
+}
 const save=()=>{
   try{
+    ddProtectApprovedSelections();
     localStorage.setItem('docenteDigitalPrototype',JSON.stringify(state));
     window.__ddMemoryOnly=false;
     return true;
