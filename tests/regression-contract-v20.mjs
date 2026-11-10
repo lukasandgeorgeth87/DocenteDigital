@@ -27,7 +27,8 @@ const cases=[
  ['Personal Social oficial','tests/primary-personal-social-curriculum.mjs'],
  ['Inventario permanente','tests/regression-contract-v20.mjs'],
  ['Solicitud real sexto y exportación','tests/teacher-explicit-fields-v21.mjs'],
- ['Petición breve sobre derechos y producto elegido','tests/short-rights-unit-v22.mjs']
+ ['Petición breve sobre derechos y producto elegido','tests/short-rights-unit-v22.mjs'],
+ ['Prioridad de selección de producto','tests/product-selection-priority-v23.mjs']
 ];
 assert.match(workflow,/branches:\s*\n\s+- preview\/docentedigital-fase10-20261030/);
 assert(browserWorkflow.includes('node tests/sixth-grade-browser-regression-v21.mjs'),'Prueba de navegador de sexto omitida en CI');

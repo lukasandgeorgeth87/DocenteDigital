@@ -353,13 +353,28 @@
     panel.querySelectorAll('.dd-product-assistant-option').forEach(btn=>btn.onclick=()=>{
       const item=ideas[Number(btn.dataset.index)];
       const ta=byId('ddOwnProduct');
-      if(ta){ta.value=item.text;ta.dataset.title=item.title;ta.focus();}
+      if(ta){ta.value=item.text;ta.dataset.title=item.title;if(state.pendingUnitChoice)state.pendingUnitChoice.productChoiceSource='own';ta.focus();}
       close();
     });
     requestAnimationFrame(()=>panel.classList.add('open'));
   }
 
-  function showProducts(d,host){host.innerHTML=`<div class="dd-choice-intro"><span class="pill">PASO 3</span><h2>Elige el producto o evidencia integradora</h2><p>El producto debe responder al reto, ser útil o comunicable y permitir mostrar con claridad lo que los estudiantes aprendieron, investigaron, resolvieron o crearon.</p></div><div class="dd-product-grid">${d.products.map(productCard).join('')}</div><label class="dd-own"><b>✍️ O escribe tu propio producto</b><textarea id="ddOwnProduct" placeholder="Escribe un producto concreto, observable y conectado con el reto..."></textarea></label><div class="actions"><button class="btn alt" type="button" id="ddHelpProduct">✨ Ayúdame a crear un producto</button></div><div class="actions"><button class="btn" id="ddBuildUnit">✓ Construir la unidad/proyecto</button><button class="btn ghost" id="ddBackSituation">← Volver a situaciones</button></div>`;wireSelection('ddProduct');// Si el docente ya nombró un producto final, ofrecerlo precargado sin sustituirlo.
+
+  // La última decisión explícita del docente gana sobre un producto precargado.
+  // Esta función es pura para poder comprobarla con pruebas de regresión.
+  function resolveProductChoice(own,chosen,source,products,customTitle){
+    const userText=tidy(plain(own));
+    const card=(Array.isArray(products)?products:[]).find(x=>String(x.key)===String(chosen));
+    if(card&&source!=='own')return {title:tidy(card.title),description:tidy(card.text),key:String(card.key),kind:'card'};
+    if(userText){
+      const label=tidy(customTitle),generic=/^(?:Producto final indicado por el docente|Producto propuesto por el docente|Producto final)$/i.test(label);
+      const title=label&&!generic?label:userText;
+      return {title,description:title===userText?'':userText,key:'',kind:'own'};
+    }
+    if(card)return {title:tidy(card.title),description:tidy(card.text),key:String(card.key),kind:'card'};
+    return null;
+  }
+  function showProducts(d,host){host.innerHTML=`<div class="dd-choice-intro"><span class="pill">PASO 3</span><h2>Elige el producto o evidencia integradora</h2><p>El producto debe responder al reto, ser útil o comunicable y permitir mostrar con claridad lo que los estudiantes aprendieron, investigaron, resolvieron o crearon.</p></div><div class="dd-product-grid">${d.products.map(productCard).join('')}</div><label class="dd-own"><b>✍️ O escribe tu propio producto</b><textarea id="ddOwnProduct" placeholder="Escribe un producto concreto, observable y conectado con el reto..."></textarea></label><div class="actions"><button class="btn alt" type="button" id="ddHelpProduct">✨ Ayúdame a crear un producto</button></div><div class="actions"><button class="btn" id="ddBuildUnit">✓ Construir la unidad/proyecto</button><button class="btn ghost" id="ddBackSituation">← Volver a situaciones</button></div>`;wireSelection('ddProduct');document.querySelectorAll('input[name="ddProduct"]').forEach(r=>r.addEventListener('change',()=>{if(state.pendingUnitChoice)state.pendingUnitChoice.productChoiceSource='card';}));byId('ddOwnProduct')?.addEventListener('input',()=>{if(state.pendingUnitChoice)state.pendingUnitChoice.productChoiceSource='own';});// Si el docente ya nombró un producto final, ofrecerlo precargado sin sustituirlo.
     const originalRequest=plain(state.pendingUnitChoice?.brief||'');
     const named=namedProductFinal(originalRequest)||
       (originalRequest.match(/(?:producto final\s*(?:ser[aá]|es|consistir[aá] en)|como producto final\s*(?:elaboraremos|presentaremos))\s*([^.!?\n]{8,500})/i)||[])[1]||'';
@@ -367,7 +382,7 @@
       byId('ddOwnProduct').value=named.trim().replace(/[,;:]\s*$/,'');
       byId('ddOwnProduct').dataset.title='Producto final indicado por el docente';
     }
-    byId('ddHelpProduct').onclick=()=>openProductAssistant(d);byId('ddBackSituation').onclick=()=>showSituations(state.pendingUnitChoice.brief,state.pendingUnitChoice.type);byId('ddBuildUnit').onclick=()=>{const own=tidy(plain(byId('ddOwnProduct')?.value||'')),chosen=document.querySelector('input[name="ddProduct"]:checked')?.value;if(!own&&!chosen)return alert('Elige uno de los productos o escribe el tuyo.');const currentProducts=state.pendingUnitChoice?.products||d.products;const item=currentProducts.find(x=>String(x.key)===String(chosen));state.pendingUnitChoice.selectedProduct=own||item?.text;state.pendingUnitChoice.selectedProductTitle=own?(byId('ddOwnProduct')?.dataset.title||'Producto propuesto por el docente'):(item?.title||'Producto final');if(typeof save==='function')save();finalizeChoice(host);};host.scrollIntoView({behavior:'smooth',block:'start'});}
+    byId('ddHelpProduct').onclick=()=>openProductAssistant(d);byId('ddBackSituation').onclick=()=>showSituations(state.pendingUnitChoice.brief,state.pendingUnitChoice.type);byId('ddBuildUnit').onclick=()=>{const own=tidy(plain(byId('ddOwnProduct')?.value||'')),chosen=document.querySelector('input[name="ddProduct"]:checked')?.value;const currentProducts=state.pendingUnitChoice?.products||d.products;const picked=resolveProductChoice(own,chosen,state.pendingUnitChoice?.productChoiceSource,currentProducts,byId('ddOwnProduct')?.dataset.title||'');if(!picked)return alert('Elige uno de los productos o escribe el tuyo.');state.pendingUnitChoice.selectedProduct=picked.description||picked.title;state.pendingUnitChoice.selectedProductTitle=picked.title;state.pendingUnitChoice.selectedProductKey=picked.key;if(typeof save==='function')save();finalizeChoice(host);};host.scrollIntoView({behavior:'smooth',block:'start'});}
   function explicitlyRequestedAreas(brief){
     const raw=String(brief||'').replace(/\*\*/g,'').replace(/__+/g,'').replace(/\s+/g,' ');
     const m=raw.match(/(?:^|[\s(])(?:incluye|trabajaremos|[aá]reas\s*(?:curriculares)?\s*[:=-]\s*)\s*([^.!?;\n]{5,240})/i);
@@ -399,7 +414,7 @@
       const safeTopic=/\b(?:quiero\s+crear|crear\s+una?\s+unidad|\d+\s+semanas)\b/i.test(topic)?'el tema propuesto':topic;
       unit.reto='¿Qué necesitamos comprender sobre '+safeTopic+' y cómo podemos comunicar con evidencias lo que aprendimos?';
     }
-    const explicitTitle=typeof namedUnitTitle==='function'?namedUnitTitle(pending.brief):'';if(explicitTitle)unit.title=explicitTitle;unit.contextFocus=pending.contextFocus||unit.contextFocus;unit.planningMeaning=pending.meaning||unit.planningMeaning;unit.expertReasoning=pending.expertReasoning||null;unit.selectedSituationSource=pending.situations.find(x=>x.text===pending.selectedSituation)?.key||'Docente';unit.teacherProfile=pending.profileSnapshot||profileSnapshot();unit.situationOptions=pending.situations;const declaredProduct=(typeof namedProductFinal==='function'?namedProductFinal(pending.brief):'');const selectedCard=(pending.products||[]).find(x=>x.title===pending.selectedProductTitle);unit.product=declaredProduct||(selectedCard?pending.selectedProductTitle:pending.selectedProduct);unit.productDescription=selectedCard?pending.selectedProduct:'';unit.productTitle=pending.selectedProductTitle;unit.productOptions=pending.products;unit.selectionApproved=true;if(typeof save==='function')save();renderUnits();renderUnitOutput(unit);fillSessionUnits();host.classList.add('hidden');byId('unitOutput')?.scrollIntoView({behavior:'smooth'});}
+    const explicitTitle=typeof namedUnitTitle==='function'?namedUnitTitle(pending.brief):'';if(explicitTitle)unit.title=explicitTitle;unit.contextFocus=pending.contextFocus||unit.contextFocus;unit.planningMeaning=pending.meaning||unit.planningMeaning;unit.expertReasoning=pending.expertReasoning||null;unit.selectedSituationSource=pending.situations.find(x=>x.text===pending.selectedSituation)?.key||'Docente';unit.teacherProfile=pending.profileSnapshot||profileSnapshot();unit.situationOptions=pending.situations;const declaredProduct=(typeof namedProductFinal==='function'?namedProductFinal(pending.brief):'');const selectedCard=(pending.products||[]).find(x=>String(x.key)===String(pending.selectedProductKey))||(pending.products||[]).find(x=>x.title===pending.selectedProductTitle);unit.product=tidy(pending.selectedProductTitle)||declaredProduct||tidy(pending.selectedProduct)||'Producto por confirmar';unit.productDescription=selectedCard?tidy(selectedCard.text):(tidy(pending.selectedProduct)!==unit.product?tidy(pending.selectedProduct):'');unit.productTitle=unit.product;unit.selectedProductKey=pending.selectedProductKey||'';unit.productOptions=pending.products;unit.selectionApproved=true;if(typeof save==='function')save();renderUnits();renderUnitOutput(unit);fillSessionUnits();host.classList.add('hidden');byId('unitOutput')?.scrollIntoView({behavior:'smooth'});}
   window.createUnitDemo=function(){
     const type=byId('unitType')?.value||'Unidad de aprendizaje';
     const title=byId('unitTitle')?.value.trim()||'';
