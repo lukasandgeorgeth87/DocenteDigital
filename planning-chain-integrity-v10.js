@@ -57,11 +57,30 @@
     if(!unit||typeof unit!=='object')return result;
     const situation=clean(unit.situation||unit.situationBrief);
     const challenge=clean(unit.reto),product=clean(unit.product);
+    // Los componentes presentes pueden contener instrucciones o una
+    // selección contradictoria; señalar sin cambiar el trabajo guardado.
+    const scaffold=/interpretaci[oó]n preliminar|se propone desarrollar|el docente podr[aá] completar|en el entorno cercano de los estudiantes/i;
+    if(scaffold.test(situation))
+      result.push(issues('situation-scaffold',
+        'La situación significativa conserva frases de plantilla en lugar de un contexto pedagógico redactado.','situación significativa'));
+    if(scaffold.test(challenge)||/¿?\s*qu[eé]\s+evidencias?\s+necesitamos?\s+reunir\s+sobre\s+en\s+el/i.test(challenge))
+      result.push(issues('challenge-scaffold',
+        'La pregunta retadora incorpora texto de plantilla y debe expresar claramente el desafío de los estudiantes.','reto'));
+    const confirmed=clean(unit.productTitle);
+    if(unit.selectionApproved&&confirmed&&product
+      && !/^(?:Producto final|Producto propuesto por el docente|Producto final indicado por el docente)$/i.test(confirmed)
+      && norm(confirmed)!==norm(product))
+      result.push(issues('selected-product-mismatch',
+        'El producto guardado no coincide con el producto elegido. Revisar resumen, sesiones y Word.','producto'));
     if(situation&&challenge&&topicalLink(situation,challenge)==='contradiccion')
       result.push(issues('semantic-challenge','El reto parece abordar un tema distinto al de la situación significativa. Revisa su relación antes de aplicar la planificación.','coherencia temática'));
     if(situation&&product&&topicalLink(situation,product)==='contradiccion')
       result.push(issues('semantic-product','El producto final parece corresponder a otro tema y no al problema de la situación significativa. Revisa su pertinencia.','coherencia temática'));
     const acts=Array.isArray(unit.activities)?unit.activities:[];
+    const scaffoldSessions=acts.filter(a=>/sobre el en el entorno|relacionad[oa]s? con el en el entorno|en el entorno cercano de los estudiantes|se propone desarrollar|el docente podr[aá] completar/i.test(clean(a?.title)));
+    if(scaffoldSessions.length)
+      result.push(issues('session-scaffold',
+        'Hay '+scaffoldSessions.length+' títulos de sesiones con frases de plantilla o construcciones defectuosas.','secuencia'));
     if(/\b(?:contribuya|ayude|sirva)\s+a\s+(?:fuentes|datos|registros|evidencias)\b/i.test(challenge)
       ||/para\s+fuentes\s+confiables\s+y\s+recogemos/i.test(challenge))
       result.push(issues('challenge-malformed',
@@ -176,7 +195,17 @@
     :'<p>Sin alertas estructurales detectadas. Esta revisión no certifica pertinencia didáctica ni desempeños MINEDU.</p>';
   function unitPanel(unit){
     const a=auditUnit(unit);
-    const summary=a.checks.map(c=>`<tr><td>${E(c.name)}</td><td>${c.present?'Presente':'Por revisar'}</td></tr>`).join('');
+    const issueByComponent={
+      'Situación significativa':['situation-scaffold'],
+      'Reto':['challenge-scaffold','challenge-malformed','explicit-challenge-differs'],
+      'Producto o evidencia integradora':['selected-product-mismatch','semantic-product'],
+      'Secuencia de actividades':['session-scaffold']
+    };
+    const summary=a.checks.map(c=>{
+      const flagged=(issueByComponent[c.name]||[]).some(id=>a.warnings.some(w=>w.id===id));
+      const status=!c.present?'Por revisar':flagged?'Presente · revisar':'Presente';
+      return `<tr><td>${E(c.name)}</td><td>${status}</td></tr>`;
+    }).join('');
     return `<section class="dd-phase10-audit" aria-label="Revisión de coherencia de unidad o proyecto"><h2>VERIFICACIÓN DE COHERENCIA (FASE 16)</h2><p>Revisión estructural y alerta temática orientativa. No certifica pertinencia pedagógica ni desempeños MINEDU; el docente debe revisar los vínculos entre situación, reto, producto, actividades y evaluación.</p><table><tr><th>Componente</th><th>Estado</th></tr>${summary}</table>${warningList(a.warnings)}</section>`;
   }
   function sessionPanel(session){

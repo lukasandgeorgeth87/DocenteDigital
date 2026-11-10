@@ -30,7 +30,8 @@ const cases=[
  ['Petición breve sobre derechos y producto elegido','tests/short-rights-unit-v22.mjs'],
  ['Prioridad de selección de producto','tests/product-selection-priority-v23.mjs'],
  ['Word respeta producto confirmado','tests/unit-export-product-consistency-v24.mjs'],
- ['Contexto asistido sin instrucciones administrativas','tests/assisted-context-grounding-v25.mjs']
+ ['Contexto asistido sin instrucciones administrativas','tests/assisted-context-grounding-v25.mjs'],
+ ['Alertas semánticas de selección contradictoria','tests/unit-semantic-guardrails-v26.mjs']
 ];
 assert.match(workflow,/branches:\s*\n\s+- preview\/docentedigital-fase10-20261030/);
 assert(browserWorkflow.includes('node tests/sixth-grade-browser-regression-v21.mjs'),'Prueba de navegador de sexto omitida en CI');
