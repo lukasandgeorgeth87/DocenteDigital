@@ -57,6 +57,7 @@ jobs:
           node tests/teacher-explicit-fields-v21.mjs
           node tests/short-rights-unit-v22.mjs
           node tests/product-selection-priority-v23.mjs
+          node tests/unit-export-product-consistency-v24.mjs
           node tests/regression-contract-v20.mjs
           node tests/planning-chain-integrity.mjs
           node tests/planning-semantic-coherence-v16.mjs

@@ -47,7 +47,12 @@
     return m?clean(m[1]).replace(/[.;\s]+$/,''):'';
   }
   function cleanProduct(u){
-    const product=clean(u?.product)||'Por confirmar con el docente';
+    // La última selección confirmada del docente prevalece sobre un
+    // producto genérico heredado. No alterar productos no confirmados.
+    const chosen=clean(u?.productTitle);
+    const validChosen=!!u?.selectionApproved&&!!chosen
+      && !/^(?:Producto final|Producto final indicado por el docente|Producto propuesto por el docente|Por confirmar con el docente)$/i.test(chosen);
+    const product=(validChosen?chosen:clean(u?.product))||'Por confirmar con el docente';
     return product.replace(/(?:\.|\s)\s*Organizaci[oó]n\s+de\s+actividades\s*:?[\s\S]*$/i,'').replace(/[.;\s]+$/,'')||product;
   }
   function teacherChallenge(u){
@@ -262,8 +267,11 @@
       notes.push('Ciencia y Tecnología: verificar que exista una pregunta investigable sobre fenómenos naturales; no indagar los derechos como si fueran un fenómeno científico.');
     if(teacherTitle(unit)&&lower(unit.title)!==lower(teacherTitle(unit)))
       notes.push('El título guardado no coincide con el título indicado por el docente; se recuperó la versión original para Word.');
-    if(cleanProduct(unit)!==clean(unit.product))
-      notes.push('El producto guardado contenía texto de instrucciones administrativas; se excluyó de Word.');
+    if(cleanProduct(unit)!==clean(unit.product)){
+      if(unit.selectionApproved&&clean(unit.productTitle)&&lower(unit.productTitle)!==lower(unit.product))
+        notes.push('El producto almacenado difiere del elegido por el docente; el Word prioriza la selección confirmada y requiere revisar la unidad.');
+      else notes.push('El producto guardado contenía texto de instrucciones administrativas; se excluyó de Word.');
+    }
     if(teacherChallenge(unit)&&unit.reto&&lower(teacherChallenge(unit))!==lower(unit.reto))
       notes.push('El reto almacenado difiere del indicado por el docente: el Word utiliza la pregunta original y requiere revisión en la plataforma.');
     if((unit.areas||[]).some(a=>!acts.some(x=>x.area===a)))notes.push('Hay áreas sin sesiones asignadas. Revisar la programación.');
@@ -294,7 +302,7 @@
     return `<div class="dd-word-v11"><h1>${esc(title)}</h1><h2>“${esc(teacherTitle(unit)||unit.title)}”</h2>
       <h2>I. DATOS GENERALES</h2>${general}
       <h2>II. SITUACIÓN SIGNIFICATIVA, RETO Y PRODUCTO</h2><p>${esc(situation(unit))}</p>
-      <p><b>Pregunta retadora:</b> ${esc(challenge(unit))}</p><p><b>Producto integrador:</b> ${esc(cleanProduct(unit))}</p>${clean(unit.productDescription)&&clean(unit.productDescription)!==cleanProduct(unit)?`<p><b>Descripción del producto:</b> ${esc(unit.productDescription)}</p>`:''}
+      <p><b>Pregunta retadora:</b> ${esc(challenge(unit))}</p><p><b>Producto integrador:</b> ${esc(cleanProduct(unit))}</p>${clean(unit.productDescription)&&clean(unit.productDescription)!==cleanProduct(unit)&&(!unit.selectionApproved||lower(unit.product)===lower(cleanProduct(unit)))?`<p><b>Descripción del producto:</b> ${esc(unit.productDescription)}</p>`:''}
       <h2>III. PROPÓSITOS Y CRITERIOS ORIENTADORES</h2><p>Competencias y criterios sugeridos para revisar con el programa curricular MINEDU. Estos criterios no son desempeños oficiales literales.</p>${purposeTable(unit)}
       <h3>ENFOQUES TRANSVERSALES</h3>${approachesTable(unit)}
       <h3>COMPETENCIAS TRANSVERSALES</h3>${transversalTable(unit)}
