@@ -32,6 +32,6 @@ assert.equal(assisted.description,'Incluye paneles, preguntas y respuestas');
 assert.equal(ctx.pick('',undefined,null,products,''),null);
 assert(src.includes("productChoiceSource='card'"),'Registrar selección explícita de tarjeta');
 assert(src.includes("productChoiceSource='own'"),'Registrar selección explícita de texto libre');
-assert(src.includes('unit.product=tidy(pending.selectedProductTitle)||declaredProduct'),'Persistir el nombre elegido');
+assert(src.includes('lastExplicitProductSelection?tidy(pending.selectedProductTitle)||declaredProduct'),'Persistir el nombre elegido');
 assert(src.includes('unit.productTitle=unit.product'),'Título del producto coherente en unidades y sesiones');
 console.log('PASS v23: prioridad de producto por última elección, tarjeta, texto y exportación');
