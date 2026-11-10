@@ -65,6 +65,7 @@ jobs:
           node tests/unit-sequence-day-criteria-v30.mjs
           node tests/science-rights-inquiry-v31.mjs
           node tests/rights-expert-override-guard-v33.mjs
+          node tests/rights-finalize-situation-v34.mjs
           node tests/regression-contract-v20.mjs
           node tests/planning-chain-integrity.mjs
           node tests/unit-semantic-guardrails-v26.mjs

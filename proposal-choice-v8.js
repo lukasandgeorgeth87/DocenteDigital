@@ -428,6 +428,27 @@
     // Mantener este normalizador local: el flujo también se prueba de forma aislada.
     const tidy=s=>String(s??'').replace(/\s+/g,' ').trim();
     const pending=state.pendingUnitChoice;if(!pending)return;
+    // Protección final: en peticiones breves sobre derechos, un paso experto
+    // o un evento de UI no puede volver a sustituir la propuesta seleccionada
+    // por frases de plantilla. Respetar siempre situaciones escritas por el
+    // docente (sin tarjeta seleccionada) y contextos específicos.
+    const selectedOption=Array.isArray(pending.situations)
+      ?pending.situations.find(x=>x?.text===pending.selectedSituation):null;
+    const request=String(pending.brief||'').trim();
+    const scaffoldSituation=/en el entorno cercano de los estudiantes|se propone desarrollar|el docente podr[aá] completar|interpretaci[oó]n preliminar/i;
+    if(request.length<=160&&selectedOption&&scaffoldSituation.test(String(pending.selectedSituation||''))
+       &&typeof situationOptions==='function'){
+      const safe=situationOptions(request);
+      if(safe?.focus==='los derechos de la niñez'&&Array.isArray(safe.situations)
+        &&safe.situations.length>=2){
+        const replacement=safe.situations.find(x=>String(x.key)===String(selectedOption.key));
+        if(replacement&&/derechos/i.test(replacement.text)&&!scaffoldSituation.test(replacement.text)){
+          pending.situations=safe.situations;
+          pending.selectedSituation=replacement.text;
+          if(!statedChallenge(request))pending.reto=safe.reto;
+        }
+      }
+    }
     const before=new Set((state.units||[]).map(u=>u.id));
     const originalAreas=state.areas;
     const requestedAreas=explicitlyRequestedAreas(pending.brief);
