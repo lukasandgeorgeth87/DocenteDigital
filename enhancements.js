@@ -278,12 +278,29 @@
     function ddEnfoquesHtml(unit){return ddTable(unit.enfoques.map(x=>`<tr><td><b>${E(x.name)}</b></td><td>${E(x.value)}</td><td>${E(x.action)}</td></tr>`).join(''),['Enfoque transversal','Valor','Actitudes o acciones observables']);}
   function ddTransversalHtml(unit){return ddTable(unit.transversals.map(x=>`<tr><td><b>${E(x.name)}</b><br><small><b>Capacidades MINEDU:</b> ${(x.capacities||[]).map(E).join('; ')}</small></td><td>${E(x.application||'')}</td></tr>`).join(''),['Competencia transversal y capacidades MINEDU','Aplicación contextualizada en la unidad']);}
   function ddSequenceHtml(unit){
-    const days=['Lunes','Martes','Miércoles','Jueves','Viernes'];
-    const rows=unit.activities.map((a,i)=>{
-      const p=unit.purposes.find(x=>x.area===a.area)||unit.purposes[0];
-      const gradeCrit=p?.criteria?.map(x=>`${x.grade}: ${x.text}`).join(' / ')||'';
-      const official=ddPickOfficialCompetence(unit.level,a.area,a.title);
-      return `<tr><td>Semana ${a.week}<br>${days[(i)%5]}</td><td>${E(a.area)}</td><td><b>${E(a.title)}</b></td><td>${E(official?.name||'')}</td><td>${E(p?.evidence||'')}</td><td>${E(gradeCrit)}</td><td>${E(p?.instrument||'')}</td><td>${E(a.title)}</td></tr>`;
+    const quality=window.DD_UNIT_EXPORT_QUALITY_V11;
+    const rows=(unit.activities||[]).map(a=>{
+      const purpose=(unit.purposes||[]).find(p=>p.area===a.area)||(unit.purposes||[])[0];
+      // La misma sesión conserva su día, criterio y evidencia en Chrome y Word.
+      // No calcular el día por posición: con dos sesiones diarias daría días errados.
+      const day=a.day||'Día por confirmar',time=a.time||'Hora por confirmar';
+      const gradeCriteria=(unit.grades||[]).map(g=>{
+        const criterion=unit.level==='Primaria'&&typeof quality?.gradeAction==='function'
+          ?quality.gradeAction(a.area,a.title,g)
+          :(purpose?.criteria||[]).find(c=>c.grade===g)?.text||'Criterio por confirmar';
+        return g+': '+criterion;
+      }).join(' / ');
+      const competence=ddPickOfficialCompetence(unit.level,a.area,a.title);
+      const evidence=unit.level==='Primaria'&&typeof quality?.evidence==='function'
+        ?quality.evidence(a.area,a.title)
+        :purpose?.evidence||'Evidencia por confirmar';
+      const activity=String(a.description||a.action||a.title||'').trim();
+      return '<tr><td>Semana '+E(a.week)+'<br>'+E(day)
+        +(time==='Hora por confirmar'?'':'<br>'+E(time))+'</td>'
+        +'<td>'+E(a.area)+'</td><td><b>'+E(a.title)+'</b></td>'
+        +'<td>'+E(competence?.name||'Competencia por confirmar')+'</td>'
+        +'<td>'+E(evidence)+'</td><td>'+E(gradeCriteria)+'</td>'
+        +'<td>'+E(purpose?.instrument||'Por definir')+'</td><td>'+E(activity)+'</td></tr>';
     }).join('');
     return ddTable(rows,['Semana / día','Área','Título de la sesión','Competencia priorizada MINEDU','Evidencia','Criterio contextualizado','Instrumento','Actividad principal']);
   }
