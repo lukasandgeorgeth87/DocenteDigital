@@ -41,4 +41,18 @@ const word=q.word({title:'Derechos',level:'Primaria',type:'Unidad de aprendizaje
 assert.match(word,/C – Inicio:/);
 assert.match(word,/razones pertinentes/);
 assert.doesNotMatch(word,/requiere ayuda para mostrar los elementos del criterio/);
-console.log('PASS v27: instrumentos por competencia con cuatro niveles observables');
+// Regresión multigrado: diferenciación de criterios y descriptores.
+const early=q.instrumentLevels({area:'Comunicación',competence:'Se comunica oralmente en su lengua materna',
+ activity:'Dialogamos',grade:'1.º',criterion:'1.º: Comunica ideas sencillas sobre sus derechos.'});
+assert.match(early.A,/Comunica ideas sencillas/);
+assert.doesNotMatch(early.A,/razones pertinentes/);
+const middle=q.instrumentLevels({area:'Matemática',competence:'Resuelve problemas de gestión de datos e incertidumbre',
+ activity:'Representamos datos',grade:'3.º',criterion:'3.º: Registra datos en una tabla y compara frecuencias.'});
+assert.match(middle.A,/Registra datos en una tabla/);
+const multi=q.word({title:'Convivimos',level:'Primaria',type:'Unidad de aprendizaje',grades:['1.º','3.º','5.º'],
+ areas:['Comunicación'],duration:'3 semanas',ieType:'Multigrado',
+ situation:'Analizamos relatos ficticios de derechos.',reto:'¿Cómo dialogamos con respeto?',
+ product:'Mural',activities:[{area:'Comunicación',week:1,day:'Lunes',title:'Dialogamos sobre nuestros derechos'}],
+ purposes:[],documentContextSnapshot:{}});
+for(const grade of ['1.º','3.º','5.º'])assert(multi.includes('Grado: '+grade),'Debe aparecer su instrumento: '+grade);
+console.log('PASS v27: instrumentos por competencia y grado, también multigrado');

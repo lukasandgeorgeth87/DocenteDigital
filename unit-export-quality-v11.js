@@ -247,6 +247,47 @@
   // curricular. No son desempeños MINEDU literales ni calificaciones asignadas.
   function instrumentLevels(s){
     const area=clean(s?.area),competence=lower(s?.competence),task=lower(s?.activity);
+    const grade=Number((String(s?.grade||'').match(/\d+/)||[])[0]||0);
+    // Para grados 1.º–4.º conservar las actuaciones de su propio criterio,
+    // sin imponer a los pequeños exigencias propias del ciclo V.
+    if(grade>=1&&grade<=4){
+      const expected=clean(s?.criterion).replace(/^\d+\s*\.?\s*[º°]\s*:\s*/,'');
+      const small=grade<=2;
+      let start='Necesita apoyo para realizar la actuación prevista y comunicar qué hizo.';
+      let progress='Realiza parte de la actividad y explica sus decisiones mediante preguntas de apoyo.';
+      if(area==='Comunicación'){
+        if(/se comunica oralmente/.test(competence)){
+          start=small?'Expresa una idea breve con apoyo y necesita escuchar a sus compañeros.':'Participa y expresa ideas, pero requiere ayuda para ordenarlas o justificarlas.';
+          progress=small?'Comunica ideas sencillas y responde algunas preguntas con acompañamiento.':'Explica una idea con algunos ejemplos y atiende preguntas con orientación.';
+        }else if(/lee diversos tipos/.test(competence)){
+          start='Localiza información del texto con ayuda de preguntas, imágenes o lectura acompañada.';
+          progress='Identifica detalles y propone una interpretación sencilla con orientación.';
+        }else if(/escribe diversos tipos/.test(competence)){
+          start='Escribe o dicta ideas aisladas y necesita apoyo para organizarlas para un destinatario.';
+          progress='Elabora un texto sencillo y revisa algunos aspectos con preguntas de apoyo.';
+        }
+      }else if(area==='Matemática'){
+        start='Representa parcialmente datos o la situación con material y ayuda.';
+        progress='Organiza algunos datos o procedimientos y explica un resultado con acompañamiento.';
+      }else if(area==='Personal Social'){
+        start='Reconoce una situación de convivencia, pero necesita guía para expresar su opinión.';
+        progress='Expresa una opinión y propone una acción sencilla con apoyo.';
+      }else if(area==='Ciencia y Tecnología'){
+        start='Observa una situación y formula una pregunta con orientación.';
+        progress='Registra observaciones o propone una explicación inicial con acompañamiento.';
+      }else if(area==='Educación Física'){
+        start='Ensaya el movimiento con acompañamiento y necesita recordar normas de seguridad.';
+        progress='Coordina acciones del reto y mejora con indicaciones.';
+      }else if(area==='Arte y Cultura'){
+        start='Explora materiales o manifestaciones y necesita apoyo para comunicar lo que observa o crea.';
+        progress='Describe o produce algunos elementos y explica decisiones con preguntas de apoyo.';
+      }else if(area==='Educación Religiosa'){
+        start='Reconoce un ejemplo de respeto con apoyo y necesita explicar qué significa.';
+        progress='Relaciona una enseñanza de su fe con un ejemplo concreto y ayuda.';
+      }
+      return {C:start,B:progress,A:expected||'Criterio por completar y confirmar por grado.',
+        AD:'Realiza la actuación prevista de forma autónoma, explica sus decisiones y aplica lo aprendido a otro ejemplo adecuado a su grado.'};
+    }
     if(area==='Comunicación'){
       if(/se comunica oralmente/.test(competence))return {
         C:'Comunica ideas aisladas y requiere preguntas de apoyo para expresar razones y escuchar a sus compañeros.',
@@ -343,10 +384,12 @@
     };
   }
   function instrumentDrafts(unit){
-    const rows=assessmentSamples(unit).map(s=>{
-      const levels=instrumentLevels(s);
-      return `<tr><td><b>${esc(s.area)}</b><br>${esc(s.competence)}</td><td>${esc(s.criterion)}<br><small>Evidencia: ${esc(s.evidence)}</small></td><td><b>C – Inicio:</b> ${esc(levels.C)}<br><b>B – Proceso:</b> ${esc(levels.B)}<br><b>A – Logro esperado:</b> ${esc(levels.A)}<br><b>AD – Destacado:</b> ${esc(levels.AD)}</td></tr>`;
-    });
+    // Cada grado recibe su propio criterio y cuatro niveles orientadores.
+    const rows=assessmentSamples(unit).flatMap(s=>(unit.grades||[]).map(grade=>{
+      const criterion=grade+': '+gradeAction(s.area,s.activity,grade);
+      const levels=instrumentLevels({...s,grade,criterion});
+      return `<tr><td><b>${esc(s.area)}</b><br>${esc(s.competence)}<br><small>Grado: ${esc(grade)}</small></td><td>${esc(criterion)}<br><small>Evidencia: ${esc(s.evidence)}</small></td><td><b>C – Inicio:</b> ${esc(levels.C)}<br><b>B – Proceso:</b> ${esc(levels.B)}<br><b>A – Logro esperado:</b> ${esc(levels.A)}<br><b>AD – Destacado:</b> ${esc(levels.AD)}</td></tr>`;
+    }));
     return rows.length?table(['Área / competencia','Criterio y evidencia','Borrador de niveles C, B, A y AD'],rows,[24,38,38]):'<p>Faltan actividades para construir instrumentos.</p>';
   }
   function registerTemplate(unit){
