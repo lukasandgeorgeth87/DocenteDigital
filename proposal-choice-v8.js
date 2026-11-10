@@ -436,7 +436,7 @@
       ?pending.situations.find(x=>x?.text===pending.selectedSituation):null;
     const request=String(pending.brief||'').trim();
     const scaffoldSituation=/en el entorno cercano de los estudiantes|se propone desarrollar|el docente podr[aá] completar|interpretaci[oó]n preliminar/i;
-    if(request.length<=160&&selectedOption&&scaffoldSituation.test(String(pending.selectedSituation||''))
+    if(request.length<=160&&!/\b(?:discriminaci[oó]n|vulneraci[oó]n|acoso|violencia|denuncia|caso real)\b/i.test(request)&&selectedOption&&scaffoldSituation.test(String(pending.selectedSituation||''))
        &&typeof situationOptions==='function'){
       const safe=situationOptions(request);
       if(safe?.focus==='los derechos de la niñez'&&Array.isArray(safe.situations)
