@@ -285,15 +285,39 @@
     function ddInstrumentHtml(unit){
     const q=window.DD_UNIT_EXPORT_QUALITY_V11;
     const rows=[];
-    for(const p of unit.purposes||[]){
-      for(const c of p.officialCompetencies||[]){
-        const a=(unit.activities||[]).find(x=>x.area===p.area&&ddPickOfficialCompetence(unit.level,p.area,x.title)?.name===c.name)
-          ||(unit.activities||[]).find(x=>x.area===p.area);
-        const criterion=(unit.grades||[]).map(g=>g+': '+(unit.level==='Primaria'&&a&&q?.gradeAction?q.gradeAction(p.area,a.title,g):ddCriterion(p.area,g,unit.situationBrief,unit.level))).join(' / ');
-        rows.push('<tr><td><b>'+E(p.area)+'</b><br>'+E(c.name)+'</td><td>'+E(criterion)+'</td><td>Requiere apoyo para demostrar los elementos del criterio.</td><td>Muestra algunos elementos y necesita mediación.</td><td>Demuestra el criterio con evidencias pertinentes.</td><td>Además justifica y transfiere el aprendizaje.</td></tr>');
+    for(const purpose of unit.purposes||[]){
+      for(const competence of purpose.officialCompetencies||[]){
+        const activity=(unit.activities||[]).find(a=>a.area===purpose.area&&ddPickOfficialCompetence(unit.level,purpose.area,a.title)?.name===competence.name)
+          ||(unit.activities||[]).find(a=>a.area===purpose.area);
+        for(const grade of unit.grades||[]){
+          const criterion=(unit.level==='Primaria'&&activity&&typeof q?.gradeAction==='function')
+            ?q.gradeAction(purpose.area,activity.title,grade)
+            :ddCriterion(purpose.area,grade,unit.situationBrief,unit.level);
+          const evidence=(unit.level==='Primaria'&&activity&&typeof q?.evidence==='function')
+            ?q.evidence(purpose.area,activity.title)
+            :purpose.evidence||'Evidencia por confirmar con el docente';
+          const source={area:purpose.area,competence:competence.name,activity:activity?.title||'',grade,criterion};
+          // La vista utiliza el mismo generador de rúbricas que la exportación Word.
+          // Si el generador no está cargado, mantener la vista funcional sin
+          // atribuir a MINEDU descriptores que la aplicación no pudo comprobar.
+          const levels=unit.level==='Primaria'&&typeof q?.instrumentLevels==='function'
+            ?q.instrumentLevels(source)
+            :{
+              C:'Necesita ayuda para mostrar el criterio en una evidencia.',
+              B:'Muestra parte de la actuación prevista con acompañamiento.',
+              A:'Demuestra la actuación descrita en el criterio con evidencias.',
+              AD:'Sustenta y aplica el aprendizaje a una situación pertinente.'
+            };
+          rows.push('<tr><td><b>'+E(purpose.area)+'</b><br>'+E(competence.name)
+            +'<br><small>Grado: '+E(grade)+'</small></td><td>'+E(criterion)
+            +'<br><small><b>Evidencia:</b> '+E(evidence)+'</small></td>'
+            +'<td>'+E(levels.C)+'</td><td>'+E(levels.B)+'</td>'
+            +'<td>'+E(levels.A)+'</td><td>'+E(levels.AD)+'</td></tr>');
+        }
       }
     }
-    return '<p><small>Borradores editables: los niveles deben revisarse con el CNEB y las evidencias reales antes de aplicar.</small></p>'+ddTable(rows.join(''),['Área y competencia','Criterio por grado','C – Inicio','B – Proceso','A – Logro esperado','AD – Destacado']);
+    return '<p><small>Borradores pedagógicos por competencia y grado. Estos niveles no son desempeños oficiales literales; revisar criterios y evidencias antes de aplicar.</small></p>'
+      +ddTable(rows.join(''),['Área y competencia / grado','Criterio y evidencia','C – Inicio','B – Proceso','A – Logro esperado','AD – Destacado']);
   }
     function ddSection(id,title,body){return `<section class="dd-unit-section" id="${id}"><h2>${title}</h2>${body}</section>`}
   function ddTabs(unit){return `<div class="dd-tabs"><button onclick="ddShowTab('resumen')">Resumen</button><button onclick="ddShowTab('propositos')">Propósitos</button><button onclick="ddShowTab('matriz')">Matriz</button><button onclick="ddShowTab('sesiones')">Sesiones</button><button onclick="ddShowTab('instrumentos')">Instrumentos</button><button onclick="ddShowTab('registro')">Registro</button></div>`}
