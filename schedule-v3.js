@@ -165,6 +165,35 @@
     // Conservar el producto completo en la unidad; abreviar solo los títulos de sesión.
     const productName=product.split(/,\s*(?:integrad[ao]|compuest[ao]|que incluye|con\s+afiches)\b/i)[0].slice(0,105).trim();
     const stage=weeks===1?1:(week===1?0:week===weeks?2:1);
+    // Los derechos son un contenido social, NO un fenómeno físico.
+    // Cuando el docente incluyó Ciencia sin proponer un fenómeno, ofrecer
+    // una indagación segura de materiales relacionada con el derecho a la
+    // salud, sin afirmar enfermedades, vulneraciones ni resultados reales.
+    const normalize=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const rights=/\bderechos?\b/.test(normalize(topic+' '+raw));
+    const providedPhenomenon=/\b(?:germinaci[oó]n|evaporaci[oó]n|electricidad|circuitos?|fermentaci[oó]n|fotos[ií]ntesis|temperatura|filtraci[oó]n|residuos?|reciclaje|biodiversidad|energ[ií]a|contaminaci[oó]n)\b/i.test(raw);
+    if(area==='Ciencia y Tecnología'&&rights&&!providedPhenomenon){
+      const scienceForRights=[
+        [
+          'Formulamos preguntas investigables sobre mezclas de agua, aceite y jabón',
+          'Hacemos predicciones sobre mezclas con y sin jabón',
+          'Observamos una comparación segura de agua y aceite con y sin jabón',
+          'Registramos observaciones de las mezclas antes de explicar los cambios'
+        ],[
+          'Observamos y comparamos registros de las mezclas con y sin jabón',
+          'Explicamos cambios observables con apoyo de información científica',
+          'Explicamos qué muestran y qué no muestran nuestras observaciones de limpieza',
+          'Registramos hallazgos y preguntas pendientes sobre las mezclas observadas'
+        ],[
+          'Registramos evidencias científicas útiles para mensajes sobre higiene y salud',
+          'Elaboramos explicaciones científicas para una exposición sobre el derecho a la salud',
+          'Explicamos la relación entre las observaciones y las recomendaciones de higiene',
+          'Explicamos nuestros hallazgos y los límites de una demostración sencilla'
+        ]
+      ];
+      const options=scienceForRights[stage];
+      return options[(turn-1)%options.length];
+    }
     const sets={
       'Comunicación':[
         [`Dialogamos sobre ${topic} y formulamos preguntas`,`Leemos información para comprender ${topic}`,`Escuchamos explicaciones y registramos dudas sobre ${topic}`,`Explicamos con nuestras palabras lo que descubrimos sobre ${topic}`],
