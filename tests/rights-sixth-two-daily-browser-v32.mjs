@@ -71,12 +71,16 @@ try{
    assert.equal(unit.activities.filter(a=>a.week===week&&a.day===day).length,2,week+' '+day);
  const titles=unit.activities.filter(a=>a.area==='Ciencia y Tecnología').map(a=>a.title).join(' | ');
  assert(!/preguntas investigables sobre los derechos|indagamos los derechos/i.test(titles));
- const audit=await page.evaluate(id=>{
+ const auditSnapshot=await page.evaluate(id=>{
   const state=JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'{}');
-  return window.DD_PLANNING_CHAIN_V10.auditUnit(state.units.find(u=>u.id===id));
+  const latest=state.units.find(u=>u.id===id);
+  return {audit:window.DD_PLANNING_CHAIN_V10.auditUnit(latest),
+    product:latest.product,productTitle:latest.productTitle,
+    selectionApproved:latest.selectionApproved,selectedProductKey:latest.selectedProductKey};
  },unit.id);
+ const audit=auditSnapshot.audit;
  for(const id of ['situation-scaffold','challenge-scaffold','selected-product-mismatch','session-scaffold'])
-  assert(!audit.warnings.some(x=>x.id===id),'Error de coherencia: '+id+'; valores del producto='+JSON.stringify({product:unit.product,productTitle:unit.productTitle,selectionApproved:unit.selectionApproved,selectedProductKey:unit.selectedProductKey}));
+  assert(!audit.warnings.some(x=>x.id===id),'Error de coherencia: '+id+'; valores persistidos='+JSON.stringify(auditSnapshot));
  const html=await page.evaluate(id=>{
   const state=JSON.parse(localStorage.getItem('docenteDigitalPrototype')||'{}');
   return window.unitWordHtml(state.units.find(u=>u.id===id));
