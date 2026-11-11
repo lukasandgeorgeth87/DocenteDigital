@@ -409,6 +409,26 @@
     if(session.area==='Personal Social')return ['Problematización','Análisis de información','Toma de decisiones'];
     return ['Exploración del reto','Desarrollo de la actividad','Análisis y mejora de la producción'];
   }
+  // Usa la misma progresión de los cuatro niveles que la unidad/Word.
+  // Un descriptor de ejemplo nunca reemplaza el criterio aprobado por el docente.
+  function ddSessionRubricLevels(session,grade,criterion){
+    const q=window.DD_UNIT_EXPORT_QUALITY_V11;
+    if(session.level==='Primaria'&&typeof q?.instrumentLevels==='function'){
+      return q.instrumentLevels({
+        area:session.area,
+        competence:ddSessionCompetence(session)?.name||session.competence||'',
+        activity:session.activityTitle||session.title||'',
+        grade,
+        criterion
+      });
+    }
+    return {
+      C:'Necesita acompañamiento para realizar la actuación prevista y mostrar evidencia.',
+      B:'Realiza parte de la actuación y explica avances con orientación.',
+      A:'Muestra la actuación prevista en el criterio mediante la evidencia solicitada.',
+      AD:'Justifica su actuación y propone una aplicación pertinente a otra situación.'
+    };
+  }
   sessionHtml=function(session,forWord=false){
     const gradeCrit=session.grades.map(g=>`<b>${E(g)}:</b> ${E(ddSessionCriterion(session,g))}`).join('<br>');
     const baseCrit=String(session.criterion||'').trim();
@@ -416,7 +436,11 @@
     const official=ddSessionCompetence(session);
     const processes=ddSessionProcesses(session);
     const taskRows=session.grades.map(g=>`<tr><td><b>${E(g)}</b></td><td>${E(ddSessionCriterion(session,g))}</td><td>${E(session.evidence)}</td></tr>`).join('');
-    const rubricRows=session.grades.map(g=>`<tr><td>${E(g)} – ${E(ddSessionCriterion(session,g))}</td><td>Requiere apoyo para evidenciar el criterio.</td><td>Lo evidencia parcialmente con apoyo.</td><td>Lo evidencia de manera pertinente y autónoma.</td><td>Lo supera, sustenta decisiones y transfiere lo aprendido.</td></tr>`).join('');
+    const rubricRows=session.grades.map(g=>{
+      const criterion=ddSessionCriterion(session,g);
+      const levels=ddSessionRubricLevels(session,g,criterion);
+      return `<tr><td>${E(g)} – ${E(criterion)}</td><td>${E(levels.C)}</td><td>${E(levels.B)}</td><td>${E(levels.A)}</td><td>${E(levels.AD)}</td></tr>`;
+    }).join('');
     const docType=session.level==='Inicial'
       ? (session.activityKind==='taller'?`TALLER DE ${E((session.workshopType||'APRENDIZAJE').toUpperCase())}`:'ACTIVIDAD DE APRENDIZAJE')
       :'SESIÓN DE APRENDIZAJE MAESTRA';
