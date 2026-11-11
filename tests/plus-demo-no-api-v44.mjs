@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 const read=x=>readFileSync(new URL('../'+x,import.meta.url),'utf8');
 const html=read('laboratorio-plus.html'),src=read('plus-demo-v44.js'),home=read('index.html');
-assert(home.includes('href="laboratorio-plus.html"'));
+assert(!home.includes('href="laboratorio-plus.html"'),'No mostrar copia-pega como opción principal de la plataforma');
 for(const id of ['draftText','fromChatGPT','copyPrompt','approve','usePasted','downloadWord','approvedPreview','demoMessage'])
  assert(html.includes('id="'+id+'"'),'Falta control visible '+id);
 assert(html.includes('src="docx-export-v29.js"'));

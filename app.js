@@ -788,6 +788,7 @@ function unitSituation(unit){
   // La redacción completa del docente tiene prioridad sobre una plantilla envolvente.
   if(authored.length>=160&&/\b(los estudiantes|las familias|el reto|la comunidad)\b/i.test(authored)
      &&(/Un hecho relacionado con [“\"]/.test(saved)||/un tema que todos reconocían/i.test(saved)))return authored;
+  if(unit?.selectedSituationSource==='Docente'&&saved)return saved;
   return saved&&saved.length>180?saved:expandSituation(authored||saved);
 }
 function unitBrief(unit){return unit.situationBrief||unit.situation||''}
@@ -1088,7 +1089,7 @@ function renderSessionOutput(session){
     tools=document.createElement('div');tools.id='sessionTools';tools.className='actions topgap';
     const chat=out.querySelector('.chatbar');out.insertBefore(tools,chat||null);
   }
-  tools.innerHTML=`<button class="btn alt" onclick="downloadSessionWord()">⬇ Descargar Word</button><button class="btn ghost" onclick="shareSession()">📤 Compartir</button><button class="btn" onclick="go('materials');setTimeout(()=>window.DDMaterials?.useCurrent?.(),60)">🧩 Crear materiales de esta sesión</button>`;
+  tools.innerHTML=`<button class="btn" type="button" onclick="window.DDReviewV46?.openSession()">✏️ Revisar y corregir</button><button class="btn alt" onclick="downloadSessionWord()">⬇ Descargar Word</button><button class="btn ghost" onclick="shareSession()">📤 Compartir</button><button class="btn" onclick="go('materials');setTimeout(()=>window.DDMaterials?.useCurrent?.(),60)">🧩 Crear materiales de esta sesión</button>`;
   out.classList.remove('hidden');out.scrollIntoView({behavior:'smooth'});
 }
 

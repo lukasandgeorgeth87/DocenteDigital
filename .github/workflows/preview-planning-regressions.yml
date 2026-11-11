@@ -96,6 +96,7 @@ jobs:
           node --check api/ai-quota-write-preflight.js
           node tests/ai-preview-lock-v43.mjs
           node tests/plus-demo-no-api-v44.mjs
+          node tests/inline-review-v46.mjs
           node tests/ai-contract.mjs
           node tests/ai-preflight.mjs
           node tests/ai-quota-write-preflight.mjs
