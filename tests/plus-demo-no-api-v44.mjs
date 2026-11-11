@@ -31,7 +31,7 @@ for(const key of ['situation','session','rubric']){
 assert.equal(api.validateText('corto'),false);
 assert.equal(api.validateText('x'.repeat(12001)),false);
 assert.equal(api.validateText('x'.repeat(60)),true);
-const malicious=api.wordHtml('situation','<script>alert("a")</script>'+' x'.repeat(16));
+const malicious=api.wordHtml('situation','<script>alert("a")</script>'+' x'.repeat(40));
 assert(!malicious.includes('<script>'));
 assert(malicious.includes('&lt;script&gt;'));
 assert.match(api.samples.session.after,/INICIO \(10 minutos\)[\s\S]*DESARROLLO \(20 minutos\)[\s\S]*CIERRE \(10 minutos\)/);
