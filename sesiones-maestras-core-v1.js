@@ -57,9 +57,20 @@
     return rows;
   }
 
-  function resourceTable(session){
+  function resourceTable(session,forWord=false){
     var rows=resourcePlan(session);
     if(!rows.length)return '<p>No se añade ningún recurso extra porque no existe un uso pedagógico definido.</p>';
+    if(forWord){
+      // A4 vertical: 4 columnas legibles en vez de ocho columnas recortadas.
+      // Conservar grado, propósito y acciones sin declarar uso efectivo.
+      return '<div class="dd-scroll"><table class="dd-table"><thead><tr>'
+        +'<th>Recurso y grado</th><th>Uso previsto / finalidad</th><th>Mediación docente</th><th>Acción del estudiante</th>'
+        +'</tr></thead><tbody>'
+        +rows.map(function(x){return '<tr><td><b>'+E(x.code)+'</b> · '+E(x.resource)
+          +'<br>Grado: '+E(x.grade)+'</td><td>'+E(x.moment)+'<br>'+E(x.purpose)
+          +'</td><td>'+E(x.teacher)+'</td><td>'+E(x.student)+'</td></tr>';}).join('')
+        +'</tbody></table></div>';
+    }
     return '<div class="dd-scroll"><table class="dd-table"><thead><tr><th>Código</th><th>Recurso</th><th>Grado</th><th>Momento</th><th>Acción docente</th><th>Acción estudiante</th><th>Modalidad</th><th>Finalidad</th></tr></thead><tbody>'+rows.map(function(x){return '<tr><td><b>'+E(x.code)+'</b></td><td>'+E(x.resource)+'</td><td>'+E(x.grade)+'</td><td>'+E(x.moment)+'</td><td>'+E(x.teacher)+'</td><td>'+E(x.student)+'</td><td>'+E(x.mode)+'</td><td>'+E(x.purpose)+'</td></tr>';}).join('')+'</tbody></table></div>';
   }
 
@@ -94,7 +105,7 @@
       html=html.replace(/<h2>9\. MATERIALES \/ ANEXOS<\/h2>[\s\S]*?(?=<\/div>\s*$)/,'');
 
       var tail='<h2>8. RECURSOS SELECCIONADOS PARA PLANIFICAR (USO POR CONFIRMAR)</h2>'+compactResources(session)+
-        '<h2>9. PLAN PROPUESTO DE USO DE RECURSOS</h2>'+resourceTable(session)+
+        '<h2>9. PLAN PROPUESTO DE USO DE RECURSOS</h2>'+resourceTable(session,!!forWord)+
         '<h2>10. '+(session.level==='Inicial'?'SISTEMATIZACIÓN BREVE DEL APRENDIZAJE':'PARA PIZARRA / SISTEMATIZACIÓN POR GRADO')+'</h2>'+boardHtml(session);
 
       if(/<\/div>\s*$/.test(html))html=html.replace(/<\/div>\s*$/,tail+'</div>');
