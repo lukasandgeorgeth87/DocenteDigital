@@ -45,7 +45,7 @@ assert.equal(session.teacherCriteria['2.º'],'Expresa una idea y formula una pre
 assert.equal(session.criterion,session.teacherCriteria['2.º']);
 assert.equal(session.reviewHistory.length,1);
 api.undoSession(session);
-assert.equal(session.teacherCriteria,undefined);
+assert.equal(Object.keys(session.teacherCriteria||{}).length,0,'El criterio específico aprobado debe desaparecer al restaurar la versión previa');
 assert.equal(session.criterion,'Explica una idea sobre los derechos');
 const oldSave=window.save;
 window.save=()=>false;
