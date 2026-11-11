@@ -53,7 +53,8 @@ const cases=[
  ['GPT preflight solo lectura','tests/ai-preflight.mjs'],
  ['GPT preflight cupo sintético','tests/ai-quota-write-preflight.mjs'],
  ['Cliente GPT sin persistencia de secretos','tests/ai-beta-client.mjs'],
- ['Laboratorio Plus manual sin llamadas API','tests/plus-demo-no-api-v44.mjs']
+ ['Laboratorio Plus manual sin llamadas API','tests/plus-demo-no-api-v44.mjs'],
+ ['Demostración Plus real de navegador y DOCX','tests/plus-demo-browser-v45.mjs']
 ];
 assert.match(workflow,/branches:\s*\n\s+- preview\/docentedigital-fase10-20261030/);
 assert(browserWorkflow.includes('node tests/sixth-grade-browser-regression-v21.mjs'),'Prueba de navegador de sexto omitida en CI');
