@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Laboratorio Plus · Docente Digital — demostración sin API</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#15352d;background:#f3f7f5;line-height:1.5}
+*{box-sizing:border-box}body{margin:0}.shell{max-width:1170px;margin:auto;padding:20px}
+header{background:#fff;border-bottom:1px solid #d8e4de}.top{display:flex;gap:18px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.brand{font-weight:800;font-size:18px;color:#12604c}.brand a{color:inherit;text-decoration:none}
+.pill{display:inline-block;background:#e6f5ee;color:#09553f;border:1px solid #a9dbc5;border-radius:50px;font-size:12px;font-weight:800;padding:7px 12px}
+h1{font-size:clamp(25px,4vw,37px);line-height:1.17;margin:10px 0}h2{font-size:18px;margin:0 0 10px}p{margin:8px 0 15px}
+.intro{margin:24px 0 18px}.muted{color:#547068;font-size:14px}.note{padding:13px 17px;border:1px solid #d1ded8;border-radius:12px;background:#fff;margin:14px 0}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}.tabs button{border:1px solid #bad2c6;background:white;color:#155040;border-radius:9px;padding:12px 14px;font-weight:700;cursor:pointer}
+.tabs button[aria-pressed=true]{background:#12634f;border-color:#12634f;color:white}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.panel{border-radius:14px;background:white;border:1px solid #d8e5df;padding:19px;min-width:0}
+.cap{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:#547368;font-weight:700}
+.output{background:#f8fbf9;border-radius:9px;padding:14px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;min-height:155px}
+textarea{width:100%;font:inherit;min-height:320px;resize:vertical;padding:14px;border:1px solid #b8cfc3;border-radius:9px;color:#163c30;background:#fff}
+textarea:focus,button:focus-visible,a:focus-visible{outline:3px solid #81c6ab;outline-offset:2px}
+button,.action{border:0;border-radius:9px;padding:11px 14px;font:700 14px Arial,sans-serif;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.primary{background:#10654d;color:white}.secondary{background:#e5f1eb;color:#15513d}.outline{background:white;border:1px solid #b4cdc1;color:#164c3d}
+button:disabled{opacity:.48;cursor:not-allowed}.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}
+.status{font-size:14px;min-height:26px;color:#3c6253}.status.ok{color:#0c6d4c;font-weight:700}.status.warn{color:#a3432d}
+.steps{display:flex;gap:8px;flex-wrap:wrap}.step{background:#e9f4ee;border-radius:8px;padding:8px 12px;font-size:13px}
+.footer{border-top:1px solid #d4e3da;margin-top:24px;padding:18px 0;color:#597268;font-size:12px}
+a{color:#0b624a}small{color:#5a756b}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.shell{padding:14px}.panel{padding:14px}textarea{min-height:270px}}
+</style>
+</head>
+<body>
+<header><div class="shell top"><div class="brand"><a href="index.html">📘 DocenteDigital</a> / Laboratorio Plus</div><span class="pill">DEMO SIN API · SIN COBROS</span></div></header>
+<main class="shell">
+<section class="intro">
+ <span class="cap">Prueba pedagógica de 2.º de primaria · Ciclo III</span>
+ <h1>Compara, mejora y aprueba antes de exportar</h1>
+ <p>Utiliza ejemplos elaborados en ChatGPT para evaluar la calidad de una unidad sobre <strong>los derechos de las niñas y los niños</strong>. Puedes trabajar con tu cuenta ChatGPT Plus de forma manual; la aplicación <strong>no tiene acceso a tu sesión Plus</strong>.</p>
+ <div class="steps"><span class="step">1. Revisa el ejemplo</span><span class="step">2. Mejora aquí o en ChatGPT</span><span class="step">3. Aprueba tú</span><span class="step">4. Descarga Word</span></div>
+ <div class="note"><strong>Privacidad y alcance:</strong> esta demostración usa casos ficticios. No envía información a OpenAI, no usa la API, no modifica tus unidades guardadas ni guarda textos o contraseñas. Si decides abrir ChatGPT, solo se copiará la instrucción que tú elijas.</div>
+</section>
+<section aria-label="Contenido de demostración">
+ <div class="tabs" role="group" aria-label="Elegir componente">
+  <button type="button" data-section="situation" aria-pressed="true">Situación significativa</button>
+  <button type="button" data-section="session" aria-pressed="false">Sesión de Comunicación</button>
+  <button type="button" data-section="rubric" aria-pressed="false">Criterios y rúbrica</button>
+ </div>
+ <div class="grid">
+  <article class="panel"><span class="cap">Texto anterior · muestra del problema</span><h2 id="beforeTitle">Texto anterior</h2><div id="beforeText" class="output"></div><p class="muted">El texto anterior ilustra errores encontrados en la auditoría. No se vincula con una unidad guardada.</p></article>
+  <article class="panel"><span class="cap">Propuesta pedagógica · editable</span><h2 id="afterTitle">Texto propuesto</h2>
+   <label for="draftText" class="muted">Corrige la propuesta para adecuarla a tu contexto y a las evidencias disponibles.</label>
+   <textarea id="draftText" spellcheck="true" aria-label="Propuesta editable"></textarea>
+   <div class="row">
+    <button class="secondary" id="restoreDemo" type="button">Restaurar ejemplo</button>
+    <button class="primary" id="approve" type="button">✓ Aprobar esta versión</button>
+   </div>
+   <p id="approvalStatus" role="status" class="status">Pendiente de revisión docente</p>
+  </article>
+ </div>
+</section>
+<section class="panel" style="margin-top:16px">
+ <h2>Usar tu ChatGPT Plus, sin conectar la API</h2>
+ <p class="muted">Copia una instrucción que pide respetar el CNEB y evitar datos inventados. Ábrela en tu propio ChatGPT, y pega abajo la respuesta que desees revisar. No compartas información personal de estudiantes.</p>
+ <div class="row">
+  <button type="button" class="secondary" id="copyPrompt">📋 Copiar instrucción</button>
+  <a class="action outline" href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer">Abrir ChatGPT</a>
+ </div>
+ <label for="fromChatGPT" class="muted" style="display:block;margin-top:14px">Pega aquí una respuesta obtenida manualmente en ChatGPT:</label>
+ <textarea id="fromChatGPT" style="min-height:130px" placeholder="Pega aquí el texto revisado, sin nombres ni datos personales de menores."></textarea>
+ <div class="row"><button type="button" id="usePasted" class="secondary">Usar este texto como borrador</button></div>
+</section>
+<section class="panel" style="margin-top:16px">
+ <h2>Vista previa y exportación</h2>
+ <p class="muted">Solo se puede exportar después de aprobar expresamente la versión actual. Si la editas, deberás aprobarla de nuevo.</p>
+ <div id="approvedPreview" class="output" aria-live="polite">Todavía no existe una versión aprobada.</div>
+ <div class="row"><button type="button" class="primary" id="downloadWord" disabled>⬇ Descargar Word (.docx)</button></div>
+ <p id="demoMessage" role="status" class="status"></p>
+</section>
+<div class="footer">Docente Digital · Demostración estática local. No representa una integración automática de ChatGPT Plus, una validación oficial del MINEDU ni una llamada real de GPT desde el sitio.</div>
+</main>
+<script>var state={units:[],teacherName:'',institutionMaster:{}};function cleanFileName(s){return String(s||'demo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9_-]+/g,'_').replace(/_+/g,'_').slice(0,80);}</script>
+<script src="docx-export-v29.js"></script>
+<script src="plus-demo-v44.js"></script>
+</body>
+</html>
