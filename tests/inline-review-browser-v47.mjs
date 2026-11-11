@@ -27,6 +27,10 @@ try{
  await page.locator('input[name="ddLevel"][value="Primaria"]').locator('..').click();
  await page.locator('input[name="ddIE"][value="Polidocente"]').locator('..').click();
  await page.locator('[data-dd-grade-group="Primaria"] input[type="checkbox"][value="2.º"]').locator('..').click();
+ for(const area of ['Comunicación','Matemática','Personal Social','Ciencia y Tecnología','Arte y Cultura','Educación Física','Educación Religiosa']){
+  const el=page.locator('[data-dd-area-group="Primaria"] input[type="checkbox"][value="'+area+'"]');
+  if(await el.count()&&!(await el.isChecked()))await el.locator('..').click();
+ }
  await page.locator('#linguisticMode').selectOption('Monolingüe castellano');
  await page.locator('#ddSetupNativeForm button[type="submit"]').click();
  await page.waitForFunction(()=>window.__ddPlanningRuntimeReady===true,null,{timeout:20000});
