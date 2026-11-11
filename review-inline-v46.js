@@ -51,8 +51,9 @@
       criteria[grade]=ensure('Criterio '+grade,changes.criteria?.[grade]);
     }
     revision(session,{purpose:session.purpose,evidence:session.evidence,challenge:session.challenge,
-      criterion:session.criterion,teacherCriteria:{...(session.teacherCriteria||{})}});
+      criterion:session.criterion,teacherCriteria:{...(session.teacherCriteria||{})},teacherReviewApproved:session.teacherReviewApproved});
     session.purpose=purpose;session.evidence=evidence;session.challenge=challenge;
+    session.teacherReviewApproved=true;
     session.teacherCriteria={...(session.teacherCriteria||{}),...criteria};
     if((session.grades||[]).length===1)session.criterion=criteria[session.grades[0]];
     if(typeof window.save==='function'&&!window.save())throw new Error('Cambios en memoria: no se pudo confirmar su almacenamiento. Descarga una copia antes de cerrar.');
@@ -71,7 +72,7 @@
   function undoSession(session){
     if(!session?.reviewHistory?.length)return false;
     const previous=session.reviewHistory.pop();
-    for(const key of ['purpose','evidence','challenge','criterion','teacherCriteria'])
+    for(const key of ['purpose','evidence','challenge','criterion','teacherCriteria','teacherReviewApproved'])
       if(Object.prototype.hasOwnProperty.call(previous,key))session[key]=previous[key];
     if(typeof window.save==='function'&&!window.save())throw new Error('No se pudo confirmar el almacenamiento al restaurar.');
     window.renderSessionOutput?.(session);

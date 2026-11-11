@@ -336,9 +336,13 @@
     session.activityTitle=tidy(activity?.title||title);
     session.sessionFocus=focus;
     session.learningPurposeParts=parts;
-    session.purpose=purposeText(parts);
-    session.criterion=criterionForSession(session.area,title,focus,session.criterion,session.level);
-    session.evidence=evidenceForSession(session.area,title,focus,session.evidence,session.level);
+    // Once the teacher explicitly approves a correction, no later view,
+    // enhancement or Word export may replace the approved fields.
+    if(session.teacherReviewApproved!==true){
+      session.purpose=purposeText(parts);
+      session.criterion=criterionForSession(session.area,title,focus,session.criterion,session.level);
+      session.evidence=evidenceForSession(session.area,title,focus,session.evidence,session.level);
+    }
     const curriculum=inheritCurriculum(unit,session.area,session);
     if(curriculum.competence)session.competence=curriculum.competence;
     session.capacities=curriculum.capacities;

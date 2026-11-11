@@ -43,10 +43,12 @@ api.commitSession(session,{purpose:'Dialogamos sobre derechos a partir de histor
  criteria:{'2.º':'Expresa una idea y formula una pregunta sobre un derecho'}});
 assert.equal(session.teacherCriteria['2.º'],'Expresa una idea y formula una pregunta sobre un derecho');
 assert.equal(session.criterion,session.teacherCriteria['2.º']);
+assert.equal(session.teacherReviewApproved,true);
 assert.equal(session.reviewHistory.length,1);
 api.undoSession(session);
 assert.equal(Object.keys(session.teacherCriteria||{}).length,0,'El criterio específico aprobado debe desaparecer al restaurar la versión previa');
 assert.equal(session.criterion,'Explica una idea sobre los derechos');
+assert.equal(session.teacherReviewApproved,undefined);
 const oldSave=window.save;
 window.save=()=>false;
 assert.throws(()=>api.commitUnit(unit,{situation:improved,reto:'¿Qué derechos?',product:'Guía ilustrada'}),/Cambios en memoria/);

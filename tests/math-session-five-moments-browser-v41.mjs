@@ -48,7 +48,7 @@ try{
      onScreen:aliases.map(re=>re.test(onScreen)),
      forWord:aliases.map(re=>re.test(forWord)),
      corrupt:/\b(?:Analizan|Identifican|Proponen)\s+(?:Leen|Identifican|Proponen)\b/i.test(forWord),
-     hasPurpose:forWord.includes('Resolvemos repartos equitativos'),
+     hasPurpose:typeof session.purpose==='string'&&session.purpose.length>30&&forWord.includes(session.purpose),
      empty:forWord.length<700,
      headings
    };
