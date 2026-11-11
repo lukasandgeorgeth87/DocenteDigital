@@ -89,13 +89,19 @@
   }
 
   function mathProcess(){
+    // Secuencia de cinco momentos matemáticos: el estudiante plantea,
+    // representa, explica y comprueba; el docente media y formaliza.
     return [
-      ['COMPRENSIÓN DEL PROBLEMA','Identifican qué se busca, datos relevantes, relaciones y condiciones; reformulan el problema con sus propias palabras.'],
-      ['BÚSQUEDA DE ESTRATEGIAS','Proponen más de una vía posible, anticipan resultados y eligen materiales, representaciones o procedimientos.'],
-      ['REPRESENTACIÓN Y EJECUCIÓN','Modelan con material concreto, dibujos, esquemas, tablas, expresiones o procedimientos adecuados al grado.'],
-      ['SOCIALIZACIÓN Y VALIDACIÓN','Comparan estrategias, analizan errores, argumentan por qué un procedimiento funciona y verifican la razonabilidad del resultado.'],
-      ['FORMALIZACIÓN','El docente organiza las ideas construidas y explicita el concepto, relación, propiedad o procedimiento matemático con ejemplos y contraejemplos.'],
-      ['REFLEXIÓN Y TRANSFERENCIA','Resuelven una variación o nuevo problema y explican qué conservaron o modificaron de su estrategia.']
+      ['FAMILIARIZACIÓN CON EL PROBLEMA',
+       'Leen o escuchan el problema, identifican qué se pregunta, qué datos se conocen y qué condiciones deben respetar; lo explican con sus propias palabras.'],
+      ['BÚSQUEDA Y EJECUCIÓN DE ESTRATEGIAS',
+       'Proponen estrategias, eligen material o representaciones adecuadas al grado, prueban procedimientos y registran sus resultados y dificultades.'],
+      ['SOCIALIZACIÓN DE REPRESENTACIONES',
+       'Comparan sus representaciones y procedimientos con los de otros estudiantes; explican cómo llegaron al resultado y contrastan soluciones.'],
+      ['REFLEXIÓN Y GENERALIZACIÓN',
+       'Comprueban la respuesta con los datos del problema, explican por qué la estrategia funciona y construyen una idea, relación o procedimiento que puedan aplicar nuevamente.'],
+      ['PLANTEAMIENTO DE OTROS PROBLEMAS',
+       'Cambian un dato o una condición del problema, resuelven el nuevo caso y argumentan qué estrategia mantienen o modifican y por qué.']
     ];
   }
 
@@ -157,11 +163,16 @@
   }
 
   function learnerAction(session,index,process){
-    const verb=cap(v(session,index+2));
-    const what=process[1].replace(/[.]$/,'').toLowerCase();
-    const form=index%3===0?'en parejas y luego en plenaria':index%3===1?'de manera individual y después contrastando con un compañero':'en equipos con roles definidos';
-    const resource=session.resourcesList?.length?session.resourcesList[index%session.resourcesList.length]:'material o recurso disponible';
-    return `${verb} ${what}, ${form}, para producir evidencia vinculada al criterio, usando ${resource} cuando aporte al aprendizaje.`;
+    // La consigna ya comienza por un verbo conjugado (identifican,
+    // comparan, formulan...); no colocar un segundo verbo delante.
+    const instruction=String(process?.[1]||'').trim().replace(/[.\s]+$/,'');
+    const group=index%3===0?'en parejas y después en plenaria'
+      :index%3===1?'individualmente y luego contrastando con un compañero'
+      :'en equipos con responsabilidades claras';
+    const resources=Array.isArray(session.resourcesList)?session.resourcesList:[];
+    const resource=resources.length?resources[index%resources.length]:'';
+    const media=resource?'; usan '+resource+' cuando resulte pertinente':'';
+    return instruction+'; trabajan '+group+media+'.';
   }
 
   function startActions(session){

@@ -42,7 +42,8 @@ const cases=[
  ['Guardar propuesta válida de derechos','tests/rights-finalize-situation-v34.mjs'],
  ['Solicitud breve muestra derechos y Expo como opción 2','tests/short-rights-options-v35.mjs'],
  ['Producto canónico y descripción separada','tests/product-canonical-contract-v36.mjs'],
- ['Selecciones aprobadas protegidas al guardar','tests/approved-selection-storage-v37.mjs']
+ ['Selecciones aprobadas protegidas al guardar','tests/approved-selection-storage-v37.mjs'],
+ ['Cinco momentos de matemática y consignas legibles','tests/primary-math-moments-v38.mjs']
 ];
 assert.match(workflow,/branches:\s*\n\s+- preview\/docentedigital-fase10-20261030/);
 assert(browserWorkflow.includes('node tests/sixth-grade-browser-regression-v21.mjs'),'Prueba de navegador de sexto omitida en CI');

@@ -76,6 +76,7 @@ jobs:
           node tests/docx-xml-safety.mjs
           node tests/context-topic-golden.mjs
           node tests/three-level-pedagogy.mjs
+          node tests/primary-math-moments-v38.mjs
           node tests/primary-communication-curriculum.mjs
           node tests/primary-mathematics-curriculum.mjs
           node tests/primary-science-curriculum.mjs
