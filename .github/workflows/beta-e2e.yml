@@ -61,7 +61,8 @@ jobs:
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps chromium
+          # Runner Ubuntu already supplies the system libraries; avoid apt DNS outages.
+          npx playwright install chromium
 
       - name: Start static app
         run: |
@@ -122,6 +123,19 @@ jobs:
         with:
           name: sixth-grade-regression-failure
           path: /tmp/dd-sixth-regression/*.png
+          if-no-files-found: ignore
+
+      - name: Verify real unit correction, reload and Word in browser
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/inline-review-browser-v47.mjs
+
+      - name: Upload correction editor screenshot on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inline-correction-failure
+          path: /tmp/dd-inline-review/*.png
           if-no-files-found: ignore
 
       - name: Test natural short rights request, expo product and second-grade DOCX

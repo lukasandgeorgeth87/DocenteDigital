@@ -9,7 +9,7 @@
     return trim(v)
       .replace(/\bsobre\s+sobre\b/gi,'sobre')
       .replace(/^En nuestra comunidad,\s*(?=En una actividad de aula,)/i,'')
-      .replace(/\s{2,}/g,' ');
+      .replace(/[ \t]{2,}/g,' ');
   }
   function ensure(field,v){
     const text=trim(v);
@@ -28,7 +28,7 @@
     const product=ensure('Producto',changes.product);
     revision(unit,{situation:unit.situation,reto:unit.reto,product:unit.product,productTitle:unit.productTitle,
       productDescription:unit.productDescription,selectedSituationSource:unit.selectedSituationSource,
-      selectedProductKey:unit.selectedProductKey,approvedSelectionSnapshot:unit.approvedSelectionSnapshot});
+      selectedProductKey:unit.selectedProductKey,productChoiceSource:unit.productChoiceSource,approvedSelectionSnapshot:unit.approvedSelectionSnapshot});
     const productChanged=trim(unit.product)!==product;
     unit.situation=situation;unit.reto=reto;unit.product=product;unit.productTitle=product;
     if(productChanged)unit.productDescription='';
@@ -62,7 +62,7 @@
   function undoUnit(unit){
     if(!unit?.reviewHistory?.length)return false;
     const previous=unit.reviewHistory.pop();
-    for(const key of ['situation','reto','product','productTitle','productDescription','selectedSituationSource','selectedProductKey','approvedSelectionSnapshot'])
+    for(const key of ['situation','reto','product','productTitle','productDescription','selectedSituationSource','selectedProductKey','productChoiceSource','approvedSelectionSnapshot'])
       if(Object.prototype.hasOwnProperty.call(previous,key))unit[key]=previous[key];
     if(typeof window.save==='function'&&!window.save())throw new Error('No se pudo confirmar el almacenamiento al restaurar.');
     window.renderUnits?.();window.renderUnitOutput?.(unit);
