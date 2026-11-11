@@ -65,7 +65,7 @@
 
   function compactResources(session){
     var rows=resourcePlan(session);
-    return rows.length?'<ul>'+rows.map(function(x){return '<li><b>'+E(x.code)+':</b> '+E(x.resource)+' — '+E(x.moment)+'.</li>';}).join('')+'</ul>':'<p>Solo se utilizarán los materiales básicos definidos en la actividad.</p>';
+    return rows.length?'<ul>'+rows.map(function(x){return '<li><b>'+E(x.code)+':</b> '+E(x.resource)+' — uso previsto: '+E(x.moment)+'.</li>';}).join('')+'</ul>':'<p>Solo se utilizarán los materiales básicos definidos en la actividad.</p>';
   }
 
   function internalAudit(session){
@@ -93,8 +93,8 @@
       html=html.replace(/<h2>8\. FORMALIZACIÓN PARA PIZARRA<\/h2>[\s\S]*?(?=<h2>9\. MATERIALES \/ ANEXOS<\/h2>)/,'');
       html=html.replace(/<h2>9\. MATERIALES \/ ANEXOS<\/h2>[\s\S]*?(?=<\/div>\s*$)/,'');
 
-      var tail='<h2>8. RECURSOS Y MATERIALES REALMENTE UTILIZADOS</h2>'+compactResources(session)+
-        '<h2>9. MATRIZ DE USO DE RECURSOS</h2>'+resourceTable(session)+
+      var tail='<h2>8. RECURSOS SELECCIONADOS PARA PLANIFICAR (USO POR CONFIRMAR)</h2>'+compactResources(session)+
+        '<h2>9. PLAN PROPUESTO DE USO DE RECURSOS</h2>'+resourceTable(session)+
         '<h2>10. '+(session.level==='Inicial'?'SISTEMATIZACIÓN BREVE DEL APRENDIZAJE':'PARA PIZARRA / SISTEMATIZACIÓN POR GRADO')+'</h2>'+boardHtml(session);
 
       if(/<\/div>\s*$/.test(html))html=html.replace(/<\/div>\s*$/,tail+'</div>');
