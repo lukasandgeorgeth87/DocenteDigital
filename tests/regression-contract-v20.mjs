@@ -47,7 +47,12 @@ const cases=[
  ['Cinco procesos por competencia en salida final de sesiones','tests/primary-math-final-sequence-v39.mjs'],
  ['Instrumentos específicos en sesiones individuales','tests/individual-session-rubric-v40.mjs'],
  ['Cinco momentos de Matemática visibles en navegador y Word','tests/math-session-five-moments-browser-v41.mjs'],
- ['Regresiones detectadas en Word real de 2.º grado','tests/second-grade-upload-regressions-v42.mjs']
+ ['Regresiones detectadas en Word real de 2.º grado','tests/second-grade-upload-regressions-v42.mjs'],
+ ['Bloqueo GPT sin pago','tests/ai-preview-lock-v43.mjs'],
+ ['Contrato GPT simulado','tests/ai-contract.mjs'],
+ ['GPT preflight solo lectura','tests/ai-preflight.mjs'],
+ ['GPT preflight cupo sintético','tests/ai-quota-write-preflight.mjs'],
+ ['Cliente GPT sin persistencia de secretos','tests/ai-beta-client.mjs']
 ];
 assert.match(workflow,/branches:\s*\n\s+- preview\/docentedigital-fase10-20261030/);
 assert(browserWorkflow.includes('node tests/sixth-grade-browser-regression-v21.mjs'),'Prueba de navegador de sexto omitida en CI');
