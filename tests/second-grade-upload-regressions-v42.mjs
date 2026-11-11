@@ -55,4 +55,20 @@ assert(sanitized.startsWith('En una actividad de aula,'));
 assert(!/forma parte de la experiencia|Aunque conocen algunos aspectos/i.test(sanitized));
 assert.equal(ctx.situation({situation:bad,reto:'¿Cómo explicamos nuestros derechos?',selectedSituationSource:'Docente'}),bad,
  'La situación manual es inmutable');
+const resources=src('sesiones-maestras-core-v1.js');
+const r1=resources.indexOf('  function resourceTable(session,forWord=false){');
+const r2=resources.indexOf('  function compactResources(session){',r1);
+assert(r1>=0&&r2>r1);
+const rctx={resourcePlan:()=>[{
+ code:'PIZ-01',resource:'Pizarra',grade:'2.º',moment:'Cierre',
+ teacher:'Conduce la síntesis',student:'Explica su idea',mode:'Uso común',purpose:'Organizar lo aprendido'
+}],E:x=>String(x)};
+runInNewContext(resources.slice(r1,r2)+'\nthis.resourceTable=resourceTable;',rctx);
+const wordTable=rctx.resourceTable({},true);
+const screenTable=rctx.resourceTable({},false);
+assert.equal((wordTable.match(/<th>/g)||[]).length,4,'La matriz A4 vertical no admite ocho columnas');
+assert.equal((screenTable.match(/<th>/g)||[]).length,8,'Conservar detalle de navegación en pantalla');
+assert(wordTable.includes('Conduce la síntesis')&&wordTable.includes('Explica su idea'));
+assert(resources.includes('RECURSOS SELECCIONADOS PARA PLANIFICAR (USO POR CONFIRMAR)'));
+assert(!resources.includes('RECURSOS Y MATERIALES REALMENTE UTILIZADOS'));
 console.log('PASS v42: ancho A4, tema de 2.º, situación y edición histórica protegida');

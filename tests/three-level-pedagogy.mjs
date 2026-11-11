@@ -193,7 +193,7 @@ for(const item of cases){
   assert.match(complete,/Producto integrador/);
   assert.match(complete,/REGISTRO DE EVALUACIÓN FORMATIVA/);
   assert.match(complete,/Evidencia a observar/);
-  assert.match(complete,/MATRIZ DE USO DE RECURSOS/,'Conservar los anexos de Sesiones Maestras');
+  assert.match(complete,/PLAN PROPUESTO DE USO DE RECURSOS/,'Conservar anexos sin afirmar recursos realmente utilizados');
   assert.match(complete,/SISTEMATIZACIÓN|PARA PIZARRA \/ SISTEMATIZACIÓN/,'Conservar síntesis por nivel');
   assert.match(complete,/Capacidades por verificar/,'No presentar capacidades como oficiales sin matriz literal verificada');
   assert.doesNotMatch(complete,/FORMALIZACIÓN PARA PIZARRA|Se desarrolla el proceso con preguntas de alta demanda cognitiva|Preparar la situación de problematización/);
