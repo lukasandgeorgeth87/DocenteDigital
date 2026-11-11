@@ -437,6 +437,49 @@
       evidence:`${base.evidence} Registrar el proceso y la explicación propia de ${grade}; no intercambiar el criterio de un grado por el de otro.`
     };
   }
+  function primaryMathematicsSteps(mode){
+    // Mantener las cinco etapas visibles también en Chrome y Word. Cada
+    // competencia moviliza actuaciones distintas; si no se reconoce el modo,
+    // pedir confirmación en lugar de inventar una correspondencia con el CNEB.
+    const routes={
+      cantidad:[
+        'Familiarización con el problema: identifican cantidades, datos, relaciones y lo que se busca; reformulan la pregunta.',
+        'Búsqueda y ejecución de estrategias: representan cantidades y eligen operaciones, material concreto o procedimientos apropiados al grado.',
+        'Socialización de representaciones: comparan modelos, cálculos y maneras de resolver; explican por qué sus procedimientos responden al problema.',
+        'Reflexión y generalización: comprueban las operaciones con los datos, justifican el resultado y acuerdan la relación matemática utilizada.',
+        'Planteamiento de otros problemas: modifican una cantidad o condición y resuelven una nueva situación usando y ajustando la estrategia.'
+      ],
+      regularidad:[
+        'Familiarización con el problema: reconocen secuencias, igualdades o relaciones de cambio y precisan qué valor o regla se busca.',
+        'Búsqueda y ejecución de estrategias: representan patrones con objetos, dibujos, tablas o expresiones y prueban una regla posible.',
+        'Socialización de representaciones: comparan reglas, términos y equivalencias y explican cómo se comprueba cada propuesta.',
+        'Reflexión y generalización: verifican la regularidad con distintos casos y expresan una regla o relación que se mantiene.',
+        'Planteamiento de otros problemas: cambian un término o condición y analizan si la misma regla sigue siendo válida.'
+      ],
+      forma:[
+        'Familiarización con el problema: observan formas, medidas, ubicaciones o recorridos y precisan la condición espacial que deben resolver.',
+        'Búsqueda y ejecución de estrategias: modelan, construyen, dibujan o miden con instrumentos pertinentes al grado y registran resultados.',
+        'Socialización de representaciones: comparan croquis, construcciones, medidas o recorridos y justifican sus elecciones.',
+        'Reflexión y generalización: verifican propiedades y relaciones geométricas y explican la estrategia que permite resolver el problema.',
+        'Planteamiento de otros problemas: cambian una medida, posición o condición y resuelven otra situación espacial.'
+      ],
+      datos:[
+        'Familiarización con el problema: identifican la pregunta estadística, qué datos existen y cuáles necesitan reunir o interpretar.',
+        'Búsqueda y ejecución de estrategias: recolectan u organizan datos disponibles en tablas o gráficos apropiados al grado.',
+        'Socialización de representaciones: comparan tablas o gráficos, interpretan frecuencias y comunican qué información muestran.',
+        'Reflexión y generalización: contrastan conclusiones con los datos y reconocen cuándo la información no permite afirmaciones suficientes.',
+        'Planteamiento de otros problemas: formulan otra pregunta, cambian la agrupación de datos o ensayan una representación diferente.'
+      ]
+    };
+    return routes[mode]||[
+      'Familiarización con el problema: identificar qué se busca y confirmar con el docente la competencia matemática principal.',
+      'Búsqueda y ejecución de estrategias: seleccionar procedimientos solo después de precisar la competencia y el grado.',
+      'Socialización de representaciones: contrastar procedimientos y determinar las evidencias que se recogerán.',
+      'Reflexión y generalización: revisar la coherencia del criterio con la competencia confirmada.',
+      'Planteamiento de otros problemas: proponer una variación solo cuando esté definido el aprendizaje previsto.'
+    ];
+  }
+
   function steps(session){
     if(session.level==='Inicial')return[
       'Explorar con materiales e imágenes seguros; recoger ideas y preguntas sin adelantar respuestas.',
@@ -467,38 +510,13 @@
       ];
     }
     if(session.area==='Matemática'){
-      if(session.level==='Primaria'){
-        const mode=mathematicsMode(session);
-        if(mode==='cantidad')return[
-          'Interpretar la situación de cantidad, reconocer relaciones y representar datos con materiales o números.',
-          'Elegir operaciones y procedimientos adecuados al grado; resolver y comprobar.',
-          'Explicar la operación usada, comparar estrategias y verificar sentido de la respuesta.'
-        ];
-        if(mode==='regularidad')return[
-          'Observar una secuencia, igualdad o relación de cambio e identificar qué se mantiene.',
-          'Representar y comprobar la regla con objetos, tablas o expresiones.',
-          'Explicar cómo se verificó la regularidad y cuándo se puede aplicar.'
-        ];
-        if(mode==='forma')return[
-          'Explorar formas, ubicaciones o recorridos y representar el problema espacial.',
-          'Modelar, construir o medir usando materiales e instrumentos pertinentes.',
-          'Comunicar las propiedades y justificar medidas, recorridos o transformaciones.'
-        ];
-        if(mode==='datos')return[
-          'Plantear una pregunta para recoger o interpretar datos del contexto.',
-          'Registrar, organizar y representar datos mediante tablas o gráficos apropiados al grado.',
-          'Interpretar resultados y sustentar una decisión o predicción según la evidencia.'
-        ];
-        return[
-          'Identificar con el docente si la situación corresponde a cantidad, regularidad, forma o datos.',
-          'Elegir representaciones y procedimientos coherentes con la competencia confirmada.',
-          'Recoger evidencias y revisar la respuesta con criterios específicos.'
-        ];
-      }
+      if(session.level==='Primaria')return primaryMathematicsSteps(mathematicsMode(session));
       return[
-        'Comprender el problema, identificar datos y representarlo con objetos, esquemas o tablas.',
-        'Elegir y aplicar una estrategia; contrastar procedimientos y verificar resultados.',
-        'Explicar la solución y analizar si sigue siendo válida con otros datos.'
+        'Familiarización con el problema: identificar datos, relaciones, condiciones y la incógnita.',
+        'Búsqueda y ejecución: representar el problema, seleccionar procedimientos y registrar intentos.',
+        'Socialización de representaciones: comparar estrategias y argumentar sus ventajas y límites.',
+        'Reflexión y generalización: verificar resultados y justificar las relaciones matemáticas empleadas.',
+        'Otros problemas: variar datos o condiciones y analizar cómo cambian las soluciones.'
       ];
     }
     if(session.area==='Personal Social'&&session.level==='Primaria'){
