@@ -2,6 +2,7 @@ const {crc32,inflateSync}=require('node:zlib');
 const {reserveQuota}=require('./_ai-quota');
 const {checkBetaAccess}=require('./_beta-access');
 const {betaEnvironmentAllowed}=require('./_ai-beta-environment');
+const {paidRequestsAllowed}=require('./_ai-paid-approval');
 const {redactPersonalData}=require('./_ai-privacy');
 const IMAGE_URL='https://api.openai.com/v1/images/generations';
 function send(res,status,data){res.statusCode=status;res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(data));}
@@ -114,6 +115,7 @@ module.exports=async function handler(req,res){
   if(!process.env.OPENAI_API_KEY)return send(res,503,{ok:false,error:'openai_not_configured'});
   // Fail-closed billing switch; still requires independent access control and quotas.
   if(process.env.DD_AI_BETA_ENABLED!=='true')return send(res,503,{ok:false,error:'ai_beta_disabled'});
+  if(!paidRequestsAllowed())return send(res,503,{ok:false,error:'ai_paid_calls_disabled'});
   const denied=checkBetaAccess(req);
   if(denied)return send(res,denied.status,{ok:false,error:denied.error});
   const body=req.body&&typeof req.body==='object'?req.body:{};

@@ -1,5 +1,6 @@
 const {quotaConfig}=require('./_ai-quota');
 const {betaEnvironmentAllowed}=require('./_ai-beta-environment');
+const {paidRequestsAllowed}=require('./_ai-paid-approval');
 module.exports = function handler(req,res){
   if(req.method !== 'GET'){
     res.statusCode=405;
@@ -11,13 +12,15 @@ module.exports = function handler(req,res){
   res.setHeader('Cache-Control','no-store');
   const configured=Boolean(process.env.OPENAI_API_KEY);
   const environmentAllowed=betaEnvironmentAllowed();
-  const enabled=environmentAllowed&&process.env.DD_AI_BETA_ENABLED==='true';
+  const enabled=environmentAllowed&&process.env.DD_AI_BETA_ENABLED==='true'&&paidRequestsAllowed();
   const accessConfigured=typeof process.env.DD_AI_BETA_TOKEN==='string'&&process.env.DD_AI_BETA_TOKEN.length>=32;
   const quotaConfigured=Boolean(quotaConfig());
   res.end(JSON.stringify({
     ok:true,
     configured,
     enabled,
+    paid_calls_enabled:enabled,
+    requires_explicit_paid_activation:true,
     preview_only:true,
     environment_allowed:environmentAllowed,
     access_required:true,

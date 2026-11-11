@@ -1,6 +1,7 @@
 const {reserveQuota}=require('./_ai-quota');
 const {checkBetaAccess}=require('./_beta-access');
 const {betaEnvironmentAllowed}=require('./_ai-beta-environment');
+const {paidRequestsAllowed}=require('./_ai-paid-approval');
 const {redactPersonalData}=require('./_ai-privacy');
 const ROUTINE_MODEL = process.env.OPENAI_MODEL_ROUTINE || 'gpt-6-luna';
 const COMPLEX_MODEL = process.env.OPENAI_MODEL_COMPLEX || 'gpt-6.1-sol';
@@ -116,6 +117,7 @@ module.exports = async function handler(req,res){
   // Fail closed: setting a paid provider key alone must never activate a public endpoint.
   // This is a billing kill switch, NOT authentication or a substitute for quotas.
   if(process.env.DD_AI_BETA_ENABLED!=='true') return json(res,503,{ok:false,error:'ai_beta_disabled'});
+  if(!paidRequestsAllowed())return json(res,503,{ok:false,error:'ai_paid_calls_disabled'});
   const denied=checkBetaAccess(req);
   if(denied)return json(res,denied.status,{ok:false,error:denied.error});
 
