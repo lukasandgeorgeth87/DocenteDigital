@@ -8,6 +8,7 @@ const status=require('../api/ai-status.js');
 const image=require('../api/image.js');
 const previousKey=process.env.OPENAI_API_KEY;
 const previousFlag=process.env.DD_AI_BETA_ENABLED;
+const previousPaidFlag=process.env.DD_AI_PAID_CALLS_ENABLED;
 const previousEnvironment=process.env.VERCEL_ENV;
 const previousBranch=process.env.VERCEL_GIT_COMMIT_REF;
 const previousToken=process.env.DD_AI_BETA_TOKEN;
@@ -55,9 +56,10 @@ async function call(handler,method,body,headers){
 try{
   process.env.VERCEL_ENV='preview';
   // Exercise the authorized Preview branch by default; negative branch cases below override it.
-  process.env.VERCEL_GIT_COMMIT_REF='audit/v5-continuity-offline-diagnostic';
+  process.env.VERCEL_GIT_COMMIT_REF='preview/docentedigital-fase10-20261030';
   delete process.env.OPENAI_API_KEY;
   delete process.env.DD_AI_BETA_ENABLED;
+  delete process.env.DD_AI_PAID_CALLS_ENABLED;
   delete process.env.DD_AI_BETA_TOKEN;
   let res=await call(status,'GET');
   assert.equal(res.statusCode,200);
@@ -84,6 +86,7 @@ try{
   assert.equal(res.statusCode,503);
   assert.equal(res.body.error,'ai_beta_disabled');
   process.env.DD_AI_BETA_ENABLED='true';
+  process.env.DD_AI_PAID_CALLS_ENABLED='true'; // mocked provider ONLY, never live
   res=await call(status,'GET');
   assert.equal(res.body.text,false,'No access secret must fail closed even with beta enabled');
   res=await call(ai,'POST',{task:'contextual_help',prompt:'Hola'});
@@ -99,6 +102,24 @@ try{
   process.env.UPSTASH_REDIS_REST_URL='https://quota.example.test';
   process.env.UPSTASH_REDIS_REST_TOKEN='quota-test-token';
   process.env.DD_AI_DAILY_MAX_UNITS='1000';
+  // The new payment lock must deny requests even with all other settings ready.
+  delete process.env.DD_AI_PAID_CALLS_ENABLED;
+  const blockedFetch=globalThis.fetch;
+  let blockedCalls=0;
+  globalThis.fetch=async()=>{blockedCalls++;throw Error('Paid API cannot run');};
+  res=await call(status,'GET');
+  assert.equal(res.body.enabled,false);
+  assert.equal(res.body.paid_calls_enabled,false);
+  assert.equal(res.body.text,false);
+  res=await call(ai,'POST',{task:'contextual_help',prompt:'Sin gastar'});
+  assert.equal(res.statusCode,503);
+  assert.equal(res.body.error,'ai_paid_calls_disabled');
+  res=await call(image,'POST',{prompt:'Sin gastar',confirmedCredit:true});
+  assert.equal(res.statusCode,503);
+  assert.equal(res.body.error,'ai_paid_calls_disabled');
+  assert.equal(blockedCalls,0,'Payment lock must prevent calls to Redis and provider');
+  globalThis.fetch=blockedFetch;
+  process.env.DD_AI_PAID_CALLS_ENABLED='true';
   // Paid beta must never run in production or an unknown environment, even
   // when all six secrets/switches exist. Verify denial before Redis or GPT.
   const quotaBeforeProduction=quotaCount;
@@ -139,7 +160,7 @@ try{
   assert.equal(quotaCount,quotaBeforeProduction,'Foreign Preview must not consume quota');
   assert.equal(productionNetworkCalls,0,'Foreign Preview must not contact Redis or OpenAI');
   globalThis.fetch=beforeProductionFetch;
-  process.env.VERCEL_GIT_COMMIT_REF='audit/v5-continuity-offline-diagnostic';
+  process.env.VERCEL_GIT_COMMIT_REF='preview/docentedigital-fase10-20261030';
   res=await call(status,'GET');
   assert.equal(res.body.environment_allowed,true);
   assert.equal(res.body.enabled,true);
@@ -834,6 +855,8 @@ try{
   else process.env.DD_AI_BETA_TOKEN=previousToken;
   if(previousFlag===undefined)delete process.env.DD_AI_BETA_ENABLED;
   else process.env.DD_AI_BETA_ENABLED=previousFlag;
+  if(previousPaidFlag===undefined)delete process.env.DD_AI_PAID_CALLS_ENABLED;
+  else process.env.DD_AI_PAID_CALLS_ENABLED=previousPaidFlag;
   if(previousKey===undefined)delete process.env.OPENAI_API_KEY;
   else process.env.OPENAI_API_KEY=previousKey;
 }

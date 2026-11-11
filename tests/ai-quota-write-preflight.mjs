@@ -18,7 +18,7 @@ async function request(method='POST',headers=validHeaders){
 }
 try{
   process.env.VERCEL_ENV='preview';
-  process.env.VERCEL_GIT_COMMIT_REF='audit/v5-continuity-offline-diagnostic';
+  process.env.VERCEL_GIT_COMMIT_REF='preview/docentedigital-fase10-20261030';
   process.env.DD_AI_BETA_TOKEN=secret;
   delete process.env.UPSTASH_REDIS_REST_URL;
   delete process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -34,7 +34,7 @@ try{
   process.env.VERCEL_GIT_COMMIT_REF='another-branch';
   res=await request();
   assert.equal(res.statusCode,403);
-  process.env.VERCEL_GIT_COMMIT_REF='audit/v5-continuity-offline-diagnostic';
+  process.env.VERCEL_GIT_COMMIT_REF='preview/docentedigital-fase10-20261030';
   res=await request('POST',{});
   assert.equal(res.statusCode,401);
   res=await request('POST',{'x-dd-beta-token':'wrong','x-dd-quota-write-confirm':'synthetic-only'});

@@ -14,7 +14,7 @@ async function request(method='GET',headers={'x-dd-beta-token':token}){
 }
 try{
   process.env.VERCEL_ENV='preview';
-  process.env.VERCEL_GIT_COMMIT_REF='audit/v5-continuity-offline-diagnostic';
+  process.env.VERCEL_GIT_COMMIT_REF='preview/docentedigital-fase10-20261030';
   process.env.DD_AI_BETA_TOKEN=token;
   delete process.env.UPSTASH_REDIS_REST_URL;
   delete process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -44,7 +44,7 @@ try{
   res=await request();
   assert.equal(res.statusCode,403,'Missing branch metadata must fail closed');
   assert.equal(calls,0,'Missing-branch requests must not contact Redis');
-  process.env.VERCEL_GIT_COMMIT_REF='audit/v5-continuity-offline-diagnostic';
+  process.env.VERCEL_GIT_COMMIT_REF='preview/docentedigital-fase10-20261030';
   process.env.UPSTASH_REDIS_REST_URL='https://quota.example.test';
   process.env.UPSTASH_REDIS_REST_TOKEN='redis-test-only-token';
   process.env.DD_AI_DAILY_MAX_UNITS='10';

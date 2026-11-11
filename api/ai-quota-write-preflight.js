@@ -4,8 +4,7 @@
 const {randomUUID}=require('node:crypto');
 const {quotaConfig}=require('./_ai-quota');
 const {checkBetaAccess}=require('./_beta-access');
-const {betaEnvironmentAllowed}=require('./_ai-beta-environment');
-const BRANCH='audit/v5-continuity-offline-diagnostic';
+const {AUTHORIZED_BRANCH,betaEnvironmentAllowed}=require('./_ai-beta-environment');
 const SCRIPT=[
   "redis.call('INCRBY',KEYS[1],1)",
   "redis.call('EXPIRE',KEYS[1],60)",
@@ -19,7 +18,7 @@ function send(res,status,body){
 }
 module.exports=async function handler(req,res){
   if(req.method!=='POST')return send(res,405,{ok:false,error:'method_not_allowed'});
-  if(!betaEnvironmentAllowed()||process.env.VERCEL_GIT_COMMIT_REF!==BRANCH)
+  if(!betaEnvironmentAllowed()||process.env.VERCEL_GIT_COMMIT_REF!==AUTHORIZED_BRANCH)
     return send(res,403,{ok:false,error:'ai_preview_branch_only'});
   const denied=checkBetaAccess(req);
   if(denied)return send(res,denied.status,{ok:false,error:denied.error});

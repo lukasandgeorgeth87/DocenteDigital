@@ -3,8 +3,7 @@
 // without reserving quota or contacting OpenAI.
 const {quotaConfig}=require('./_ai-quota');
 const {checkBetaAccess}=require('./_beta-access');
-const {betaEnvironmentAllowed}=require('./_ai-beta-environment');
-const BRANCH='audit/v5-continuity-offline-diagnostic';
+const {AUTHORIZED_BRANCH,betaEnvironmentAllowed}=require('./_ai-beta-environment');
 function send(res,status,body){
   res.statusCode=status;
   res.setHeader('Content-Type','application/json; charset=utf-8');
@@ -13,7 +12,7 @@ function send(res,status,body){
 }
 module.exports=async function handler(req,res){
   if(req.method!=='GET')return send(res,405,{ok:false,error:'method_not_allowed'});
-  if(!betaEnvironmentAllowed()||process.env.VERCEL_GIT_COMMIT_REF!==BRANCH)
+  if(!betaEnvironmentAllowed()||process.env.VERCEL_GIT_COMMIT_REF!==AUTHORIZED_BRANCH)
     return send(res,403,{ok:false,error:'ai_preview_branch_only'});
   const denied=checkBetaAccess(req);
   if(denied)return send(res,denied.status,{ok:false,error:denied.error});
