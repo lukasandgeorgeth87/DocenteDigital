@@ -63,7 +63,7 @@
     if(!text)return '<w:p/>';
     return `<w:p><w:pPr>${center?'<w:jc w:val="center"/>':''}<w:spacing w:after="${after}"/></w:pPr>${runXml(text,bold,size)}</w:p>`;
   }
-  function tableXml(table){
+  function tableXml(table,totalWidth){
     const rows=[...table.rows];
     if(!rows.length)return '';
     const cellsOf=tr=>[...tr.children].filter(c=>/^(TD|TH)$/.test(c.tagName));
@@ -71,7 +71,9 @@
     const count=Math.max(1,...rows.map(tr=>cellsOf(tr).reduce((n,c)=>n+span(c),0)));
     // Word necesita tblGrid explícito y anchos consistentes para evitar páginas
     // vacías y columnas que se expanden al imprimir tablas largas.
-    const totalWidth=15000;
+    // 10400 twips caben en A4 vertical con márgenes de 720 twips;
+    // 15000 twips caben en A4 horizontal. No reutilizar el ancho horizontal.
+    totalWidth=Number(totalWidth)||10400;
     const declared=String(table.getAttribute?.('data-col-weights')||'').split(',').map(Number);
     const valid=declared.length===count&&declared.every(n=>Number.isFinite(n)&&n>0);
     const weights=valid?declared:Array(count).fill(1);
@@ -90,12 +92,12 @@
     }).join('');
     return `<w:tbl><w:tblPr><w:tblW w:w="${totalWidth}" w:type="dxa"/><w:tblLayout w:type="fixed"/></w:tblPr>${grid}${body}</w:tbl>${pXml('',{})}`;
   }
-  function htmlToWordXml(html){
+  function htmlToWordXml(html,totalWidth){
     const doc=new DOMParser().parseFromString(`<body>${html}</body>`,'text/html'),out=[];
     function walk(node){
       for(const el of [...node.children]){
         const tag=el.tagName;
-        if(tag==='TABLE'){out.push(tableXml(el));continue;}
+        if(tag==='TABLE'){out.push(tableXml(el,totalWidth));continue;}
         if(tag==='H1'){out.push(pXml(textOf(el),{bold:true,size:32,center:true,after:140}));continue;}
         if(tag==='H2'){out.push(pXml(textOf(el),{bold:true,size:26,after:100}));continue;}
         if(tag==='H3'||tag==='H4'){out.push(pXml(textOf(el),{bold:true,size:23,after:80}));continue;}
@@ -110,7 +112,7 @@
     walk(doc.body);return out.join('');
   }
   function docxBlob(title,html,landscape=false,documentContext=null){
-    const body=htmlToWordXml(html);
+    const body=htmlToWordXml(html,landscape?15000:10400);
     const pgSz=landscape?'<w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>':'<w:pgSz w:w="11906" w:h="16838"/>';
     // Para documentos históricos, usar SOLO el snapshot del documento; nunca
     // completar la identidad con la Ficha Maestra que esté activa hoy.

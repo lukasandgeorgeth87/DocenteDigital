@@ -45,7 +45,11 @@
       .replace(/[.!?]+$/,'').trim();
     const contextual=tidy(unit?.contextFocus||window.ddContextTopic?.(session?.brief||'')||'');
     if(contextual&&/^(?:textos? vinculados? con|relatos e imágenes vinculadas con|relatos y exploramos imágenes vinculadas con|problemas? de cantidad vinculados? con)\b/i.test(stripped))return contextual;
-    if(stripped&&stripped.length<=115)return stripped;
+    // La actividad «Dialogamos sobre X y formulamos preguntas» no usa
+    // «sobre X y formulamos preguntas» como tema gramatical.
+    const topic=stripped.replace(/^sobre\s+/i,'')
+      .replace(/\s+y\s+(?:formulamos|planteamos|respondemos)\s+preguntas\s*$/i,'').trim();
+    if(topic&&topic.length<=115)return topic;
     const semantic=unit?.semanticProfile||unit?.planningMeaning||{};
     const f=tidy(contextual||semantic.focus||semantic.contextConcepts?.[0]||session?.brief||unit?.title||'');
     return (f.length>115?f.slice(0,115).replace(/\s+\S*$/,''):f)||'la actividad de aprendizaje';

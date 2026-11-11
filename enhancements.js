@@ -429,7 +429,18 @@
       AD:'Justifica su actuación y propone una aplicación pertinente a otra situación.'
     };
   }
+  // Corrección de visualización: conserva la sesión histórica original,
+  // pero elimina la duplicación gramatical producida por el generador.
+  function ddCleanGeneratedSessionText(value){
+    return String(value??'')
+      .replace(/\bsobre\s+sobre\b/gi,'sobre')
+      .replace(/\bsobre\s+los\s+derechos\s+de\s+la\s+niñez\s+y\s+formulamos\s+preguntas\b/gi,'sobre los derechos de la niñez');
+  }
   sessionHtml=function(session,forWord=false){
+    session={...session,
+      purpose:ddCleanGeneratedSessionText(session.purpose),
+      criterion:ddCleanGeneratedSessionText(session.criterion),
+      evidence:ddCleanGeneratedSessionText(session.evidence)};
     const gradeCrit=session.grades.map(g=>`<b>${E(g)}:</b> ${E(ddSessionCriterion(session,g))}`).join('<br>');
     const baseCrit=String(session.criterion||'').trim();
     const crit=[baseCrit?`<b>Criterio de la sesión:</b> ${E(baseCrit)}`:'',gradeCrit].filter(Boolean).join('<br>');

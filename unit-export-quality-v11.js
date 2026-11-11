@@ -20,10 +20,18 @@
       if(quote?.[1])return clean(quote[1]);
     }
     const result=selected||authored||'Situación por completar y confirmar con el docente.';
+    // Limpiar la concatenación de DOS plantillas detectada en la prueba de
+    // 2.º grado, solo cuando NO fue redactada manualmente por el docente.
+    let displayed=result;
+    if(u?.selectedSituationSource!=='Docente'
+       &&/^En nuestra comunidad,\s*En una actividad de aula,/i.test(displayed)){
+      displayed=displayed.replace(/^En nuestra comunidad,\s*(?=En una actividad de aula,)/i,'');
+      displayed=displayed.replace(/\s*forma parte de la experiencia de los estudiantes de\s+\d+\.\s*[º°]\.?(?:\s*Aunque conocen algunos aspectos[\s\S]*)?$/i,'').trim();
+    }
     // La pregunta retadora se muestra una sola vez, en su campo propio.
     // No modifica la situación guardada por el docente.
-    if(clean(u?.reto))return result.replace(/\s+El reto\s+(?:será|es|central será)\s*:\s*¿[^?]{10,500}\?\s*$/i,'').trim()||result;
-    return result;
+    if(clean(u?.reto))return displayed.replace(/\s+El reto\s+(?:será|es|central será)\s*:\s*¿[^?]{10,500}\?\s*$/i,'').trim()||displayed;
+    return displayed;
   }
   function competences(u,area,title){
     const core=window.DD_OFFICIAL_CURRICULUM;
