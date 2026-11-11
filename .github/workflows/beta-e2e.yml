@@ -125,6 +125,19 @@ jobs:
           node tests/rights-sixth-two-daily-browser-v32.mjs
           node tests/rights-sixth-two-daily-browser-v32.mjs
 
+      - name: Check actual mathematics session and Word pedagogical moments
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/math-session-five-moments-browser-v41.mjs
+
+      - name: Upload mathematics session failure screenshot
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mathematics-session-failure
+          path: /tmp/dd-math-session/*.png
+          if-no-files-found: ignore
+
       - name: Upload sixth-grade rights failure screenshot
         if: failure()
         uses: actions/upload-artifact@v4
