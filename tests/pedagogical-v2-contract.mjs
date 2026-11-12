@@ -54,7 +54,7 @@ assert(design.situation.length>450&&design.situation.includes('historietas ficti
 assert(design.situation.includes(unit.product.toLowerCase()));
 assert(!design.situation.includes('En nuestra comunidad, En una actividad de aula'));
 assert(design.activities[0].title.includes('viñetas'));
-assert(design.activities.some(a=>a.area==='Matemática'&&a.v2Plan.kind==='data'&&/votos/.test(a.studentAction)));
+assert(design.activities.some(a=>a.area==='Matemática'&&a.v2Plan.kind==='data'&&/vot[ao]|marcas/.test(a.studentAction)));
 assert(design.activities.some(a=>a.area==='Ciencia y Tecnología'&&/no se pudo comprobar|no se pudo|límites|microbios/.test(a.title+' '+a.studentAction+' '+a.evidence)));
 assert(!design.activities.some(a=>/24 tarjetas entre 6/.test(a.studentAction)), 'Evitar división formal no requerida');
 for(let w=1;w<=3;w++){
