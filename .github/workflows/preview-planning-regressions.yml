@@ -5,6 +5,7 @@ on:
     branches:
       - preview/docentedigital-fase10-20261030
       - preview/motor-pedagogico-v2-derechos-2do-20261112
+      - feature/motor-pedagogico-v3-integral-20261112
   workflow_dispatch:
 
 permissions:
@@ -101,6 +102,7 @@ jobs:
           node tests/inline-review-ui-v47.mjs
           node tests/teacher-approved-session-fields-v48.mjs
           node tests/pedagogical-v2-contract.mjs
+          node tests/planning-engine-v3-core.mjs
           node tests/ai-contract.mjs
           node tests/ai-preflight.mjs
           node tests/ai-quota-write-preflight.mjs
