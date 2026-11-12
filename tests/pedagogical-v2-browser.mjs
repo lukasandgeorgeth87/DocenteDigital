@@ -90,7 +90,7 @@ try{
  assert.match(unitZip,/Guía ilustrada/i);
  assert.match(unitZip,/¿Qué derecho reconocemos en las viñetas\?/);
  await page.evaluate(id=>window.useUnit(id),approved.id);
- await page.waitForSelector('#activity option',{timeout:12000});
+ await page.locator('#activity option').first().waitFor({state:'attached',timeout:12000});
  assert.equal(await page.locator('#activity option').count(),30);
  await page.evaluate(()=>window.generateSession());
  await page.waitForFunction(()=>window.state.lastSession?.pedagogicalV2?.version==='2.0.0-rights-grade2',null,{timeout:15000});
