@@ -45,7 +45,7 @@
   const subject=clean(unit.topic||unit.situationBrief||'');
   if(subject.length<3||/^una experiencia cercana/i.test(subject))
    errors.push(issue('subject_missing','tema','Falta una temática o situación concreta.'));
-  if(!clean(unit.productTitle||unit.product)||/producto (integrador|final) por (definir|confirmar)/i.test(clean(unit.product)))
+  if(!clean(unit.productTitle||unit.product)||/producto (?:(?:integrador|final) )?por (?:definir|confirmar)/i.test(clean(unit.product)))
    errors.push(issue('product_missing','producto','El producto no está definido; no puede inventarse.'));
   if(incompatible(subject,unit.title))
    errors.push(issue('topic_mismatch','título','El título parece corresponder a otro tema.'));
