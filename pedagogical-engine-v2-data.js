@@ -85,7 +85,7 @@
    ['Explicamos límites de nuestra demostración','¿Ver las mezclas permite saber si hay microbios?','Distinguen observaciones visibles de afirmaciones que requieren otras fuentes; leen recomendaciones de higiene apropiadas para su edad.','Lista de lo observado y lo que no se pudo comprobar.','Distingue un dato observable de una afirmación no comprobada.','Registro de mezcla y texto informativo revisado.','explain']
   ],
   [
-   ['Preparamos mensajes de higiene basados en evidencia','¿Qué podemos afirmar realmente después del experimento?','Seleccionan observaciones registradas y separan mensajes de cuidado recomendados por fuentes confiables de los resultados de la mezcla.','Mensaje con observación y límite de la prueba.','Comunica un hallazgo y reconoce un límite de la comparación.','Registros reales y fuente escolar verificada.','inquiry'],
+   ['Preparamos mensajes de higiene basados en evidencia','¿Qué podemos afirmar realmente después del experimento?','Seleccionan observaciones registradas, distinguen las recomendaciones de fuentes confiables de los resultados de la mezcla y señalan los límites de la prueba: no observaron microorganismos.','Mensaje con observación y límite de la prueba.','Comunica un hallazgo y reconoce un límite de la comparación.','Registros reales y fuente escolar verificada.','inquiry'],
    ['Compartimos nuestra indagación y sus límites','¿Qué investigamos y qué necesitaríamos averiguar después?','Presentan pregunta, predicción, procedimiento, observación y una duda pendiente sin afirmar que el jabón eliminó microorganismos.','Relato científico breve del proceso y pregunta nueva.','Comunica observaciones y limitaciones de su indagación con claridad.','Fichas de experimento y panel de explicación.','inquiry']
   ]
  ],
