@@ -95,6 +95,19 @@
   }
   if(clean(unit.productTitle||unit.product)&&norm(product)!==norm(unit.productTitle||unit.product))
    errors.push(issue('product_changed','producto','No se puede sustituir el producto aprobado.'));
+  // Un proyecto no es una unidad con otra etiqueta: exige hitos de creación y validación.
+  const milestones=Array.isArray(plan.projectMilestones)?plan.projectMilestones:[];
+  if(unit.type==='Proyecto de aprendizaje'){
+   const needs=['planificacion','investigacion','construccion','evaluacion'];
+   if(milestones.length<4||!needs.every(key=>milestones.some(m=>norm(m.phase)===key)))
+    errors.push(issue('project_cycle_missing','proyecto',
+     'El proyecto necesita hitos verificables de planificación, investigación, construcción y evaluación del producto.'));
+   for(const milestone of milestones){
+    if(clean(milestone.action).length<35||clean(milestone.evidence).length<18)
+     errors.push(issue('project_milestone_weak','proyecto',
+      'Cada hito del proyecto requiere una acción estudiantil y evidencia de avance.'));
+   }
+  }
   const allowed=new Set(unit.areas||[]),seen=new Set(),trail=[],weekCounts=new Map(),blocks=new Set();
   for(let i=0;i<plan.activities.length;i++){
    const a=plan.activities[i]||{},field='sesión '+(i+1);
@@ -145,7 +158,7 @@
    'Los desempeños y estándares de grado requieren vinculación documental y revisión docente; no se presentan como verificados.'));
   return result(errors,warnings,{normalized:{type:unit.type,level:unit.level,grades:copy(unit.grades||[]),
    areas:copy(unit.areas||[]),duration:unit.duration,title,situation,reto,purpose,product,
-   documentContextSnapshot:copy(unit.documentContextSnapshot||{}),sessions:trail},
+   documentContextSnapshot:copy(unit.documentContextSnapshot||{}),projectMilestones:copy(milestones),sessions:trail},
    coverage:{sessions:trail.length,weeks:Object.fromEntries(weekCounts),uniqueTitles:seen.size}});
  }
  function compile(unit,provider,curriculum){
@@ -166,6 +179,68 @@
   return {...audited,reviewRequired:true,readyForPublishing:false,
    origin:'contenido local cotejado, sin GPT',approvalRequired:true};
  }
+ function compileSession(compiled,order,guide){
+  const errors=[],warnings=[];
+  if(!compiled?.ok||!compiled.normalized)
+   return result([issue('unit_unverified','unidad','No se puede crear una sesión desde una planificación no validada.')],warnings);
+  const unit=compiled.normalized;
+  const activity=unit.sessions.find(x=>x.order===Number(order));
+  if(!activity)return result([issue('session_missing','sesión','La sesión solicitada no forma parte de la planificación auditada.')],warnings);
+  if(!guide||typeof guide!=='object')
+   return result([issue('session_guide_missing','sesión',
+    'Faltan las estrategias didácticas concretas. No se completarán con frases vacías.')],warnings);
+  const steps=Array.isArray(guide.steps)?guide.steps.map(v=>({
+   name:clean(Array.isArray(v)?v[0]:v.name),
+   action:clean(Array.isArray(v)?v[1]:v.action)
+  })):[];
+  if(steps.length<3||steps.some(x=>x.name.length<5||x.action.length<40))
+   errors.push(issue('session_steps_weak','procesos','Cada proceso exige una actuación clara y suficientemente desarrollada.'));
+  if(activity.area==='Matemática'){
+   const expected=['familiarizacion','busqueda','socializacion','reflexion'];
+   if(steps.length!==5||!expected.every((x,i)=>norm(steps[i]?.name).includes(x))||
+    !/otros problemas|planteamiento de otros/.test(norm(steps[4]?.name)))
+    errors.push(issue('math_didactic','procesos','Matemática debe mantener los cinco procesos didácticos en orden.'));
+  }
+  const start=Number(guide.minutes?.start),develop=Number(guide.minutes?.develop),
+   close=Number(guide.minutes?.close);
+  if(![start,develop,close].every(v=>Number.isInteger(v)&&v>0))
+   errors.push(issue('time_missing','tiempo','Indique minutos reales para Inicio, Desarrollo y Cierre.'));
+  const purpose=clean(guide.purpose);
+  if(purpose.length<40)errors.push(issue('session_purpose','propósito','Falta un propósito específico ligado a la actuación.'));
+  const instrument=clean(guide.instrument);
+  if(instrument.length<8)errors.push(issue('session_instrument','evaluación','Falta el instrumento adecuado para observar la evidencia.'));
+  if(errors.length)return result(errors,warnings);
+  const session={
+   version:VERSION,sourceUnitType:unit.type,sourceUnitTitle:unit.title,
+   order:activity.order,title:activity.title,area:activity.area,level:unit.level,grades:copy(unit.grades),
+   week:activity.week,day:activity.day,block:activity.block,
+   competence:activity.competence,capacities:copy(activity.capacities),
+   question:activity.question,purpose,studentAction:activity.studentAction,
+   evidence:activity.evidence,criterion:activity.criterion,resource:activity.resource,
+   instrument,steps,minutes:{start,develop,close,total:start+develop+close},
+   product:unit.product,documentContextSnapshot:copy(unit.documentContextSnapshot),
+   status:'REQUIERE_REVISION_DOCENTE'
+  };
+  return result(errors,warnings,{session,reviewRequired:true,readyForPublishing:false});
+ }
+ function renderSessionDocument(compiled){
+  if(!compiled?.ok||!compiled.session)throw new Error('No se exporta una sesión sin contrato completo.');
+  const s=compiled.session,steps=s.steps.map(x=>'<li><b>'+escape(x.name)+':</b> '+escape(x.action)+'</li>').join('');
+  return '<article class="dd-session-v3"><h1>SESIÓN DE APRENDIZAJE</h1><h2>'+escape(s.title)+'</h2>'+
+   '<p><b>Unidad o proyecto:</b> '+escape(s.sourceUnitTitle)+' · <b>Grados:</b> '+escape(s.grades.join(', '))+'</p>'+
+   '<p><b>Área:</b> '+escape(s.area)+' · <b>Semana:</b> '+escape(s.week)+' · <b>Día:</b> '+escape(s.day)+'</p>'+
+   '<h3>Propósitos y evaluación</h3><p><b>Propósito:</b> '+escape(s.purpose)+'</p>'+
+   '<p><b>Competencia:</b> '+escape(s.competence)+'</p>'+
+   '<p><b>Capacidades:</b> '+escape(s.capacities.join('; '))+'</p>'+
+   '<p><b>Criterio:</b> '+escape(s.criterion)+' · <b>Evidencia:</b> '+escape(s.evidence)+
+   ' · <b>Instrumento:</b> '+escape(s.instrument)+'</p>'+
+   '<h3>Inicio — '+s.minutes.start+' min</h3><p>Presentación de la pregunta: '+escape(s.question)+
+   '. El docente recoge las explicaciones de inicio, sin adelantar respuestas.</p>'+
+   '<h3>Desarrollo — '+s.minutes.develop+' min</h3><ol>'+steps+'</ol>'+
+   '<h3>Cierre — '+s.minutes.close+' min</h3><p>Los estudiantes explican sus evidencias y las contrastan con el criterio; expresan una mejora para su siguiente actuación.</p>'+
+   '<h3>Materiales</h3><p>'+escape(s.resource||'Por confirmar con el docente')+'</p>'+
+   '<p><i>Borrador sujeto a revisión docente: no se atribuyen desempeños o estándares no cotejados al MINEDU.</i></p></article>';
+ }
  function renderDocument(model){
   if(!model?.normalized||!model.ok)throw new Error('No se exporta un plan sin validación estructural.');
   const m=model.normalized;
@@ -180,9 +255,10 @@
    '<h2>Situación significativa</h2><p>'+escape(m.situation)+'</p>'+
    '<p><b>Pregunta retadora:</b> '+escape(m.reto)+'</p><h2>Propósito y producto</h2><p>'+escape(m.purpose)+'</p>'+
    '<p><b>Producto:</b> '+escape(m.product)+'</p>'+
+    (m.type==='Proyecto de aprendizaje'?'<h2>Hitos del proyecto</h2>'+grid(['Fase','Acción','Evidencia'],m.projectMilestones.map(x=>[x.phase,x.action,x.evidence])):'')+
    '<h2>Secuencia de aprendizaje con trazabilidad</h2>'+
    grid(['N.º','Semana / día','Área','Sesión','Competencia','Acción estudiantil','Evidencia','Criterio'],matrix)+
    '<p><i>Competencias contrastadas con el catálogo curricular de la aplicación. Desempeños y estándares de grado pendientes de cotejo. Requiere revisión y aprobación del docente.</i></p></article>';
  }
- root.DDPlanningCoreV3=Object.freeze({version:VERSION,preflight,audit,compile,renderDocument});
+ root.DDPlanningCoreV3=Object.freeze({version:VERSION,preflight,audit,compile,compileSession,renderDocument,renderSessionDocument});
 })(typeof window!=='undefined'?window:globalThis);
