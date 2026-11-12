@@ -58,7 +58,9 @@ const cases=[
  ['Editor en unidad y sesión sin API ni copiar-pegar','tests/inline-review-v46.mjs'],
  ['Interacción real de botones de revisión sin navegador','tests/inline-review-ui-v47.mjs'],
  ['Edición de unidad, recarga y Word real en navegador','tests/inline-review-browser-v47.mjs'],
- ['Propósito aprobado por docente no se sobrescribe','tests/teacher-approved-session-fields-v48.mjs']
+ ['Propósito aprobado por docente no se sobrescribe','tests/teacher-approved-session-fields-v48.mjs'],
+ ['Motor pedagógico V2: competencia, secuencia y Word','tests/pedagogical-v2-contract.mjs'],
+ ['Motor V2: creación real y DOCX en navegador','tests/pedagogical-v2-browser.mjs']
 ];
 assert.match(workflow,/branches:\s*\n\s+- preview\/docentedigital-fase10-20261030/);
 assert(browserWorkflow.includes('node tests/sixth-grade-browser-regression-v21.mjs'),'Prueba de navegador de sexto omitida en CI');

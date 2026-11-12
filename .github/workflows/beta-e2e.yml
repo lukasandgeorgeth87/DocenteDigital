@@ -2,7 +2,7 @@ name: Beta E2E Browser Gate
 
 on:
   push:
-    branches: [main, audit/v5-continuity-offline-diagnostic, preview/docentedigital-fase10-20261030]
+    branches: [main, audit/v5-continuity-offline-diagnostic, preview/docentedigital-fase10-20261030, preview/motor-pedagogico-v2-derechos-2do-20261112]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -136,6 +136,20 @@ jobs:
         with:
           name: inline-correction-failure
           path: /tmp/dd-inline-review/*.png
+          if-no-files-found: ignore
+
+      - name: Verify new pedagogical V2 unit, detailed session and Word
+        if: github.ref == 'refs/heads/preview/motor-pedagogico-v2-derechos-2do-20261112'
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/pedagogical-v2-browser.mjs
+
+      - name: Upload V2 regression screenshot on failure
+        if: failure() && github.ref == 'refs/heads/preview/motor-pedagogico-v2-derechos-2do-20261112'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pedagogical-v2-browser-failure
+          path: /tmp/dd-pedagogical-v2/*.png
           if-no-files-found: ignore
 
       - name: Test natural short rights request, expo product and second-grade DOCX
