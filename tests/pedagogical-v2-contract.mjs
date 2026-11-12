@@ -80,6 +80,7 @@ assert.equal(unit.approvedSelectionSnapshot.productTitle,unit.product);
 assert.equal(unit.selectedSituationSource,'Docente');
 const word=api.unitHtml(unit);
 assert(word.includes('UNIDAD DE APRENDIZAJE'));
+assert(api.unitHtml({...unit,type:'Proyecto de aprendizaje'}).includes('PROYECTO DE APRENDIZAJE'));
 assert(word.includes('SITUACIÓN SIGNIFICATIVA'));
 assert(word.includes('MATRIZ CURRICULAR'));
 assert(word.includes('EVALUACIÓN FORMATIVA'));
@@ -94,12 +95,14 @@ for(const a of [math,physical,civic]){
   criterion:a.criterion,evidence:a.evidence,purpose:'Hoy aprendemos mediante una tarea concreta',
   duration:'40 minutos',times:{start:10,dev:20,close:10},instrument:'Lista de cotejo'};
  assert(s.pedagogicalV2);
+ assert(s.pedagogicalV2.purpose.includes(a.v2Plan.question));
  const html=api.sessionHtmlV2(s);
  assert(html.includes(a.title)&&html.includes(a.criterion));
  assert(html.includes(a.evidence));
  assert(html.includes(a.v2Plan.question));
  assert(html.includes('INICIO')===false||html.includes('Inicio'));
  assert(html.includes('10 min')&&html.includes('20 min'));
+ assert(html.includes('<ol>')&&html.includes('</ol>'),'Procesos en pasos legibles en Word');
  if(a.area==='Matemática'){
   assert.equal(s.pedagogicalV2.steps.length,5);
   assert(s.pedagogicalV2.steps[0][0].includes('Familiarización'));

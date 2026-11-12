@@ -152,7 +152,7 @@
   return {version:VERSION,...p,steps:describeProcesses(p,activity.area),
    title:activity.title,area:activity.area,week:activity.week,day:activity.day,time:activity.time||'',
    criterion:activity.criterion,evidence:activity.evidence,studentAction:activity.studentAction,
-   purpose:'Hoy '+activity.studentAction.charAt(0).toLowerCase()+activity.studentAction.slice(1),
+   purpose:'Hoy resolveremos esta pregunta: «'+p.question+'». Mostraremos lo aprendido mediante '+p.evidence.toLowerCase()+'.',
    unitTitle:unit.title};
  }
  const table=(headers,rows)=>'<table style="border-collapse:collapse;width:100%" border="1" cellpadding="5"><thead><tr>'
@@ -170,7 +170,7 @@
   const purposeRows=[...grouped.entries()].map(([key,p])=>[key.split('|')[0],p.competence,p.capacities.join('; '),
    unit.activities.filter(a=>a.v2Plan.competence===p.competence).map(a=>a.criterion).slice(0,2).join(' / ')]);
   const body=['<div class="dd-v2-document">',
-   '<h1 style="text-align:center">UNIDAD DE APRENDIZAJE — PROPUESTA PEDAGÓGICA V2</h1>',
+   '<h1 style="text-align:center">'+esc((unit.type||'Unidad de aprendizaje').toUpperCase())+' — PROPUESTA PEDAGÓGICA V2</h1>',
    '<h2 style="text-align:center">“'+esc(unit.title)+'”</h2>',
    '<p><b>Alcance:</b> 2.º grado de Primaria · Ciclo III · Tres semanas · '+unit.activities.length+' sesiones del horario guardado</p>',
    '<h2>I. DATOS GENERALES</h2>',table(['Dato','Información'],[
@@ -209,7 +209,7 @@
  function sessionHtmlV2(session){
   const p=session.pedagogicalV2;
   const times=session.times||{start:10,dev:20,close:10};
-  const steps=p.steps.map(([label,action],i)=>String(i+1)+'. '+label+': '+action).join('\n');
+  const steps=p.steps.map(([label,action])=>'<li><b>'+esc(label)+'</b>: '+esc(action)+'</li>').join('');
   return '<div class="dd-v2-document">'
    +'<h1 style="text-align:center">SESIÓN DE APRENDIZAJE — 2.º GRADO DE PRIMARIA</h1>'
    +'<h2 style="text-align:center">“'+esc(session.title)+'”</h2>'
@@ -226,10 +226,12 @@
    +table(['Criterio observable','Evidencia','Instrumento'],[[
      session.teacherCriteria?.['2.º']||session.criterion,session.evidence,session.instrument||'Lista de cotejo']])
    +'<h2>II. MOMENTOS Y PROCESOS DIDÁCTICOS</h2>'
-   +table(['Momento','Actuaciones de estudiantes y mediación','Tiempo'],[
-     ['Inicio','Observan el recurso: '+p.resource+' Formulan hipótesis o ideas iniciales ante la pregunta «'+p.question+'». El docente recupera sus respuestas, comunica propósito y criterio.',(times.start??10)+' min'],
-     ['Desarrollo',steps,(times.dev??20)+' min'],
-     ['Cierre','Explican o muestran '+p.evidence.toLowerCase()+'; revisan si cumplieron el criterio, reconocen una dificultad y acuerdan un siguiente paso.',(times.close??10)+' min']])
+   +'<h3>INICIO — '+esc(times.start??10)+' min</h3>'
+   +'<p>Observan el recurso previsto: '+esc(p.resource)+' Plantean ideas iniciales ante la pregunta «'+esc(p.question)+'». El docente recoge sus explicaciones sin adelantar respuestas y comunica el propósito y el criterio.</p>'
+   +'<h3>DESARROLLO — '+esc(times.dev??20)+' min</h3>'
+   +'<ol>'+steps+'</ol>'
+   +'<h3>CIERRE — '+esc(times.close??10)+' min</h3>'
+   +'<p>Explican o muestran '+esc(p.evidence.toLowerCase())+'; comparan su actuación con el criterio, reconocen una dificultad y acuerdan una mejora concreta.</p>'
    +'<h2>III. RETO CONCRETO, TAREA Y EVALUACIÓN</h2>'
    +'<p><b>Pregunta de trabajo:</b> '+esc(p.question)+'</p>'
    +'<p><b>Acción del estudiante:</b> '+esc(p.studentAction)+'</p>'
@@ -381,7 +383,7 @@
   const p=sessionDetails(session,unit,activity);
   if(!p)return session;
   session.title=activity.title;session.competence=p.competence;session.capacities=p.capacities;
-  session.purpose='Hoy vamos a '+(p.kind==='read'?'leer y comprender':p.kind==='write'?'escribir y revisar':'realizar')+' una actividad para responder: '+p.question;
+  session.purpose=p.purpose;
   session.criterion=p.criterion;session.evidence=p.evidence;session.challenge=p.question;
   session.resources=p.resource;session.pedagogicalV2=p;session.teacherReviewApproved=true;
   root.save?.();

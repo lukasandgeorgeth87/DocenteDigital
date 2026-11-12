@@ -9,7 +9,7 @@ const page=await context.newPage();
 const errors=[],calls=[];
 page.on('pageerror',e=>errors.push(e.message));
 page.on('request',request=>{
- if(/api\.openai\.com|\/api\/(?:ai|image)/.test(request.url()))calls.push(request.url());
+ if(/api\.openai\.com|\/api\/(?:ai|image)(?:\?|\/|$)/.test(request.url()))calls.push(request.url());
 });
 function docxXml(bytes){
  let o=0;
