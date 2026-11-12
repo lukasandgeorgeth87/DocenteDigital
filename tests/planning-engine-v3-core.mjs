@@ -54,7 +54,19 @@ assert.equal(core.compile(context,null,curriculum).errors[0].code,'provider_miss
 assert.equal(core.compile({...context,title:'Investigamos el agua para convivir mejor'},generator,curriculum).errors[0].code,'topic_mismatch');
 assert.equal(core.compile({...context,areas:['Personal Social']},generator,curriculum).ok,false);
 assert.equal(core.compile({...context,product:'Producto por confirmar',productTitle:''},generator,curriculum).ok,false);
-assert.equal(core.compile({...context,type:'Proyecto de aprendizaje'},generator,curriculum).ok,true);
+assert.equal(core.compile({...context,type:'Proyecto de aprendizaje'},generator,curriculum).ok,false,
+ 'Un proyecto no debe cambiar solo de encabezado');
+const milestones=[
+ ['planificacion','En equipos acuerdan objetivos, distribuyen responsabilidades y establecen cómo revisarán sus productos.','Acta de planificación con responsables y criterios.'],
+ ['investigacion','Analizan fuentes sencillas sobre derechos, registran preguntas y seleccionan ejemplos comprensibles para niños.','Fichas de lectura y preguntas organizadas por equipo.'],
+ ['construccion','Elaboran y revisan páginas ilustradas, verificando que cada mensaje se apoye en los textos leídos.','Prototipo de guía ilustrada con cambios visibles.'],
+ ['evaluacion','Presentan las páginas a compañeros, recogen comentarios respetuosos y justifican una mejora del producto.','Versión final y ficha de retroalimentación argumentada.']
+].map(([phase,action,evidence])=>({phase,action,evidence}));
+const projectProvider=u=>({...generator(u),projectMilestones:milestones});
+const project=core.compile({...context,type:'Proyecto de aprendizaje'},projectProvider,curriculum);
+assert(project.ok,JSON.stringify(project.errors));
+assert.equal(project.normalized.projectMilestones.length,4);
+assert(core.renderDocument(project).includes('Hitos del proyecto'));
 assert(core.compile({...context,topic:'El agua'},generator,curriculum).errors.some(x=>x.code==='topic_mismatch'));
 const replaced=(u)=>({...generator(u),activities:generator(u).activities.map((a,i)=>i===1?{...a,title:generator(u).activities[0].title}:a)});
 assert(core.compile(context,replaced,curriculum).errors.some(x=>x.code==='title_duplicate'));
@@ -71,4 +83,23 @@ assert(bad.errors.some(x=>x.code==='action_weak'));
 assert(bad.errors.some(x=>x.code==='evidence_weak'));
 assert.deepEqual(JSON.stringify(context),JSON.stringify({...context}));
 assert.equal(context.activities,undefined);
+const guide={purpose:'Leer una historieta ficticia sobre los derechos, identificar información explícita y explicar una idea con ayuda de una pista del texto.',
+ instrument:'Lista de cotejo por criterio',minutes:{start:15,develop:60,close:15},
+ steps:[
+ ['Antes de leer','Observan la portada de la historieta y plantean predicciones relacionadas con el derecho a jugar.'],
+ ['Durante la lectura','Leen en parejas, localizan las acciones de los personajes y marcan una pista que apoye su explicación.'],
+ ['Después de leer','Contrastan sus predicciones, comparten una conclusión sustentada y revisan la evidencia con el criterio acordado.']
+ ]};
+const session=core.compileSession(first,1,guide);
+assert(session.ok,JSON.stringify(session.errors));
+assert.equal(session.session.title,first.normalized.sessions[0].title);
+assert.equal(session.session.evidence,first.normalized.sessions[0].evidence);
+assert.equal(session.session.minutes.total,90);
+assert(core.renderSessionDocument(session).includes('Lista de cotejo por criterio'));
+assert(core.renderSessionDocument(session).includes('Leemos historias sobre el derecho a jugar'));
+assert.equal(core.compileSession(first,99,guide).errors[0].code,'session_missing');
+assert(core.compileSession(first,1,{...guide,steps:[]}).errors.some(x=>x.code==='session_steps_weak'));
+assert(core.compileSession(first,1,{...guide,minutes:{start:0,develop:60,close:30}}).errors.some(x=>x.code==='time_missing'));
+const escaped=core.renderDocument({...first,normalized:{...first.normalized,title:'Derechos <script>malicioso</script>'}});
+assert(!escaped.includes('<script>malicioso</script>'));
 console.log('PASS V3 CORE: fuente única, trazabilidad curricular, documentos, integridad del original y rechazo de contenidos defectuosos');
