@@ -104,6 +104,7 @@ jobs:
           node tests/pedagogical-v2-contract.mjs
           node tests/planning-engine-v3-core.mjs
           node tests/planning-engine-v3-v2-compat.mjs
+          node tests/planning-engine-v3-water-case.mjs
           node tests/ai-contract.mjs
           node tests/ai-preflight.mjs
           node tests/ai-quota-write-preflight.mjs
