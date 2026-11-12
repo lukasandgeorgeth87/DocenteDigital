@@ -139,7 +139,7 @@
    if(!resource)warnings.push(issue('resource_missing',field,'Faltan materiales y fuentes de trabajo.'));
    if(!didactic(area,a))errors.push(issue('didactic_sequence',field,'La secuencia de Matemática no respeta los cinco procesos previstos.'));
    if(incompatible(theme,name+' '+studentAction))
-    errors.push(issue('session_topic_mismatch',field,'El título y la actuación parecen ajenos al tema.'));
+    warnings.push(issue('cross_domain_review',field,'La sesión aborda un contenido de otra esfera temática. Requiere justificar su relación interdisciplinaria con el reto y el producto.'));
    const match=curriculumMatch(curriculum,unit.level,area,p.competence||a.competence,p.capacities||a.capacities);
    if(!match)errors.push(issue('curriculum_unverified',field,'La competencia y capacidades no están corroboradas para '+area+'.'));
    trail.push({order:i+1,week:week,day:a.day||'',block:a.block||'',area,title:name,
