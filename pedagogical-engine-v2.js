@@ -287,7 +287,11 @@
   if(v3Review)unit.pedagogicalV3={version:v3Review.version,auditedAt:new Date().toISOString(),
    warnings:v3Review.warnings.map(w=>({code:w.code,field:w.field,message:w.message}))};
   if(typeof root.save==='function'&&root.save()===false){
-   Object.assign(unit,prior);throw new Error('No se pudo guardar en este dispositivo. La versión anterior se conserva.');
+   for(const name of ['title','situation','reto','purpose','activities','selectedSituationSource',
+    'approvedSelectionSnapshot','pedagogicalV2','pedagogicalV3']){
+    if(own(prior,name))unit[name]=prior[name];else delete unit[name];
+   }
+   throw new Error('No se pudo guardar en este dispositivo. La versión anterior se conserva.');
   }
   return unit;
  }
