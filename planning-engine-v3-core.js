@@ -157,7 +157,7 @@
   warnings.push(issue('performance_not_verified','currículo',
    'Los desempeños y estándares de grado requieren vinculación documental y revisión docente; no se presentan como verificados.'));
   return result(errors,warnings,{normalized:{type:unit.type,level:unit.level,grades:copy(unit.grades||[]),
-   areas:copy(unit.areas||[]),duration:unit.duration,title,situation,reto,purpose,product,
+   areas:copy(unit.areas||[]),duration:unit.duration,title,situation:String(plan.situation||'').trim(),reto,purpose,product,
    documentContextSnapshot:copy(unit.documentContextSnapshot||{}),projectMilestones:copy(milestones),sessions:trail},
    coverage:{sessions:trail.length,weeks:Object.fromEntries(weekCounts),uniqueTitles:seen.size}});
  }
@@ -242,23 +242,58 @@
    '<p><i>Borrador sujeto a revisión docente: no se atribuyen desempeños o estándares no cotejados al MINEDU.</i></p></article>';
  }
  function renderDocument(model){
-  if(!model?.normalized||!model.ok)throw new Error('No se exporta un plan sin validación estructural.');
+  if(!model?.normalized||!model.ok)throw new Error('No se exporta una planificación sin validación estructural.');
   const m=model.normalized;
-  const grid=(head,rows)=>'<table border="1" cellpadding="5"><thead><tr>'+head.map(x=>'<th>'+escape(x)+'</th>').join('')+
-   '</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(x=>'<td>'+escape(x)+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
-  const matrix=m.sessions.map(x=>[String(x.order),x.week+' / '+x.day,x.area,x.title,x.competence,
-   x.studentAction,x.evidence,x.criterion]);
-  return '<article class="dd-planning-v3"><h1>'+escape(m.type)+'</h1><h2>'+escape(m.title)+'</h2>'+
-   '<p><b>Grado:</b> '+escape(m.grades.join(', '))+' · <b>Duración:</b> '+escape(m.duration)+'</p>'+
-   '<p><b>IE:</b> '+escape(m.documentContextSnapshot.institution||'Por confirmar')+
-   ' · <b>Docente:</b> '+escape(m.documentContextSnapshot.teacher||'Por confirmar')+'</p>'+
-   '<h2>Situación significativa</h2><p>'+escape(m.situation)+'</p>'+
-   '<p><b>Pregunta retadora:</b> '+escape(m.reto)+'</p><h2>Propósito y producto</h2><p>'+escape(m.purpose)+'</p>'+
-   '<p><b>Producto:</b> '+escape(m.product)+'</p>'+
-    (m.type==='Proyecto de aprendizaje'?'<h2>Hitos del proyecto</h2>'+grid(['Fase','Acción','Evidencia'],m.projectMilestones.map(x=>[x.phase,x.action,x.evidence])):'')+
-   '<h2>Secuencia de aprendizaje con trazabilidad</h2>'+
-   grid(['N.º','Semana / día','Área','Sesión','Competencia','Acción estudiantil','Evidencia','Criterio'],matrix)+
-   '<p><i>Competencias contrastadas con el catálogo curricular de la aplicación. Desempeños y estándares de grado pendientes de cotejo. Requiere revisión y aprobación del docente.</i></p></article>';
+  const grid=(head,rows)=>'<table style="border-collapse:collapse;width:100%" border="1" cellpadding="5"><thead><tr>'
+   +head.map(x=>'<th>'+escape(x)+'</th>').join('')+'</tr></thead><tbody>'
+   +rows.map(row=>'<tr>'+row.map(x=>'<td>'+escape(x)+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+  const paragraphs=value=>String(value||'').split(/\n\s*\n/).filter(Boolean).map(x=>'<p>'+escape(x)+'</p>').join('');
+  const rows=[['Institución educativa',m.documentContextSnapshot.institution||'Por confirmar'],
+   ['Docente',m.documentContextSnapshot.teacher||'Por confirmar'],
+   ['Nivel y grados',m.level+' · '+m.grades.join(', ')],
+   ['Duración',m.duration],['Áreas seleccionadas',m.areas.join(', ')],
+   ['Producto final aprobado',m.product]];
+  const curriculum=new Map();
+  for(const a of m.sessions){
+   const key=a.area+'|'+a.competence;
+   if(!curriculum.has(key))curriculum.set(key,{area:a.area,competence:a.competence,
+    capacities:a.capacities,criteria:[]});
+   const group=curriculum.get(key);
+   if(!group.criteria.includes(a.criterion))group.criteria.push(a.criterion);
+  }
+  const curricularRows=[...curriculum.values()].map(x=>[
+   x.area,x.competence,x.capacities.join('; '),x.criteria.slice(0,2).join(' / ')]);
+  const weeks=[...new Set(m.sessions.map(a=>a.week))].sort((a,b)=>a-b);
+  const stageText=['Explorar y formular preguntas','Investigar y organizar información',
+   'Construir y revisar las producciones','Comunicar y evaluar los aprendizajes'];
+  const sequence=weeks.map((week,i)=>'<h3>Semana '+week+' — '+stageText[Math.min(i,3)]+'</h3>'+
+   grid(['Día / bloque','Área','Sesión y pregunta','Actuación y evidencia','Criterio observable'],
+    m.sessions.filter(a=>a.week===week).map(a=>[
+     (a.day||'Por programar')+(a.block?' · Bloque '+a.block:''),
+     a.area,a.title+' · '+a.question,a.studentAction+' Evidencia: '+a.evidence,a.criterion]))).join('');
+  const project=m.type==='Proyecto de aprendizaje'
+   ?'<h2>V. HITOS Y SEGUIMIENTO DEL PROYECTO</h2>'
+    +grid(['Fase del proyecto','Actuación estudiantil','Evidencia del avance'],
+      m.projectMilestones.map(x=>[x.phase,x.action,x.evidence]))
+   :'';
+  return '<article class="dd-planning-v3">'
+   +'<h1 style="text-align:center">'+escape(m.type.toUpperCase())+' — PROPUESTA PEDAGÓGICA V3</h1>'
+   +'<h2 style="text-align:center">'+escape(m.title)+'</h2>'
+   +'<h2>I. DATOS GENERALES</h2>'+grid(['Dato','Información'],rows)
+   +'<h2>II. SITUACIÓN SIGNIFICATIVA</h2>'+paragraphs(m.situation)
+   +'<p><b>Pregunta retadora:</b> '+escape(m.reto)+'</p>'
+   +'<h2>III. PROPÓSITO INTEGRADOR Y PRODUCTO</h2>'
+   +'<p>'+escape(m.purpose)+'</p><p><b>Producto:</b> '+escape(m.product)+'</p>'
+   +'<h2>IV. MATRIZ CURRICULAR DE ARTICULACIÓN</h2>'
+   +'<p>Se cotejan competencias y capacidades con el catálogo curricular cargado. Los criterios son propuestas de evaluación observables, no desempeños oficiales literales.</p>'
+   +grid(['Área','Competencia','Capacidades','Criterios orientadores'],curricularRows)
+   +project
+   +'<h2>V. SECUENCIA PROGRESIVA DE SESIONES</h2>'+sequence
+   +'<h2>VI. EVALUACIÓN FORMATIVA Y SEGUIMIENTO</h2>'
+   +'<p>Observar y registrar cada evidencia. Retroalimentar con el criterio correspondiente a cada actuación. No asignar niveles sin evidencia concreta del estudiante.</p>'
+   +'<h2>VII. VERIFICACIONES PEDAGÓGICAS PENDIENTES</h2>'
+   +'<p>Confirmar el contexto real, los recursos y el horario, las adecuaciones para los estudiantes y la pertinencia de cada área. Los estándares y desempeños de grado aún requieren cotejo documental. La planificación necesita revisión y aprobación docente.</p>'
+   +'</article>';
  }
  root.DDPlanningCoreV3=Object.freeze({version:VERSION,preflight,audit,compile,compileSession,renderDocument,renderSessionDocument});
 })(typeof window!=='undefined'?window:globalThis);
