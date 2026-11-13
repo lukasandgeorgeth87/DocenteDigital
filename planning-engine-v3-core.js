@@ -292,7 +292,7 @@
    +'<h2>VI. EVALUACIÓN FORMATIVA Y SEGUIMIENTO</h2>'
    +'<p>Observar y registrar cada evidencia. Retroalimentar con el criterio correspondiente a cada actuación. No asignar niveles sin evidencia concreta del estudiante.</p>'
    +'<h2>VII. VERIFICACIONES PEDAGÓGICAS PENDIENTES</h2>'
-   +'<p>Confirmar el contexto real, los recursos y el horario, las adecuaciones para los estudiantes y la pertinencia de cada área. Los estándares y desempeños de grado aún requieren cotejo documental. La planificación necesita revisión y aprobación docente.</p>'
+   +'<p>Confirmar el contexto real, los recursos y el horario, las adecuaciones para los estudiantes y la pertinencia de cada área. Los estándares y desempeños de grado están pendientes de cotejo documental. La planificación necesita revisión y aprobación docente.</p>'
    +'</article>';
  }
  root.DDPlanningCoreV3=Object.freeze({version:VERSION,preflight,audit,compile,compileSession,renderDocument,renderSessionDocument});
