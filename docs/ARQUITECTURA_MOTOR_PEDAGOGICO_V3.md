@@ -41,3 +41,24 @@ El núcleo `planning-engine-v3-core.js` implementa `preflight`, `audit`, `compil
 - No ofrecer una versión comercial hasta superar pruebas de uso real y revisión pedagógica humana.
 
 **Regla de aceptación:** ninguna nueva salida se presenta como planificación final sin una cadena curricular y pedagógica consistente. La aplicación debe declarar sus límites cuando falte una fuente de contenido.
+
+## Integración incremental del 13 de noviembre de 2026
+
+**Alcance de esta integración:** vertical validada de 2.º de Primaria, derechos de la niñez. No se atribuye generación universal a la aplicación.
+
+- Se carga \`planning-engine-v3-core.js\` antes del proveedor pedagógico V2 en la interfaz real.
+- Al **aprobar** una propuesta, el flujo comprueba el título, situación significativa, reto, propósito, selección de áreas, producto aprobado, 30 actividades, competencias, capacidades, criterios y evidencias mediante V3. La validación no escribe ni modifica el borrador hasta la aprobación docente.
+- Si falla el almacenamiento, la operación recupera los campos previos, también la marca de aprobación V3.
+- Al **generar una sesión** desde una unidad V2 aprobada, V3 valida la unidad actual y comprueba los momentos didácticos, el propósito, el instrumento y la evidencia de la sesión antes de guardarla. Si falla, conserva la sesión anterior.
+- Al **descargar o compartir la unidad en Word**, la aplicación vuelve a auditar los datos actuales y produce el documento desde el modelo V3. Las ediciones incompletas impiden la descarga; ninguna copia antigua de criterios se inserta en silencio.
+- Las exportaciones muestran situación significativa, pregunta retadora, propósito, matriz curricular, secuencia por semanas, evidencias, criterios y evaluación formativa. No afirman desempeños específicos que no estén cotejados.
+- **Sin nuevos botones**: se reutiliza el flujo existente. La ausencia del compilador V3 en el navegador impide aprobar y exportar una unidad V2, en lugar de simular validación.
+- Pruebas obligatorias: \`planning-engine-v3-core.mjs\`, \`planning-engine-v3-v2-compat.mjs\`, \`planning-engine-v3-water-case.mjs\`, \`planning-engine-v3-integration.mjs\`, \`planning-engine-v3-browser.mjs\`, más \`pedagogical-v2-browser.mjs\` y todas las regresiones previas.
+- Sin activación de GPT, API de pago, Supabase ni modificación de \`main\`/producción.
+
+### Limitaciones vigentes
+
+1. El proveedor conectado en la interfaz sigue limitado a la ruta curricular validada de **derechos, segundo grado, tres semanas**. La prueba del proyecto del agua es un contrato independiente, aún no constituye una opción conectada a toda la interfaz.
+2. Los planificadores anteriores pueden producir **borradores** sobre otros temas; no deben presentarse como planificaciones plenamente auditadas V3.
+3. La matriz de estándares y desempeños de grado, así como la validación humana integral de las sesiones y la calidad de sus textos, continúan pendientes. Las pruebas automáticas certifican contratos técnicos, no validez pedagógica del MINEDU.
+4. La siguiente etapa es sustituir los proveedores específicos por una interfaz de contenido contextualizado y verificable por nivel/área/grado, respetando el tipo de documento y el producto docente. No añadir más catálogos aislados por tema.
