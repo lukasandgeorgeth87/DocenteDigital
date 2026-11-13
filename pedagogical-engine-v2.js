@@ -246,6 +246,20 @@
    +'<p><i>Competencia y capacidades verificadas en el programa curricular. Criterios y actuaciones son propuestas pedagógicas sujetas a revisión.</i></p>'
    +'</div>';
  }
+ function auditWithV3(unit,proposal){
+  const core=root.DDPlanningCoreV3;
+  if(!core)return null; // Las pruebas históricas de V2 cargan únicamente su módulo.
+  const reviewed=core.compile(unit,()=>proposal,source());
+  if(!reviewed.ok){
+   const first=reviewed.errors.slice(0,4).map(x=>x.field+': '+x.message).join(' ');
+   throw new Error('La planificación no superó la revisión V3. '+first);
+  }
+  return reviewed;
+ }
+ function currentApprovedPlan(unit){
+  return {title:unit.title,situation:unit.situation,reto:unit.reto,
+   purpose:unit.purpose,product:unit.product,activities:unit.activities};
+ }
  function apply(unit,proposal,edits={}){
   if(!proposal?.ok||!eligible(unit))throw new Error('Propuesta incompatible o incompleta. No se modificó la unidad.');
   if(proposal.activities.length!==30||!proposal.activities.every(x=>x.v2Plan?.competence&&x.criterion&&x.evidence))
@@ -256,9 +270,11 @@
    throw new Error('Revisa los campos antes de aprobar; faltan datos pedagógicos esenciales.');
   if(!/\bderechos?\b/.test(norm(title+' '+situation+' '+reto)))
    throw new Error('El texto dejó de responder al tema de derechos. No se modificó la unidad.');
+  const v3Review=auditWithV3(unit,{...proposal,title,situation,reto,purpose});
   const backup={title:unit.title,situation:unit.situation,reto:unit.reto,purpose:unit.purpose,
    activities:unit.activities,selectedSituationSource:unit.selectedSituationSource,
-   approvedSelectionSnapshot:unit.approvedSelectionSnapshot,pedagogicalV2:unit.pedagogicalV2};
+   approvedSelectionSnapshot:unit.approvedSelectionSnapshot,pedagogicalV2:unit.pedagogicalV2,
+   pedagogicalV3:unit.pedagogicalV3};
   const prior=JSON.parse(JSON.stringify(backup));
   unit.title=title;unit.situation=situation;unit.reto=reto;unit.purpose=purpose;
   unit.activities=proposal.activities;
@@ -268,6 +284,8 @@
    productTitle:unit.productTitle||unit.product,productDescription:unit.productDescription||''};
   unit.pedagogicalV2={version:VERSION,approved:true,scope:proposal.scope,approvedAt:new Date().toISOString(),
    original:prior,areaCount:proposal.coverage.areas.length,sessions:proposal.activities.length};
+  if(v3Review)unit.pedagogicalV3={version:v3Review.version,auditedAt:new Date().toISOString(),
+   warnings:v3Review.warnings.map(w=>({code:w.code,field:w.field,message:w.message}))};
   if(typeof root.save==='function'&&root.save()===false){
    Object.assign(unit,prior);throw new Error('No se pudo guardar en este dispositivo. La versión anterior se conserva.');
   }
@@ -280,6 +298,7 @@
   for(const name of ['title','situation','reto','purpose','activities','selectedSituationSource','approvedSelectionSnapshot'])
    unit[name]=old[name];
   if(old.pedagogicalV2)unit.pedagogicalV2=old.pedagogicalV2;else delete unit.pedagogicalV2;
+  if(old.pedagogicalV3)unit.pedagogicalV3=old.pedagogicalV3;else delete unit.pedagogicalV3;
   if(typeof root.save==='function'&&root.save()===false){
    Object.assign(unit,snapshot);throw new Error('No se pudo guardar la restauración.');
   }
@@ -377,21 +396,43 @@
  };
  const previousBuild=root.buildSession;
  if(typeof previousBuild==='function')root.buildSession=function(){
+  const prior=root.state?.lastSession;
   const session=previousBuild.apply(this,arguments);
   const unit=root.state?.units?.find(u=>u.id===session.unitId);
   const activity=unit?.activities?.[session.activityIndex];
   const p=sessionDetails(session,unit,activity);
   if(!p)return session;
-  session.title=activity.title;session.competence=p.competence;session.capacities=p.capacities;
-  session.purpose=p.purpose;
-  session.criterion=p.criterion;session.evidence=p.evidence;session.challenge=p.question;
-  session.resources=p.resource;session.pedagogicalV2=p;session.teacherReviewApproved=true;
-  root.save?.();
-  return session;
+  try{
+   const checked=auditWithV3(unit,currentApprovedPlan(unit));
+   if(checked){
+    const compiled=root.DDPlanningCoreV3.compileSession(checked,session.activityIndex+1,{
+     purpose:p.purpose,steps:p.steps,
+     minutes:{start:session.times?.start,develop:session.times?.dev,close:session.times?.close},
+     instrument:session.instrument||'Lista de cotejo'
+    });
+    if(!compiled.ok)throw new Error('La sesión no pasó V3: '+
+     compiled.errors.slice(0,3).map(x=>x.message).join(' '));
+    session.pedagogicalV3=compiled.session;
+   }
+   session.title=activity.title;session.competence=p.competence;session.capacities=p.capacities;
+   session.purpose=p.purpose;
+   session.criterion=p.criterion;session.evidence=p.evidence;session.challenge=p.question;
+   session.resources=p.resource;session.pedagogicalV2=p;session.teacherReviewApproved=true;
+   root.save?.();
+   return session;
+  }catch(error){
+   if(root.state)root.state.lastSession=prior||null;
+   root.save?.();
+   throw error;
+  }
  };
  const previousUnitWord=root.unitWordHtml;
  if(typeof previousUnitWord==='function')root.unitWordHtml=function(unit){
-  if(unit?.pedagogicalV2?.approved)return unitHtml(unit);
+  if(unit?.pedagogicalV2?.approved){
+   const checked=auditWithV3(unit,currentApprovedPlan(unit));
+   if(checked)return root.DDPlanningCoreV3.renderDocument(checked);
+   return unitHtml(unit);
+  }
   return previousUnitWord.apply(this,arguments);
  };
  const previousSessionHtml=root.sessionHtml;
