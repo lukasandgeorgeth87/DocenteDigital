@@ -79,7 +79,8 @@ ses.evidence='Ficha revisada con la explicación del derecho y una pregunta pert
 const editedSessionWord=root.sessionHtml(ses);
 assert(editedSessionWord.includes(ses.challenge),'La pregunta nueva se aplica también al inicio y reto');
 assert(editedSessionWord.includes(ses.evidence),'La evidencia nueva se aplica también al cierre');
-assert(!editedSessionWord.includes(originalQuestion),'No reinsertar la pregunta antigua en Word');
+assert(!editedSessionWord.includes('ante la pregunta «'+originalQuestion+'»'),'No reinsertar la pregunta antigua en el inicio');
+assert(!editedSessionWord.includes('<b>Pregunta de trabajo:</b> '+originalQuestion),'La pregunta de trabajo debe ser la corregida');
 assert(!editedSessionWord.includes(originalEvidence),'No reinsertar la evidencia antigua en Word');
 ses.challenge=originalQuestion;ses.evidence=originalEvidence;
 const keep=root.state.lastSession;
