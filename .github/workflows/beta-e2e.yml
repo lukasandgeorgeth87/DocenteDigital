@@ -2,7 +2,7 @@ name: Beta E2E Browser Gate
 
 on:
   push:
-    branches: [main, audit/v5-continuity-offline-diagnostic, preview/docentedigital-fase10-20261030, preview/motor-pedagogico-v2-derechos-2do-20261112]
+    branches: [main, audit/v5-continuity-offline-diagnostic, preview/docentedigital-fase10-20261030, preview/motor-pedagogico-v2-derechos-2do-20261112, feature/motor-pedagogico-v3-integral-20261112]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -139,7 +139,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Verify new pedagogical V2 unit, detailed session and Word
-        if: github.ref == 'refs/heads/preview/motor-pedagogico-v2-derechos-2do-20261112'
+        if: github.ref == 'refs/heads/preview/motor-pedagogico-v2-derechos-2do-20261112' || github.ref == 'refs/heads/feature/motor-pedagogico-v3-integral-20261112'
         env:
           BASE_URL: http://127.0.0.1:4173
         run: node tests/pedagogical-v2-browser.mjs
@@ -151,6 +151,12 @@ jobs:
           name: pedagogical-v2-browser-failure
           path: /tmp/dd-pedagogical-v2/*.png
           if-no-files-found: ignore
+
+      - name: Validate V3 actual review, Word, session and reload (feature only)
+        if: github.ref == 'refs/heads/feature/motor-pedagogico-v3-integral-20261112'
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/planning-engine-v3-browser.mjs
 
       - name: Test natural short rights request, expo product and second-grade DOCX
         env:
