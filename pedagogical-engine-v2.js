@@ -208,6 +208,8 @@
  }
  function sessionHtmlV2(session){
   const p=session.pedagogicalV2;
+  const question=session.challenge||p.question;
+  const evidence=session.evidence||p.evidence;
   const times=session.times||{start:10,dev:20,close:10};
   const steps=p.steps.map(([label,action])=>'<li><b>'+esc(label)+'</b>: '+esc(action)+'</li>').join('');
   return '<div class="dd-v2-document">'
@@ -227,13 +229,13 @@
      session.teacherCriteria?.['2.º']||session.criterion,session.evidence,session.instrument||'Lista de cotejo']])
    +'<h2>II. MOMENTOS Y PROCESOS DIDÁCTICOS</h2>'
    +'<h3>INICIO — '+esc(times.start??10)+' min</h3>'
-   +'<p>Observan el recurso previsto: '+esc(p.resource)+' Plantean ideas iniciales ante la pregunta «'+esc(p.question)+'». El docente recoge sus explicaciones sin adelantar respuestas y comunica el propósito y el criterio.</p>'
+   +'<p>Observan el recurso previsto: '+esc(p.resource)+' Plantean ideas iniciales ante la pregunta «'+esc(question)+'». El docente recoge sus explicaciones sin adelantar respuestas y comunica el propósito y el criterio.</p>'
    +'<h3>DESARROLLO — '+esc(times.dev??20)+' min</h3>'
    +'<ol>'+steps+'</ol>'
    +'<h3>CIERRE — '+esc(times.close??10)+' min</h3>'
-   +'<p>Explican o muestran '+esc(p.evidence.toLowerCase())+'; comparan su actuación con el criterio, reconocen una dificultad y acuerdan una mejora concreta.</p>'
+   +'<p>Explican o muestran '+esc(evidence.toLowerCase())+'; comparan su actuación con el criterio, reconocen una dificultad y acuerdan una mejora concreta.</p>'
    +'<h2>III. RETO CONCRETO, TAREA Y EVALUACIÓN</h2>'
-   +'<p><b>Pregunta de trabajo:</b> '+esc(p.question)+'</p>'
+   +'<p><b>Pregunta de trabajo:</b> '+esc(question)+'</p>'
    +'<p><b>Acción del estudiante:</b> '+esc(p.studentAction)+'</p>'
    +'<p><b>Contribución a la unidad:</b> '+esc(p.contribution)+'</p>'
    +table(['Nivel','Descriptor propuesto a verificar'],[
