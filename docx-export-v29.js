@@ -160,21 +160,33 @@
       ?document.documentContextSnapshot:{historicalIdentityUnverified:true};
   }
 
+  function checkedHtml(render){
+    try{return render();}
+    catch(error){
+      console.warn('DocenteDigital: exportación detenida por validación:',error);
+      alert('No se puede exportar todavía. Revisa los criterios, las evidencias y el contexto de la planificación. '+(error?.message||''));
+      return null;
+    }
+  }
   window.downloadUnitWord=function(id){
     const unit=(state.units||[]).find(u=>u.id===id);if(!unit)return;
-    const blob=docxBlob(unit.title,unitWordHtml(unit),true,savedIdentity(unit));downloadDocx(blob,fileName(unit.title));
+    const html=checkedHtml(()=>unitWordHtml(unit));if(html===null)return;
+    const blob=docxBlob(unit.title,html,true,savedIdentity(unit));downloadDocx(blob,fileName(unit.title));
   };
   window.shareUnit=function(id){
     const unit=(state.units||[]).find(u=>u.id===id);if(!unit)return;
-    const blob=docxBlob(unit.title,unitWordHtml(unit),true,savedIdentity(unit));shareDocx(blob,fileName(unit.title),unit.title);
+    const html=checkedHtml(()=>unitWordHtml(unit));if(html===null)return;
+    const blob=docxBlob(unit.title,html,true,savedIdentity(unit));shareDocx(blob,fileName(unit.title),unit.title);
   };
   window.downloadSessionWord=function(){
     const s=state.lastSession;if(!s)return alert('Primero crea una sesión.');
-    const blob=docxBlob(s.title,sessionHtml(s,true),false,savedIdentity(s));downloadDocx(blob,fileName(s.title));
+    const html=checkedHtml(()=>sessionHtml(s,true));if(html===null)return;
+    const blob=docxBlob(s.title,html,false,savedIdentity(s));downloadDocx(blob,fileName(s.title));
   };
   window.shareSession=function(){
     const s=state.lastSession;if(!s)return alert('Primero crea una sesión.');
-    const blob=docxBlob(s.title,sessionHtml(s,true),false,savedIdentity(s));shareDocx(blob,fileName(s.title),s.title);
+    const html=checkedHtml(()=>sessionHtml(s,true));if(html===null)return;
+    const blob=docxBlob(s.title,html,false,savedIdentity(s));shareDocx(blob,fileName(s.title),s.title);
   };
   window.DDWordExport={
     downloadHtml:function(title,html,landscape=false,customName=''){
