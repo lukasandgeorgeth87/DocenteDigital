@@ -248,7 +248,10 @@
  }
  function auditWithV3(unit,proposal){
   const core=root.DDPlanningCoreV3;
-  if(!core)return null; // Las pruebas históricas de V2 cargan únicamente su módulo.
+  if(!core){
+   if(typeof document!=='undefined')throw new Error('El Motor V3 no está cargado. No se aprobará ni exportará una planificación sin su revisión.');
+   return null; // Compatibilidad con las pruebas históricas de V2 aisladas, sin navegador.
+  }
   const reviewed=core.compile(unit,()=>proposal,source());
   if(!reviewed.ok){
    const first=reviewed.errors.slice(0,4).map(x=>x.field+': '+x.message).join(' ');
