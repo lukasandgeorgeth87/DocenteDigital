@@ -272,7 +272,7 @@
      (a.day||'Por programar')+(a.block?' · Bloque '+a.block:''),
      a.area,a.title+' · '+a.question,a.studentAction+' Evidencia: '+a.evidence,a.criterion]))).join('');
   const project=m.type==='Proyecto de aprendizaje'
-   ?'<h2>V. HITOS Y SEGUIMIENTO DEL PROYECTO</h2>'
+   ?'<h2>V. Hitos del proyecto y seguimiento</h2>'
     +grid(['Fase del proyecto','Actuación estudiantil','Evidencia del avance'],
       m.projectMilestones.map(x=>[x.phase,x.action,x.evidence]))
    :'';
