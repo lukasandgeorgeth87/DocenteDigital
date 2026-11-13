@@ -211,7 +211,8 @@
   const question=session.challenge||p.question;
   const evidence=session.evidence||p.evidence;
   const times=session.times||{start:10,dev:20,close:10};
-  const steps=p.steps.map(([label,action])=>'<li><b>'+esc(label)+'</b>: '+esc(action)+'</li>').join('');
+  const steps=describeProcesses({...p,question,evidence},session.area)
+   .map(([label,action])=>'<li><b>'+esc(label)+'</b>: '+esc(action)+'</li>').join('');
   return '<div class="dd-v2-document">'
    +'<h1 style="text-align:center">SESIÓN DE APRENDIZAJE — 2.º GRADO DE PRIMARIA</h1>'
    +'<h2 style="text-align:center">“'+esc(session.title)+'”</h2>'
