@@ -45,7 +45,12 @@ assert.equal(first.readyForPublishing,false);
 assert.equal(first.coverage.sessions,4);
 assert.equal(first.normalized.sessions[0].source,'Programa curricular de Primaria');
 const html=core.renderDocument(first);
-assert(html.includes('MATRIZ')===false);
+assert(html.includes('MATRIZ CURRICULAR DE ARTICULACIÓN'));
+assert(html.includes('SECUENCIA PROGRESIVA DE SESIONES'));
+assert(html.includes('EVALUACIÓN FORMATIVA'));
+assert(html.includes('SITUACIÓN SIGNIFICATIVA'));
+assert(html.includes('¿Qué necesitamos comprender y explicar acerca de nuestros derechos?'));
+
 assert(html.includes('Leemos historias sobre el derecho a jugar'));
 assert(html.includes('Guía ilustrada sobre los derechos'));
 assert(!html.includes('CNEB certificado'));
