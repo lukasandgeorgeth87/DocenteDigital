@@ -1076,8 +1076,13 @@ function sessionHtml(session,forWord=false){
 
 function generateSession(){
   syncTitle();
-  const session=buildSession();
-  renderSessionOutput(session);
+  try{
+    const session=buildSession();
+    renderSessionOutput(session);
+  }catch(error){
+    console.warn('DocenteDigital: sesión no generada por validación pedagógica',error);
+    alert('La sesión no pudo generarse todavía. Revisa el contenido de la unidad o proyecto y sus evidencias. '+(error?.message||''));
+  }
 }
 
 function renderSessionOutput(session){
