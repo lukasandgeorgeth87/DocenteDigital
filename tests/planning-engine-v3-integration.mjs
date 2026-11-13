@@ -46,6 +46,12 @@ const design=root.DDPedagogicalV2.design(unit);
 assert(design.ok,JSON.stringify(design));
 assert.equal(JSON.stringify(unit),version,'La propuesta previa no reescribe el original');
 assert.equal(saves,0,'No se guarda antes de aprobar');
+const beforeFailedSave=JSON.stringify(unit);
+root.save=()=>false;
+assert.throws(()=>root.DDPedagogicalV2.apply(unit,design),/No se pudo guardar/,
+ 'El fallo de almacenamiento no debe dejar una propuesta parcialmente aprobada');
+assert.equal(JSON.stringify(unit),beforeFailedSave,'Restaurar todos los campos incluidos V3 ante fallo de guardado');
+root.save=()=>{saves++;return true;};
 root.DDPedagogicalV2.apply(unit,design);
 assert(unit.pedagogicalV2?.approved);
 assert.equal(unit.pedagogicalV3?.version,'3.0.0-contract-first');
