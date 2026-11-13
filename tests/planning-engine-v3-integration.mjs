@@ -82,4 +82,14 @@ const back=root.DDPedagogicalV2.restore(unit);
 assert.equal(back,true);
 assert.equal(unit.pedagogicalV3,undefined,'Restaurar también desactiva la certificación V3');
 assert.equal(unit.activities.length,30);
+// Fail closed: without the central V3 module the real browser cannot export an approved V2 unit.
+const noCore={unitWordHtml:()=>'<p>Legacy</p>'};
+const fakeDocument={head:{appendChild(){}},createElement(){return {textContent:''};}};
+const guarded=vm.createContext({window:noCore,document:fakeDocument,console});
+vm.runInContext(read('pedagogical-engine-v2-data.js'),guarded);
+vm.runInContext(read('pedagogical-engine-v2.js'),guarded);
+assert.throws(()=>noCore.unitWordHtml({pedagogicalV2:{approved:true}}),/Motor V3 no está cargado/);
+const index=read('index.html');
+assert(index.indexOf('src="planning-engine-v3-core.js"')>0);
+assert(index.indexOf('src="planning-engine-v3-core.js"')<index.indexOf('src="pedagogical-engine-v2.js"'));
 console.log('PASS V3 INTEGRATION: aprobación, Word actual, sesión trazable, rechazo de errores y restauración');
