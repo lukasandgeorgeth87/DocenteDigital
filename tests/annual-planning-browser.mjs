@@ -24,10 +24,11 @@ try{
   await page.locator('#ddAnnualNew').click();
   const march=page.locator('#ddAnnualMonths tr[data-month="Marzo"]');
   await march.locator('[data-field="title"]').fill('Convivimos y nos escuchamos en clase');
-  await march.locator('[data-field="context"]').fill('En una escena ficticia, niñas y niños dialogan sobre cómo escuchar opiniones diferentes.');
   await march.locator('[data-annual-create]').click();
   assert.equal(await page.locator('#unitTitle').inputValue(),'Convivimos y nos escuchamos en clase');
-  assert((await page.locator('#unitSituation').inputValue()).includes('opiniones diferentes'));
+  const autoContext=await page.locator('#unitSituation').inputValue();
+  assert(autoContext.includes('Convivimos y nos escuchamos en clase'),'El título elegido debe determinar el contexto propuesto');
+  assert(autoContext.includes('3.º'),'El perfil previamente configurado debe reutilizarse sin preguntas adicionales');
   await page.waitForFunction(()=>document.querySelector('#unitType')?.value==='Unidad de aprendizaje',null,{timeout:8000});
   await page.locator('#unitTitle').fill('Creamos acuerdos para escuchar todas las voces');
   await page.locator('button[onclick="createUnitDemo()"]',{hasText:'Crear propuesta completa'}).click();

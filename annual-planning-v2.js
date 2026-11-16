@@ -94,13 +94,15 @@
     const rows=plan.months.map(m=>{
       const linked=m.linkedUnitId&&(state.units||[]).some(u=>u.id===m.linkedUnitId);
       return `<tr data-month="${E(m.name)}"><td><b>${E(m.name)}</b></td>
-        <td><input data-field="title" aria-label="Título sugerido ${E(m.name)}" value="${E(m.title)}" ${linked?'readonly':''}></td>
-        <td><textarea data-field="context" aria-label="Contexto ${E(m.name)}" rows="2" placeholder="Contexto de los estudiantes (opcional)">${E(m.context||'')}</textarea></td>
+        <td><input data-field="title" aria-label="Título sugerido ${E(m.name)}" value="${E(m.title)}" ${linked?'readonly':''}>
+          <details><summary>Opcional: añadir un contexto específico</summary>
+            <textarea data-field="context" aria-label="Contexto ${E(m.name)}" rows="2" placeholder="Solo si deseas indicar un hecho real o necesidad particular de tu grupo">${E(m.context||'')}</textarea>
+          </details></td>
         <td><span class="pill">${linked?'Vinculada':'Sugerida'}</span><button class="btn alt" type="button" data-annual-create="${E(m.name)}">${linked?'Abrir unidad':'Crear unidad'}</button></td></tr>`;
     }).join('');
     host.innerHTML=`<div class="success"><b>Programación ${E(plan.year)}</b> · ${E(plan.level)} · ${E(plan.grades.join(', '))} · ${E(plan.ieType||'')}</div>
-      <p class="sub">Los títulos son sugerencias editables. Elige cualquier mes para preparar su unidad. Si cambias el título de una unidad vinculada, este cuadro lo reflejará automáticamente.</p>
-      <div class="dd-scroll"><table class="dd-table dd-annual-month-table" data-col-weights="1,3,3,2"><thead><tr><th>Mes</th><th>Unidad o proyecto</th><th>Contexto para contextualizar</th><th>Acción</th></tr></thead><tbody id="ddAnnualMonths">${rows}</tbody></table></div>
+      <p class="sub">Elige o escribe el título de cada mes. La aplicación preparará la propuesta desde tu título, el nivel, los grados y el contexto institucional registrado. Puedes agregar información específica, pero no es obligatorio.</p>
+      <div class="dd-scroll"><table class="dd-table dd-annual-month-table" data-col-weights="1,4,2"><thead><tr><th>Mes</th><th>Título elegido por el docente</th><th>Acción</th></tr></thead><tbody id="ddAnnualMonths">${rows}</tbody></table></div>
       <details class="topgap"><summary>Competencias curriculares de las áreas seleccionadas</summary>${curricularHtml(plan)}</details>
       <div class="actions topgap"><button class="btn" id="ddAnnualSave">💾 Guardar programación</button><button class="btn alt" id="ddAnnualDownload">⬇ Descargar Word</button></div>`;
     $('ddAnnualSave').onclick=()=>{saveFields();$('ddAnnualSave').textContent='✓ Guardado';};
@@ -143,7 +145,14 @@
     },0);
     const title=$('unitTitle'),brief=$('unitSituation');
     if(title){title.value=row.title;title.dataset.autoTitle='false';title.dataset.ddSuggestedTitle='true';}
-    if(brief){brief.value=row.context||`Durante ${month.toLowerCase()} se propone trabajar «${row.title}» con experiencias cercanas a los estudiantes. El docente precisará los intereses, preguntas y datos reales de su grupo.`;}
+    if(brief){
+      brief.value=row.context||'';
+      // El título basta para preparar un contexto didáctico provisional.
+      // La función existente incorpora nivel, grados y datos del perfil sin
+      // presentar necesidades inventadas como observaciones de la comunidad.
+      if(!row.context&&typeof root.ddAssistPlanningContext==='function')root.ddAssistPlanningContext(true);
+      if(!brief.value.trim())brief.value=`Experiencia didáctica sobre «${row.title}» para ${plan.level} (${plan.grades.join(', ')}). Los hechos del contexto real serán verificados con el grupo.`;
+    }
     if(typeof refreshUnitTitleSuggestions==='function')refreshUnitTitleSuggestions();
   }
   function attachUnit(unit){
@@ -181,7 +190,7 @@
     clearTimeout(autosave);autosave=setTimeout(saveFields,750);
   });
   const css=document.createElement('style');
-  css.textContent='.dd-annual-month-table input,.dd-annual-month-table textarea{width:100%;min-width:150px;padding:9px;border:1px solid #c8d9d2;border-radius:8px;font:inherit}.dd-annual-month-table td{vertical-align:middle}.dd-annual-month-table td:last-child{min-width:124px}.dd-annual-month-table td:last-child .btn{margin-top:7px;font-size:13px}@media(max-width:650px){.dd-annual-month-table{min-width:750px}}';
+  css.textContent='.dd-annual-month-table input,.dd-annual-month-table textarea{width:100%;min-width:150px;padding:9px;border:1px solid #c8d9d2;border-radius:8px;font:inherit}.dd-annual-month-table details{margin-top:7px}.dd-annual-month-table details summary{font-size:12px;color:#396b57;cursor:pointer}.dd-annual-month-table details textarea{margin-top:8px}.dd-annual-month-table td{vertical-align:middle}.dd-annual-month-table td:last-child{min-width:124px}.dd-annual-month-table td:last-child .btn{margin-top:7px;font-size:13px}@media(max-width:650px){.dd-annual-month-table{min-width:600px}}';
   document.head.appendChild(css);
   root.DDAnnualPlanning={open,syncWithUnits,attachUnit,printHtml,downloadWord};
   root.DDPlanningTools.openAnnual=function(){go('annual');open();};
