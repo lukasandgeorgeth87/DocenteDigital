@@ -18,7 +18,9 @@ try{
   await page.locator('input[name="ddIE"][value="Polidocente"]').locator('..').click();
   await page.locator('[data-dd-grade-group="Inicial"] input[value="4 años"]').locator('..').click();
   await page.locator('[data-dd-area-group="Inicial"] input[value="Ciencia y Tecnología"]').locator('..').click();
+  await page.locator('#linguisticMode').selectOption('Monolingüe castellano');
   await page.locator('#ddSetupNativeForm button[type="submit"]').click();
+  await page.waitForFunction(()=>window.state?.level==='Inicial'&&typeof window.go==='function',null,{timeout:20000});
   await page.evaluate(()=>{go('materials');window.DDMaterials.fill();});
   await page.locator('#materialSource').selectOption('free');
   await page.locator('#materialType').selectOption('Ficha de trabajo');

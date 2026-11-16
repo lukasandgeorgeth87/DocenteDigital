@@ -44,6 +44,9 @@ function ddProtectApprovedSelections(){
 const save=()=>{
   try{
     ddProtectApprovedSelections();
+    // El título aprobado de cada unidad es la fuente única para el mes anual
+    // al que pertenece. La sincronización no crea unidades ni cambia áreas.
+    try{window.DDAnnualPlanning?.syncWithUnits?.();}catch(error){console.warn('Programación anual:',error);}
     localStorage.setItem('docenteDigitalPrototype',JSON.stringify(state));
     window.__ddMemoryOnly=false;
     // El historial se guarda aparte (IndexedDB) y nunca bloquea el guardado principal.
@@ -776,7 +779,9 @@ function createUnitDemo(){
     product:proposeProduct(brief,type),
     activities:buildActivities(brief,duration),createdAt:new Date().toISOString()
   };
-  state.units.unshift(unit);state.activeUnitId=unit.id;save();
+  state.units.unshift(unit);state.activeUnitId=unit.id;
+  window.DDAnnualPlanning?.attachUnit?.(unit);
+  save();
   // Do not discard the teacher's draft unless this exact new unit exists in storage.
   window.ddBetaDraftAutosave?.clearIfPersisted?.(unit);
   byId('unitReady').classList.remove('hidden');

@@ -104,6 +104,7 @@ body.dd-setup-mode .chatbar{display:none!important}
 <div class="layout">
   <aside class="sidebar">
     <button class="nav active" data-screen="home" onclick="go('home')">🏠 Inicio</button>
+    <button class="nav" data-screen="annual" onclick="go('annual');window.DDAnnualPlanning?.open()">📅 Programación anual</button>
     <button class="nav" data-screen="plan" onclick="go('plan')">📘 Unidades y proyectos</button>
     <button class="nav" data-screen="session" onclick="go('session')">📝 Sesiones</button>
     <button class="nav" data-screen="materials" onclick="go('materials')">🧩 Materiales</button>
@@ -241,22 +242,29 @@ body.dd-setup-mode .chatbar{display:none!important}
     </section>
 
     <section id="home" class="screen">
-      <div class="hero"><span class="pill">Docente Digital Esencial · Beta privada</span><h1>Planifica, enseña y evalúa en un solo lugar.</h1><p id="homeContext"></p><p>Empieza con una unidad. De ella saldrán tus sesiones, materiales e instrumentos.</p><button class="btn alt topgap" onclick="continueWork()">▶ Retomar mi último trabajo</button></div>
+      <div class="hero"><span class="pill">Docente Digital Esencial · Beta privada</span><h1>Planifica, enseña y evalúa en un solo lugar.</h1><p id="homeContext"></p><p>Empieza con tu programación anual o crea directamente una unidad. De ella saldrán las sesiones, los materiales y los instrumentos.</p><button class="btn alt topgap" onclick="continueWork()">▶ Retomar mi último trabajo</button></div>
       <div class="grid">
-        <button class="card action-card span4" onclick="go('plan');showUnit()"><span>📘</span><h2>1. Unidades y proyectos</h2><p>Organiza la planificación contextualizada de tus estudiantes.</p></button>
-        <button class="card action-card span4" onclick="go('session')"><span>📝</span><h2>2. Sesiones</h2><p>Prepara la actividad seleccionada de tu unidad.</p></button>
-        <button class="card action-card span4" onclick="go('materials')"><span>🧩</span><h2>3. Materiales</h2><p>Fichas y recursos relacionados con la sesión.</p></button>
-        <button class="card action-card span4" onclick="go('evaluation')"><span>📏</span><h2>4. Instrumentos</h2><p>Rúbricas, listas de cotejo y otras formas de evaluar.</p></button>
-        <button class="card action-card span4" onclick="go('evaluation');window.DDEvaluation?.openRegister()"><span>📋</span><h2>5. Registro auxiliar</h2><p>Registra evidencias y descarga resultados en Excel.</p></button>
-        <button class="card action-card span4" onclick="go('documents');window.DDDocumentLibrary?.open()"><span>📂</span><h2>6. Mis documentos</h2><p>Recupera, reutiliza y consulta versiones guardadas.</p></button>
+        <button class="card action-card span4" onclick="go('annual');window.DDAnnualPlanning?.open()"><span>📅</span><h2>1. Programación anual</h2><p>Organiza los meses y prepara sus unidades.</p></button>
+        <button class="card action-card span4" onclick="go('plan');showUnit()"><span>📘</span><h2>2. Unidades y proyectos</h2><p>Organiza la planificación contextualizada de tus estudiantes.</p></button>
+        <button class="card action-card span4" onclick="go('session')"><span>📝</span><h2>3. Sesiones</h2><p>Prepara la actividad seleccionada de tu unidad.</p></button>
+        <button class="card action-card span4" onclick="go('materials')"><span>🧩</span><h2>4. Materiales</h2><p>Fichas y recursos relacionados con la sesión.</p></button>
+        <button class="card action-card span4" onclick="go('evaluation')"><span>📏</span><h2>5. Instrumentos</h2><p>Rúbricas, listas de cotejo y otras formas de evaluar.</p></button>
+        <button class="card action-card span4" onclick="go('evaluation');window.DDEvaluation?.openRegister()"><span>📋</span><h2>6. Registro auxiliar</h2><p>Registra evidencias y descarga resultados en Excel.</p></button>
+        <button class="card action-card span4" onclick="go('documents');window.DDDocumentLibrary?.open()"><span>📂</span><h2>7. Mis documentos</h2><p>Recupera, reutiliza y consulta versiones guardadas.</p></button>
       </div>
+    </section>
+
+    <section id="annual" class="screen">
+      <h1>Programación anual</h1>
+      <p class="sub">Planifica de marzo a diciembre y crea una unidad desde cualquier mes. Si modificas el título de una unidad vinculada, la programación también se actualiza.</p>
+      <div id="annualRoot"></div>
     </section>
 
     <section id="plan" class="screen">
       <h1>Unidades y proyectos</h1><p class="sub">Los datos de tu institución se reutilizan. Crea una planificación y úsala para preparar las sesiones.</p>
       <div class="grid">
         <div class="card span4 dd-future-module"><h2>🩺 Evaluación diagnóstica</h2><p>Recoge evidencias iniciales y ayuda a decidir apoyos y prioridades.</p><button class="btn block" onclick="window.DDPlanningTools?.openDiagnostic()">Crear diagnóstico</button></div>
-        <div class="card span4 dd-future-module"><h2>📅 Programación anual</h2><p>Organiza periodos, unidades/proyectos, competencias y evidencias de manera editable.</p><button class="btn alt block" onclick="window.DDPlanningTools?.openAnnual()">Abrir programación anual</button></div>
+        <div class="card span4"><h2>📅 Programación anual</h2><p>Elige un mes y crea su unidad con el título y contexto propuestos.</p><button class="btn alt block" onclick="window.DDPlanningTools?.openAnnual()">Abrir programación anual</button></div>
         <div class="card span12"><h2>📚 Unidad / Proyecto</h2><p>Crea y guarda unidades o proyectos para reutilizarlos en las sesiones.</p><button class="btn amber block" onclick="showUnit()">Crear nueva</button></div>
       </div>
 
@@ -449,6 +457,7 @@ body.dd-setup-mode .chatbar{display:none!important}
 <script src="evaluation-v1.js"></script>
 <script src="sesiones-maestras-core-v1.js"></script>
 <script src="planning-tools-v1.js"></script>
+<script src="annual-planning-v2.js"></script>
 <script src="director-v1.js"></script>
 <script src="docx-export-v29.js"></script>
 <script src="persistence-truth-v63.js"></script>

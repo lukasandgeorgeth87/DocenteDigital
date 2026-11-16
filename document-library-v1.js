@@ -40,12 +40,13 @@
     const docs=[];
     function add(kind,source){
       if(!source||!source.id)return;
-      const title=kind==='unidad'?source.title:kind==='sesion'?source.title:
+      const title=kind==='anual'?'Programación anual '+(source.year||''):kind==='unidad'?source.title:kind==='sesion'?source.title:
         kind==='material'?source.topic:kind==='rubrica'?'Rúbrica · '+(source.area||'')+' · '+(source.grade||''):
         'Instrumento · '+(source.area||'')+' · '+(source.grade||'');
       docs.push({key:kind+':'+source.id,kind,sourceId:String(source.id),title:String(title||'Sin título'),unitId:String(source.unitId||''),payload:copy(source)});
     }
     (Array.isArray(state.units)?state.units:[]).forEach(u=>add('unidad',u));
+    (Array.isArray(state.annualPlans)?state.annualPlans:[]).forEach(p=>add('anual',p));
     if(state.lastSession)add('sesion',state.lastSession);
     (Array.isArray(state.materials)?state.materials:[]).forEach(m=>add('material',m));
     (Array.isArray(state.generatedAssessments)?state.generatedAssessments:[]).forEach(a=>add('instrumento',a));
@@ -83,7 +84,7 @@
   }
   function target(){return $('documentsList');}
   function message(text){const box=$('documentsMessage');if(box){box.textContent=text;box.classList.remove('hidden');}}
-  function human(kind){return ({unidad:'Unidad / proyecto',sesion:'Sesión',material:'Material',instrumento:'Instrumento',rubrica:'Rúbrica'})[kind]||kind;}
+  function human(kind){return ({anual:'Programación anual',unidad:'Unidad / proyecto',sesion:'Sesión',material:'Material',instrumento:'Instrumento',rubrica:'Rúbrica'})[kind]||kind;}
   function datestring(value){const date=new Date(value);return Number.isNaN(date.getTime())?'Fecha no disponible':date.toLocaleString('es-PE');}
   async function open(){
     const box=target();if(!box)return;
@@ -103,7 +104,12 @@
     return {doc,version,payload:copy(version.payload)};
   }
   function assign(kind,payload){
-    if(kind==='unidad'){
+    if(kind==='anual'){
+      state.annualPlans=Array.isArray(state.annualPlans)?state.annualPlans:[];
+      const index=state.annualPlans.findIndex(x=>x.id===payload.id);
+      if(index<0)state.annualPlans.unshift(payload);else state.annualPlans[index]=payload;
+      state.lastAnnualPlan=payload;
+    }else if(kind==='unidad'){
       const index=state.units.findIndex(x=>x.id===payload.id);
       if(index<0)state.units.unshift(payload);else state.units[index]=payload;
       state.activeUnitId=payload.id;
@@ -128,7 +134,8 @@
     if(!save())throw new Error('No se pudo guardar el documento recuperado. Libera espacio o descarga un respaldo.');
   }
   function show(kind,payload){
-    if(kind==='unidad'){go('plan');renderUnits();fillSessionUnits();viewUnit(payload.id);}
+    if(kind==='anual'){go('annual');root.DDAnnualPlanning?.open?.();}
+    else if(kind==='unidad'){go('plan');renderUnits();fillSessionUnits();viewUnit(payload.id);}
     else if(kind==='sesion'){go('session');renderSessionOutput(payload);}
     else if(kind==='material'){go('materials');root.DDMaterials?.renderHistory?.();root.DDMaterials?.reopen?.(payload.id);}
     else if(kind==='instrumento'){go('evaluation');root.DDEvaluation?.openSavedAssessment?.();}
@@ -150,7 +157,9 @@
     const {doc,payload}=await selected(key,number);
     if(!root.DDWordExport?.downloadHtml)throw new Error('El exportador Word no está disponible.');
     let html='';
-    if(doc.kind==='unidad'){
+    if(doc.kind==='anual'){
+      html=root.DDAnnualPlanning?.printHtml?.(payload)||'';
+    }else if(doc.kind==='unidad'){
       if(typeof unitWordHtml!=='function')throw new Error('El generador Word de unidades no está disponible.');
       html=unitWordHtml(payload);
     }else if(doc.kind==='sesion'){
@@ -159,7 +168,7 @@
     }else if(doc.kind==='material')html=root.DDMaterials?.materialWordHtml?.(payload)||String(payload.html||'').replace(/<div class="actions[\s\S]*$/,'');
     else html=payload.html||'';
     if(!html)throw new Error('Esta versión no contiene un documento exportable.');
-    root.DDWordExport.downloadHtml(doc.title,html,doc.kind==='unidad'||doc.kind==='rubrica','Documento_'+doc.title+'_v'+(number||'actual'));
+    root.DDWordExport.downloadHtml(doc.title,html,doc.kind==='anual'||doc.kind==='unidad'||doc.kind==='rubrica','Documento_'+doc.title+'_v'+(number||'actual'));
   }
   async function history(key){
     const doc=await read(key),box=$('documentsHistory');if(!doc||!box)return;
