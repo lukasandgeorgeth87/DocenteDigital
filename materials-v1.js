@@ -518,6 +518,40 @@
     return stripped&&!/[·|•]/.test(stripped)?stripped:raw;
   }
 
+  function remembranceWorksheet(title,grade){
+    const n=gradeNumber(grade),info=topicInfo(title);
+    const tasks=n<=2?[
+      'Escucha el texto. ¿Qué fecha corresponde al Día de Todos los Santos?',
+      'Señala una idea del texto: ¿todas las familias tienen las mismas costumbres?',
+      'Dibuja una manera respetuosa de escuchar una tradición que conoces por el texto.',
+      'Cuenta qué puedes aprender cuando otra persona tiene una costumbre diferente.',
+      'Formula una pregunta que harías para aprender más sin pedir recuerdos personales.'
+    ]:n<=4?[
+      'Identifica qué se recuerda el 1 y el 2 de noviembre según la lectura.',
+      'Explica con un ejemplo del texto por qué existen diferentes costumbres familiares.',
+      'Distingue una afirmación verificable de una opinión sobre las tradiciones.',
+      'Señala una fuente —texto, imagen documentada o testimonio voluntario— que ayudaría a conocer mejor una costumbre.',
+      'Escribe una conclusión respetuosa y una pregunta que todavía falta investigar.'
+    ]:[
+      'Distingue dos datos verificables y una interpretación posible de la lectura.',
+      'Compara formas de recordar sin suponer que todas las familias comparten una práctica.',
+      'Explica cómo contrastarías información usando dos fuentes diferentes y confiables.',
+      'Redacta una conclusión sustentada en evidencias y respetuosa de la diversidad cultural.',
+      'Indica qué falta comprobar antes de atribuir una costumbre a tu localidad y formula una pregunta investigable.'
+    ];
+    return `<article class="dd-material-sheet dd-cultural-sheet">
+      <div class="dd-material-kicker">Ficha de Comunicación · ${E(grade)} · Diversidad cultural</div>
+      <h1>Leemos sobre Todos los Santos y distintas tradiciones</h1>
+      <p><b>Nombre:</b> _________________________ <b>Fecha:</b> ______________</p>
+      <p><b>Propósito:</b> comprender una lectura informativa y compartir ideas sobre las tradiciones con respeto.</p>
+      <h2>Lectura: Dos días de noviembre</h2>
+      ${info.facts.map(p=>`<p>${E(p)}</p>`).join('')}
+      <h2>Comprendo, pienso y explico</h2>
+      <ol class="dd-big-list">${tasks.map(task=>`<li>${E(task)}<div class="dd-answer-lines"><p>____________________________________________________________</p></div></li>`).join('')}</ol>
+      <p><b>Reviso:</b> □ Identifiqué información. &nbsp; □ Expliqué una idea. &nbsp; □ Escuché con respeto.</p>
+    </article>`;
+  }
+
   function communicationWorksheet(title,level,grade,area){
     const focus=communicationFocus(title),n=gradeNumber(grade),t=N(title);
     const official=window.DD_OFFICIAL_CURRICULUM?.communicationModeFromTitle;
@@ -603,6 +637,8 @@
        /historiet|derech|particip/i.test(topic)&&!String(sourceText||'').trim()){
       return rightsParticipationWorksheet(topic,grade);
     }
+    if(level==='Primaria'&&area==='Comunicación'&&topicInfo(topic).key==='remembrance'&&!String(sourceText||'').trim())
+      return remembranceWorksheet(topic,grade);
     if(level==='Primaria'&&area==='Comunicación'&&!String(sourceText||'').trim())
       return communicationWorksheet(topic,level,grade,area);
     const acts=worksheetActivities(topic,level,grade,area);
