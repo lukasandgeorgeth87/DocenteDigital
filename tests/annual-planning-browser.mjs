@@ -28,6 +28,7 @@ try{
   await march.locator('[data-annual-create]').click();
   assert.equal(await page.locator('#unitTitle').inputValue(),'Convivimos y nos escuchamos en clase');
   assert((await page.locator('#unitSituation').inputValue()).includes('opiniones diferentes'));
+  await page.waitForFunction(()=>document.querySelector('#unitType')?.value==='Unidad de aprendizaje',null,{timeout:8000});
   await page.locator('#unitTitle').fill('Creamos acuerdos para escuchar todas las voces');
   await page.locator('button[onclick="createUnitDemo()"]',{hasText:'Crear propuesta completa'}).click();
   await page.waitForSelector('#ddProposalChooser:not(.hidden)',{timeout:20000});

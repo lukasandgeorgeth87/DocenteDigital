@@ -131,6 +131,16 @@
     if(existing){go('plan');viewUnit(existing.id);return;}
     state.annualPendingUnit={planId:plan.id,month};save();
     go('plan');showUnit();
+    // El selector global Unidad/Proyecto se reinicia al abrir un nuevo plan.
+    // Desde la programación anual ya conocemos el tipo de esta entrada:
+    // seleccionarlo después del reinicio evita pedir la misma decisión otra vez.
+    setTimeout(()=>{
+      const kind=row.type||'Unidad de aprendizaje';
+      const button=[...document.querySelectorAll('#ddPlanningKindChooser [data-kind]')]
+        .find(b=>b.dataset.kind===kind);
+      if(button)button.click();
+      else if($('unitType'))$('unitType').value=kind;
+    },0);
     const title=$('unitTitle'),brief=$('unitSituation');
     if(title){title.value=row.title;title.dataset.autoTitle='false';title.dataset.ddSuggestedTitle='true';}
     if(brief){brief.value=row.context||`Durante ${month.toLowerCase()} se propone trabajar «${row.title}» con experiencias cercanas a los estudiantes. El docente precisará los intereses, preguntas y datos reales de su grupo.`;}
