@@ -34,7 +34,14 @@ runInNewContext(sch.slice(p,q)+'\nthis.sessionTitle=primarySequenceTitle;',sched
 const title=schedule.sessionTitle('Comunicación',brief,3,3,1);
 assert.match(title,/Expo interactiva: descubrimos los derechos/);
 assert(proposal.includes('lastExplicitProductSelection?tidy(pending.selectedProductTitle)||declaredProduct'), 'El producto canónico debe guardar el nombre elegido, no solo su descripción');
-assert(proposal.includes('return \'los derechos de la niñez\';return base;'), 'El contexto autogenerado sobre derechos no puede perder el tema');
+// Comprobar comportamiento, no la disposición literal de dos sentencias
+// internas: la función puede refactorizarse sin perder el tema de derechos.
+const sf=proposal.indexOf('  function shortFocus(m,raw){'),ef=proposal.indexOf('  function placeFor(m){',sf);
+assert(sf>=0&&ef>sf);
+const focusEnv={window:{ddContextTopic:()=> 'los derechos'},tidy:s=>String(s||'').replace(/\s+/g,' ').trim()};
+runInNewContext(proposal.slice(sf,ef)+'\nthis.focus=shortFocus;',focusEnv);
+assert.equal(focusEnv.focus({focus:'palabras · sin · sintaxis'},brief),'los derechos de la niñez',
+  'El contexto autogenerado sobre derechos no puede perder el tema');
 assert(!/Muestra por estaciones/.test(title),'La sesión debe nombrar el producto elegido, no la descripción extensa');
 const exportWin={unitWordHtml:()=>''};
 runInNewContext(read('unit-export-quality-v11.js'),{window:exportWin});
