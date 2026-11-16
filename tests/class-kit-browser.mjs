@@ -67,10 +67,15 @@ try{
   assert.equal(first.assessment.instrument,'Lista de cotejo');
   assert.match(first.material.html,/Situación ficticia para practicar la conversación/,
     'La ficha oral debe contener una situación real de trabajo, sin depender de material ausente');
+  assert.match(first.material.html,/Luz leyó un relato|Luz leyó un relato sobre/,
+    'La conversación sobre relatos debe traer ejemplos concretos relacionados con el tema');
   assert.match(first.material.html,/Una pregunta para mi compañero/,
     'La ficha debe dar espacio para una pregunta del estudiante');
   assert.equal((first.assessment.html.match(/<tr><td>/g)||[]).length,3,
     'Una lista de cotejo oral debe tener tres indicadores distinguibles');
+  assert.match(first.assessment.html,/criterio de referencia/i);
+  assert.doesNotMatch(first.assessment.html,/escuchar dis y la comunica/i,
+    'El criterio de revisión no puede contener una situación truncada a mitad de palabra');
   await page.screenshot({path:path.join(out,'10-paquete-clase-integrado.png'),fullPage:true});
   await page.locator('#ddClassKitActivity').selectOption('1');
   await page.locator('#ddClassKitPanel [data-dd-kit-create]').click();
