@@ -87,8 +87,17 @@
     if(/siembra|semilla|biohuerto/i.test(raw))return 'la siembra y el biohuerto';
     if(/agua|yaku/i.test(raw))return 'el cuidado del agua';
     if(/residuo|basura|contamin/i.test(raw))return 'el manejo de residuos';
-    const topic=raw.match(/\bsobre\s+([^.,;!?]{6,72})/i)?.[1]||raw.split(/[.;!?]/)[0];
-    return topic.slice(0,78).trim().replace(/[,:-]+$/,'')||'el reto de la unidad';
+    // An institutional situation is often a full paragraph. Keep the specific
+    // learning focus, never the leading boilerplate or a mid-word truncation.
+    if(/relatos?|cuentos?|lecturas?/i.test(raw)&&/escuch|pregunt|voces|dialog/i.test(raw))
+      return 'los relatos y las distintas voces';
+    const explicit=raw.match(/\bsobre\s+([^.,;!?]{6,110})/i)?.[1];
+    const topic=String(explicit||raw.split(/[.;!?]/)[0])
+      .replace(/^(?:en\s+)?(?:el aula|los estudiantes|las niñas y los niños)\s+(?:trabajan?|conocen|investigan|dialogan)\s+(?:con|sobre)\s+/i,'')
+      .split(/\s+para\s+(?:escuchar|dialogar|explicar|elaborar|producir|comprender|reflexionar)\b/i)[0];
+    const words=topic.trim().split(/\s+/).filter(Boolean).slice(0,11);
+    while(words.length>1&&/^(?:y|o|de|del|en|con|para|sobre|la|el|los|las|un|una)$/i.test(words.at(-1)))words.pop();
+    return words.join(' ').replace(/[,:;-]+$/,'')||'el reto de la unidad';
   }
   function ddCriterion(area,g,brief,level=''){
     const n=parseInt(g)||0; const ctx=level==='Primaria'?ddConciseContext(brief):(brief||'el reto de la unidad');
