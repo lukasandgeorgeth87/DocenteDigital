@@ -111,6 +111,7 @@
     function walk(node){
       for(const el of [...node.children]){
         const tag=el.tagName;
+        if(el.hasAttribute?.('data-dd-page-before'))out.push('<w:p><w:r><w:br w:type="page"/></w:r></w:p>');
         if(tag==='TABLE'){out.push(tableXml(el,totalWidth));continue;}
         if(tag==='H1'){out.push(pXml(textOf(el),{bold:true,size:32,center:true,after:140}));continue;}
         if(tag==='H2'){out.push(pXml(textOf(el),{bold:true,size:26,after:100}));continue;}

@@ -35,6 +35,8 @@ try{
   assert.match(sheet,/<pane ySplit="1"[^>]+state="frozen"/);
   assert.match(sheet,/<autoFilter ref="A1:C3"/);
   assert.match(sheet,/<col min="2" max="2" width="58" customWidth="1"/);
+  const styles=spawnSync('unzip',['-p',file,'xl/styles.xml'],{encoding:'utf8'}).stdout;
+  assert.match(styles,/<cellStyle name="Normal" xfId="0" builtinId="0"/);
   assert.ok(sheet.includes('=HYPERLINK(&quot;https://ejemplo.pe&quot;)'));
   assert.ok(!sheet.includes('<f>'),'No se deben crear fórmulas ejecutables desde texto ingresado');
   assert.ok(sheet.includes('Comparación de &lt; y &gt;'));

@@ -493,16 +493,16 @@
       <p><b>Materiales:</b> dos tipos de semillas seguras, dos platos y una lupa de juguete. La docente acompaña la exploración.</p>
       <h2>1. Observo y converso</h2>
       <p>Observa dos semillas. ¿En qué se parecen? ¿Qué cambia? Dibuja lo que ves.</p>
-      <table data-col-weights="1,1"><thead><tr><th>Semilla A · Dibujo lo que veo</th><th>Semilla B · Dibujo lo que veo</th></tr></thead><tbody><tr data-dd-drawbox="2300"><td> </td><td> </td></tr></tbody></table>
+      <table data-col-weights="1,1"><thead><tr><th>Semilla A · Dibujo lo que veo</th><th>Semilla B · Dibujo lo que veo</th></tr></thead><tbody><tr data-dd-drawbox="3100"><td> </td><td> </td></tr></tbody></table>
       <h2>2. Juego a agrupar</h2>
       <p>Separa las semillas en dos platos. Dibuja cómo quedaron tus grupos.</p>
-      <table data-col-weights="1,1"><thead><tr><th>Plato 1</th><th>Plato 2</th></tr></thead><tbody><tr data-dd-drawbox="1700"><td> </td><td> </td></tr></tbody></table>
-      <h2>3. Me hago una pregunta</h2>
+      <table data-col-weights="1,1"><thead><tr><th>Plato 1</th><th>Plato 2</th></tr></thead><tbody><tr data-dd-drawbox="2600"><td> </td><td> </td></tr></tbody></table>
+      <h2 data-dd-page-before="true" class="dd-pagebreak">3. Me hago una pregunta</h2>
       <p>¿Qué pasaría con una semilla sobre algodón húmedo? Dibuja lo que imaginas. Todavía no sabemos qué ocurrirá.</p>
-      <table><thead><tr><th>Imagino y dibujo</th></tr></thead><tbody><tr data-dd-drawbox="1700"><td> </td></tr></tbody></table>
+      <table><thead><tr><th>Imagino y dibujo</th></tr></thead><tbody><tr data-dd-drawbox="2800"><td> </td></tr></tbody></table>
       <h2>4. Volvemos a observar</h2>
       <p>Otro día, observa de nuevo y dibuja solo lo que realmente ves.</p>
-      <table><thead><tr><th>Observo otro día y dibujo</th></tr></thead><tbody><tr data-dd-drawbox="1700"><td> </td></tr></tbody></table>
+      <table><thead><tr><th>Observo otro día y dibujo</th></tr></thead><tbody><tr data-dd-drawbox="2800"><td> </td></tr></tbody></table>
       <p><b>Para la docente:</b> escucha y anota qué observó y cómo lo explicó el niño o niña: ________________________</p>
       <p><b>Seguridad:</b> no introducir semillas en la boca; explorar siempre con una persona adulta.</p>
     </article>`;
@@ -880,7 +880,7 @@
     .dd-editable-material{outline:none;border-radius:10px}.dd-editable-material:focus{box-shadow:0 0 0 2px rgba(47,126,90,.15)}.dd-material-bundle>.dd-bundle-section{margin:22px 0;padding-top:16px;border-top:2px dashed #c8d8cf}.dd-grade-pack{margin:24px 0;padding:14px;border:1px solid #d7e3dc;border-radius:14px;background:#fbfdfc}.dd-grade-pack-head{margin-bottom:10px}.dd-resource-code{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.04em;background:#eaf5ef;border-radius:8px;padding:5px 8px;margin-bottom:6px}.dd-material-history{display:grid;gap:8px}.dd-material-history-item{display:flex;justify-content:space-between;gap:12px;align-items:center;border:1px solid #dce5e0;border-radius:12px;padding:11px;background:#fff}
     .dd-material-history-item h3{margin:5px 0 2px}.dd-material-history-item p{margin:0;color:#677}
     @media(max-width:650px){.dd-word-cards,.dd-concept-grid,.dd-organizer{grid-template-columns:1fr}.dd-material-history-item{align-items:flex-start;flex-direction:column}}
-    @media print{body>*:not(.layout){display:none!important}.sidebar,.topbar,.mobile-nav,.dd-material-actions{display:none!important}.content,.screen#materials,.screen#materials.active{display:block!important;padding:0!important}.screen#materials>*:not(.card){display:none!important}#materials .card>*:not(#materialOutput){display:none!important}#materialOutput{display:block!important;border:0!important;box-shadow:none!important}}
+    @media print{.dd-pagebreak{break-before:page;page-break-before:always}body>*:not(.layout){display:none!important}.sidebar,.topbar,.mobile-nav,.dd-material-actions{display:none!important}.content,.screen#materials,.screen#materials.active{display:block!important;padding:0!important}.screen#materials>*:not(.card){display:none!important}#materials .card>*:not(#materialOutput){display:none!important}#materialOutput{display:block!important;border:0!important;box-shadow:none!important}}
   `;
   document.head.appendChild(css);
 
