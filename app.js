@@ -46,6 +46,8 @@ const save=()=>{
     ddProtectApprovedSelections();
     localStorage.setItem('docenteDigitalPrototype',JSON.stringify(state));
     window.__ddMemoryOnly=false;
+    // El historial se guarda aparte (IndexedDB) y nunca bloquea el guardado principal.
+    try{window.DDDocumentLibrary?.onStateSaved?.();}catch(error){console.warn('Biblioteca: no se pudo programar el historial.',error);}
     return true;
   }catch(error){
     window.__ddMemoryOnly=true;

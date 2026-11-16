@@ -33,6 +33,9 @@ jobs:
       - name: Validate DOCX XML character safety (offline)
         run: node tests/docx-xml-safety.mjs
 
+      - name: Validate native Excel register export (offline)
+        run: node tests/xlsx-export.mjs
+
       - name: Validate Redis quota operation kinds and accounting (mock)
         run: node tests/ai-quota-kind.mjs
 
@@ -157,6 +160,20 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:4173
         run: node tests/planning-engine-v3-browser.mjs
+
+      - name: Produce real commercial-evidence documents from the application (feature only)
+        if: github.ref == 'refs/heads/feature/motor-pedagogico-v3-integral-20261112'
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/commercial-evidence-browser.mjs
+
+      - name: Preserve real Word and Excel evidence for editorial inspection
+        if: always() && github.ref == 'refs/heads/feature/motor-pedagogico-v3-integral-20261112'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docente-digital-evidencia-real
+          path: /tmp/dd-commercial-evidence/*
+          if-no-files-found: warn
 
       - name: Test natural short rights request, expo product and second-grade DOCX
         env:

@@ -89,6 +89,11 @@ body.dd-setup-mode .chatbar{display:none!important}
 #setup [data-dd-initial-csl][hidden]{display:none!important}
 #setup .dd-native-group.dd-native-hidden{display:none!important}
 #setup .dd-setup-selected{background:#e8f7f2;padding:10px;border-radius:10px}
+.span12{grid-column:1/-1}
+.dd-future-module{display:none!important}
+#documentsList .document h3{margin:10px 0 4px;overflow-wrap:anywhere}
+#documentsList .actions,#documentsHistory .actions{flex-wrap:wrap}
+#documentsHistory{scroll-margin-top:80px}
 </style>
 </head>
 <body>
@@ -99,11 +104,12 @@ body.dd-setup-mode .chatbar{display:none!important}
 <div class="layout">
   <aside class="sidebar">
     <button class="nav active" data-screen="home" onclick="go('home')">🏠 Inicio</button>
-    <button class="nav" data-screen="plan" onclick="go('plan')">📘 Mi planificación</button>
-    <button class="nav" data-screen="session" onclick="go('session')">📝 Crear mi sesión</button>
+    <button class="nav" data-screen="plan" onclick="go('plan')">📘 Unidades y proyectos</button>
+    <button class="nav" data-screen="session" onclick="go('session')">📝 Sesiones</button>
     <button class="nav" data-screen="materials" onclick="go('materials')">🧩 Materiales</button>
-    <button class="nav" data-screen="evaluation" onclick="go('evaluation')">📊 Evaluación</button>
-    <button class="nav" data-screen="director" onclick="go('director')">🏫 Director</button>
+    <button class="nav" data-screen="evaluation" onclick="go('evaluation')">📏 Instrumentos de evaluación</button>
+    <button class="nav" onclick="go('evaluation');window.DDEvaluation?.openRegister()">📋 Registro auxiliar</button>
+    <button class="nav" data-screen="documents" onclick="go('documents');window.DDDocumentLibrary?.open()">📂 Mis documentos</button>
     <button class="nav" data-screen="settings" onclick="go('settings')">⚙️ Configuración</button>
   </aside>
   <main class="content">
@@ -235,22 +241,23 @@ body.dd-setup-mode .chatbar{display:none!important}
     </section>
 
     <section id="home" class="screen">
-      <div class="hero"><span class="pill">✨ Modo Fácil</span><h1>Tu trabajo docente, más simple.</h1><p id="homeContext"></p></div>
+      <div class="hero"><span class="pill">Docente Digital Esencial · Beta privada</span><h1>Planifica, enseña y evalúa en un solo lugar.</h1><p id="homeContext"></p><p>Empieza con una unidad. De ella saldrán tus sesiones, materiales e instrumentos.</p><button class="btn alt topgap" onclick="continueWork()">▶ Retomar mi último trabajo</button></div>
       <div class="grid">
-        <button class="card action-card span6" onclick="continueWork()"><span>▶️</span><h2>Continuar mi trabajo</h2><p>Retoma tu última unidad, proyecto o sesión.</p></button>
-        <button class="card action-card span6" onclick="go('session')"><span>📝</span><h2>Crear mi sesión</h2><p>Usa la unidad/proyecto actual y completa solo lo que falta.</p></button>
-        <button class="card action-card span4" onclick="go('plan')"><span>📘</span><h2>Mi planificación</h2><p>Diagnóstico, programación anual, horario, unidades y proyectos.</p></button>
-        <button class="card action-card span4" onclick="go('materials')"><span>🧩</span><h2>Materiales</h2><p>Crea lecturas, fichas, problemas y paquetes a partir de tu planificación.</p></button>
-        <button class="card action-card span4" onclick="go('evaluation')"><span>📊</span><h2>Evaluación</h2><p>Registra evidencias, crea evaluaciones y redacta conclusiones desde lo ya planificado.</p></button>
+        <button class="card action-card span4" onclick="go('plan');showUnit()"><span>📘</span><h2>1. Unidades y proyectos</h2><p>Organiza la planificación contextualizada de tus estudiantes.</p></button>
+        <button class="card action-card span4" onclick="go('session')"><span>📝</span><h2>2. Sesiones</h2><p>Prepara la actividad seleccionada de tu unidad.</p></button>
+        <button class="card action-card span4" onclick="go('materials')"><span>🧩</span><h2>3. Materiales</h2><p>Fichas y recursos relacionados con la sesión.</p></button>
+        <button class="card action-card span4" onclick="go('evaluation')"><span>📏</span><h2>4. Instrumentos</h2><p>Rúbricas, listas de cotejo y otras formas de evaluar.</p></button>
+        <button class="card action-card span4" onclick="go('evaluation');window.DDEvaluation?.openRegister()"><span>📋</span><h2>5. Registro auxiliar</h2><p>Registra evidencias y descarga resultados en Excel.</p></button>
+        <button class="card action-card span4" onclick="go('documents');window.DDDocumentLibrary?.open()"><span>📂</span><h2>6. Mis documentos</h2><p>Recupera, reutiliza y consulta versiones guardadas.</p></button>
       </div>
     </section>
 
     <section id="plan" class="screen">
-      <h1>Mi planificación</h1><p class="sub">Nivel → Tipo de IE → grados/edades → áreas → horario → planificación.</p>
+      <h1>Unidades y proyectos</h1><p class="sub">Los datos de tu institución se reutilizan. Crea una planificación y úsala para preparar las sesiones.</p>
       <div class="grid">
-        <div class="card span4"><h2>🩺 Evaluación diagnóstica</h2><p>Recoge evidencias iniciales y ayuda a decidir apoyos y prioridades.</p><button class="btn block" onclick="window.DDPlanningTools?.openDiagnostic()">Crear diagnóstico</button></div>
-        <div class="card span4"><h2>📅 Programación anual</h2><p>Organiza periodos, unidades/proyectos, competencias y evidencias de manera editable.</p><button class="btn alt block" onclick="window.DDPlanningTools?.openAnnual()">Abrir programación anual</button></div>
-        <div class="card span4"><h2>📚 Unidad / Proyecto</h2><p>Crea y guarda unidades o proyectos para reutilizarlos en las sesiones.</p><button class="btn amber block" onclick="showUnit()">Crear nueva</button></div>
+        <div class="card span4 dd-future-module"><h2>🩺 Evaluación diagnóstica</h2><p>Recoge evidencias iniciales y ayuda a decidir apoyos y prioridades.</p><button class="btn block" onclick="window.DDPlanningTools?.openDiagnostic()">Crear diagnóstico</button></div>
+        <div class="card span4 dd-future-module"><h2>📅 Programación anual</h2><p>Organiza periodos, unidades/proyectos, competencias y evidencias de manera editable.</p><button class="btn alt block" onclick="window.DDPlanningTools?.openAnnual()">Abrir programación anual</button></div>
+        <div class="card span12"><h2>📚 Unidad / Proyecto</h2><p>Crea y guarda unidades o proyectos para reutilizarlos en las sesiones.</p><button class="btn amber block" onclick="showUnit()">Crear nueva</button></div>
       </div>
 
       <div id="unitsLibrary" class="card topgap">
@@ -379,16 +386,24 @@ body.dd-setup-mode .chatbar{display:none!important}
     </section>
 
     <section id="evaluation" class="screen">
-      <h1>Evaluación</h1>
+      <h1>Instrumentos de evaluación y registro auxiliar</h1>
       <p class="sub">Registra evidencias y niveles a partir de los criterios ya existentes. DocenteDigital reutiliza unidad, sesiones, criterios e instrumentos sin volver a generar información innecesaria.</p>
       <div class="grid">
         <div class="card span4"><h2>📋 Registro de evaluación</h2><p>Usa criterios y evidencias de la planificación.</p><button class="btn alt block" type="button" onclick="window.DDEvaluation?.openRegister()">Abrir registro</button></div>
         <div class="card span4"><h2>🧪 Evaluación de unidad/proyecto</h2><p>Construye una evaluación alineada con los criterios trabajados.</p><button class="btn amber block" type="button" onclick="window.DDEvaluation?.openAssessment()">Crear evaluación</button></div>
-        <div class="card span4"><h2>📝 Conclusiones descriptivas</h2><p>Genera borradores desde los registros existentes, sin repetir el trabajo docente.</p><button class="btn block" type="button" onclick="window.DDEvaluation?.openConclusions()">Generar borradores</button></div>
+        <div class="card span4 dd-future-module"><h2>📝 Conclusiones descriptivas</h2><p>Genera borradores desde los registros existentes, sin repetir el trabajo docente.</p><button class="btn block" type="button" onclick="window.DDEvaluation?.openConclusions()">Generar borradores</button></div>
         <div class="card span6"><h2>📏 Rúbrica desde mis criterios</h2><p>Convierte criterios ya aprobados en descriptores observables y editables.</p><button class="btn alt block" type="button" onclick="window.DDEvaluation?.openRubric()">Crear rúbrica</button></div>
-        <div class="card span6"><h2>💬 Retroalimentación y siguiente paso</h2><p>Propone un borrador desde la evidencia registrada; el docente revisa antes de usarlo.</p><button class="btn alt block" type="button" onclick="window.DDEvaluation?.openFeedback()">Preparar retroalimentación</button></div>
+        <div class="card span6 dd-future-module"><h2>💬 Retroalimentación y siguiente paso</h2><p>Propone un borrador desde la evidencia registrada; el docente revisa antes de usarlo.</p><button class="btn alt block" type="button" onclick="window.DDEvaluation?.openFeedback()">Preparar retroalimentación</button></div>
       </div>
       <div id="evaluationPanel" class="card hidden topgap"></div>
+    </section>
+
+    <section id="documents" class="screen">
+      <h1>Mis documentos</h1>
+      <p class="sub">Aquí se guardan versiones de las unidades, sesiones, fichas e instrumentos creados. Se conservan en este navegador: descarga también una copia externa para mayor seguridad.</p>
+      <div id="documentsMessage" class="notice hidden" role="status" aria-live="polite"></div>
+      <div id="documentsList" class="topgap"></div>
+      <div id="documentsHistory" class="card hidden topgap"></div>
     </section>
 
     <section id="director" class="screen">
@@ -402,10 +417,10 @@ body.dd-setup-mode .chatbar{display:none!important}
       <div id="directorPanel" class="card hidden topgap"></div>
     </section>
 
-    <section id="settings" class="screen"><h1>Configuración</h1><p class="sub">Datos institucionales y pedagógicos reutilizables.</p><div class="card"><div id="settingsSummary" class="success"></div><button class="btn" onclick="restartSetup()">Editar Nivel/Tipo/Grados/Áreas</button> <button class="btn ghost" onclick="resetDemo()">Restablecer datos</button></div></section>
+    <section id="settings" class="screen"><h1>Configuración</h1><p class="sub">Datos institucionales y pedagógicos reutilizables.</p><div class="card"><div id="settingsSummary" class="success"></div><button class="btn" onclick="restartSetup()">Editar Nivel/Tipo/Grados/Áreas</button> <button class="btn ghost" onclick="resetDemo()">Restablecer datos</button><details class="topgap"><summary>Funciones futuras conservadas</summary><p>La gestión directiva y otros módulos se conservan, pero quedan fuera de esta primera versión comercial.</p><button class="btn alt" onclick="go('director')">Abrir prototipo Director</button></details></div></section>
   </main>
 </div>
-<nav class="mobile-nav"><button class="active" data-screen="home" onclick="go('home')"><b>🏠</b>Inicio</button><button data-screen="plan" onclick="go('plan')"><b>📘</b>Plan</button><button data-screen="session" onclick="go('session')"><b>📝</b>Sesión</button><button data-screen="materials" onclick="go('materials')"><b>🧩</b>Materiales</button><button data-screen="evaluation" onclick="go('evaluation')"><b>📊</b>Evaluación</button></nav>
+<nav class="mobile-nav"><button class="active" data-screen="home" onclick="go('home')"><b>🏠</b>Inicio</button><button data-screen="plan" onclick="go('plan')"><b>📘</b>Unidades</button><button data-screen="session" onclick="go('session')"><b>📝</b>Sesiones</button><button data-screen="materials" onclick="go('materials')"><b>🧩</b>Materiales</button><button data-screen="evaluation" onclick="go('evaluation')"><b>📊</b>Evaluación</button></nav>
 <script src="storage-recovery-v26.js"></script>
 <script src="storage-access-guard-v71.js"></script>
 <script src="app.js"></script>
@@ -430,6 +445,7 @@ body.dd-setup-mode .chatbar{display:none!important}
 <script src="schedule-prompt-v6.js"></script>
 <script src="ai-library-router-v1.js"></script>\n<script src="openai-runtime-v1.js"></script>
 <script src="materials-v1.js"></script>
+<script src="xlsx-export-v1.js"></script>
 <script src="evaluation-v1.js"></script>
 <script src="sesiones-maestras-core-v1.js"></script>
 <script src="planning-tools-v1.js"></script>
@@ -447,6 +463,7 @@ body.dd-setup-mode .chatbar{display:none!important}
 <script src="pedagogical-engine-v2-data.js"></script>
 <script src="planning-engine-v3-core.js"></script>
 <script src="pedagogical-engine-v2.js"></script>
+<script src="document-library-v1.js"></script>
 
 </body>
 </html>

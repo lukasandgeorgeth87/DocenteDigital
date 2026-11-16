@@ -121,10 +121,10 @@
       }).join('');
       html+='<section class="dd-eval-criterion"><h3>'+E(c.area)+'</h3><p><b>Criterio:</b> '+E(c.criterion)+'</p><p class="dd-small"><b>Evidencia esperada:</b> '+E(c.evidence)+' · <b>Instrumento:</b> '+E(c.instrument)+'</p><div class="dd-scroll"><table class="dd-table"><thead><tr><th>Estudiante / código</th><th>Nivel</th><th>Evidencia observada</th><th>Siguiente paso</th></tr></thead><tbody>'+rows+'</tbody></table></div></section>';
     });
-    html+='<div class="actions"><button class="btn" id="ddEvalSave">💾 Guardar registro</button><button class="btn alt" id="ddEvalCsv">⬇ Descargar CSV</button><button class="btn ghost" id="ddEvalCon">📝 Conclusiones</button></div>';
+    html+='<div class="actions"><button class="btn" id="ddEvalSave">💾 Guardar registro</button><button class="btn alt" id="ddEvalExcel">⬇ Descargar Excel</button><button class="btn ghost" id="ddEvalCon">📝 Conclusiones</button></div>';
     box.innerHTML=html;
     $('ddEvalSave').onclick=function(){saveRegister(cs,names,unit,grade,true);};
-    $('ddEvalCsv').onclick=function(){saveRegister(cs,names,unit,grade,false);downloadCsv(unit,grade);};
+    $('ddEvalExcel').onclick=function(){saveRegister(cs,names,unit,grade,false);downloadExcel(unit,grade);};
     $('ddEvalCon').onclick=function(){saveRegister(cs,names,unit,grade,false);openConclusions(grade);};
   }
 
@@ -159,6 +159,29 @@
     }
     var csv=all.map(function(row){return row.map(safeCsvCell).join(',');}).join('\n');
     downloadBlob(new Blob(['\ufeff',csv],{type:'text/csv;charset=utf-8'}),cleanFileName('Registro_evaluacion_'+((unit&&unit.title)||grade))+'.csv');
+  }
+
+  function downloadExcel(unit,grade){
+    if(!window.DDXlsxExport?.download){
+      alert('El exportador Excel no está disponible. Recarga la página para volver a intentarlo.');
+      return false;
+    }
+    var rows=state.evaluationRecords.filter(function(r){return r.unitId===((unit&&unit.id)||'')&&r.grade===grade;});
+    var data=[['Estudiante','Grado','Área','Criterio','Nivel','Evidencia observada','Siguiente paso']].concat(rows.map(function(r){
+      return [r.student,r.grade,r.area,r.criterion,r.level||'',r.evidenceNote||'',r.nextStep||''];
+    }));
+    if(data.length===1){
+      alert('Primero registra las evidencias o niveles de los estudiantes para descargar el Excel.');
+      return false;
+    }
+    try{
+      window.DDXlsxExport.download(data,'Registro_evaluacion_'+((unit&&unit.title)||grade),'Registro '+grade);
+      return true;
+    }catch(error){
+      console.error('DocenteDigital: no se pudo exportar el registro a Excel',error);
+      alert('No se pudo crear el archivo Excel. El registro permanece guardado; vuelve a intentarlo.');
+      return false;
+    }
   }
 
   function difficulty(grade){
@@ -527,13 +550,26 @@
     }).join('');
     var body='<article class="dd-rubric-sheet"><div class="dd-material-kicker">Rúbrica editable · '+E(area)+' · '+E(grade)+'</div><h1>'+E((unit&&unit.title)||'Rúbrica de aprendizaje')+'</h1><p><b>Evidencia relacionada:</b> '+E(cs.map(function(x){return x.evidence;}).filter(Boolean).join(' · '))+'</p><div class="dd-scroll"><table class="dd-table"><thead><tr><th>Criterio</th><th>AD</th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>'+rows+'</tbody></table></div><p class="dd-small">Los descriptores son una propuesta editable. El docente valida que sean pertinentes para la evidencia y el nivel.</p></article>';
     state.lastRubric={id:'rub'+Date.now(),unitId:(unit&&unit.id)||'',unitTitle:(unit&&unit.title)||'',grade:grade,area:area,html:body,createdAt:new Date().toISOString()};save();
-    box.innerHTML='<div class="dd-editable-material" contenteditable="true" spellcheck="true">'+body+'</div><div class="actions topgap"><button class="btn" id="ddRubWord">⬇ Word</button><button class="btn alt" id="ddRubPrint">🖨 Imprimir / PDF</button></div>';
+    renderSavedRubric();
+  }
+
+  function renderSavedRubric(){
+    var saved=state.lastRubric,box=$('ddRubBody');if(!saved||!box)return;
+    box.innerHTML='<div class="dd-editable-material" contenteditable="true" spellcheck="true">'+saved.html+'</div><div class="actions topgap"><button class="btn" id="ddRubWord">⬇ Word</button><button class="btn alt" id="ddRubPrint">🖨 Imprimir / PDF</button></div>';
+    function persist(){saved.html=box.querySelector('.dd-editable-material').innerHTML;save();}
+    box.querySelector('.dd-editable-material').addEventListener('input',persist);
     $('ddRubWord').onclick=function(){
-      var html=box.querySelector('.dd-editable-material').innerHTML;
-      if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml('Rúbrica',html,true,'Rubrica_'+area+'_'+grade);
-      downloadBlob(wordBlob('Rúbrica',html),cleanFileName('Rubrica_'+area+'_'+grade)+'.doc');
+      persist();
+      if(window.DDWordExport?.downloadHtml)return window.DDWordExport.downloadHtml('Rúbrica',saved.html,true,'Rubrica_'+saved.area+'_'+saved.grade);
+      downloadBlob(wordBlob('Rúbrica',saved.html),cleanFileName('Rubrica_'+saved.area+'_'+saved.grade)+'.doc');
     };
     $('ddRubPrint').onclick=function(){window.print();};
+  }
+
+  function openSavedRubric(){
+    if(!state.lastRubric)return;
+    openRubric();
+    renderSavedRubric();
   }
 
   function feedbackText(student,recs){
@@ -579,5 +615,5 @@
   css.textContent='.dd-rubric-sheet{max-width:980px;margin:auto}.dd-feedback-list{display:grid;gap:10px}.dd-feedback-list article{border:1px solid #dce5df;border-radius:12px;padding:12px;background:#fff}.dd-feedback-list textarea{width:100%;min-height:110px}.dd-eval-context{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;padding:10px 12px;background:#eef7f2;border-radius:11px;margin-bottom:12px}.dd-eval-context span{font-size:12px;color:#50665b}.dd-eval-criterion{margin:14px 0;padding:12px;border:1px solid #dce5df;border-radius:13px;background:#fbfdfc}.dd-eval-note,.dd-eval-next{min-width:210px;min-height:60px}.dd-assessment-sheet{max-width:850px;margin:auto}.dd-conclusion-list{display:grid;gap:10px}.dd-conclusion-list article{border:1px solid #dce5df;border-radius:12px;padding:12px;background:#fff}.dd-conclusion-list textarea{width:100%;min-height:115px}';
   document.head.appendChild(css);
 
-  window.DDEvaluation={openRegister:openRegister,openAssessment:openAssessment,openConclusions:openConclusions,openRubric:openRubric,openFeedback:openFeedback,renderRegister:renderRegister,renderConclusions:renderConclusions,renderFeedback:renderFeedback};
+  window.DDEvaluation={openRegister:openRegister,openAssessment:openAssessment,openConclusions:openConclusions,openRubric:openRubric,openSavedRubric:openSavedRubric,openFeedback:openFeedback,renderRegister:renderRegister,renderConclusions:renderConclusions,renderFeedback:renderFeedback};
 })();

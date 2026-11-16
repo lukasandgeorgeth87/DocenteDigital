@@ -3,7 +3,7 @@ import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 const BASE=process.env.BASE_URL||'http://127.0.0.1:4173';
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||undefined});
 const context=await browser.newContext({viewport:{width:1440,height:850},acceptDownloads:true});
 const page=await context.newPage();
 const errors=[],calls=[];
