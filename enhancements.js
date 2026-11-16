@@ -246,7 +246,12 @@
     if(!brief)brief=byId('unitTitle').value.trim()||'una experiencia cercana y significativa para los estudiantes';
     let title=byId('unitTitle').value.trim(); if(!title){title=proposeUnitTitle(brief,type);byId('unitTitle').value=title;}
     const unit=ddEnrich({id:'u'+Date.now(),title,type,duration,situationBrief:brief,situation:expandSituation(brief),level:state.level,ieType:state.ieType,grades:[...state.grades],areas:[...state.areas],language:state.language,quechuaVar:state.quechuaVar,documentContextSnapshot:documentContextFor(state.level,state.ieType,state.grades,state.language,state.quechuaVar),purpose:'Desarrollar competencias de manera articulada a partir de una situación real y retadora de la comunidad, integrando saberes locales y conocimientos escolares, con atención diferenciada según grado.',product:ddProduct(brief,type),activities:buildActivities(brief,duration),createdAt:new Date().toISOString()});
-    state.units.unshift(unit);state.activeUnitId=unit.id;save();byId('unitReady').classList.remove('hidden');renderUnits();renderUnitOutput(unit);fillSessionUnits();byId('unitOutput').scrollIntoView({behavior:'smooth'});
+    state.units.unshift(unit);state.activeUnitId=unit.id;
+    // Este es el generador curricular que reemplaza al generador base de app.js.
+    // Mantener aquí el vínculo anual; de otro modo la unidad se crea, pero el
+    // mes que la originó no queda asociado a ella.
+    window.DDAnnualPlanning?.attachUnit?.(unit);
+    save();byId('unitReady').classList.remove('hidden');renderUnits();renderUnitOutput(unit);fillSessionUnits();byId('unitOutput').scrollIntoView({behavior:'smooth'});
   };
 
   function ddTable(rows,heads){return `<div class="dd-scroll"><table class="dd-table"><thead><tr>${heads.map(h=>`<th>${E(h)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`}

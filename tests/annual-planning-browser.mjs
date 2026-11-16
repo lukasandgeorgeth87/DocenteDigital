@@ -38,6 +38,11 @@ try{
   await page.locator('input[name="ddProduct"]').first().check();
   await page.locator('#ddBuildUnit').click();
   await page.waitForFunction(()=>window.state.units?.length>0,null,{timeout:20000});
+  await page.waitForSelector('#ddV2Start',{timeout:20000});
+  await page.locator('#ddV2Start').click();
+  await page.waitForSelector('#ddV2Proposal');
+  await page.getByRole('button',{name:'Aprobar y generar unidad 2.0'}).click();
+  await page.waitForFunction(()=>window.state.units[0]?.pedagogicalV3?.version==='3.0.0-contract-first',{timeout:25000});
   const info=await page.evaluate(()=>({unit:state.units[0],pending:state.annualPendingUnit,plan:state.annualPlans[0]}));
   assert.equal(info.unit.annualMonth,'Marzo');
   assert.equal(info.unit.annualPlanId,info.plan.id);
