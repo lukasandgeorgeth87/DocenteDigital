@@ -562,7 +562,12 @@
     const head=`<div class="dd-material-kicker">Ficha de trabajo · ${E(area)} · ${E(grade)}</div>
       <h1>${E(title)}</h1><p><b>Nombre:</b> __________________________ <b>Fecha:</b> ______________</p>`;
     if(mode==='oral'){
-      const exchange=n<=2?[
+      const isStory=/relat|cuent|histor|voces/.test(N(focus));
+      const exchange=isStory&&n>2?[
+        'Luz leyó un relato sobre una niña que ayudó a una vecina a encontrar a su perro. Pedro leyó otro sobre dos amigos que escucharon sus diferencias antes de resolver un desacuerdo.',
+        'Luz comenta: «En mi historia, ayudar fue lo más importante». Pedro responde: «En la mía, escuchar hizo posible llegar a un acuerdo».',
+        'Su profesora pregunta: «¿Qué tienen en común esas decisiones? ¿En qué se diferencian?». Los dos compañeros escuchan las razones antes de responder.'
+      ]:n<=2?[
         'Luz propone compartir una idea sobre el tema de la clase. Pedro quiere hablar también.',
         'Luz dice: «Primero te escucho; después cuento lo que pienso». Pedro hace una pregunta y ambos conversan.'
       ]:[
@@ -576,6 +581,7 @@
         <p><i>Situación ficticia para practicar la conversación:</i></p>
         <div class="dd-source-base">${exchange.map(p=>`<p>${E(p)}</p>`).join('')}</div>
         <h2>2. Preparo mi intervención</h2>
+        ${isStory?'<p><b>Primero observo:</b> ¿qué decisión tomó cada personaje de los relatos? Usa esos ejemplos al conversar.</p>':''}
         <p><b>Mi idea sobre ${E(focus)}:</b> __________________________________________</p>
         <p>________________________________________________________________</p>
         <p><b>Una razón que explica mi idea:</b> ____________________________________</p>
