@@ -33,6 +33,15 @@
   const plans=()=>Array.isArray(state.annualPlans)?state.annualPlans:(state.annualPlans=[]);
   const nextId=()=> 'annual'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   function titleFor(month,level){return (THEMES[level]||THEMES.Primaria)[MONTHS.indexOf(month)]||'Experiencia por planificar';}
+  function curricularHtml(plan){
+    const curriculum=root.DD_OFFICIAL_CURRICULUM;
+    if(!curriculum?.verified||typeof curriculum.getArea!=='function')
+      return '<p>La selección de competencias oficiales está pendiente de verificación. No se han creado nombres curriculares nuevos.</p>';
+    const rows=(plan.areas||[]).map(area=>({area,names:(curriculum.getArea(plan.level,area)||[]).map(c=>c.name).filter(Boolean)})).filter(x=>x.names.length);
+    if(!rows.length)return '<p>Falta elegir áreas con competencias curriculares verificadas.</p>';
+    return '<table data-col-weights="1,4"><thead><tr><th>Área</th><th>Competencias consideradas</th></tr></thead><tbody>'+
+      rows.map(x=>'<tr><td>'+E(x.area)+'</td><td>'+E(x.names.join('; '))+'</td></tr>').join('')+'</tbody></table>';
+  }
   function monthRows(level){return MONTHS.map(name=>({name,title:titleFor(name,level),context:'',linkedUnitId:'',type:'Unidad de aprendizaje'}));}
   function normalize(plan){
     if(!Array.isArray(plan.months))plan.months=monthRows(plan.level);
@@ -92,6 +101,7 @@
     host.innerHTML=`<div class="success"><b>Programación ${E(plan.year)}</b> · ${E(plan.level)} · ${E(plan.grades.join(', '))} · ${E(plan.ieType||'')}</div>
       <p class="sub">Los títulos son sugerencias editables. Elige cualquier mes para preparar su unidad. Si cambias el título de una unidad vinculada, este cuadro lo reflejará automáticamente.</p>
       <div class="dd-scroll"><table class="dd-table dd-annual-month-table" data-col-weights="1,3,3,2"><thead><tr><th>Mes</th><th>Unidad o proyecto</th><th>Contexto para contextualizar</th><th>Acción</th></tr></thead><tbody id="ddAnnualMonths">${rows}</tbody></table></div>
+      <details class="topgap"><summary>Competencias curriculares de las áreas seleccionadas</summary>${curricularHtml(plan)}</details>
       <div class="actions topgap"><button class="btn" id="ddAnnualSave">💾 Guardar programación</button><button class="btn alt" id="ddAnnualDownload">⬇ Descargar Word</button></div>`;
     $('ddAnnualSave').onclick=()=>{saveFields();$('ddAnnualSave').textContent='✓ Guardado';};
     $('ddAnnualDownload').onclick=downloadWord;
@@ -142,6 +152,7 @@
     }).join('');
     return `<h1>PROGRAMACIÓN ANUAL ${E(plan.year)}</h1><p><b>Nivel:</b> ${E(plan.level)} · <b>Grados/edades:</b> ${E(plan.grades.join(', '))} · <b>Tipo de IE:</b> ${E(plan.ieType||'')}</p>
       <p><b>Áreas previstas:</b> ${E(plan.areas.join(', '))}</p>
+      <h2>Competencias de las áreas previstas</h2>${curricularHtml(plan)}
       <h2>Organización mensual de unidades y proyectos</h2>
       <table data-col-weights="1,3,4,2"><thead><tr><th>Mes</th><th>Título</th><th>Contexto / situación por precisar</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table>
       <p>Planificación flexible: los títulos y las actividades se ajustan según evidencias y decisiones del docente. Las competencias, capacidades y desempeños oficiales se cotejan en cada unidad antes de su aplicación.</p>`;

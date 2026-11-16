@@ -43,10 +43,10 @@ function ddProtectApprovedSelections(){
 }
 const save=()=>{
   try{
-    ddProtectApprovedSelections();
     // El título aprobado de cada unidad es la fuente única para el mes anual
     // al que pertenece. La sincronización no crea unidades ni cambia áreas.
     try{window.DDAnnualPlanning?.syncWithUnits?.();}catch(error){console.warn('Programación anual:',error);}
+    ddProtectApprovedSelections();
     localStorage.setItem('docenteDigitalPrototype',JSON.stringify(state));
     window.__ddMemoryOnly=false;
     // El historial se guarda aparte (IndexedDB) y nunca bloquea el guardado principal.
@@ -810,8 +810,23 @@ function renderUnitOutput(unit){
   const out=byId('unitOutput');if(!out||!unit)return;
   const situation=unitSituation(unit);
   const activities=unit.activities.map((a,i)=>`<div class="document topgap"><b>Semana ${a.week} · Actividad ${i+1} · ${escapeHtml(a.area)}</b><br>${escapeHtml(a.title)}</div>`).join('');
-  out.innerHTML=`<span class="pill">✓ Guardada</span><h1 style="margin-top:10px">${escapeHtml(unit.title)}</h1><p><b>Tipo:</b> ${escapeHtml(unit.type)} &nbsp; <b>Duración:</b> ${escapeHtml(unit.duration)}</p><p><b>Nivel y atención:</b> ${escapeHtml(unit.level)} · ${escapeHtml(unit.ieType)} · ${escapeHtml(unit.grades.join(', '))}</p><p><b>Áreas:</b> ${escapeHtml(unit.areas.join(', '))}</p><div class="notice"><b>Idea/contexto registrado por el docente:</b><br>${escapeHtml(unitBrief(unit))}</div><div class="document"><h2>Situación significativa</h2><p>${escapeHtml(situation)}</p><small><b>Referencia pedagógica MINEDU:</b> se presenta un contexto, una necesidad o condición que da sentido al aprendizaje, retos/preguntas y relación con productos o evidencias. Es una propuesta editable por el docente.</small></div><div class="document topgap"><p><b>Propósito integrador:</b> ${escapeHtml(unit.purpose)}</p><p><b>Producto/evidencia integradora:</b> ${escapeHtml(unit.product)}</p></div><h2 class="topgap">Secuencia de actividades propuestas</h2>${activities}<div class="actions"><button class="btn" onclick="useUnit('${unit.id}')">📝 Crear sesiones</button><button class="btn alt" onclick="downloadUnitWord('${unit.id}')">⬇ Descargar Word</button><button class="btn ghost" onclick="shareUnit('${unit.id}')">📤 Compartir</button><button class="btn ghost" onclick="showUnit()">➕ Crear otra</button></div>`;
+  out.innerHTML=`<span class="pill">✓ Guardada</span><h1 style="margin-top:10px">${escapeHtml(unit.title)}</h1><div class="actions"><button class="btn ghost" onclick="startRenameUnit('${unit.id}')">✏️ Cambiar título</button></div><div id="unitRenameBox" class="document topgap hidden"><label>Nuevo título<input id="unitRenameTitle" value="${escapeHtml(unit.title)}" maxlength="140"></label><div class="actions"><button class="btn" onclick="confirmRenameUnit('${unit.id}')">Guardar título</button><button class="btn ghost" onclick="byId('unitRenameBox').classList.add('hidden')">Cancelar</button></div></div><p><b>Tipo:</b> ${escapeHtml(unit.type)} &nbsp; <b>Duración:</b> ${escapeHtml(unit.duration)}</p><p><b>Nivel y atención:</b> ${escapeHtml(unit.level)} · ${escapeHtml(unit.ieType)} · ${escapeHtml(unit.grades.join(', '))}</p><p><b>Áreas:</b> ${escapeHtml(unit.areas.join(', '))}</p><div class="notice"><b>Idea/contexto registrado por el docente:</b><br>${escapeHtml(unitBrief(unit))}</div><div class="document"><h2>Situación significativa</h2><p>${escapeHtml(situation)}</p><small><b>Referencia pedagógica MINEDU:</b> se presenta un contexto, una necesidad o condición que da sentido al aprendizaje, retos/preguntas y relación con productos o evidencias. Es una propuesta editable por el docente.</small></div><div class="document topgap"><p><b>Propósito integrador:</b> ${escapeHtml(unit.purpose)}</p><p><b>Producto/evidencia integradora:</b> ${escapeHtml(unit.product)}</p></div><h2 class="topgap">Secuencia de actividades propuestas</h2>${activities}<div class="actions"><button class="btn" onclick="useUnit('${unit.id}')">📝 Crear sesiones</button><button class="btn alt" onclick="downloadUnitWord('${unit.id}')">⬇ Descargar Word</button><button class="btn ghost" onclick="shareUnit('${unit.id}')">📤 Compartir</button><button class="btn ghost" onclick="showUnit()">➕ Crear otra</button></div>`;
   out.classList.remove('hidden');
+}
+
+function startRenameUnit(id){
+  if(!state.units.some(u=>u.id===id))return;
+  byId('unitRenameBox')?.classList.remove('hidden');
+  byId('unitRenameTitle')?.focus();
+}
+function confirmRenameUnit(id){
+  const unit=state.units.find(u=>u.id===id),title=byId('unitRenameTitle')?.value.trim();
+  if(!unit||!title||title.length<6)return alert('Escribe un título claro de al menos seis caracteres.');
+  // A title edit does not change competencies, context, criteria or evidence.
+  // Those remain subject to the normal pedagogical review before exporting.
+  unit.title=title;
+  if(state.lastSession?.unitId===id)state.lastSession.unitTitle=title;
+  save();renderUnits();renderUnitOutput(unit);
 }
 
 function viewUnit(id){

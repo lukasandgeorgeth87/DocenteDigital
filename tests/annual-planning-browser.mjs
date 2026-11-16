@@ -29,16 +29,25 @@ try{
   assert.equal(await page.locator('#unitTitle').inputValue(),'Convivimos y nos escuchamos en clase');
   assert((await page.locator('#unitSituation').inputValue()).includes('opiniones diferentes'));
   await page.locator('#unitTitle').fill('Creamos acuerdos para escuchar todas las voces');
-  // Ejecuta la misma función que invoca el botón de la app. No modifica state a mano.
-  await page.evaluate(()=>createUnitDemo());
+  await page.locator('button[onclick="createUnitDemo()"]',{hasText:'Crear propuesta completa'}).click();
+  await page.waitForSelector('#ddProposalChooser:not(.hidden)',{timeout:20000});
+  await page.locator('input[name="ddSituation"]').first().check();
+  await page.locator('#ddContinueProducts').click();
+  await page.waitForSelector('input[name="ddProduct"]');
+  await page.locator('input[name="ddProduct"]').first().check();
+  await page.locator('#ddBuildUnit').click();
+  await page.waitForFunction(()=>window.state.units?.length>0,null,{timeout:20000});
   const info=await page.evaluate(()=>({unit:state.units[0],pending:state.annualPendingUnit,plan:state.annualPlans[0]}));
   assert.equal(info.unit.annualMonth,'Marzo');
   assert.equal(info.unit.annualPlanId,info.plan.id);
   assert.equal(info.plan.months.find(m=>m.name==='Marzo').title,info.unit.title);
   assert(!info.pending);
-  // El editor de unidades puede cambiar el título después de la creación.
-  // Se verifica el contrato central de guardado sin crear una segunda unidad.
-  await page.evaluate(()=>{state.units[0].title='Escuchamos y dialogamos para convivir mejor';save();go('annual');window.DDAnnualPlanning.open();});
+  // Prueba el cambio real de título desde la interfaz, no desde el estado.
+  await page.evaluate(id=>viewUnit(id),info.unit.id);
+  await page.getByRole('button',{name:'Cambiar título'}).click();
+  await page.locator('#unitRenameTitle').fill('Escuchamos y dialogamos para convivir mejor');
+  await page.getByRole('button',{name:'Guardar título'}).click();
+  await page.evaluate(()=>{go('annual');window.DDAnnualPlanning.open();});
   const reflected=await page.locator('#ddAnnualMonths tr[data-month="Marzo"] [data-field="title"]').inputValue();
   assert.equal(reflected,'Escuchamos y dialogamos para convivir mejor');
   assert.equal(await page.locator('#ddAnnualMonths tr').count(),10);
