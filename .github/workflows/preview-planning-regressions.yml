@@ -59,6 +59,7 @@ jobs:
           node tests/teacher-explicit-fields-v21.mjs
           node tests/short-rights-unit-v22.mjs
           node tests/assisted-context-grounding-v25.mjs
+          node tests/pedagogical-inputs-contract.mjs
           node tests/product-selection-priority-v23.mjs
           node tests/product-canonical-contract-v36.mjs
           node tests/approved-selection-storage-v37.mjs

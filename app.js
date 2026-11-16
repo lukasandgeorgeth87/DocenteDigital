@@ -396,6 +396,11 @@ function ddAssistPlanningContext(apply=true){
     p.region?('región '+p.region):''
   ].filter(Boolean).join(', ');
   const where=place||'el entorno cercano de los estudiantes';
+  const pending=state.annualPendingUnit;
+  const month=pending?.month||'';
+  const event=month?window.DDPedagogicalInputs?.monthEvents?.(month)?.[0]:null;
+  const generalNotes=window.DDPedagogicalInputs?.contextualNotes?.('group',200)?.[0];
+  const schoolNotes=window.DDPedagogicalInputs?.contextualNotes?.('school',200)?.[0];
   let brief='';
 
   if(level==='Inicial'){
@@ -412,6 +417,12 @@ function ddAssistPlanningContext(apply=true){
       brief=`En una actividad de aula, los estudiantes de ${grades||'Primaria'} examinan relatos ficticios, imágenes o datos de ejemplo relacionados con el tema «${topic}». A partir de esos materiales plantearán preguntas, confrontarán sus primeras ideas con fuentes pertinentes y organizarán hallazgos para explicarlos con claridad. El grupo decidirá cómo comunicar lo aprendido mediante una producción vinculada con el tema.`;
     }
   }
+
+  // Solo se incorporan datos aportados y confirmados por el docente.
+  // El calendario no prueba por sí mismo una necesidad o conducta del grupo.
+  if(event)brief+=` Según el insumo «${event.source}», en ${month} se contempla «${event.text}». Este dato del calendario puede servir de punto de partida para relacionar el título de la unidad con saberes y experiencias locales; el docente verificará su pertinencia y fechas.`;
+  if(generalNotes)brief+=` Como referencia general facilitada por el docente (${generalNotes.source}): ${generalNotes.text}. Se contrastará con la observación pedagógica, sin atribuir resultados particulares a estudiantes.`;
+  if(schoolNotes)brief+=` Como prioridad institucional declarada por el docente (${schoolNotes.source}): ${schoolNotes.text}. Su aplicación concreta se adecuará a la planificación.`;
 
   if(apply&&ta){
     ta.value=brief;

@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
+
+const state={pedagogicalInputs:[]};
+const window={};
+const document={createElement:()=>({style:{}}),head:{appendChild(){}},addEventListener(){},getElementById(){return null;}};
+runInNewContext(readFileSync(new URL('../pedagogical-inputs-v1.js',import.meta.url),'utf8'),{window,state,document,console});
+const api=window.DDPedagogicalInputs;
+assert(api?.eventsFrom&&api?.monthEvents,'El módulo de insumos no se inicializó');
+const events=api.eventsFrom('MARZO: Faena de limpieza de acequias\nAbril: Festival de semillas\nMayo: Día de la comunidad');
+assert.equal(events.Marzo[0],'Faena de limpieza de acequias');
+assert.equal(events.Abril[0],'Festival de semillas');
+state.pedagogicalInputs.push({name:'Calendario local',category:'calendar',confirmed:false,events});
+assert.equal(api.monthEvents('Marzo').length,0,'Un insumo sin revisar no debe usarse');
+state.pedagogicalInputs[0].confirmed=true;
+assert.match(api.recommendedTitle('Marzo','Primaria'),/Faena de limpieza de acequias/);
+assert.match(api.recommendedTitle('Abril','Inicial'),/Exploramos y compartimos/);
+assert.equal(api.recommendedTitle('Junio','Primaria'),'');
+state.pedagogicalInputs.push({name:'Notas generales',category:'group',confirmed:true,text:'Trabajamos con materiales cotidianos.'});
+assert.equal(api.contextualNotes('group')[0].source,'Notas generales');
+console.log('PASS Insumos: calendario mensual, sugerencias por nivel y privacidad de fuentes sin confirmar.');

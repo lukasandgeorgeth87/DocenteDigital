@@ -104,6 +104,7 @@ body.dd-setup-mode .chatbar{display:none!important}
 <div class="layout">
   <aside class="sidebar">
     <button class="nav active" data-screen="home" onclick="go('home')">🏠 Inicio</button>
+    <button class="nav" data-screen="inputs" onclick="go('inputs');window.DDPedagogicalInputs?.open()">🧭 Mi contexto</button>
     <button class="nav" data-screen="annual" onclick="go('annual');window.DDAnnualPlanning?.open()">📅 Programación anual</button>
     <button class="nav" data-screen="plan" onclick="go('plan')">📘 Unidades y proyectos</button>
     <button class="nav" data-screen="session" onclick="go('session')">📝 Sesiones</button>
@@ -242,7 +243,7 @@ body.dd-setup-mode .chatbar{display:none!important}
     </section>
 
     <section id="home" class="screen">
-      <div class="hero"><span class="pill">Docente Digital Esencial · Beta privada</span><h1>Planifica, enseña y evalúa en un solo lugar.</h1><p id="homeContext"></p><p>Empieza con tu programación anual o crea directamente una unidad. De ella saldrán las sesiones, los materiales y los instrumentos.</p><button class="btn alt topgap" onclick="continueWork()">▶ Retomar mi último trabajo</button></div>
+      <div class="hero"><span class="pill">Docente Digital Esencial · Beta privada</span><h1>Planifica, enseña y evalúa en un solo lugar.</h1><p id="homeContext"></p><p>Empieza con tu programación anual o crea directamente una unidad. De ella saldrán las sesiones, los materiales y los instrumentos.</p><div class="actions topgap"><button class="btn alt" onclick="continueWork()">▶ Retomar mi último trabajo</button><button class="btn alt" onclick="go('inputs');window.DDPedagogicalInputs?.open()">🧭 Añadir calendario comunal e insumos</button></div></div>
       <div class="grid">
         <button class="card action-card span4" onclick="go('annual');window.DDAnnualPlanning?.open()"><span>📅</span><h2>1. Programación anual</h2><p>Organiza los meses y prepara sus unidades.</p></button>
         <button class="card action-card span4" onclick="go('plan');showUnit()"><span>📘</span><h2>2. Unidades y proyectos</h2><p>Organiza la planificación contextualizada de tus estudiantes.</p></button>
@@ -253,6 +254,8 @@ body.dd-setup-mode .chatbar{display:none!important}
         <button class="card action-card span4" onclick="go('documents');window.DDDocumentLibrary?.open()"><span>📂</span><h2>7. Mis documentos</h2><p>Recupera, reutiliza y consulta versiones guardadas.</p></button>
       </div>
     </section>
+
+    <section id="inputs" class="screen"><h1>Mi contexto pedagógico</h1><p class="sub">Insumos opcionales para personalizar la planificación sin repetir información.</p><div id="pedagogicalInputsRoot"></div></section>
 
     <section id="annual" class="screen">
       <h1>Programación anual</h1>
@@ -441,6 +444,7 @@ body.dd-setup-mode .chatbar{display:none!important}
 <script src="planning-structure-v1.js"></script>
 <script src="format-v2.js"></script>
 <script src="teacher-context-v1.js"></script>
+<script src="pedagogical-inputs-v1.js"></script>
 <script src="context-semantic-v20.js"></script>
 <script src="intent-engine-v21.js"></script>
 <script src="proposal-choice-v8.js"></script>

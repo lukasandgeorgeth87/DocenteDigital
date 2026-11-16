@@ -42,7 +42,10 @@
     return '<table data-col-weights="1,4"><thead><tr><th>Área</th><th>Competencias consideradas</th></tr></thead><tbody>'+
       rows.map(x=>'<tr><td>'+E(x.area)+'</td><td>'+E(x.names.join('; '))+'</td></tr>').join('')+'</tbody></table>';
   }
-  function monthRows(level){return MONTHS.map(name=>({name,title:titleFor(name,level),context:'',linkedUnitId:'',type:'Unidad de aprendizaje'}));}
+  function monthRows(level){return MONTHS.map(name=>{
+    const suggested=root.DDPedagogicalInputs?.recommendedTitle?.(name,level)||'';
+    return {name,title:suggested||titleFor(name,level),titleOrigin:suggested?'insumo':'sugerencia',context:'',linkedUnitId:'',type:'Unidad de aprendizaje'};
+  });}
   function normalize(plan){
     if(!Array.isArray(plan.months))plan.months=monthRows(plan.level);
     for(const name of MONTHS){
@@ -82,11 +85,26 @@
       const row=plan.months.find(m=>m.name===tr.dataset.month);if(!row)return;
       const title=tr.querySelector('[data-field="title"]')?.value.trim();
       const context=tr.querySelector('[data-field="context"]')?.value.trim();
-      if(title&&!row.linkedUnitId)row.title=title;
+      if(title&&!row.linkedUnitId&&title!==row.title){row.title=title;row.titleOrigin='docente';}
       if(context!=null)row.context=context;
     });
     plan.updatedAt=new Date().toISOString();state.lastAnnualPlan=plan;
     syncWithUnits();save();
+  }
+  function refreshSuggestions(){
+    saveFields();const plan=selectedPlan();if(!plan)return;
+    let count=0;
+    for(const row of plan.months){
+      if(row.linkedUnitId||!['sugerencia','insumo'].includes(row.titleOrigin))continue;
+      const updated=root.DDPedagogicalInputs?.recommendedTitle?.(row.name,plan.level);
+      if(!updated||updated===row.title)continue;
+      row.title=updated;row.titleOrigin='insumo';count++;
+    }
+    save();render(plan);
+    const note=$('ddAnnualSuggestStatus');
+    if(note)note.textContent=count
+      ?'✓ Se actualizaron '+count+' propuestas a partir de tus insumos. Se conservaron los títulos escritos por ti.'
+      :'No hay nuevas propuestas por actualizar. Los títulos escritos por ti se han conservado.';
   }
   function render(plan){
     const host=$('ddAnnualEditor');if(!host||!plan)return;
@@ -95,17 +113,19 @@
       const linked=m.linkedUnitId&&(state.units||[]).some(u=>u.id===m.linkedUnitId);
       return `<tr data-month="${E(m.name)}"><td><b>${E(m.name)}</b></td>
         <td><input data-field="title" aria-label="Título sugerido ${E(m.name)}" value="${E(m.title)}" ${linked?'readonly':''}>
+          ${m.titleOrigin==='insumo'?'<small>Propuesta a partir del calendario registrado</small>':''}
           <details><summary>Opcional: añadir un contexto específico</summary>
             <textarea data-field="context" aria-label="Contexto ${E(m.name)}" rows="2" placeholder="Solo si deseas indicar un hecho real o necesidad particular de tu grupo">${E(m.context||'')}</textarea>
           </details></td>
         <td><span class="pill">${linked?'Vinculada':'Sugerida'}</span><button class="btn alt" type="button" data-annual-create="${E(m.name)}">${linked?'Abrir unidad':'Crear unidad'}</button></td></tr>`;
     }).join('');
     host.innerHTML=`<div class="success"><b>Programación ${E(plan.year)}</b> · ${E(plan.level)} · ${E(plan.grades.join(', '))} · ${E(plan.ieType||'')}</div>
-      <p class="sub">Elige o escribe el título de cada mes. La aplicación preparará la propuesta desde tu título, el nivel, los grados y el contexto institucional registrado. Puedes agregar información específica, pero no es obligatorio.</p>
+      <p class="sub">Elige o escribe el título de cada mes. Si registraste un calendario comunal, se usa para las nuevas sugerencias; los títulos elegidos por ti nunca se reemplazan automáticamente. El contexto adicional es opcional.</p>
       <div class="dd-scroll"><table class="dd-table dd-annual-month-table" data-col-weights="1,4,2"><thead><tr><th>Mes</th><th>Título elegido por el docente</th><th>Acción</th></tr></thead><tbody id="ddAnnualMonths">${rows}</tbody></table></div>
       <details class="topgap"><summary>Competencias curriculares de las áreas seleccionadas</summary>${curricularHtml(plan)}</details>
-      <div class="actions topgap"><button class="btn" id="ddAnnualSave">💾 Guardar programación</button><button class="btn alt" id="ddAnnualDownload">⬇ Descargar Word</button></div>`;
+      <div class="actions topgap"><button class="btn" id="ddAnnualSave">💾 Guardar programación</button><button class="btn alt" id="ddAnnualSuggest">✨ Sugerir desde mis insumos</button><button class="btn alt" id="ddAnnualDownload">⬇ Descargar Word</button></div><p id="ddAnnualSuggestStatus" class="sub" role="status"></p>`;
     $('ddAnnualSave').onclick=()=>{saveFields();$('ddAnnualSave').textContent='✓ Guardado';};
+    $('ddAnnualSuggest').onclick=refreshSuggestions;
     $('ddAnnualDownload').onclick=downloadWord;
   }
   function open(){
@@ -159,7 +179,7 @@
     const pending=state.annualPendingUnit;if(!pending||!unit?.id)return;
     const plan=plans().find(p=>p.id===pending.planId),row=plan?.months?.find(m=>m.name===pending.month);
     if(!row)return;
-    row.linkedUnitId=unit.id;row.title=unit.title;row.type=unit.type||row.type;
+    row.linkedUnitId=unit.id;row.title=unit.title;row.titleOrigin='unidad';row.type=unit.type||row.type;
     unit.annualPlanId=plan.id;unit.annualMonth=row.name;
     state.lastAnnualPlan=plan;delete state.annualPendingUnit;
   }
@@ -167,7 +187,9 @@
     normalize(plan);
     const rows=plan.months.map(m=>{
       const linked=!!m.linkedUnitId&&(state.units||[]).some(u=>u.id===m.linkedUnitId);
-      return `<tr><td>${E(m.name)}</td><td>${E(m.title)}</td><td>${E(m.context||'Contexto por precisar con el grupo')}</td><td>${linked?'Unidad vinculada':'Unidad sugerida'}</td></tr>`;
+      const event=root.DDPedagogicalInputs?.monthEvents?.(m.name)?.[0];
+      const reference=event?`Calendario aportado (${event.source}): ${event.text}. Se verificará su pertinencia con el grupo.`:'Contexto por precisar con el grupo';
+      return `<tr><td>${E(m.name)}</td><td>${E(m.title)}</td><td>${E(m.context||reference)}</td><td>${linked?'Unidad vinculada':'Unidad sugerida'}</td></tr>`;
     }).join('');
     return `<h1>PROGRAMACIÓN ANUAL ${E(plan.year)}</h1><p><b>Nivel:</b> ${E(plan.level)} · <b>Grados/edades:</b> ${E(plan.grades.join(', '))} · <b>Tipo de IE:</b> ${E(plan.ieType||'')}</p>
       <p><b>Áreas previstas:</b> ${E(plan.areas.join(', '))}</p>
