@@ -497,7 +497,33 @@
       var session=state.lastSession?.unitId===unit?.id&&state.lastSession?.area===area?state.lastSession:null;
       var question=String(session?.pedagogicalV3?.question||session?.question||'').trim();
       var indicators=[];
-      cs.forEach(function(x){
+      // Las intervenciones orales, las lecturas y las producciones escritas
+      // requieren indicadores diferentes. Nunca convertir una oración larga
+      // con tres actuaciones en una única casilla imposible de observar.
+      var title=String(session?.title||'').trim();
+      var communicationMode=window.DD_OFFICIAL_CURRICULUM?.communicationModeFromTitle?.(title);
+      if(area==='Comunicación'&&title){
+        var action=title.toLocaleLowerCase();
+        var mode=communicationMode&&communicationMode!=='indefinido'?communicationMode:
+          /^(?:leemos|leer|comprendemos|interpretamos)/.test(action)?'lectura':
+          /^(?:escribimos|redactamos|planificamos|revisamos|producimos)/.test(action)?'escritura':'oral';
+        if(mode==='oral')indicators=[
+          'Comunica una idea relacionada con el tema de la sesión y explica al menos una razón.',
+          'Formula una pregunta pertinente para conocer la opinión de otra persona.',
+          'Escucha sin interrumpir y responde de manera relacionada con lo escuchado.'
+        ];
+        if(mode==='lectura')indicators=[
+          'Ubica información explícita en el texto leído.',
+          'Explica una idea principal utilizando un detalle del texto como apoyo.',
+          'Formula una pregunta relacionada con la lectura o una información que falta aclarar.'
+        ];
+        if(mode==='escritura')indicators=[
+          'Define qué quiere comunicar y a quién va dirigido su texto.',
+          'Escribe ideas relacionadas con el propósito de la actividad de forma comprensible.',
+          'Revisa su borrador y realiza una mejora visible antes de compartirlo.'
+        ];
+      }
+      if(!indicators.length)cs.forEach(function(x){
         var criterion=String(x.criterion||'').trim();
         if(/explica.*idea.*formula.*pregunta.*escucha/i.test(criterion)){
           indicators.push('Explica con orden una idea de la historieta relacionada con el derecho trabajado.');
@@ -510,7 +536,8 @@
       indicators=[...new Set(indicators)].slice(0,6);
       var observation='<p><b>Actividad:</b> '+E(session?.title||'Observar una actuación del estudiante')+'</p>'+
         (question?'<p><b>Pregunta de trabajo:</b> '+E(question)+'</p>':'')+
-        '<p><b>Evidencia:</b> '+E(cs.map(function(x){return x.evidence;}).filter(Boolean).join(' · ')||'Actuación observada')+'</p>';
+        '<p><b>Evidencia:</b> '+E(cs.map(function(x){return x.evidence;}).filter(Boolean).join(' · ')||'Actuación observada')+'</p>'+
+        '<p><b>Criterio de referencia para revisión docente:</b> '+E(cs.map(function(x){return x.criterion;}).filter(Boolean).join(' · '))+'</p>';
       var checklist='<article class="dd-assessment-sheet"><h1>Lista de cotejo</h1><p><b>Área:</b> '+E(area)+' · <b>Grado:</b> '+E(grade)+'</p>'+observation+
         '<p><b>Estudiante:</b> ______________________________ &nbsp; <b>Fecha:</b> ___________</p>'+
         '<table data-col-weights="5,1,1,1"><thead><tr><th>Indicador observable</th><th>Sí</th><th>En proceso</th><th>Aún no</th></tr></thead><tbody>'+
