@@ -8,6 +8,7 @@
   const kits=()=>Array.isArray(state.classKits)?state.classKits:(state.classKits=[]);
   const units=()=>Array.isArray(state.units)?state.units:[];
   const findKit=id=>kits().find(k=>k.id===id);
+  const messages=new Map();
   function renderPanel(unit){
     const host=$('unitOutput');if(!host||!unit)return;
     let panel=$('ddClassKitPanel');
@@ -18,18 +19,19 @@
       <div class="form2"><label>Actividad de la unidad<select id="ddClassKitActivity">${(unit.activities||[]).map((a,i)=>`<option value="${i}">${E(a.area)} · ${E(a.title)}</option>`).join('')}</select></label>
       <label>Grado para ficha e instrumento<select id="ddClassKitGrade">${(unit.grades||[]).map(g=>`<option value="${E(g)}">${E(g)}</option>`).join('')}</select></label></div>
       <div class="actions"><button class="btn" type="button" data-dd-kit-create="${E(unit.id)}" ${!unit.activities?.length?'disabled':''}>✨ Preparar mi clase</button></div>
-      <p id="ddClassKitMessage" class="sub" role="status" aria-live="polite">Se elaborará un borrador para revisar antes de aplicarlo.</p>
+      <p id="ddClassKitMessage" class="sub" role="status" aria-live="polite">${E(messages.get(unit.id)||'Se elaborará un borrador para revisar antes de aplicarlo.')}</p>
       ${related.length?'<h3>Clases preparadas</h3>'+related.map(k=>`<div class="dd-kit-item"><div><b>${E(k.activityTitle)}</b><p class="sub">${E(k.grade)} · ${E(k.area)} · Sesión, ficha e instrumento</p></div><div class="actions"><button class="btn alt" type="button" data-dd-kit-open="session" data-dd-kit-id="${E(k.id)}">Sesión</button><button class="btn alt" type="button" data-dd-kit-open="material" data-dd-kit-id="${E(k.id)}">Ficha</button><button class="btn alt" type="button" data-dd-kit-open="assessment" data-dd-kit-id="${E(k.id)}">Instrumento</button></div></div>`).join(''):''}`;
   }
-  function status(message){const box=$('ddClassKitMessage');if(box)box.textContent=message;}
+  function status(unitId,message){messages.set(unitId,message);const box=$('ddClassKitMessage');if(box)box.textContent=message;}
   async function create(unitId){
     const unit=units().find(u=>u.id===unitId);
     const index=Number($('ddClassKitActivity')?.value),grade=$('ddClassKitGrade')?.value||unit?.grades?.[0];
     const activity=unit?.activities?.[index];
-    if(!unit||!activity||!unit.grades?.includes(grade))return status('Selecciona una actividad y un grado válidos.');
+    if(!unit||!activity||!unit.grades?.includes(grade))return status(unitId,'Selecciona una actividad y un grado válidos.');
     const trigger=$('ddClassKitPanel')?.querySelector('[data-dd-kit-create]');
     if(trigger?.disabled)return;
     if(trigger)trigger.disabled=true;
+    status(unitId,'Preparando los documentos y guardando sus versiones…');
     const completed=[];
     try{
       if(typeof root.useUnit!=='function'||typeof root.generateSession!=='function'||!root.DDMaterials?.create||!root.DDEvaluation?.openAssessment)
@@ -78,13 +80,13 @@
       let historyReady=true;
       try{await root.DDDocumentLibrary?.synchronize?.();}catch(error){historyReady=false;console.warn('Historial de clase:',error);}
       root.go('plan');root.viewUnit(unit.id);renderPanel(unit);
-      status(historyReady
+      status(unitId,historyReady
         ?'✓ Paquete guardado: sesión, ficha e instrumento. Abre cada documento para revisarlo y descargarlo.'
         :'Paquete disponible en esta sesión. No se confirmó el historial de versiones; descarga los documentos antes de cerrar.');
     }catch(error){
       console.warn('Paquete de clase incompleto:',error);
       root.go('plan');root.viewUnit(unit.id);renderPanel(unit);
-      status('No se completó el paquete ('+completed.join(', ')+'). '+(error.message||'Revisa los campos y vuelve a intentarlo.')+' Los documentos ya generados no se han eliminado.');
+      status(unitId,'No se completó el paquete ('+completed.join(', ')+'). '+(error.message||'Revisa los campos y vuelve a intentarlo.')+' Los documentos ya generados no se han eliminado.');
     }finally{
       const current=$('ddClassKitPanel')?.querySelector('[data-dd-kit-create]');
       if(current)current.disabled=false;

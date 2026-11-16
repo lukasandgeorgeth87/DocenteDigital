@@ -45,6 +45,8 @@ try{
   await page.locator('#ddClassKitGrade').selectOption('3.º');
   await page.locator('#ddClassKitPanel [data-dd-kit-create]').click();
   await page.waitForFunction(()=>state.classKits?.length===1,null,{timeout:20000});
+  // IndexedDB history is written asynchronously after the kit enters state.
+  await page.waitForFunction(()=>/Paquete guardado|No se completó/.test(document.querySelector('#ddClassKitMessage')?.textContent||''),null,{timeout:20000});
   assert.match(await page.locator('#ddClassKitMessage').innerText(),/Paquete guardado/i);
   const first=await page.evaluate(()=>({kit:state.classKits[0],session:state.sessions[0],material:state.lastMaterial,assessment:state.lastAssessment}));
   assert.equal(first.kit.unitId,unitId);
@@ -59,6 +61,8 @@ try{
   await page.locator('#ddClassKitActivity').selectOption('1');
   await page.locator('#ddClassKitPanel [data-dd-kit-create]').click();
   await page.waitForFunction(()=>state.classKits?.length===2,null,{timeout:20000});
+  await page.waitForFunction(()=>/Paquete guardado|No se completó/.test(document.querySelector('#ddClassKitMessage')?.textContent||''),null,{timeout:20000});
+  assert.match(await page.locator('#ddClassKitMessage').innerText(),/Paquete guardado/i);
   const second=await page.evaluate(()=>({kit:state.classKits[0],sessions:state.sessions.map(s=>s.id)}));
   assert.notEqual(second.kit.sessionId,first.kit.sessionId);
   assert(second.sessions.includes(first.session.id),'Se perdió la primera sesión al generar la siguiente');
