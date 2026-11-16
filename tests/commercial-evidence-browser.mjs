@@ -78,7 +78,7 @@ try{
   for(const text of ['SITUACIÓN SIGNIFICATIVA','MATRIZ CURRICULAR','SECUENCIA PROGRESIVA'])assert(unitXml.includes(text),text+' ausente en la unidad');
 
   await page.evaluate(id=>useUnit(id),unit.id);
-  await page.waitForSelector('#activity option');
+  await page.waitForSelector('#activity option',{state:'attached'});
   await page.evaluate(()=>generateSession());
   await page.waitForFunction(()=>window.state.lastSession?.pedagogicalV3?.version==='3.0.0-contract-first');
   const session=await page.evaluate(()=>window.state.lastSession);
