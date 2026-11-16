@@ -485,7 +485,32 @@
     </article>`;
   }
 
+  function initialSeedsWorksheet(grade){
+    return `<article class="dd-material-sheet dd-initial-seeds">
+      <div class="dd-material-kicker">Inicial · ${E(grade)} · Indagación mediante el juego</div>
+      <h1>Pequeños exploradores de semillas</h1>
+      <p><b>Nombre:</b> ______________________________ &nbsp; <b>Fecha:</b> ______________</p>
+      <p><b>Materiales:</b> dos tipos de semillas seguras, dos platos y una lupa de juguete. La persona adulta supervisa; no introducimos semillas en la boca.</p>
+      <h2>1. Observo y converso</h2>
+      <p>La docente muestra dos semillas diferentes. Míralas y tócalas con cuidado. ¿Qué forma tienen? ¿Cuál es más grande?</p>
+      <table data-col-weights="1,1"><thead><tr><th>Semilla A · Dibujo lo que veo</th><th>Semilla B · Dibujo lo que veo</th></tr></thead><tbody><tr><td><p>_________________________________</p><p>_________________________________</p><p>_________________________________</p></td><td><p>_________________________________</p><p>_________________________________</p><p>_________________________________</p></td></tr></tbody></table>
+      <h2>2. Juego a agrupar</h2>
+      <p>Coloca las semillas en dos platos según una característica que elijas. Muestra cómo las agrupaste y cuenta tu idea.</p>
+      <p>Las agrupé porque __________________________________________________</p>
+      <h2>3. Me hago una pregunta</h2>
+      <p>¿Qué crees que pasaría si dejamos una semilla sobre algodón húmedo? Dibuja lo que imaginas. Todavía no sabemos qué ocurrirá.</p>
+      <p>________________________________________________________________</p>
+      <p>________________________________________________________________</p>
+      <h2>4. Volvemos a observar</h2>
+      <p>Con ayuda de la docente, observa la semilla otro día y representa solamente lo que realmente cambió o permaneció igual.</p>
+      <p>________________________________________________________________</p>
+      <p><b>Para la docente:</b> escucha y anota lo que dijo el niño o niña: ________________________</p>
+    </article>`;
+  }
+
   function worksheetMaterial(topic,level,grade,area,sourceText=''){
+    if(level==='Inicial'&&/semill|germin|siembr/.test(N(topic))&&!String(sourceText||'').trim())
+      return initialSeedsWorksheet(grade);
     if(level==='Primaria'&&area==='Comunicación'&&
        /\b(?:derechos?|participar|participaci[oó]n)\b/i.test(topic)&&
        /historiet|derech|particip/i.test(topic)&&!String(sourceText||'').trim()){
@@ -752,7 +777,10 @@
     const doc=new DOMParser().parseFromString(item.html,'text/html');
     const body=doc.querySelector('.dd-editable-material');
     const note=doc.querySelector(':scope > .notice')||doc.querySelector('.notice');
-    return `<div class="word-border">${note?.outerHTML||''}${body?.innerHTML||item.html.replace(/<div class="actions[\s\S]*$/,'')}</div>`;
+    const printable=body?.innerHTML||item.html.replace(/<div class="actions[\s\S]*$/,'');
+    // EIB packs already contain their warning inside the editable bundle.
+    const extraNote=/Revisi[oó]n ling[uü][ií]stica requerida/i.test(printable)?'':(note?.outerHTML||'');
+    return `<div class="word-border">${extraNote}${printable}</div>`;
   }
 
   function downloadWord(){
@@ -855,6 +883,6 @@
   `;
   document.head.appendChild(css);
 
-  window.DDMaterials={create,createBundle,useCurrent,duplicate,saveEdits,downloadWord,reopen,remove,fill,renderHistory};
+  window.DDMaterials={create,createBundle,useCurrent,duplicate,saveEdits,downloadWord,materialWordHtml,reopen,remove,fill,renderHistory};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire,{once:true});else wire();
 })();

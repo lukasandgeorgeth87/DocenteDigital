@@ -167,6 +167,12 @@ jobs:
           BASE_URL: http://127.0.0.1:4173
         run: node tests/commercial-evidence-browser.mjs
 
+      - name: Produce Initial 4-year-old printed material evidence (feature only)
+        if: github.ref == 'refs/heads/feature/motor-pedagogico-v3-integral-20261112'
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/commercial-initial-evidence-browser.mjs
+
       - name: Preserve real Word and Excel evidence for editorial inspection
         if: always() && github.ref == 'refs/heads/feature/motor-pedagogico-v3-integral-20261112'
         uses: actions/upload-artifact@v4

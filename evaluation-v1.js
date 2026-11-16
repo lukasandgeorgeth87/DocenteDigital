@@ -458,6 +458,14 @@
     showAssessmentDocument(saved);
   }
 
+  function openSavedAssessment(){
+    var saved=state.lastAssessment;if(!saved)return;
+    openAssessment();
+    if($('ddAssGrade'))$('ddAssGrade').value=saved.grade;
+    if($('ddAssArea'))$('ddAssArea').value=saved.area;
+    showAssessmentDocument(saved);
+  }
+
   function openAssessment(){
     var unit=activeUnit(),panel=ensureEvaluationPanel();if(!panel)return;
     var grades=(unit&&unit.grades)||state.grades||[],areas=(unit&&unit.areas)||state.areas||[];
@@ -668,5 +676,5 @@
   css.textContent='.dd-rubric-sheet{max-width:980px;margin:auto}.dd-feedback-list{display:grid;gap:10px}.dd-feedback-list article{border:1px solid #dce5df;border-radius:12px;padding:12px;background:#fff}.dd-feedback-list textarea{width:100%;min-height:110px}.dd-eval-context{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;padding:10px 12px;background:#eef7f2;border-radius:11px;margin-bottom:12px}.dd-eval-context span{font-size:12px;color:#50665b}.dd-eval-criterion{margin:14px 0;padding:12px;border:1px solid #dce5df;border-radius:13px;background:#fbfdfc}.dd-eval-note,.dd-eval-next{min-width:210px;min-height:60px}.dd-assessment-sheet{max-width:850px;margin:auto}.dd-conclusion-list{display:grid;gap:10px}.dd-conclusion-list article{border:1px solid #dce5df;border-radius:12px;padding:12px;background:#fff}.dd-conclusion-list textarea{width:100%;min-height:115px}';
   document.head.appendChild(css);
 
-  window.DDEvaluation={openRegister:openRegister,openAssessment:openAssessment,openConclusions:openConclusions,openRubric:openRubric,openSavedRubric:openSavedRubric,openFeedback:openFeedback,renderRegister:renderRegister,renderConclusions:renderConclusions,renderFeedback:renderFeedback};
+  window.DDEvaluation={openRegister:openRegister,openAssessment:openAssessment,openSavedAssessment:openSavedAssessment,openConclusions:openConclusions,openRubric:openRubric,openSavedRubric:openSavedRubric,openFeedback:openFeedback,renderRegister:renderRegister,renderConclusions:renderConclusions,renderFeedback:renderFeedback};
 })();

@@ -131,7 +131,7 @@
     if(kind==='unidad'){go('plan');renderUnits();fillSessionUnits();viewUnit(payload.id);}
     else if(kind==='sesion'){go('session');renderSessionOutput(payload);}
     else if(kind==='material'){go('materials');root.DDMaterials?.renderHistory?.();root.DDMaterials?.reopen?.(payload.id);}
-    else if(kind==='instrumento'){go('evaluation');root.DDEvaluation?.openAssessment?.();}
+    else if(kind==='instrumento'){go('evaluation');root.DDEvaluation?.openSavedAssessment?.();}
     else if(kind==='rubrica'){go('evaluation');root.DDEvaluation?.openSavedRubric?.();}
   }
   async function restore(key,number,duplicate=false){
@@ -156,10 +156,10 @@
     }else if(doc.kind==='sesion'){
       if(typeof sessionHtml!=='function')throw new Error('El generador Word de sesiones no está disponible.');
       html=sessionHtml(payload,true);
-    }else if(doc.kind==='material')html=String(payload.html||'').replace(/<div class="actions[\s\S]*$/,'');
+    }else if(doc.kind==='material')html=root.DDMaterials?.materialWordHtml?.(payload)||String(payload.html||'').replace(/<div class="actions[\s\S]*$/,'');
     else html=payload.html||'';
     if(!html)throw new Error('Esta versión no contiene un documento exportable.');
-    root.DDWordExport.downloadHtml(doc.title,html,false,'Documento_'+doc.title+'_v'+(number||'actual'));
+    root.DDWordExport.downloadHtml(doc.title,html,doc.kind==='unidad'||doc.kind==='rubrica','Documento_'+doc.title+'_v'+(number||'actual'));
   }
   async function history(key){
     const doc=await read(key),box=$('documentsHistory');if(!doc||!box)return;

@@ -153,10 +153,17 @@ try{
   assert(available>=5,'La biblioteca no contiene todos los documentos generados: '+available);
   await page.screenshot({path:path.join(out,'06-biblioteca-en-la-app.png'),fullPage:true});
   const before=await page.evaluate(()=>window.DDDocumentLibrary.readAll().then(ds=>ds.length));
+  await page.locator('#documentsList [data-doc^="instrumento:"] [data-action="open"]').first().click();
+  await page.waitForSelector('#ddAssBody .dd-editable-material');
+  assert((await page.locator('#ddAssBody .dd-editable-material').innerText()).includes('Lista de cotejo'),'La biblioteca no abrió el instrumento archivado');
+  await page.evaluate(()=>{go('documents');window.DDDocumentLibrary.open();});
+  await page.locator('#documentsList [data-doc^="unidad:"] [data-action="duplicate"]').first().click();
+  await page.waitForFunction(()=>window.state.units.length===2);
+  assert((await page.evaluate(()=>window.state.units.map(u=>u.title))).some(t=>t.includes('(copia)')),'La biblioteca no duplicó la unidad');
   await page.reload({waitUntil:'networkidle'});
   await page.waitForFunction(()=>window.DDDocumentLibrary?.readAll!=null);
   const after=await page.evaluate(()=>window.DDDocumentLibrary.readAll().then(ds=>ds.length));
-  assert.equal(after,before,'Se perdieron documentos al recargar');
+  assert(after>=before+1,'La copia de la unidad no quedó archivada');
   assert.deepEqual(errors.filter(x=>/ReferenceError|SyntaxError/.test(x)),[]);
 
   const results={case:'Primaria, 2.º, Comunicación, derechos de los niños',unit:unit.title,unitId:unit.id,
