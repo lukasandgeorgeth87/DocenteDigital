@@ -47,6 +47,14 @@
     function visit(n){
       if(n?.nodeType===3){parts.push(String(n.nodeValue||''));return;}
       if(n?.nodeName==='BR'){parts.push('\n');return;}
+      // Paragraphs nested inside list items and table cells need boundaries.
+      // Otherwise Word glued questions, hints and answer lines together.
+      if(/^(P|DIV|SECTION|ARTICLE)$/.test(n?.nodeName||'')){
+        parts.push('\n');
+        if(n?.childNodes)for(const child of n.childNodes)visit(child);
+        parts.push('\n');
+        return;
+      }
       if(n?.childNodes)for(const child of n.childNodes)visit(child);
     }
     visit(node);

@@ -60,6 +60,11 @@
        (Array.isArray(session.grades)?session.grades:[session.grade]).some(function(g){
          return g!=null&&criterionGradeKey(g)===criterionGradeKey(grade);
        }))return [{area:session.area,criterion:session.criterion,evidence:session.evidence||'',instrument:session.instrument||''}];
+    if(unit?.pedagogicalV3&&Array.isArray(unit.activities)&&
+       (unit.grades||[]).some(function(g){return criterionGradeKey(g)===criterionGradeKey(grade);})){
+      var planned=unit.activities.find(function(a){return (!area||a.area===area)&&a.criterion&&a.evidence;});
+      if(planned)return [{area:planned.area,criterion:planned.criterion,evidence:planned.evidence,instrument:planned.instrument||'Lista de cotejo'}];
+    }
     var out=[];
     purposes(unit).filter(function(p){return !area||p.area===area;}).forEach(function(p){
       // Criteria are grade-specific. A missing grade must never inherit the first

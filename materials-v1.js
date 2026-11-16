@@ -479,7 +479,7 @@
       <table data-col-weights="1,1,1"><thead><tr>${panels.map(x=>`<th>${E(x[0])}</th>`).join('')}</tr></thead>
       <tbody><tr>${panels.map(x=>`<td><p>${E(x[1])}</p></td>`).join('')}</tr></tbody></table>
       <h2>Ahora trabajamos</h2>
-      <ol>${items.map(([tag,question,hint])=>`<li><b>${E(tag)}.</b> ${E(question)}<p>${E(hint)}</p><p>________________________________________________________________</p></li>`).join('')}</ol>
+      <ol>${items.map(([tag,question,hint])=>`<li><b>${E(tag)}.</b> ${E(question)}<p>${E(hint)}</p><p>________________________________________________________________</p><p>________________________________________________________________</p></li>`).join('')}</ol>
       <h3>Compruebo lo aprendido</h3>
       <p>□ Expliqué una idea de la historieta. &nbsp; □ Hice una pregunta. &nbsp; □ Escuché a mi pareja.</p>
     </article>`;

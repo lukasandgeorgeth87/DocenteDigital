@@ -104,6 +104,7 @@ try{
   assert(/derecho a participar/i.test(materialXml),'La ficha perdió su tema');
   for(const expected of ['Una idea para jugar','Ana','Luis','Mara','LOCALIZO','PARTICIPO'])
     assert(materialXml.includes(expected),'La ficha no ofrece un estímulo o una tarea concreta: '+expected);
+  assert(!materialXml.includes('todos?Ana'),'Word unió una pregunta y sus opciones sin espacio');
   assert(!materialXml.includes('Vinculación con la planificación'),'La ficha imprimible contiene metadatos administrativos');
 
   await page.evaluate(()=>{go('evaluation');window.DDEvaluation.openRubric();});
@@ -160,6 +161,7 @@ try{
   await page.locator('#documentsList [data-doc^="unidad:"] [data-action="duplicate"]').first().click();
   await page.waitForFunction(()=>window.state.units.length===2);
   assert((await page.evaluate(()=>window.state.units.map(u=>u.title))).some(t=>t.includes('(copia)')),'La biblioteca no duplicó la unidad');
+  await page.waitForFunction(async count=>(await window.DDDocumentLibrary.readAll()).length>=count+1,before,{timeout:15000});
   await page.reload({waitUntil:'networkidle'});
   await page.waitForFunction(()=>window.DDDocumentLibrary?.readAll!=null);
   const after=await page.evaluate(()=>window.DDDocumentLibrary.readAll().then(ds=>ds.length));
