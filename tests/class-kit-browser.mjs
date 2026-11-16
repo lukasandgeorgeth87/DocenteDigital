@@ -46,6 +46,9 @@ try{
   await page.waitForFunction(()=>state.units?.[0]?.activities?.length>=2,{},{timeout:20000});
   await page.waitForSelector('#ddClassKitPanel [data-dd-kit-create]');
   const unitId=await page.evaluate(()=>state.units[0].id);
+  const suggestedTitle=await page.evaluate(()=>state.units[0].activities[0].title);
+  assert.match(suggestedTitle,/relatos|voces/i,'La actividad debe conservar el tema del título elegido por el docente');
+  assert(!/[·|•]/.test(suggestedTitle),'Un listado de palabras clave no es un título pedagógico');
   await page.locator('#ddClassKitActivity').selectOption('0');
   await page.locator('#ddClassKitGrade').selectOption('3.º');
   await page.locator('#ddClassKitPanel [data-dd-kit-create]').click();
@@ -62,6 +65,12 @@ try{
   assert.equal(first.assessment.unitId,unitId);
   assert.equal(first.assessment.grade,'3.º');
   assert.equal(first.assessment.instrument,'Lista de cotejo');
+  assert.match(first.material.html,/Situación ficticia para practicar la conversación/,
+    'La ficha oral debe contener una situación real de trabajo, sin depender de material ausente');
+  assert.match(first.material.html,/Una pregunta para mi compañero/,
+    'La ficha debe dar espacio para una pregunta del estudiante');
+  assert.equal((first.assessment.html.match(/<tr><td>/g)||[]).length,3,
+    'Una lista de cotejo oral debe tener tres indicadores distinguibles');
   await page.screenshot({path:path.join(out,'10-paquete-clase-integrado.png'),fullPage:true});
   await page.locator('#ddClassKitActivity').selectOption('1');
   await page.locator('#ddClassKitPanel [data-dd-kit-create]').click();
