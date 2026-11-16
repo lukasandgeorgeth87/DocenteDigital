@@ -17,6 +17,7 @@ state.areas=state.areas||[];
 state.language=state.language||'Castellano';
 state.quechuaVar=state.quechuaVar||'Quechua Collao';
 state.units=Array.isArray(state.units)?state.units:[];
+state.sessions=Array.isArray(state.sessions)?state.sessions:[];
 state.activeUnitId=state.activeUnitId||null;
 state.lastSession=state.lastSession||null;
 
@@ -1039,7 +1040,7 @@ function buildSession(){
   const times=sessionTimes(duration);
   const topicSpec=ddSessionTopicSpec(area,title,brief,level);
   const session={
-    id:'s'+Date.now(),unitId:unit?.id||null,unitTitle:unit?.title||'Unidad de ejemplo',title,area,duration,resources,
+    id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),unitId:unit?.id||null,unitTitle:unit?.title||'Unidad de ejemplo',title,area,duration,resources,
     activityIndex:unit&&activity?unit.activities.indexOf(activity):-1,
     activitySnapshot:activity?{area:activity.area||'',title:activity.title||'',kind:activity.kind||'sesion',workshopType:activity.workshopType||''}:null,
     topicSpec,
@@ -1112,6 +1113,14 @@ function generateSession(){
   try{
     const session=buildSession();
     renderSessionOutput(session);
+    // Cada sesión terminada pasa al archivo de trabajo; lastSession es solo
+    // la sesión visible. Los fallos de validación no ingresan al historial.
+    if(!Array.isArray(state.sessions))state.sessions=[];
+    const prior=state.sessions.findIndex(s=>s.id===session.id);
+    if(prior>=0)state.sessions.splice(prior,1);
+    state.sessions.unshift(session);
+    state.sessions=state.sessions.slice(0,100);
+    save();
   }catch(error){
     console.warn('DocenteDigital: sesión no generada por validación pedagógica',error);
     alert('La sesión no pudo generarse todavía. Revisa el contenido de la unidad o proyecto y sus evidencias. '+(error?.message||''));

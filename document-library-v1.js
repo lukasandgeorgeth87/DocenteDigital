@@ -47,7 +47,8 @@
     }
     (Array.isArray(state.units)?state.units:[]).forEach(u=>add('unidad',u));
     (Array.isArray(state.annualPlans)?state.annualPlans:[]).forEach(p=>add('anual',p));
-    if(state.lastSession)add('sesion',state.lastSession);
+    (Array.isArray(state.sessions)?state.sessions:[]).forEach(s=>add('sesion',s));
+    if(state.lastSession&&!docs.some(d=>d.key==='sesion:'+state.lastSession.id))add('sesion',state.lastSession);
     (Array.isArray(state.materials)?state.materials:[]).forEach(m=>add('material',m));
     (Array.isArray(state.generatedAssessments)?state.generatedAssessments:[]).forEach(a=>add('instrumento',a));
     if(state.lastRubric)add('rubrica',state.lastRubric);
@@ -115,6 +116,9 @@
       state.activeUnitId=payload.id;
     }else if(kind==='sesion'){
       state.lastSession=payload;
+      state.sessions=Array.isArray(state.sessions)?state.sessions:[];
+      const index=state.sessions.findIndex(x=>x.id===payload.id);
+      if(index<0)state.sessions.unshift(payload);else state.sessions[index]=payload;
       if(state.units.some(x=>x.id===payload.unitId))state.activeUnitId=payload.unitId;
     }else if(kind==='material'){
       state.materials=Array.isArray(state.materials)?state.materials:[];

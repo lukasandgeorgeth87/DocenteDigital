@@ -185,6 +185,12 @@ jobs:
           BASE_URL: http://127.0.0.1:4173
         run: node tests/pedagogical-inputs-browser.mjs
 
+      - name: Prepare two complete lesson packs and recover Word files after reload
+        if: github.ref == 'refs/heads/feature/motor-pedagogico-v3-integral-20261112'
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/class-kit-browser.mjs
+
       - name: Preserve real Word and Excel evidence for editorial inspection
         if: always() && github.ref == 'refs/heads/feature/motor-pedagogico-v3-integral-20261112'
         uses: actions/upload-artifact@v4
