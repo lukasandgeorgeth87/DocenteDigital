@@ -26,12 +26,15 @@ try{
   assert.equal(verify.status,0,verify.stderr||verify.stdout);
   const entries=spawnSync('unzip',['-Z','-1',file],{encoding:'utf8'});
   assert.equal(entries.status,0);
-  for(const name of ['[Content_Types].xml','_rels/.rels','xl/workbook.xml','xl/_rels/workbook.xml.rels','xl/worksheets/sheet1.xml']){
+  for(const name of ['[Content_Types].xml','_rels/.rels','xl/workbook.xml','xl/_rels/workbook.xml.rels','xl/worksheets/sheet1.xml','xl/styles.xml']){
     assert.ok(entries.stdout.includes(name),`Falta ${name}`);
   }
   const sheet=spawnSync('unzip',['-p',file,'xl/worksheets/sheet1.xml'],{encoding:'utf8'}).stdout;
   const workbook=spawnSync('unzip',['-p',file,'xl/workbook.xml'],{encoding:'utf8'}).stdout;
-  assert.match(sheet,/<c r="A2" t="inlineStr">/);
+  assert.match(sheet,/<c r="A2" t="inlineStr" s="2">/);
+  assert.match(sheet,/<pane ySplit="1"[^>]+state="frozen"/);
+  assert.match(sheet,/<autoFilter ref="A1:C3"/);
+  assert.match(sheet,/<col min="2" max="2" width="58" customWidth="1"/);
   assert.ok(sheet.includes('=HYPERLINK(&quot;https://ejemplo.pe&quot;)'));
   assert.ok(!sheet.includes('<f>'),'No se deben crear fórmulas ejecutables desde texto ingresado');
   assert.ok(sheet.includes('Comparación de &lt; y &gt;'));

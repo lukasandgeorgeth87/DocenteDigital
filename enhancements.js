@@ -372,6 +372,8 @@
     const institutionLabel=identity.institution||unit.teacherProfile?.institutionName||'Por verificar';
     const teacherLabel=identity.teacher||unit.teacherProfile?.teacherName||'Por verificar';
     const summary=`<div class="dd-cover"><div><span class="pill">✓ Guardada</span><h1>${E(unit.title)}</h1><p><b>${E(unit.type)}</b> · ${E(unit.duration)}</p><p>${E(unit.level)} · ${E(unit.ieType)} · ${E(unit.grades.join(', '))}</p></div><div class="dd-cover-icon">🌱📚</div></div>
+      <div class="actions topgap"><button class="btn ghost" type="button" onclick="startRenameUnit('${unit.id}')">✏️ Cambiar título</button></div>
+      <div id="unitRenameBox" class="document topgap hidden"><label>Nuevo título<input id="unitRenameTitle" value="${E(unit.title)}" maxlength="140"></label><div class="actions"><button class="btn" type="button" onclick="confirmRenameUnit('${unit.id}')">Guardar título</button><button class="btn ghost" type="button" onclick="byId('unitRenameBox').classList.add('hidden')">Cancelar</button></div></div>
       <div class="dd-info"><b>I.E.:</b> ${E(institutionLabel)} &nbsp; | &nbsp; <b>Docente:</b> ${E(teacherLabel)} &nbsp; | &nbsp; <b>Áreas:</b> ${E(unit.areas.join(', '))}<br><b>Ubicación:</b> ${E([
         unit.teacherProfile?.community?((unit.teacherProfile?.localityType||'Localidad')+' '+unit.teacherProfile.community):'',
         unit.teacherProfile?.district?('Distrito '+unit.teacherProfile.district):'',
