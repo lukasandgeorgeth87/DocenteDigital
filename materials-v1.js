@@ -490,21 +490,21 @@
       <div class="dd-material-kicker">Inicial · ${E(grade)} · Indagación mediante el juego</div>
       <h1>Pequeños exploradores de semillas</h1>
       <p><b>Nombre:</b> ______________________________ &nbsp; <b>Fecha:</b> ______________</p>
-      <p><b>Materiales:</b> dos tipos de semillas seguras, dos platos y una lupa de juguete. La persona adulta supervisa; no introducimos semillas en la boca.</p>
+      <p><b>Materiales:</b> dos tipos de semillas seguras, dos platos y una lupa de juguete. La docente acompaña la exploración.</p>
       <h2>1. Observo y converso</h2>
-      <p>La docente muestra dos semillas diferentes. Míralas y tócalas con cuidado. ¿Qué forma tienen? ¿Cuál es más grande?</p>
-      <table data-col-weights="1,1"><thead><tr><th>Semilla A · Dibujo lo que veo</th><th>Semilla B · Dibujo lo que veo</th></tr></thead><tbody><tr><td><p>_________________________________</p><p>_________________________________</p><p>_________________________________</p></td><td><p>_________________________________</p><p>_________________________________</p><p>_________________________________</p></td></tr></tbody></table>
+      <p>Observa dos semillas. ¿En qué se parecen? ¿Qué cambia? Dibuja lo que ves.</p>
+      <table data-col-weights="1,1"><thead><tr><th>Semilla A · Dibujo lo que veo</th><th>Semilla B · Dibujo lo que veo</th></tr></thead><tbody><tr data-dd-drawbox="2300"><td> </td><td> </td></tr></tbody></table>
       <h2>2. Juego a agrupar</h2>
-      <p>Coloca las semillas en dos platos según una característica que elijas. Muestra cómo las agrupaste y cuenta tu idea.</p>
-      <p>Las agrupé porque __________________________________________________</p>
+      <p>Separa las semillas en dos platos. Dibuja cómo quedaron tus grupos.</p>
+      <table data-col-weights="1,1"><thead><tr><th>Plato 1</th><th>Plato 2</th></tr></thead><tbody><tr data-dd-drawbox="1700"><td> </td><td> </td></tr></tbody></table>
       <h2>3. Me hago una pregunta</h2>
-      <p>¿Qué crees que pasaría si dejamos una semilla sobre algodón húmedo? Dibuja lo que imaginas. Todavía no sabemos qué ocurrirá.</p>
-      <p>________________________________________________________________</p>
-      <p>________________________________________________________________</p>
+      <p>¿Qué pasaría con una semilla sobre algodón húmedo? Dibuja lo que imaginas. Todavía no sabemos qué ocurrirá.</p>
+      <table><thead><tr><th>Imagino y dibujo</th></tr></thead><tbody><tr data-dd-drawbox="1700"><td> </td></tr></tbody></table>
       <h2>4. Volvemos a observar</h2>
-      <p>Con ayuda de la docente, observa la semilla otro día y representa solamente lo que realmente cambió o permaneció igual.</p>
-      <p>________________________________________________________________</p>
-      <p><b>Para la docente:</b> escucha y anota lo que dijo el niño o niña: ________________________</p>
+      <p>Otro día, observa de nuevo y dibuja solo lo que realmente ves.</p>
+      <table><thead><tr><th>Observo otro día y dibujo</th></tr></thead><tbody><tr data-dd-drawbox="1700"><td> </td></tr></tbody></table>
+      <p><b>Para la docente:</b> escucha y anota qué observó y cómo lo explicó el niño o niña: ________________________</p>
+      <p><b>Seguridad:</b> no introducir semillas en la boca; explorar siempre con una persona adulta.</p>
     </article>`;
   }
 
@@ -864,6 +864,7 @@
     #materialOutput,#materialOutput .dd-material-actions{scroll-margin-top:110px}
     .dd-material-sheet{max-width:820px;margin:auto;padding:18px;background:#fff}
     .dd-material-sheet h1{font-size:26px;margin:8px 0 14px;color:#183f32}
+    .dd-initial-seeds tr[data-dd-drawbox] td{min-height:115px;height:115px;background:#fff}
     .dd-material-kicker{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#3e705e}
     .dd-material-meta{display:flex;gap:10px;flex-wrap:wrap;padding:8px 10px;margin-bottom:10px;border-bottom:1px solid #dbe5df}
     .dd-material-meta span{font-size:12px;color:#667}

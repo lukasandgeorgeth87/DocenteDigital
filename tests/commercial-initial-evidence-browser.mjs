@@ -47,6 +47,8 @@ try{
   }
   for(const expected of ['Pequeños exploradores de semillas','Semilla A','Semilla B','Juego a agrupar','Volvemos a observar'])
     assert(xml.includes(expected),'Inicial: el Word carece de contenido concreto: '+expected);
+  assert((xml.match(/w:trHeight w:val="\d+" w:hRule="atLeast"/g)||[]).length>=4,
+    'Inicial: la ficha Word necesita cuatro recuadros amplios para dibujar, no solo líneas para escribir');
   assert(!xml.includes('Vinculación con la planificación'),'Inicial: el Word contiene controles del docente');
   await page.reload({waitUntil:'networkidle'});
   assert((await page.evaluate(()=>state.materials||[])).length===1,'La ficha de Inicial se perdió al recargar');

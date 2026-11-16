@@ -92,7 +92,13 @@
     const body=rows.map(tr=>{
       const cells=cellsOf(tr);
       const head=cells.length&&cells.every(c=>c.tagName==='TH');
-      return `<w:tr><w:trPr><w:cantSplit/>${head?'<w:tblHeader w:val="true"/>':''}</w:trPr>${cells.map((c,i)=>{
+      // Las fichas para niños pequeños necesitan recuadros amplios para dibujar.
+      // data-dd-drawbox define una altura MÍNIMA, nunca una altura fija que
+      // pueda cortar el contenido al abrir el archivo en Word.
+      const requestedHeight=Number(tr.getAttribute?.('data-dd-drawbox')||0);
+      const minHeight=Number.isFinite(requestedHeight)&&requestedHeight>=500&&requestedHeight<=5000
+        ?`<w:trHeight w:val="${Math.round(requestedHeight)}" w:hRule="atLeast"/>`:'';
+      return `<w:tr><w:trPr><w:cantSplit/>${minHeight}${head?'<w:tblHeader w:val="true"/>':''}</w:trPr>${cells.map((c,i)=>{
         const sp=span(c);
         const cellW=widths.slice(i,i+sp).reduce((a,b)=>a+b,0);
         return `<w:tc><w:tcPr><w:tcW w:w="${cellW}" w:type="dxa"/>${sp>1?`<w:gridSpan w:val="${sp}"/>`:''}${c.tagName==='TH'?'<w:shd w:fill="E7F1EA"/>':''}<w:tcMar><w:top w:w="95" w:type="dxa"/><w:left w:w="95" w:type="dxa"/><w:bottom w:w="95" w:type="dxa"/><w:right w:w="95" w:type="dxa"/></w:tcMar><w:tcBorders><w:top w:val="single" w:sz="4" w:color="A8B5AF"/><w:left w:val="single" w:sz="4" w:color="A8B5AF"/><w:bottom w:val="single" w:sz="4" w:color="A8B5AF"/><w:right w:val="single" w:sz="4" w:color="A8B5AF"/></w:tcBorders></w:tcPr>${pXml(textOf(c),{bold:c.tagName==='TH',size:18,after:22})}</w:tc>`;
