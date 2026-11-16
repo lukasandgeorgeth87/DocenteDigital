@@ -102,6 +102,9 @@ try{
   const docxMaterial=await download('03-ficha-derechos-2-primaria.docx',()=>page.evaluate(()=>window.DDMaterials.downloadWord()));
   const materialXml=extractZipText(docxMaterial,'word/document.xml');
   assert(/derecho a participar/i.test(materialXml),'La ficha perdió su tema');
+  for(const expected of ['Una idea para jugar','Ana','Luis','Mara','LOCALIZO','PARTICIPO'])
+    assert(materialXml.includes(expected),'La ficha no ofrece un estímulo o una tarea concreta: '+expected);
+  assert(!materialXml.includes('Vinculación con la planificación'),'La ficha imprimible contiene metadatos administrativos');
 
   await page.evaluate(()=>{go('evaluation');window.DDEvaluation.openRubric();});
   await page.locator('#ddRubGrade').selectOption('2.º');
@@ -112,6 +115,8 @@ try{
   const docxRubric=await download('04-rubrica-derechos-2-primaria.docx',()=>page.locator('#ddRubWord').click());
   const rubricXml=extractZipText(docxRubric,'word/document.xml');
   for(const text of ['Rúbrica','Criterio','AD','A','B','C'])assert(rubricXml.includes(text),text+' ausente en rúbrica');
+  assert(rubricXml.includes('formula una pregunta relacionada'),'La rúbrica carece de un descriptor observable de la sesión');
+  assert(!rubricXml.includes('Realiza lo esperado con autonomía'),'La rúbrica repite un descriptor genérico');
 
   await page.evaluate(()=>window.DDEvaluation.openAssessment());
   await page.locator('#ddAssGrade').selectOption('2.º');
@@ -121,7 +126,9 @@ try{
   await page.waitForSelector('#ddAssBody .dd-editable-material');
   await page.screenshot({path:path.join(out,'04b-instrumento-en-la-app.png'),fullPage:true});
   const docxInstrument=await download('04b-instrumento-derechos-2-primaria.docx',()=>page.locator('#ddAssWord').click());
-  assert(extractZipText(docxInstrument,'word/document.xml').includes('Lista de cotejo'));
+  const instrumentXml=extractZipText(docxInstrument,'word/document.xml');
+  for(const text of ['Lista de cotejo','Indicador observable','En proceso','Formula una pregunta','Evidencia observada'])
+    assert(instrumentXml.includes(text),'La lista de cotejo no permite registrar '+text);
 
   await page.evaluate(()=>window.DDEvaluation.openRegister());
   await page.locator('#ddEvalGrade').selectOption('2.º');
@@ -136,6 +143,7 @@ try{
   const xlsx=await download('05-registro-derechos-2-primaria.xlsx',()=>page.locator('#ddEvalExcel').click());
   const sheet=extractZipText(xlsx,'xl/worksheets/sheet1.xml');
   assert(sheet.includes('E01'));
+  assert(sheet.includes('E02'),'El Excel omite estudiantes sin evaluación aún registrada');
   assert(sheet.includes('Explicó oralmente el derecho a participar'));
   assert(!sheet.includes('<f>'),'Se exportó una fórmula ejecutable');
 

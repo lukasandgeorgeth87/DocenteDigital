@@ -76,7 +76,7 @@
   const proposedSituation=
    'Como punto de partida, los estudiantes de segundo grado conocerán dos historietas ficticias: en una, una niña desea explicar su opinión y ser escuchada; en otra, varios niños conversan sobre cómo participar juntos en un juego. No se presenta ninguna de estas escenas como un hecho ocurrido en la institución o en las familias.\n\n'
    +'Al observarlas, los estudiantes expresarán qué derechos reconocen, formularán preguntas y leerán textos breves sobre el derecho a aprender, jugar, recibir buen trato y ser escuchados. A lo largo de tres semanas dialogarán, analizarán situaciones ficticias, propondrán acuerdos, resolverán problemas con datos recogidos en clase y elaborarán producciones adecuadas a su edad. Los resultados de las experiencias de Ciencia y Tecnología se registrarán tal como se observen, sin afirmar hechos que no puedan comprobarse.\n\n'
-   +'Al concluir, organizarán y compartirán el producto «'+product+'» con explicaciones claras, ejemplos respetuosos y evidencias de lo aprendido. La propuesta se adecuará con el docente a las características reales de su aula.';
+   +'Al concluir, organizarán y compartirán el producto «'+product.toLowerCase()+'» con explicaciones claras, ejemplos respetuosos y evidencias de lo aprendido. La propuesta se adecuará con el docente a las características reales de su aula.';
   const challenge='¿Cómo podemos explicar nuestros derechos con ejemplos claros, respetar los derechos de los demás y compartir lo aprendido mediante nuestro producto?';
   const purpose='Que los estudiantes de segundo grado comprendan derechos de la niñez mediante historias ficticias y fuentes adecuadas a su edad, dialoguen y lean con propósito, escriban y revisen mensajes, utilicen datos reales de clase en actividades matemáticas y participen en acuerdos de convivencia, para comunicar lo aprendido mediante '+product+'.';
   return {ok:true,version:VERSION,title,situation:proposedSituation,reto:challenge,purpose,product,
@@ -152,7 +152,7 @@
   return {version:VERSION,...p,steps:describeProcesses(p,activity.area),
    title:activity.title,area:activity.area,week:activity.week,day:activity.day,time:activity.time||'',
    criterion:activity.criterion,evidence:activity.evidence,studentAction:activity.studentAction,
-   purpose:'Hoy resolveremos esta pregunta: «'+p.question+'». Mostraremos lo aprendido mediante '+p.evidence.toLowerCase()+'.',
+   purpose:'Hoy resolveremos esta pregunta: «'+p.question+'». Mostraremos lo aprendido mediante '+p.evidence.toLowerCase().replace(/[.;\s]+$/,'')+'.',
    unitTitle:unit.title};
  }
  const table=(headers,rows)=>'<table style="border-collapse:collapse;width:100%" border="1" cellpadding="5"><thead><tr>'
@@ -234,7 +234,7 @@
    +'<h3>DESARROLLO — '+esc(times.dev??20)+' min</h3>'
    +'<ol>'+steps+'</ol>'
    +'<h3>CIERRE — '+esc(times.close??10)+' min</h3>'
-   +'<p>Explican o muestran '+esc(evidence.toLowerCase())+'; comparan su actuación con el criterio, reconocen una dificultad y acuerdan una mejora concreta.</p>'
+   +'<p>Explican o muestran '+esc(evidence.toLowerCase().replace(/[.;\s]+$/,''))+'; comparan su actuación con el criterio, reconocen una dificultad y acuerdan una mejora concreta.</p>'
    +'<h2>III. RETO CONCRETO, TAREA Y EVALUACIÓN</h2>'
    +'<p><b>Pregunta de trabajo:</b> '+esc(question)+'</p>'
    +'<p><b>Acción del estudiante:</b> '+esc(p.studentAction)+'</p>'

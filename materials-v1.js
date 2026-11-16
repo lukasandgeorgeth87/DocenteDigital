@@ -445,7 +445,52 @@
     ];
   }
 
+  // A worksheet for early readers must contain its *own* stimulus. Referring
+  // to a story/image that the app did not supply produced unusable handouts.
+  // These three fictional panels are original teaching content, not alleged
+  // incidents involving real pupils or families.
+  function rightsParticipationWorksheet(topic,grade){
+    const n=gradeNumber(grade),early=n<=2;
+    const panels=[
+      ['1. Una propuesta','En el recreo, Ana dice: «Quiero proponer un juego en el que todos participemos». Luis responde: «Solo nosotros elegimos».'],
+      ['2. Escuchamos','Mara interviene: «Escuchemos primero la idea de Ana. Todos podemos opinar con respeto». Luis acepta escuchar.'],
+      ['3. Llegamos a un acuerdo','Ana propone turnarse para elegir el juego. El grupo conversa y acuerda que cada uno tendrá la oportunidad de participar.']
+    ];
+    const items=early?[
+      ['LOCALIZO','¿Quién propuso un juego para todos?','Ana / Luis / Mara'],
+      ['COMPRENDO','¿Qué dijo Mara para que escucharan a Ana?','Escribe o explica una frase de la viñeta 2.'],
+      ['PIENSO','¿Por qué fue más justo conversar antes de decidir?','Explica tu respuesta con una pista de la historia.'],
+      ['PARTICIPO','Escribe una pregunta respetuosa que le harías a Ana.','Pregunto: ¿__________________________________?'],
+      ['ME EXPRESO','Cuenta a tu pareja qué derecho se muestra y escucha su opinión.','Mi compañero o compañera me dijo: ___________________']
+    ]:[
+      ['LOCALIZO','Identifica las propuestas de Ana, Luis y Mara.','Anota qué dijo cada personaje.'],
+      ['INTERPRETO','¿Qué cambió entre la primera y la tercera viñeta?','Explica usando dos detalles del diálogo.'],
+      ['ARGUMENTO','¿Por qué turnarse para elegir puede favorecer la participación?','Sustenta con una razón y un ejemplo.'],
+      ['PREGUNTO','Formula dos preguntas para comprender otros puntos de vista.','Escribe preguntas abiertas y respetuosas.'],
+      ['COMUNICO','Redacta un acuerdo para que todos participen.','Revisa claridad, destinatario y buen trato.']
+    ];
+    return `<article class="dd-material-sheet dd-rights-sheet">
+      <div class="dd-material-kicker">Comunicación · ${E(grade)} · Lectura y expresión oral</div>
+      <h1>Todos tenemos derecho a participar</h1>
+      <p><b>Nombre:</b> _____________________________________ <b>Fecha:</b> ______________</p>
+      <p><b>Propósito:</b> explicar una idea de una historieta, formular una pregunta relacionada y escuchar con respeto.</p>
+      <h2>Leemos la historieta: Una idea para jugar</h2>
+      <p><i>Historia ficticia creada para aprender en clase.</i></p>
+      <table data-col-weights="1,1,1"><thead><tr>${panels.map(x=>`<th>${E(x[0])}</th>`).join('')}</tr></thead>
+      <tbody><tr>${panels.map(x=>`<td><p>${E(x[1])}</p></td>`).join('')}</tr></tbody></table>
+      <h2>Ahora trabajamos</h2>
+      <ol>${items.map(([tag,question,hint])=>`<li><b>${E(tag)}.</b> ${E(question)}<p>${E(hint)}</p><p>________________________________________________________________</p></li>`).join('')}</ol>
+      <h3>Compruebo lo aprendido</h3>
+      <p>□ Expliqué una idea de la historieta. &nbsp; □ Hice una pregunta. &nbsp; □ Escuché a mi pareja.</p>
+    </article>`;
+  }
+
   function worksheetMaterial(topic,level,grade,area,sourceText=''){
+    if(level==='Primaria'&&area==='Comunicación'&&
+       /\b(?:derechos?|participar|participaci[oó]n)\b/i.test(topic)&&
+       /historiet|derech|particip/i.test(topic)&&!String(sourceText||'').trim()){
+      return rightsParticipationWorksheet(topic,grade);
+    }
     const acts=worksheetActivities(topic,level,grade,area);
     const source=String(sourceText||'').trim();
     return `<article class="dd-material-sheet">
@@ -702,7 +747,12 @@
   }
 
   function materialWordHtml(item){
-    return `<div class="word-border">${item.html.replace(/<div class="actions[\s\S]*$/,'')}</div>`;
+    // Context and editor controls remain in the app; the downloaded worksheet
+    // is a clean pupil-facing handout, not the teacher's planning workbench.
+    const doc=new DOMParser().parseFromString(item.html,'text/html');
+    const body=doc.querySelector('.dd-editable-material');
+    const note=doc.querySelector(':scope > .notice')||doc.querySelector('.notice');
+    return `<div class="word-border">${note?.outerHTML||''}${body?.innerHTML||item.html.replace(/<div class="actions[\s\S]*$/,'')}</div>`;
   }
 
   function downloadWord(){

@@ -51,6 +51,15 @@
     // A stale unit selection must not show another unit's criteria or a
     // previous session's assessment evidence.
     if(state.activeUnitId&&!unit)return [];
+    // When the teacher has just generated a session from the active V3 unit,
+    // its exact criterion/evidence must take precedence over a broad unit
+    // rubric from an earlier proposal step.
+    var session=state.lastSession;
+    if(unit?.pedagogicalV3&&session?.unitId===unit.id&&
+       (!area||session.area===area)&&String(session.criterion||'').trim()&&
+       (Array.isArray(session.grades)?session.grades:[session.grade]).some(function(g){
+         return g!=null&&criterionGradeKey(g)===criterionGradeKey(grade);
+       }))return [{area:session.area,criterion:session.criterion,evidence:session.evidence||'',instrument:session.instrument||''}];
     var out=[];
     purposes(unit).filter(function(p){return !area||p.area===area;}).forEach(function(p){
       // Criteria are grade-specific. A missing grade must never inherit the first
@@ -168,9 +177,16 @@
       return false;
     }
     var rows=state.evaluationRecords.filter(function(r){return r.unitId===((unit&&unit.id)||'')&&r.grade===grade;});
-    var data=[['Estudiante','Grado','Área','Criterio','Nivel','Evidencia observada','Siguiente paso']].concat(rows.map(function(r){
-      return [r.student,r.grade,r.area,r.criterion,r.level||'',r.evidenceNote||'',r.nextStep||''];
-    }));
+    var data=[['Estudiante','Grado','Área','Criterio','Nivel','Evidencia observada','Siguiente paso']];
+    var students=roster(grade),existing=new Set();
+    var activeCriteria=criteriaFor(unit,grade,'');
+    activeCriteria.forEach(function(c){students.forEach(function(student){
+      var r=rows.find(function(x){return x.student===student&&x.area===c.area&&x.criterion===c.criterion;})||{};
+      data.push([student,grade,c.area,c.criterion,r.level||'',r.evidenceNote||'',r.nextStep||'']);
+      existing.add(JSON.stringify([student,c.area,c.criterion]));
+    });});
+    rows.forEach(function(r){if(!existing.has(JSON.stringify([r.student,r.area,r.criterion])))
+      data.push([r.student,r.grade,r.area,r.criterion,r.level||'',r.evidenceNote||'',r.nextStep||'']);});
     if(data.length===1){
       alert('Primero registra las evidencias o niveles de los estudiantes para descargar el Excel.');
       return false;
@@ -462,6 +478,36 @@
     var original=String((unit&&unit.situationBrief)||'').trim();
     var situation=String((unit&&(unit.situation||unit.situationBrief))||'').trim();
     var product=String((unit&&(unit.selectionApproved&&unit.productTitle||unit.product))||'').trim();
+    if(chosenInstrument==='Lista de cotejo'){
+      // A checklist is a recording instrument, not six unrelated comprehension
+      // tasks. Leave all marks blank: only the teacher observes the evidence.
+      var session=state.lastSession?.unitId===unit?.id&&state.lastSession?.area===area?state.lastSession:null;
+      var question=String(session?.pedagogicalV3?.question||session?.question||'').trim();
+      var indicators=[];
+      cs.forEach(function(x){
+        var criterion=String(x.criterion||'').trim();
+        if(/explica.*idea.*formula.*pregunta.*escucha/i.test(criterion)){
+          indicators.push('Explica con orden una idea de la historieta relacionada con el derecho trabajado.');
+          indicators.push('Formula una pregunta pertinente sobre la situación observada.');
+          indicators.push('Escucha a su interlocutor y respeta su turno de participación.');
+        }else{
+          criterion.split(/;\s*/).map(function(s){return s.trim();}).filter(Boolean).forEach(function(s){indicators.push(s.replace(/[.;]+$/,'')+'.');});
+        }
+      });
+      indicators=[...new Set(indicators)].slice(0,6);
+      var observation='<p><b>Actividad:</b> '+E(session?.title||'Observar una actuación del estudiante')+'</p>'+
+        (question?'<p><b>Pregunta de trabajo:</b> '+E(question)+'</p>':'')+
+        '<p><b>Evidencia:</b> '+E(cs.map(function(x){return x.evidence;}).filter(Boolean).join(' · ')||'Actuación observada')+'</p>';
+      var checklist='<article class="dd-assessment-sheet"><h1>Lista de cotejo</h1><p><b>Área:</b> '+E(area)+' · <b>Grado:</b> '+E(grade)+'</p>'+observation+
+        '<p><b>Estudiante:</b> ______________________________ &nbsp; <b>Fecha:</b> ___________</p>'+
+        '<table data-col-weights="5,1,1,1"><thead><tr><th>Indicador observable</th><th>Sí</th><th>En proceso</th><th>Aún no</th></tr></thead><tbody>'+
+        indicators.map(function(x){return '<tr><td>'+E(x)+'</td><td>□</td><td>□</td><td>□</td></tr>';}).join('')+'</tbody></table>'+
+        '<p><b>Evidencia observada:</b> __________________________________________________</p>'+
+        '<p><b>Retroalimentación y siguiente paso:</b> __________________________________________</p></article>';
+      state.lastAssessment={id:'a'+Date.now(),unitId:unit?.id||'',unitTitle:unit?.title||'',grade:grade,area:area,type:type,technique:technique,instrument:instrument,criteria:cs,html:checklist,createdAt:new Date().toISOString()};
+      state.generatedAssessments.unshift(state.lastAssessment);state.generatedAssessments=state.generatedAssessments.slice(0,20);save();
+      showAssessmentDocument(state.lastAssessment);return;
+    }
     var reference='<div class="dd-assessment-reference">'+
       (original&&original!==situation?'<p><b>Contexto original del docente:</b> '+E(original)+'</p>':'')+
       (situation?'<p><b>Situación de partida:</b> '+E(situation)+'</p>':'')+
@@ -529,10 +575,16 @@
 
   function descriptor(level,criterion){
     var c=String(criterion||'').replace(/\s+/g,' ').trim();
-    if(level==='AD')return 'Realiza lo esperado con autonomía y precisión, explica sus decisiones con evidencias y transfiere lo aprendido a una situación nueva.';
-    if(level==='A')return 'Realiza lo esperado en el criterio de manera pertinente y explica suficientemente su procedimiento, decisión o producción.';
-    if(level==='B')return 'Muestra avances parciales en el criterio, pero todavía requiere apoyo para completar, justificar o revisar su actuación con mayor autonomía.';
-    return 'Requiere acompañamiento frecuente para comprender la tarea, representar lo que sabe o producir una evidencia relacionada con el criterio.';
+    if(/explica.*idea.*formula.*pregunta.*escucha/i.test(c)){
+      if(level==='AD')return 'Explica con claridad la idea de la viñeta, pregunta con pertinencia, escucha con respeto y aporta otro ejemplo que amplía el diálogo.';
+      if(level==='A')return 'Explica con orden una idea de la viñeta, formula una pregunta relacionada y escucha a su interlocutor.';
+      if(level==='B')return 'Identifica una idea de la viñeta, pero necesita preguntas de apoyo para explicarla o formular una pregunta pertinente; está aprendiendo a escuchar turnos.';
+      return 'Con apoyo identifica personajes o hechos de la viñeta; aún no logra explicar una idea, formular una pregunta relacionada y escuchar el turno completo.';
+    }
+    if(level==='AD')return c+' Además, justifica su actuación con una evidencia y la aplica en una situación nueva.';
+    if(level==='A')return c;
+    if(level==='B')return 'Muestra parcialmente lo siguiente: '+c+' Necesita una pauta o pregunta para completar su evidencia.';
+    return 'Con acompañamiento inicia la actuación: '+c+' Todavía necesita apoyo para demostrar el criterio.';
   }
 
   function openRubric(){

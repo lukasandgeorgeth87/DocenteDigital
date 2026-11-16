@@ -81,7 +81,8 @@ try{
   const s=JSON.parse(localStorage.getItem('docenteDigitalPrototype'));
   return window.unitWordHtml(s.units.find(u=>u.id===id));
  },approved.id);
- assert.match(unitHtml,/PROPUESTA PEDAGÓGICA V3/);
+ assert.match(unitHtml,/UNIDAD DE APRENDIZAJE/);
+ assert.doesNotMatch(unitHtml,/PROPUESTA PEDAGÓGICA V3/);
  assert.match(unitHtml,/SECUENCIA PROGRESIVA/);
  assert.match(unitHtml,/MATRIZ CURRICULAR/);
  for(const a of approved.activities)assert(unitHtml.includes(a.title),'Sesión ausente de Word: '+a.title);
