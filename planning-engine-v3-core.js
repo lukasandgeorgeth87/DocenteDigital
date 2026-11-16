@@ -277,7 +277,7 @@
       m.projectMilestones.map(x=>[x.phase,x.action,x.evidence]))
    :'';
   return '<article class="dd-planning-v3">'
-   +'<h1 style="text-align:center">'+escape(m.type.toUpperCase())+' — PROPUESTA PEDAGÓGICA V3</h1>'
+   +'<h1 style="text-align:center">'+escape(m.type.toUpperCase())+'</h1>'
    +'<h2 style="text-align:center">'+escape(m.title)+'</h2>'
    +'<h2>I. DATOS GENERALES</h2>'+grid(['Dato','Información'],rows)
    +'<h2>II. SITUACIÓN SIGNIFICATIVA</h2>'+paragraphs(m.situation)

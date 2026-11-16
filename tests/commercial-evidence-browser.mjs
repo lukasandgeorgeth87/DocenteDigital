@@ -70,12 +70,14 @@ try{
   await page.waitForFunction(()=>window.state.units[0]?.pedagogicalV3?.version==='3.0.0-contract-first',{timeout:25000});
   const unit=await page.evaluate(()=>window.state.units[0]);
   assert.equal(unit.activities.length,30);
+  assert(unit.title.length<=100,'El título automático es demasiado extenso para un documento comercial');
   assert(unit.activities.every(a=>a.criterion&&a.evidence&&a.title));
   assert(!unit.activities.some(a=>/Actividad de aprendizaje \d+/.test(a.title)));
   await page.screenshot({path:path.join(out,'01-unidad-en-la-app.png'),fullPage:true});
   const docxUnit=await download('01-unidad-derechos-2-primaria.docx',()=>page.evaluate(id=>downloadUnitWord(id),unit.id));
   const unitXml=extractZipText(docxUnit,'word/document.xml');
   for(const text of ['SITUACIÓN SIGNIFICATIVA','MATRIZ CURRICULAR','SECUENCIA PROGRESIVA'])assert(unitXml.includes(text),text+' ausente en la unidad');
+  assert(!unitXml.includes('PROPUESTA PEDAGÓGICA V3'),'El documento exporta una etiqueta técnica interna');
 
   await page.evaluate(id=>useUnit(id),unit.id);
   await page.waitForSelector('#activity option',{state:'attached'});

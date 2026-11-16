@@ -292,6 +292,13 @@
       }
     }
     const enriched=titleContextText(raw),u=mci(enriched,type),baseTheme=tidy(u.theme)||'esta experiencia',kind=u.intentKind||'exploración/comprensión',goal=tidy(u.finality),project=/proyecto/i.test(type||u.document||''),level=titleLevel();
+    // Una descripción narrativa extensa de los derechos no debe convertirse
+    // literalmente en un título kilométrico ni empezar con «Los» en mayúscula.
+    if(level==='Primaria'&&/\bderechos?\s+de\s+(?:las\s+niñas\s+y\s+los\s+niños|los\s+niños|la\s+niñez)\b/i.test(enriched))return [
+      'Conocemos nuestros derechos y aprendemos a respetarlos',
+      'Nuestros derechos en acción: dialogamos y convivimos',
+      'Aprendemos a reconocer los derechos de la niñez'
+    ];
     const issue=semanticIssue(enriched,baseTheme);
     if(issue)return issueTitles(issue,type,level);
     const remembrance=remembranceTitles(enriched,level);
