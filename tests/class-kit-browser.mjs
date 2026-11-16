@@ -20,14 +20,17 @@ try{
   await page.goto(process.env.BASE_URL||'http://127.0.0.1:4173',{waitUntil:'networkidle'});
   await page.evaluate(()=>localStorage.clear());
   await page.reload({waitUntil:'networkidle'});
-  await page.waitForFunction(()=>document.querySelector('#ddSetupNativeForm')?.dataset.ddNativeMounted==='1'&&typeof window.go==='function',null,{timeout:15000});
+  // First visit goes to the lightweight onboarding page. Its submit redirects
+  // back to the actual app; wait for that navigation before using app globals.
+  await page.waitForURL(url=>url.pathname.endsWith('/onboarding.html'),{timeout:15000});
   await page.locator('input[name="ddLevel"][value="Primaria"]').locator('..').click();
   await page.locator('input[name="ddIE"][value="Polidocente"]').locator('..').click();
   await page.locator('[data-dd-grade-group="Primaria"] input[value="3.º"]').locator('..').click();
   await page.locator('[data-dd-area-group="Primaria"] input[value="Comunicación"]').locator('..').click();
   await page.locator('#linguisticMode').selectOption('Monolingüe castellano');
   await page.locator('#ddSetupNativeForm button[type="submit"]').click();
-  await page.waitForFunction(()=>window.state?.level==='Primaria'&&document.querySelector('#home')?.classList.contains('active'),null,{timeout:15000});
+  await page.waitForURL(url=>!url.pathname.endsWith('/onboarding.html'),{timeout:15000});
+  await page.waitForFunction(()=>typeof window.go==='function'&&window.state?.level==='Primaria',null,{timeout:15000});
   await page.evaluate(()=>{go('plan');showUnit();});
   const kind=page.locator('#ddPlanningKindChooser [data-kind="Unidad de aprendizaje"]');
   if(await kind.count())await kind.click();
