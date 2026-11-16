@@ -23,6 +23,11 @@ try{
   await page.locator('#ddInputSave').click();
   assert.match(await page.locator('#ddInputStatus').innerText(),/Confirma/);
   await page.locator('#ddInputConsent').check();
+  // Other screen helpers can repaint a form between the teacher's confirmation
+  // and Save. Preserve the draft and explicit approval across that repaint.
+  await page.evaluate(()=>window.DDPedagogicalInputs.open());
+  assert.equal(await page.locator('#ddInputConsent').isChecked(),true);
+  assert.match(await page.locator('#ddInputText').inputValue(),/Feria local de semillas/);
   await page.locator('#ddInputSave').click();
   assert.match(await page.locator('#ddInputStatus').innerText(),/guardado/i);
   assert.equal(await page.evaluate(()=>window.state.pedagogicalInputs?.length),1);

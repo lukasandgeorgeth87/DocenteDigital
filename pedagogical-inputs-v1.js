@@ -6,6 +6,9 @@
   const RX=new RegExp('\\b('+MONTHS.join('|')+')\\b','i');
   const LABELS={calendar:'Calendario comunal',group:'Características generales del grupo',school:'Proyecto o prioridad institucional',other:'Otro insumo'};
   const $=id=>document.getElementById(id),E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  // Keep a teacher's unsubmitted form while another component refreshes this screen.
+  // This draft lives only in memory; neither raw files nor unreviewed text are saved.
+  let draft={category:'calendar',name:'',text:'',consented:false};
   const inputs=()=>Array.isArray(state.pedagogicalInputs)?state.pedagogicalInputs:(state.pedagogicalInputs=[]);
   const clean=v=>String(v||'').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,'').replace(/\r\n?/g,'\n').slice(0,16000).trim();
   function eventsFrom(content){
@@ -88,21 +91,32 @@
       <div class="actions topgap"><button class="btn" id="ddInputSave" type="button">💾 Guardar insumo</button><button class="btn alt" id="ddInputAnnual" type="button">📅 Programación anual</button></div>
       <div class="notice topgap" id="ddInputStatus" role="status" aria-live="polite">Puedes registrar hasta 8 insumos de 16 000 caracteres cada uno.</div></div>
       <div class="card topgap"><h2>Insumos guardados</h2><div id="ddInputList"></div></div>`;
+    $('ddInputCategory').value=draft.category;
+    $('ddInputName').value=draft.name;
+    $('ddInputText').value=draft.text;
+    $('ddInputConsent').checked=draft.consented;
+    const keepDraft=()=>{draft={category:$('ddInputCategory').value,name:$('ddInputName').value,text:$('ddInputText').value,consented:$('ddInputConsent').checked};};
+    $('ddInputCategory').addEventListener('change',keepDraft);
+    $('ddInputName').addEventListener('input',keepDraft);
+    $('ddInputText').addEventListener('input',()=>{draft.consented=false;$('ddInputConsent').checked=false;keepDraft();});
+    $('ddInputConsent').addEventListener('change',keepDraft);
     $('ddInputFile').onchange=async()=>{
       const file=$('ddInputFile').files?.[0];if(!file)return;
       if(!$('ddInputName').value.trim())$('ddInputName').value=file.name.replace(/\.[^.]+$/,'');
       try{const result=await fileText(file);$('ddInputText').value=clean(result.text);status(result.message);}
       catch(error){$('ddInputText').value='';status('No se importó: '+error.message);}
+      $('ddInputConsent').checked=false;keepDraft();
     };
     $('ddInputSave').onclick=()=>{
       const name=$('ddInputName').value.trim().slice(0,100),text=clean($('ddInputText').value),category=$('ddInputCategory').value;
-      if(!$('ddInputConsent').checked)return status('Confirma antes que el texto fue revisado y no incluye datos sensibles.');
+      if(!$('ddInputConsent').checked&&!draft.consented)return status('Confirma antes que el texto fue revisado y no incluye datos sensibles.');
       if(!name||text.length<12)return status('Agrega un nombre y suficiente contenido útil (12 caracteres como mínimo).');
       if(/\b(?:\d{8}|9\d{8})\b|[\w.+-]+@[\w.-]+\.[a-z]{2,}/i.test(text))return status('Se detectó un posible DNI, teléfono o correo. Elimina esos datos personales antes de guardar.');
       if(inputs().length>=8)return status('Ya tienes 8 insumos; retira uno para continuar.');
       const item={id:'input'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),name,category,text,events:category==='calendar'?eventsFrom(text):{},confirmed:true,createdAt:new Date().toISOString()};
       inputs().push(item);if(!save()){inputs().pop();return status('No se pudo guardar. Revisa el almacenamiento de este navegador.');}
       list();$('ddInputName').value='';$('ddInputText').value='';$('ddInputFile').value='';$('ddInputConsent').checked=false;
+      draft={category,name:'',text:'',consented:false};
       status('✓ Insumo guardado. Se utilizará para nuevas sugerencias. No cambia títulos ya elegidos.');
     };
     $('ddInputAnnual').onclick=()=>{go('annual');root.DDAnnualPlanning?.open();};list();
