@@ -121,10 +121,11 @@
       }).join('');
       html+='<section class="dd-eval-criterion"><h3>'+E(c.area)+'</h3><p><b>Criterio:</b> '+E(c.criterion)+'</p><p class="dd-small"><b>Evidencia esperada:</b> '+E(c.evidence)+' · <b>Instrumento:</b> '+E(c.instrument)+'</p><div class="dd-scroll"><table class="dd-table"><thead><tr><th>Estudiante / código</th><th>Nivel</th><th>Evidencia observada</th><th>Siguiente paso</th></tr></thead><tbody>'+rows+'</tbody></table></div></section>';
     });
-    html+='<div class="actions"><button class="btn" id="ddEvalSave">💾 Guardar registro</button><button class="btn alt" id="ddEvalExcel">⬇ Descargar Excel</button><button class="btn ghost" id="ddEvalCon">📝 Conclusiones</button></div>';
+    html+='<div class="actions"><button class="btn" id="ddEvalSave">💾 Guardar registro</button><button class="btn alt" id="ddEvalExcel">⬇ Descargar Excel</button><button class="btn ghost" id="ddEvalCsv">Descargar CSV</button><button class="btn ghost" id="ddEvalCon">📝 Conclusiones</button></div>';
     box.innerHTML=html;
     $('ddEvalSave').onclick=function(){saveRegister(cs,names,unit,grade,true);};
     $('ddEvalExcel').onclick=function(){saveRegister(cs,names,unit,grade,false);downloadExcel(unit,grade);};
+    $('ddEvalCsv').onclick=function(){saveRegister(cs,names,unit,grade,false);downloadCsv(unit,grade);};
     $('ddEvalCon').onclick=function(){saveRegister(cs,names,unit,grade,false);openConclusions(grade);};
   }
 
