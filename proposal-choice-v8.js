@@ -45,7 +45,8 @@
     return '';
   }
   function meaningFor(raw){try{if(typeof window.ddUnderstandPlanningDescription==='function')return window.ddUnderstandPlanningDescription(raw)}catch(e){}return {raw,focus:raw||'la situación descrita',problem:'',cause:'',consequence:'',goal:'',opportunity:'',actors:[],place:'',confidence:0,status:'lectura preliminar',gaps:['falta precisar el sentido de la situación']};}
-  function subjectFromTeacherTitle(title){
+  function shortFocus(m,raw){
+    function subjectFromTeacherTitle(title){
     // El título del docente tiene prioridad sobre una extracción léxica sin
     // sintaxis: «ficticios · preguntas · distintas» no es un tema enseñable.
     const original=tidy(title);
@@ -56,8 +57,7 @@
       .replace(/\s+y\s+(?:formulamos|planteamos|respondemos)\s+preguntas.*$/i,'')
       .replace(/[.;:]+$/,'').trim();
     return focus.length>=8&&focus.split(/\s+/).length>=2?focus[0].toLowerCase()+focus.slice(1):'';
-  }
-  function shortFocus(m,raw){
+    }
     const f=tidy(m?.focus||'');
     const fallback=typeof window.ddContextTopic==='function'?window.ddContextTopic(raw):tidy(raw).slice(0,110);
     const instrumental=/^(?:por favor\s+)?(?:quiero|quisiera|necesito|deseo|crea|crear|elabora|prepara|hazme)\b/i.test(tidy(raw))&&/\b(?:unidad|proyecto|sesión|sesion)\b/i.test(tidy(raw).slice(0,130));
