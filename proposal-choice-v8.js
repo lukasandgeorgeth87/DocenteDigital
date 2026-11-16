@@ -45,7 +45,33 @@
     return '';
   }
   function meaningFor(raw){try{if(typeof window.ddUnderstandPlanningDescription==='function')return window.ddUnderstandPlanningDescription(raw)}catch(e){}return {raw,focus:raw||'la situación descrita',problem:'',cause:'',consequence:'',goal:'',opportunity:'',actors:[],place:'',confidence:0,status:'lectura preliminar',gaps:['falta precisar el sentido de la situación']};}
-  function shortFocus(m,raw){const f=tidy(m?.focus||'');const fallback=typeof window.ddContextTopic==='function'?window.ddContextTopic(raw):tidy(raw).slice(0,110);const instrumental=/^(?:por favor\s+)?(?:quiero|quisiera|necesito|deseo|crea|crear|elabora|prepara|hazme)\b/i.test(tidy(raw))&&/\b(?:unidad|proyecto|sesión|sesion)\b/i.test(tidy(raw).slice(0,130));const base=instrumental?fallback:(f&&f!=='la realidad descrita'&&f.length<=105&&f!==tidy(raw)?f:fallback||'la situación descrita');const s=tidy(raw+' '+base).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueologic|sitios?\s+arqueologic|patrimonio\s+arqueologic/.test(s))return 'las pinturas rupestres y el patrimonio arqueológico local';const titleText=typeof document!=='undefined'&&document.getElementById?(document.getElementById('unitTitle')?.value||''):'';const rightsTheme=/\b(?:los derechos|derechos de la niñez|derechos de los niños|derechos de la infancia)\b/i.test(tidy(raw+' '+titleText));const autoScaffold=/\b(?:en el entorno cercano de los estudiantes|se propone desarrollar|el docente podr[aá] completar|en una actividad de aula, los estudiantes)\b/i.test(raw);if(rightsTheme&&(tidy(raw).length<=90||autoScaffold))return 'los derechos de la niñez';return base;}
+  function subjectFromTeacherTitle(title){
+    // El título del docente tiene prioridad sobre una extracción léxica sin
+    // sintaxis: «ficticios · preguntas · distintas» no es un tema enseñable.
+    const original=tidy(title);
+    if(!/^(?:leemos|escuchamos|dialogamos|conversamos|escribimos|investigamos|observamos|exploramos|comparamos|cuidamos|valoramos|aprendemos|conocemos|describimos|explicamos|registramos|descubrimos)\s+/i.test(original))return '';
+    const focus=original
+      .replace(/^[^\s]+\s+/,'').replace(/^sobre\s+/i,'')
+      .replace(/\s+y\s+(?:escuchamos|dialogamos|conversamos|observamos|exploramos|comparamos|valoramos|conocemos|explicamos|registramos)\s+/gi,' y ')
+      .replace(/\s+y\s+(?:formulamos|planteamos|respondemos)\s+preguntas.*$/i,'')
+      .replace(/[.;:]+$/,'').trim();
+    return focus.length>=8&&focus.split(/\s+/).length>=2?focus[0].toLowerCase()+focus.slice(1):'';
+  }
+  function shortFocus(m,raw){
+    const f=tidy(m?.focus||'');
+    const fallback=typeof window.ddContextTopic==='function'?window.ddContextTopic(raw):tidy(raw).slice(0,110);
+    const instrumental=/^(?:por favor\s+)?(?:quiero|quisiera|necesito|deseo|crea|crear|elabora|prepara|hazme)\b/i.test(tidy(raw))&&/\b(?:unidad|proyecto|sesión|sesion)\b/i.test(tidy(raw).slice(0,130));
+    const base=instrumental?fallback:(f&&f!=='la realidad descrita'&&f.length<=105&&f!==tidy(raw)?f:fallback||'la situación descrita');
+    const s=tidy(raw+' '+base).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    if(/pinturas?\s+rupestres?|arte\s+rupestre|petroglif|restos?\s+arqueologic|sitios?\s+arqueologic|patrimonio\s+arqueologic/.test(s))return 'las pinturas rupestres y el patrimonio arqueológico local';
+    const titleText=typeof document!=='undefined'&&document.getElementById?(document.getElementById('unitTitle')?.value||''):'';
+    const rightsTheme=/\b(?:los derechos|derechos de la niñez|derechos de los niños|derechos de la infancia)\b/i.test(tidy(raw+' '+titleText));
+    const autoScaffold=/\b(?:en el entorno cercano de los estudiantes|se propone desarrollar|el docente podr[aá] completar|en una actividad de aula, los estudiantes)\b/i.test(raw);
+    if(rightsTheme&&(tidy(raw).length<=90||autoScaffold))return 'los derechos de la niñez';
+    const titleFocus=subjectFromTeacherTitle(titleText);
+    if(titleFocus&&(/[·|•]/.test(base)||/^(?:el aula trabaja|se propone|la experiencia descrita)/i.test(base)))return titleFocus;
+    return base;
+  }
   function placeFor(m){
     if(tidy(m?.place))return tidy(m.place);
     const p=state.teacherContext||{};
