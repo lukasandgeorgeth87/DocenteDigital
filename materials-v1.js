@@ -508,6 +508,93 @@
     </article>`;
   }
 
+  function communicationFocus(title){
+    const raw=String(title||'').trim();
+    const stripped=raw
+      .replace(/^(?:dialogamos|conversamos|escuchamos|leemos|escribimos|redactamos|planificamos|explicamos|compartimos|investigamos)\s+/i,'')
+      .replace(/^(?:sobre|información para comprender|textos vinculados con|un texto sobre)\s+/i,'')
+      .replace(/\s+y\s+(?:formulamos|planteamos|respondemos)\s+preguntas\s*$/i,'')
+      .trim();
+    return stripped&&!/[·|•]/.test(stripped)?stripped:raw;
+  }
+
+  function communicationWorksheet(title,level,grade,area){
+    const focus=communicationFocus(title),n=gradeNumber(grade),t=N(title);
+    const official=window.DD_OFFICIAL_CURRICULUM?.communicationModeFromTitle;
+    const reported=typeof official==='function'?official(title):'';
+    const mode=reported&&reported!=='indefinido'?reported
+      :/^(?:leemos|leer|comprendemos|interpretamos)/.test(t)?'lectura'
+      :/^(?:escribimos|redactamos|planificamos|revisamos|producimos)/.test(t)?'escritura':'oral';
+    const head=`<div class="dd-material-kicker">Ficha de trabajo · ${E(area)} · ${E(grade)}</div>
+      <h1>${E(title)}</h1><p><b>Nombre:</b> __________________________ <b>Fecha:</b> ______________</p>`;
+    if(mode==='oral'){
+      const exchange=n<=2?[
+        'Luz propone compartir una idea sobre el tema de la clase. Pedro quiere hablar también.',
+        'Luz dice: «Primero te escucho; después cuento lo que pienso». Pedro hace una pregunta y ambos conversan.'
+      ]:[
+        'Para preparar una conversación, Luz propone escuchar diferentes ideas antes de responder.',
+        'Pedro pregunta: «¿Cómo podemos explicar nuestra opinión y saber qué piensan los demás?».',
+        'Luz responde: «Podemos dar una razón, formular preguntas y escuchar sin interrumpir». Después acuerdan compartir sus conclusiones.'
+      ];
+      return `<article class="dd-material-sheet dd-communication-sheet">${head}
+        <p><b>Propósito:</b> expresar una idea sobre ${E(focus)}, formular una pregunta relacionada y escuchar las respuestas con respeto.</p>
+        <h2>1. Leo o escucho una situación para dialogar</h2>
+        <p><i>Situación ficticia para practicar la conversación:</i></p>
+        <div class="dd-source-base">${exchange.map(p=>`<p>${E(p)}</p>`).join('')}</div>
+        <h2>2. Preparo mi intervención</h2>
+        <p><b>Mi idea sobre ${E(focus)}:</b> __________________________________________</p>
+        <p>________________________________________________________________</p>
+        <p><b>Una razón que explica mi idea:</b> ____________________________________</p>
+        <p>________________________________________________________________</p>
+        <p><b>Una pregunta para mi compañero o compañera:</b> _____________________</p>
+        <p>________________________________________________________________</p>
+        <h2>3. Conversamos por turnos</h2>
+        <ol><li>Explica tu idea con una razón y un ejemplo sencillo.</li><li>Escucha sin interrumpir y formula tu pregunta.</li><li>Responde la pregunta que te hagan y agradece la participación.</li></ol>
+        <p><b>Una idea que escuché:</b> __________________________________________</p>
+        <p>________________________________________________________________</p>
+        <h3>Así reviso mi participación</h3>
+        <p>□ Expresé una idea con claridad. &nbsp; □ Hice una pregunta pertinente. &nbsp; □ Escuché y respondí con respeto.</p>
+      </article>`;
+    }
+    if(mode==='lectura'){
+      const story=/relat|cuento|histori|voz/.test(N(focus));
+      const text=story?[
+        'En una clase, dos estudiantes llevaron relatos para compartir. Una historia hablaba de un viaje y otra de una amistad. Ambos textos tenían personajes que tomaban decisiones diferentes.',
+        'Al leer, Julia observó que los personajes no pensaban igual. Miguel comentó: «Podemos comprender a cada personaje si buscamos pistas en lo que dice y hace».',
+        'El grupo volvió a los relatos, señaló una frase que ayudaba a explicar una decisión y escuchó otras interpretaciones antes de escribir una conclusión.'
+      ]:[
+        `En una clase, un grupo decidió aprender más sobre ${focus}. Primero escribió preguntas para orientar su lectura.`,
+        'Después leyó un texto y subrayó los datos que respondían a esas preguntas. Cuando aparecieron opiniones, las distinguió de los datos que podía comprobar.',
+        'Finalmente, cada estudiante explicó una idea central, indicó qué parte del texto la respaldaba y anotó una pregunta que todavía necesitaba investigar.'
+      ];
+      return `<article class="dd-material-sheet dd-communication-sheet">${head}
+        <p><b>Propósito:</b> localizar información, explicar una idea y justificarla con detalles del texto.</p>
+        <h2>Leemos: ${story?'Distintas historias, distintas ideas':'Una lectura con preguntas'}</h2>
+        <p><i>Lectura ficticia elaborada para esta actividad. No describe hechos reales de la institución.</i></p>
+        <div class="dd-source-base">${text.map(p=>`<p>${E(p)}</p>`).join('')}</div>
+        <h2>Comprendo lo que leo</h2>
+        <ol><li>¿Qué hicieron primero los estudiantes? <p>____________________________________________________________</p></li>
+        <li>¿Qué detalle del texto te ayuda a explicar una idea de los personajes o del grupo?<p>____________________________________________________________</p></li>
+        <li>¿Cuál es la idea principal? Escríbela con tus palabras.<p>____________________________________________________________</p></li>
+        <li>¿Qué pregunta podrías hacer después de leer?<p>____________________________________________________________</p></li></ol>
+        <h3>Reviso mi respuesta</h3><p>□ Encontré información del texto. &nbsp; □ Expliqué mi idea. &nbsp; □ Utilicé una pista de la lectura.</p>
+      </article>`;
+    }
+    return `<article class="dd-material-sheet dd-communication-sheet">${head}
+      <p><b>Propósito:</b> escribir un texto breve y comprensible sobre ${E(focus)} para un destinatario definido.</p>
+      <h2>1. Pienso antes de escribir</h2>
+      <p><b>¿Para quién escribiré?</b> ____________________________________________</p>
+      <p><b>¿Qué quiero comunicar sobre ${E(focus)}?</b> __________________________</p>
+      <p>________________________________________________________________</p>
+      <h2>2. Organizo mis ideas</h2>
+      <table data-col-weights="1,1"><thead><tr><th>Mi idea principal</th><th>Dos detalles o ejemplos</th></tr></thead><tbody><tr data-dd-drawbox="900"><td></td><td></td></tr></tbody></table>
+      <h2>3. Escribo mi primer borrador</h2>
+      <p>________________________________________________________________</p><p>________________________________________________________________</p><p>________________________________________________________________</p>
+      <h2>4. Reviso y mejoro</h2><p>□ Se comprende mi idea. &nbsp; □ Mi texto es apropiado para quien lo leerá. &nbsp; □ Mejoré una parte.</p>
+      <p><b>La mejora que realicé:</b> ___________________________________________</p>
+      </article>`;
+  }
+
   function worksheetMaterial(topic,level,grade,area,sourceText=''){
     if(level==='Inicial'&&/semill|germin|siembr/.test(N(topic))&&!String(sourceText||'').trim())
       return initialSeedsWorksheet(grade);
@@ -516,6 +603,8 @@
        /historiet|derech|particip/i.test(topic)&&!String(sourceText||'').trim()){
       return rightsParticipationWorksheet(topic,grade);
     }
+    if(level==='Primaria'&&area==='Comunicación'&&!String(sourceText||'').trim())
+      return communicationWorksheet(topic,level,grade,area);
     const acts=worksheetActivities(topic,level,grade,area);
     const source=String(sourceText||'').trim();
     return `<article class="dd-material-sheet">
@@ -523,7 +612,7 @@
       <h1>${E(topic)}</h1>
       <p><b>${area==='Matemática'&&isGardenMath(topic)?'Práctica matemática contextualizada':'Propósito'}:</b> ${area==='Matemática'&&isGardenMath(topic)?'usar datos hipotéticos del biohuerto para contar, organizar o medir según el grado; contrastar con datos reales antes de planificar una siembra.':'desarrollar una evidencia observable mediante acciones de comprensión, aplicación y explicación.'}</p>
       ${source?`<div class="dd-source-base"><b>Recurso base proporcionado por el docente</b><p>${E(source.slice(0,2200))}${source.length>2200?'…':''}</p></div>`:''}
-      <ol class="dd-big-list">${acts.map((a,i)=>`<li><b>${i+1}.</b> ${E(a)}<div class="dd-answer-lines"></div></li>`).join('')}</ol>
+      <ol class="dd-big-list">${acts.map(a=>`<li>${E(a)}<div class="dd-answer-lines"></div></li>`).join('')}</ol>
       <div class="dd-material-reflect"><b>Al final:</b> ¿qué aprendiste?, ¿qué estrategia te ayudó?, ¿qué mejorarías?</div>
     </article>`;
   }
