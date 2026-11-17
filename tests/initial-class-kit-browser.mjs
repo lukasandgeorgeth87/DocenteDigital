@@ -46,6 +46,14 @@ try{
   await page.locator('input[name="ddProduct"]').first().check();
   await page.locator('#ddBuildUnit').click();
   await page.waitForFunction(()=>state.units?.[0]?.activities?.length>=2,null,{timeout:25000});
+  // La propuesta preliminar solo contiene títulos y áreas. La etapa de
+  // aprobación pedagógica debe producir criterios, evidencias y actuaciones
+  // antes de considerar la unidad apta para preparar una clase completa.
+  await page.waitForSelector('#ddV2Start',{timeout:15000});
+  await page.locator('#ddV2Start').click();
+  await page.waitForSelector('#ddV2Proposal',{timeout:15000});
+  await page.getByRole('button',{name:'Aprobar y generar unidad 2.0'}).click();
+  await page.waitForFunction(()=>state.units?.[0]?.pedagogicalV3?.version==='3.0.0-contract-first',null,{timeout:25000});
   const before=await page.evaluate(()=>({unit:state.units[0],level:state.level}));
   assert.equal(before.level,'Inicial');
   assert.equal(before.unit.title,'Exploramos las semillas de nuestro entorno');
