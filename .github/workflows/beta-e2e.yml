@@ -173,6 +173,12 @@ jobs:
           BASE_URL: http://127.0.0.1:4173
         run: node tests/commercial-initial-evidence-browser.mjs
 
+      - name: Validate full Initial package from teacher title to three real Word files
+        if: github.ref == 'refs/heads/feature/motor-pedagogico-v3-integral-20261112'
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tests/initial-class-kit-browser.mjs
+
       - name: Verify annual plan month-to-unit synchronization with real Word evidence (feature only)
         if: github.ref == 'refs/heads/feature/motor-pedagogico-v3-integral-20261112'
         env:
