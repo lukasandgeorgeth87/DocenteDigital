@@ -90,6 +90,12 @@
     widths[count-1]+=totalWidth-widths.reduce((a,b)=>a+b,0);
     const grid='<w:tblGrid>'+widths.map(width=>`<w:gridCol w:w="${width}"/>`).join('')+'</w:tblGrid>';
     const allowsLongRows=table.getAttribute?.('data-dd-splittable-rows')==='true';
+    // La tabla mensual y la secuencia extensa requieren menos espacio de
+    // relleno para no dejar una única fila o el cierre aislados en otra página.
+    // No reducir los recuadros de dibujo ni los instrumentos del estudiante.
+    const compactRows=table.getAttribute?.('data-dd-compact-rows')==='true';
+    const verticalMargin=compactRows?45:95;
+    const paragraphAfter=compactRows?0:22;
     const body=rows.map(tr=>{
       const cells=cellsOf(tr);
       const head=cells.length&&cells.every(c=>c.tagName==='TH');
@@ -107,7 +113,7 @@
       return `<w:tr><w:trPr>${longNarrative?'':'<w:cantSplit/>'}${minHeight}${head?'<w:tblHeader w:val="true"/>':''}</w:trPr>${cells.map((c,i)=>{
         const sp=span(c);
         const cellW=widths.slice(i,i+sp).reduce((a,b)=>a+b,0);
-        return `<w:tc><w:tcPr><w:tcW w:w="${cellW}" w:type="dxa"/>${sp>1?`<w:gridSpan w:val="${sp}"/>`:''}${c.tagName==='TH'?'<w:shd w:fill="E7F1EA"/>':''}<w:tcMar><w:top w:w="95" w:type="dxa"/><w:left w:w="95" w:type="dxa"/><w:bottom w:w="95" w:type="dxa"/><w:right w:w="95" w:type="dxa"/></w:tcMar><w:tcBorders><w:top w:val="single" w:sz="4" w:color="A8B5AF"/><w:left w:val="single" w:sz="4" w:color="A8B5AF"/><w:bottom w:val="single" w:sz="4" w:color="A8B5AF"/><w:right w:val="single" w:sz="4" w:color="A8B5AF"/></w:tcBorders></w:tcPr>${pXml(textOf(c),{bold:c.tagName==='TH',size:18,after:22})}</w:tc>`;
+        return `<w:tc><w:tcPr><w:tcW w:w="${cellW}" w:type="dxa"/>${sp>1?`<w:gridSpan w:val="${sp}"/>`:''}${c.tagName==='TH'?'<w:shd w:fill="E7F1EA"/>':''}<w:tcMar><w:top w:w="${verticalMargin}" w:type="dxa"/><w:left w:w="95" w:type="dxa"/><w:bottom w:w="${verticalMargin}" w:type="dxa"/><w:right w:w="95" w:type="dxa"/></w:tcMar><w:tcBorders><w:top w:val="single" w:sz="4" w:color="A8B5AF"/><w:left w:val="single" w:sz="4" w:color="A8B5AF"/><w:bottom w:val="single" w:sz="4" w:color="A8B5AF"/><w:right w:val="single" w:sz="4" w:color="A8B5AF"/></w:tcBorders></w:tcPr>${pXml(textOf(c),{bold:c.tagName==='TH',size:18,after:paragraphAfter})}</w:tc>`;
       }).join('')}</w:tr>`;
     }).join('');
     return `<w:tbl><w:tblPr><w:tblW w:w="${totalWidth}" w:type="dxa"/><w:tblLayout w:type="fixed"/></w:tblPr>${grid}${body}</w:tbl>${pXml('',{})}`;

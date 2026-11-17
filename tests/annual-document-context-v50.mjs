@@ -23,6 +23,7 @@ const plan={id:'anual-prueba',year:2027,level:'Primaria',grades:['3.º'],areas:[
     {name:'Junio',title:'Investigamos el agua que usamos',context:'',linkedUnitId:''}
   ]};
 const html=root.DDAnnualPlanning.printHtml(plan);
+assert(html.includes('data-dd-compact-rows="true"'),'La tabla anual debe caber sin dejar una sola fila en otra página');
 assert(html.includes('Campaña de cuidado del canal y registro de observaciones.'),'Usar el producto real de la unidad vinculada');
 assert(html.includes('residuos junto al canal'),'Recuperar la situación aprobada, no un campo vacío');
 assert(html.includes('Intercambio de semillas en la comunidad'),'Usar el calendario comunal aportado');

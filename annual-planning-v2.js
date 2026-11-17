@@ -238,7 +238,7 @@
       <h2>Competencias de las áreas previstas</h2>${curricularHtml(plan)}
       <h2>Organización mensual de unidades y proyectos</h2>
       <p>Los títulos los elige el docente. Los productos no vinculados son propuestas que se precisarán en cada unidad a partir del diagnóstico y el contexto real.</p>
-      <table data-col-weights="1,3,4,3"><thead><tr><th>Mes</th><th>Unidad o proyecto</th><th>Situación o insumo disponible</th><th>Producto o evidencia</th></tr></thead><tbody>${rows}</tbody></table>
+      <table data-col-weights="1,3,4,3" data-dd-compact-rows="true"><thead><tr><th>Mes</th><th>Unidad o proyecto</th><th>Situación o insumo disponible</th><th>Producto o evidencia</th></tr></thead><tbody>${rows}</tbody></table>
       <p>Planificación flexible: los títulos y las actividades se ajustan según evidencias y decisiones del docente. Las competencias, capacidades y desempeños oficiales se cotejan en cada unidad antes de su aplicación.</p>`;
   }
   function downloadWord(){

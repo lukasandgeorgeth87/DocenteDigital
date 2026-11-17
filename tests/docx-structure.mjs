@@ -86,14 +86,16 @@ try{
   assert(duplicateBlocked===false,'La protección contra doble clic idéntico dejó de funcionar');
   const flexible=await page.evaluate(async()=>{
     const long='Los estudiantes comparan testimonios, registran evidencias y explican con sus propias palabras los resultados obtenidos durante una actividad contextualizada. '.repeat(3);
-    const html='<table data-col-weights="1,4" data-dd-splittable-rows="true"><thead><tr><th>Día</th><th>Actuación y evidencia</th></tr></thead><tbody><tr><td>Lunes</td><td>'+long+'</td></tr></tbody></table>';
+    const html='<table data-col-weights="1,4" data-dd-splittable-rows="true" data-dd-compact-rows="true"><thead><tr><th>Día</th><th>Actuación y evidencia</th></tr></thead><tbody><tr><td>Lunes</td><td>'+long+'</td></tr></tbody></table>';
     const bytes=await DDWordExport.createBlob('Secuencia para imprimir',html,true).arrayBuffer();
     return new TextDecoder().decode(bytes);
   });
   assert(flexible.includes('<w:gridCol w:w="3000"/>')&&flexible.includes('<w:gridCol w:w="12000"/>'),
     'Las columnas no respetan su ancho proporcional');
-  assert.equal((flexible.match(/<w:cantSplit\/>/g)||[]).length,1,
+  assert((flexible.match(/<w:cantSplit\/>/g)||[]).length===1,
     'Las filas largas deben poder continuar en la página siguiente; la cabecera debe permanecer unida');
+  assert(flexible.includes('<w:top w:w="45" w:type="dxa"/>')&&flexible.includes('<w:bottom w:w="45" w:type="dxa"/>'),
+    'Las tablas extensas deben tener márgenes verticales moderados para evitar una página huérfana');
   console.log('DOCX_STRUCTURE_PASS');
 }finally{
   await browser.close();

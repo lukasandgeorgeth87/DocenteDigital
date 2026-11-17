@@ -246,7 +246,8 @@
   const m=model.normalized;
   const grid=(head,rows,options={})=>'<table style="border-collapse:collapse;width:100%" border="1" cellpadding="5"'
    +(options.weights?' data-col-weights="'+options.weights.join(',')+'"':'')
-   +(options.allowLongRowSplit?' data-dd-splittable-rows="true"':'')+'><thead><tr>'
+   +(options.allowLongRowSplit?' data-dd-splittable-rows="true"':'')
+   +(options.compactRows?' data-dd-compact-rows="true"':'')+'><thead><tr>'
    +head.map(x=>'<th>'+escape(x)+'</th>').join('')+'</tr></thead><tbody>'
    +rows.map(row=>'<tr>'+row.map(x=>'<td>'+escape(x)+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
   const paragraphs=value=>String(value||'').split(/\n\s*\n/).filter(Boolean).map(x=>'<p>'+escape(x)+'</p>').join('');
@@ -273,7 +274,7 @@
     m.sessions.filter(a=>a.week===week).map(a=>[
      (a.day||'Por programar')+(a.block?' · Bloque '+a.block:''),
      a.area,a.title+' · '+a.question,a.studentAction+' Evidencia: '+a.evidence,a.criterion]),
-    {weights:[10,10,27,32,21],allowLongRowSplit:true})).join('');
+    {weights:[10,10,27,32,21],allowLongRowSplit:true,compactRows:true})).join('');
   const project=m.type==='Proyecto de aprendizaje'
    ?'<h2>V. Hitos del proyecto y seguimiento</h2>'
     +grid(['Fase del proyecto','Actuación estudiantil','Evidencia del avance'],
