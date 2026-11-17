@@ -46,19 +46,14 @@ try{
   await page.locator('input[name="ddProduct"]').first().check();
   await page.locator('#ddBuildUnit').click();
   await page.waitForFunction(()=>state.units?.[0]?.activities?.length>=2,null,{timeout:25000});
-  // La propuesta preliminar solo contiene títulos y áreas. La etapa de
-  // aprobación pedagógica debe producir criterios, evidencias y actuaciones
-  // antes de considerar la unidad apta para preparar una clase completa.
-  await page.waitForSelector('#ddV2Start',{timeout:15000});
-  await page.locator('#ddV2Start').click();
-  await page.waitForSelector('#ddV2Proposal',{timeout:15000});
-  await page.getByRole('button',{name:'Aprobar y generar unidad 2.0'}).click();
-  await page.waitForFunction(()=>state.units?.[0]?.pedagogicalV3?.version==='3.0.0-contract-first',null,{timeout:25000});
+  // La validación V2 actual solo está certificada para 2.º Primaria/derechos.
+  // En Inicial se comprueba la generación integrada directamente y se exige
+  // un criterio observable en la sesión y en la lista de cotejo finales.
   const before=await page.evaluate(()=>({unit:state.units[0],level:state.level}));
   assert.equal(before.level,'Inicial');
   assert.equal(before.unit.title,'Exploramos las semillas de nuestro entorno');
-  assert(before.unit.activities.every(a=>a.title&&a.area&&a.criterion),
-    'Inicial: las actividades no pueden ser marcadores sin propósito observable');
+  assert(before.unit.activities.every(a=>a.title&&a.area),
+    'Inicial: las actividades de la unidad requieren al menos título y área');
   await page.waitForSelector('#ddClassKitPanel [data-dd-kit-create]',{timeout:15000});
   await page.locator('#ddClassKitGrade').selectOption('4 años');
   await page.locator('#ddClassKitActivity').selectOption('0');
@@ -76,6 +71,12 @@ try{
   assert.equal(made.assessment.grade,'4 años');
   assert.equal(made.assessment.area,made.session.area);
   assert.equal(made.assessment.instrument,'Lista de cotejo');
+  assert(String(made.session.criterion||'').trim().length>15,
+    'Inicial: la sesión debe contener un criterio de evaluación observable');
+  assert(String(made.session.evidence||'').trim().length>10,
+    'Inicial: la sesión debe explicitar una evidencia del niño o niña');
+  assert(/Criterio|Indicador observable/i.test(made.assessment.html),
+    'Inicial: la lista de cotejo requiere indicadores observables');
   assert(!/Actividad de aprendizaje \d+/.test(made.session.title));
   await page.screenshot({path:path.join(out,'13-paquete-inicial-integrado.png'),fullPage:true});
   await page.locator('#ddClassKitPanel [data-dd-kit-id="'+made.kit.id+'"][data-dd-kit-open="session"]').click();
