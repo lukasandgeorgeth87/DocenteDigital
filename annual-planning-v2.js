@@ -46,6 +46,47 @@
     const suggested=root.DDPedagogicalInputs?.recommendedTitle?.(name,level)||'';
     return {name,title:suggested||titleFor(name,level),titleOrigin:suggested?'insumo':'sugerencia',context:'',linkedUnitId:'',type:'Unidad de aprendizaje'};
   });}
+  function unitForMonth(row){
+    return row.linkedUnitId?(state.units||[]).find(unit=>unit.id===row.linkedUnitId)||null:null;
+  }
+  function concise(value,max=165){
+    const text=String(value||'').replace(/\s+/g,' ').trim();
+    if(text.length<=max)return text;
+    const cut=text.slice(0,max+1).lastIndexOf(' ');
+    return text.slice(0,cut>80?cut:max).replace(/[\s,;:]+$/,'')+'…';
+  }
+  // El docente decide los títulos. Los productos son propuestas orientadoras
+  // basadas en ese título, no observaciones inventadas ni desempeños oficiales.
+  function suggestedProduct(title,level){
+    const text=String(title||'').toLocaleLowerCase('es-PE');
+    if(level==='Inicial'){
+      if(/semill|plant|huerto|chacra|cultiv|agua|explor/.test(text))return 'Dibujos de observación y conversación sobre lo descubierto';
+      if(/relat|cuent|cultur|costumb|tradici/.test(text))return 'Relato oral, dramatización o representación gráfica';
+      return 'Producciones mediante juego, dibujos y expresión oral';
+    }
+    if(/conviv|dialog|acuerd|escuch/.test(text))return 'Acuerdos y registro de un diálogo respetuoso';
+    if(/salud|cuerp|bienestar|higiene/.test(text))return 'Registro de prácticas y recomendaciones de autocuidado';
+    if(/familia|comunidad|historia familiar/.test(text))return 'Álbum de relatos y testimonios voluntarios';
+    if(/agua|yaku/.test(text))return 'Registro de observaciones y propuesta de cuidado del agua';
+    if(/tradici|costumb|cultur|patrimonio|pachamama|difuntos|santos/.test(text))return 'Galería explicativa con fuentes y respeto a la diversidad';
+    if(/semill|plant|huerto|chacra|cultiv/.test(text))return 'Cuaderno de observación y explicación de cambios';
+    if(/feria|medim|presupuesto|organizamos/.test(text))return 'Tablas, planificación y muestra de producciones';
+    if(/derech|niñez|participaci/.test(text))return 'Mural o campaña con mensajes fundamentados';
+    if(/aprendizajes|año escolar/.test(text))return 'Portafolio comentado de evidencias del año';
+    return 'Producción y evidencia por concretar durante la unidad';
+  }
+  function productFor(row,plan){
+    const linked=unitForMonth(row);
+    return String(linked?.productTitle||linked?.product||suggestedProduct(row.title,plan.level)).trim();
+  }
+  function contextualBasis(row){
+    if(String(row.context||'').trim())return {text:concise(row.context,205),origin:'Contexto indicado por el docente'};
+    const unit=unitForMonth(row),fromUnit=String(unit?.situationBrief||unit?.situation||'').trim();
+    if(fromUnit)return {text:concise(fromUnit,205),origin:'Contexto de la unidad vinculada'};
+    const events=root.DDPedagogicalInputs?.monthEvents?.(row.name)||[];
+    if(events.length)return {text:concise(events.slice(0,2).map(e=>e.text).join('; '),205),origin:'Calendario aportado por el docente'};
+    return {text:'Por caracterizar con información real del grupo y la comunidad',origin:'Pendiente de contextualizar'};
+  }
   function normalize(plan){
     if(!Array.isArray(plan.months))plan.months=monthRows(plan.level);
     for(const name of MONTHS){
@@ -114,6 +155,7 @@
       return `<tr data-month="${E(m.name)}"><td><b>${E(m.name)}</b></td>
         <td><input data-field="title" aria-label="Título sugerido ${E(m.name)}" value="${E(m.title)}" ${linked?'readonly':''}>
           ${m.titleOrigin==='insumo'?'<small>Propuesta a partir del calendario registrado</small>':''}
+          <small data-annual-product="${E(m.name)}">Producto sugerido: ${E(productFor(m,plan))}</small>
           <details><summary>Opcional: añadir un contexto específico</summary>
             <textarea data-field="context" aria-label="Contexto ${E(m.name)}" rows="2" placeholder="Solo si deseas indicar un hecho real o necesidad particular de tu grupo">${E(m.context||'')}</textarea>
           </details></td>
@@ -186,16 +228,17 @@
   function printHtml(plan){
     normalize(plan);
     const rows=plan.months.map(m=>{
-      const linked=!!m.linkedUnitId&&(state.units||[]).some(u=>u.id===m.linkedUnitId);
-      const event=root.DDPedagogicalInputs?.monthEvents?.(m.name)?.[0];
-      const reference=event?`Calendario aportado (${event.source}): ${event.text}. Se verificará su pertinencia con el grupo.`:'Contexto por precisar con el grupo';
-      return `<tr><td>${E(m.name)}</td><td>${E(m.title)}</td><td>${E(m.context||reference)}</td><td>${linked?'Unidad vinculada':'Unidad sugerida'}</td></tr>`;
+      const linked=!!unitForMonth(m),basis=contextualBasis(m);
+      return `<tr><td>${E(m.name)}<br><small>${linked?'Vinculada':'Sugerida'}</small></td>`+
+        `<td>${E(m.title)}</td><td>${E(basis.text)}<br><small>${E(basis.origin)}</small></td>`+
+        `<td>${E(productFor(m,plan))}</td></tr>`;
     }).join('');
     return `<h1>PROGRAMACIÓN ANUAL ${E(plan.year)}</h1><p><b>Nivel:</b> ${E(plan.level)} · <b>Grados/edades:</b> ${E(plan.grades.join(', '))} · <b>Tipo de IE:</b> ${E(plan.ieType||'')}</p>
       <p><b>Áreas previstas:</b> ${E(plan.areas.join(', '))}</p>
       <h2>Competencias de las áreas previstas</h2>${curricularHtml(plan)}
       <h2>Organización mensual de unidades y proyectos</h2>
-      <table data-col-weights="1,3,4,2"><thead><tr><th>Mes</th><th>Título</th><th>Contexto / situación por precisar</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table>
+      <p>Los títulos los elige el docente. Los productos no vinculados son propuestas que se precisarán en cada unidad a partir del diagnóstico y el contexto real.</p>
+      <table data-col-weights="1,3,4,3"><thead><tr><th>Mes</th><th>Unidad o proyecto</th><th>Situación o insumo disponible</th><th>Producto o evidencia</th></tr></thead><tbody>${rows}</tbody></table>
       <p>Planificación flexible: los títulos y las actividades se ajustan según evidencias y decisiones del docente. Las competencias, capacidades y desempeños oficiales se cotejan en cada unidad antes de su aplicación.</p>`;
   }
   function downloadWord(){
@@ -209,6 +252,11 @@
   let autosave;
   document.addEventListener('input',event=>{
     if(!event.target.closest('#ddAnnualMonths'))return;
+    if(event.target.matches('[data-field="title"]')){
+      const row=event.target.closest('tr[data-month]'),label=row?.querySelector('[data-annual-product]');
+      const plan=selectedPlan();
+      if(label&&plan)label.textContent='Producto sugerido: '+suggestedProduct(event.target.value,plan.level);
+    }
     clearTimeout(autosave);autosave=setTimeout(saveFields,750);
   });
   const css=document.createElement('style');

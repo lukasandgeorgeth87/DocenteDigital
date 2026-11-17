@@ -47,6 +47,13 @@ try{
   assert.equal(info.unit.annualPlanId,info.plan.id);
   assert.equal(info.plan.months.find(m=>m.name==='Marzo').title,info.unit.title);
   assert(!info.pending);
+  const annualPrint=await page.evaluate(()=>{
+    const unit=state.units[0],plan=state.annualPlans[0];
+    const text=new DOMParser().parseFromString(window.DDAnnualPlanning.printHtml(plan),'text/html').body.textContent;
+    return {text,product:unit.productTitle||unit.product,context:unit.situationBrief||unit.situation};
+  });
+  assert(annualPrint.text.includes(annualPrint.product),'El Word anual no recuperó el producto de la unidad vinculada');
+  assert(annualPrint.text.includes(annualPrint.context.slice(0,65)),'El Word anual no recuperó el contexto real de la unidad');
   // Prueba el cambio real de título desde la interfaz, no desde el estado.
   await page.evaluate(id=>viewUnit(id),info.unit.id);
   await page.getByRole('button',{name:'Cambiar título'}).click();
@@ -56,6 +63,7 @@ try{
   const reflected=await page.locator('#ddAnnualMonths tr[data-month="Marzo"] [data-field="title"]').inputValue();
   assert.equal(reflected,'Escuchamos y dialogamos para convivir mejor');
   assert.equal(await page.locator('#ddAnnualMonths tr').count(),10);
+  assert.match(await page.locator('#ddAnnualMonths tr[data-month="Marzo"] [data-annual-product]').innerText(),/Producto sugerido:/);
   await page.screenshot({path:path.join(out,'08-programacion-anual-en-la-app.png'),fullPage:true});
   const download=page.waitForEvent('download',{timeout:20000});
   await page.locator('#ddAnnualDownload').click();

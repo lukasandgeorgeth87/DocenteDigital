@@ -72,6 +72,8 @@ const project=core.compile({...context,type:'Proyecto de aprendizaje'},projectPr
 assert(project.ok,JSON.stringify(project.errors));
 assert.equal(project.normalized.projectMilestones.length,4);
 assert(core.renderDocument(project).includes('Hitos del proyecto'));
+assert.match(core.renderDocument(project),/data-col-weights="10,10,27,32,21"/, 'Secuencia Word con columnas proporcionadas al texto');
+assert.match(core.renderDocument(project),/data-dd-splittable-rows="true"/, 'Las filas largas podrán continuar en otra página');
 assert(core.compile({...context,topic:'El agua'},generator,curriculum).errors.some(x=>x.code==='topic_mismatch'));
 const replaced=(u)=>({...generator(u),activities:generator(u).activities.map((a,i)=>i===1?{...a,title:generator(u).activities[0].title}:a)});
 assert(core.compile(context,replaced,curriculum).errors.some(x=>x.code==='title_duplicate'));

@@ -89,6 +89,7 @@
     const widths=weights.map(n=>Math.max(550,Math.floor(totalWidth*n/sum)));
     widths[count-1]+=totalWidth-widths.reduce((a,b)=>a+b,0);
     const grid='<w:tblGrid>'+widths.map(width=>`<w:gridCol w:w="${width}"/>`).join('')+'</w:tblGrid>';
+    const allowsLongRows=table.getAttribute?.('data-dd-splittable-rows')==='true';
     const body=rows.map(tr=>{
       const cells=cellsOf(tr);
       const head=cells.length&&cells.every(c=>c.tagName==='TH');
@@ -98,7 +99,12 @@
       const requestedHeight=Number(tr.getAttribute?.('data-dd-drawbox')||0);
       const minHeight=Number.isFinite(requestedHeight)&&requestedHeight>=500&&requestedHeight<=5000
         ?`<w:trHeight w:val="${Math.round(requestedHeight)}" w:hRule="atLeast"/>`:'';
-      return `<w:tr><w:trPr><w:cantSplit/>${minHeight}${head?'<w:tblHeader w:val="true"/>':''}</w:trPr>${cells.map((c,i)=>{
+      // In a dense teaching sequence, tall narrative rows must be allowed to
+      // continue onto the next page. Otherwise Word moves the entire row and
+      // leaves an enormous blank space on the previous page. Other tables keep
+      // their previous protection against splitting a short student task.
+      const longNarrative=allowsLongRows&&!head&&cells.some(c=>textOf(c).length>190);
+      return `<w:tr><w:trPr>${longNarrative?'':'<w:cantSplit/>'}${minHeight}${head?'<w:tblHeader w:val="true"/>':''}</w:trPr>${cells.map((c,i)=>{
         const sp=span(c);
         const cellW=widths.slice(i,i+sp).reduce((a,b)=>a+b,0);
         return `<w:tc><w:tcPr><w:tcW w:w="${cellW}" w:type="dxa"/>${sp>1?`<w:gridSpan w:val="${sp}"/>`:''}${c.tagName==='TH'?'<w:shd w:fill="E7F1EA"/>':''}<w:tcMar><w:top w:w="95" w:type="dxa"/><w:left w:w="95" w:type="dxa"/><w:bottom w:w="95" w:type="dxa"/><w:right w:w="95" w:type="dxa"/></w:tcMar><w:tcBorders><w:top w:val="single" w:sz="4" w:color="A8B5AF"/><w:left w:val="single" w:sz="4" w:color="A8B5AF"/><w:bottom w:val="single" w:sz="4" w:color="A8B5AF"/><w:right w:val="single" w:sz="4" w:color="A8B5AF"/></w:tcBorders></w:tcPr>${pXml(textOf(c),{bold:c.tagName==='TH',size:18,after:22})}</w:tc>`;

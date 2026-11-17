@@ -43,6 +43,7 @@ jobs:
           node tests/quick-request-routing-phase11.mjs
           node tests/teacher-intent-boundary-v12.mjs
           node tests/criterion-no-midword-v49.mjs
+          node tests/annual-document-context-v50.mjs
           node tests/unit-explicit-areas-and-situation-v13.mjs
           node tests/creative-situation-sanitization-v13.mjs
           node tests/planning-structured-request-v14.mjs
